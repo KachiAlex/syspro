@@ -156,7 +156,7 @@ export function TasksTab({ profile }: { profile: EmployeeProfile }) {
   const completedCount = tasks.filter(t => t.status === 'completed').length;
 
   if (loading) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-blue-600 animate-spin" /></div>;
+    return <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-theme-accent animate-spin" /></div>;
   }
 
   return (
@@ -164,15 +164,15 @@ export function TasksTab({ profile }: { profile: EmployeeProfile }) {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Tasks & KPIs</h2>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h2 className="text-xl font-bold text-theme-text-primary">Tasks & KPIs</h2>
+          <p className="text-sm text-theme-text-secondary mt-0.5">
             {isHOD ? 'Manage tasks and KPIs for your department' : 'Your assigned tasks and KPI targets'}
           </p>
         </div>
         {canAssign && (
           <button
             onClick={() => setShowAssign(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-theme-accent text-white rounded-lg text-sm font-medium hover:bg-theme-accent-hover transition-colors"
           >
             <Plus className="w-4 h-4" />
             Assign Task / KPI
@@ -182,7 +182,7 @@ export function TasksTab({ profile }: { profile: EmployeeProfile }) {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Total Tasks" value={tasks.length} icon={<Clock className="w-4 h-4" />} color="bg-gray-100 text-gray-700" />
+        <StatCard label="Total Tasks" value={tasks.length} icon={<Clock className="w-4 h-4" />} color="bg-theme-muted text-theme-text-primary" />
         <StatCard label="KPIs" value={kpiCount} icon={<Target className="w-4 h-4" />} color="bg-purple-100 text-purple-700" />
         <StatCard label="Pending" value={pendingCount} icon={<AlertCircle className="w-4 h-4" />} color="bg-amber-100 text-amber-700" />
         <StatCard label="Completed" value={completedCount} icon={<CheckCircle className="w-4 h-4" />} color="bg-green-100 text-green-700" />
@@ -190,19 +190,19 @@ export function TasksTab({ profile }: { profile: EmployeeProfile }) {
 
       {/* Filters */}
       <div className="flex items-center gap-2 flex-wrap">
-        <Filter className="w-4 h-4 text-gray-400" />
+        <Filter className="w-4 h-4 text-theme-text-tertiary" />
         {['all', 'pending', 'in_progress', 'completed', 'overdue'].map(s => (
           <button
             key={s}
             onClick={() => setFilterStatus(s)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
-              filterStatus === s ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              filterStatus === s ? 'bg-theme-accent text-white' : 'bg-theme-muted text-theme-text-secondary hover:bg-theme-muted'
             }`}
           >
             {s === 'all' ? 'All' : s.replace('_', ' ')}
             {s === 'completed' && completedCount > 0 && (
               <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
-                filterStatus === s ? 'bg-white/20 text-white' : 'bg-green-200 text-green-700'
+                filterStatus === s ? 'bg-theme-surface/20 text-theme-text-primary' : 'bg-green-200 text-green-700'
               }`}>
                 {completedCount}
               </span>
@@ -212,7 +212,7 @@ export function TasksTab({ profile }: { profile: EmployeeProfile }) {
         <button
           onClick={() => setFilterKpi(!filterKpi)}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            filterKpi ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            filterKpi ? 'bg-purple-600 text-white' : 'bg-theme-muted text-theme-text-secondary hover:bg-theme-muted'
           }`}
         >
           KPIs Only
@@ -227,9 +227,9 @@ export function TasksTab({ profile }: { profile: EmployeeProfile }) {
 
       {/* Task list */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
-          <Target className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">No tasks found. {canAssign && 'Assign a task to get started.'}</p>
+        <div className="text-center py-16 bg-theme-muted rounded-xl border border-theme-border">
+          <Target className="w-10 h-10 text-theme-text-secondary mx-auto mb-3" />
+          <p className="text-theme-text-secondary text-sm">No tasks found. {canAssign && 'Assign a task to get started.'}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -257,29 +257,29 @@ export function TasksTab({ profile }: { profile: EmployeeProfile }) {
 
       {/* Completion Note Modal */}
       {completingTaskId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => { setCompletingTaskId(null); setCompletionNote(''); }}>
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-5 border-b border-gray-100">
-              <h3 className="font-bold text-gray-900">Complete Task</h3>
-              <button onClick={() => { setCompletingTaskId(null); setCompletionNote(''); }} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="w-5 h-5 text-gray-500" /></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay p-4" onClick={() => { setCompletingTaskId(null); setCompletionNote(''); }}>
+          <div className="bg-theme-surface rounded-2xl shadow-xl max-w-md w-full" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-theme-border">
+              <h3 className="font-bold text-theme-text-primary">Complete Task</h3>
+              <button onClick={() => { setCompletingTaskId(null); setCompletionNote(''); }} className="p-1.5 rounded-lg hover:bg-theme-muted"><X className="w-5 h-5 text-theme-text-secondary" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                  Completion Note <span className="text-gray-400 font-normal">(optional)</span>
+                <label className="block text-xs font-medium text-theme-text-primary mb-1.5">
+                  Completion Note <span className="text-theme-text-tertiary font-normal">(optional)</span>
                 </label>
                 <textarea
                   value={completionNote}
                   onChange={e => setCompletionNote(e.target.value)}
                   rows={4}
                   placeholder="Describe what was accomplished, any evidence, or outcomes achieved..."
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 rounded-lg border border-theme-border text-sm focus:ring-2 focus:ring-theme-accent focus:border-transparent resize-none"
                 />
-                <p className="text-xs text-gray-400 mt-1">This note will be used in AI productivity appraisals</p>
+                <p className="text-xs text-theme-text-tertiary mt-1">This note will be used in AI productivity appraisals</p>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-2 p-5 border-t border-gray-100">
-              <button onClick={() => { setCompletingTaskId(null); setCompletionNote(''); }} className="px-4 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">Cancel</button>
+            <div className="flex items-center justify-end gap-2 p-5 border-t border-theme-border">
+              <button onClick={() => { setCompletingTaskId(null); setCompletionNote(''); }} className="px-4 py-2 text-sm font-medium text-theme-text-secondary rounded-lg hover:bg-theme-muted">Cancel</button>
               <button
                 onClick={handleCompleteWithNote}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700"
@@ -297,11 +297,11 @@ export function TasksTab({ profile }: { profile: EmployeeProfile }) {
 
 function StatCard({ label, value, icon, color }: { label: string; value: number; icon: React.ReactNode; color: string }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4">
+    <div className="bg-theme-surface rounded-xl border border-theme-border p-4">
       <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium ${color} mb-2`}>
         {icon} {label}
       </div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <p className="text-2xl font-bold text-theme-text-primary">{value}</p>
     </div>
   );
 }
@@ -314,11 +314,11 @@ function TaskCard({
   onDelete: (id: string) => void;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+    <div className="bg-theme-surface rounded-xl border border-theme-border p-4 hover:shadow-sm transition-shadow">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <h3 className="font-semibold text-gray-900 text-sm">{task.title}</h3>
+            <h3 className="font-semibold text-theme-text-primary text-sm">{task.title}</h3>
             {task.is_kpi && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700">
                 <Target className="w-3 h-3" /> KPI
@@ -327,32 +327,32 @@ function TaskCard({
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${STATUS_COLORS[task.status] || ''}`}>
               {task.status?.replace('_', ' ')}
             </span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-theme-muted text-theme-text-secondary">
               {FREQ_LABELS[task.frequency] || task.frequency}
             </span>
             {task.weight && task.weight > 1 && (
-              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-600">
+              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-theme-accent">
                 <Zap className="w-3 h-3" /> Weight: {task.weight}
               </span>
             )}
           </div>
 
           {task.description && (
-            <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+            <p className="text-sm text-theme-text-secondary mt-1">{task.description}</p>
           )}
           {task.expected_outcome && (
-            <p className="text-xs text-gray-500 mt-1.5">
+            <p className="text-xs text-theme-text-secondary mt-1.5">
               <span className="font-medium">Expected outcome:</span> {task.expected_outcome}
             </p>
           )}
 
-          <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+          <div className="flex items-center gap-3 mt-2 text-xs text-theme-text-tertiary">
             <span className="inline-flex items-center gap-1">
               <Calendar className="w-3 h-3" /> Due: {task.due_date}
             </span>
             <span>Assigned by: {task.assigned_by}</span>
             {isHOD && task.employee_name && (
-              <span className="font-medium text-gray-600">{task.employee_name}</span>
+              <span className="font-medium text-theme-text-secondary">{task.employee_name}</span>
             )}
           </div>
 
@@ -367,7 +367,7 @@ function TaskCard({
         {canManage && (
           <button
             onClick={() => onDelete(task.id)}
-            className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors flex-shrink-0"
+            className="p-1.5 rounded-lg text-theme-text-tertiary hover:bg-red-50 hover:text-red-600 transition-colors flex-shrink-0"
             title="Delete task"
           >
             <Trash2 className="w-4 h-4" />
@@ -376,12 +376,12 @@ function TaskCard({
       </div>
 
       {/* Action buttons row */}
-      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-theme-border">
         {/* Staff action buttons */}
         {!canManage && task.status === 'pending' && (
           <button
             onClick={() => onStatusUpdate(task.id, 'in_progress')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-theme-accent text-white rounded-lg text-xs font-medium hover:bg-theme-accent-hover transition-colors"
           >
             <Play className="w-3.5 h-3.5" /> Start Task
           </button>
@@ -397,7 +397,7 @@ function TaskCard({
         {!canManage && task.status === 'overdue' && (
           <button
             onClick={() => onStatusUpdate(task.id, 'in_progress')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-theme-accent text-white rounded-lg text-xs font-medium hover:bg-theme-accent-hover transition-colors"
           >
             <Play className="w-3.5 h-3.5" /> Start Task
           </button>
@@ -405,7 +405,7 @@ function TaskCard({
         {!canManage && task.status === 'completed' && (
           <button
             onClick={() => onStatusUpdate(task.id, 'in_progress')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-theme-muted text-theme-text-secondary rounded-lg text-xs font-medium hover:bg-theme-muted transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" /> Reopen
           </button>
@@ -420,8 +420,8 @@ function TaskCard({
                 onClick={() => onStatusUpdate(task.id, s)}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
                   task.status === s
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-theme-accent text-white'
+                    : 'bg-theme-muted text-theme-text-secondary hover:bg-theme-muted'
                 }`}
               >
                 {s === 'in_progress' ? 'In Progress' : s.charAt(0).toUpperCase() + s.slice(1)}
@@ -482,11 +482,11 @@ function AssignTaskModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5 border-b border-gray-100">
-          <h3 className="font-bold text-gray-900">Assign Task / KPI</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="w-5 h-5 text-gray-500" /></button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay p-4" onClick={onClose}>
+      <div className="bg-theme-surface rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-theme-border">
+          <h3 className="font-bold text-theme-text-primary">Assign Task / KPI</h3>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-theme-muted"><X className="w-5 h-5 text-theme-text-secondary" /></button>
         </div>
 
         <div className="p-5 space-y-4">
@@ -498,11 +498,11 @@ function AssignTaskModal({
 
           {/* Employee select */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Assign to *</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-1.5">Assign to *</label>
             <select
               value={employeeId}
               onChange={e => setEmployeeId(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 rounded-lg border border-theme-border text-sm focus:ring-2 focus:ring-theme-accent focus:border-transparent"
             >
               <option value="">Select department member...</option>
               {colleagues.map(c => (
@@ -513,48 +513,48 @@ function AssignTaskModal({
 
           {/* Title */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Task Title *</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-1.5">Task Title *</label>
             <input
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="e.g., Prepare Q3 financial report"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 rounded-lg border border-theme-border text-sm focus:ring-2 focus:ring-theme-accent focus:border-transparent"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Description</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-1.5">Description</label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
               rows={2}
               placeholder="Brief description of what needs to be done..."
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 rounded-lg border border-theme-border text-sm focus:ring-2 focus:ring-theme-accent focus:border-transparent resize-none"
             />
           </div>
 
           {/* Expected Outcome */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Expected Outcome</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-1.5">Expected Outcome</label>
             <input
               type="text"
               value={expectedOutcome}
               onChange={e => setExpectedOutcome(e.target.value)}
               placeholder="e.g., Completed report with all sections filled"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 rounded-lg border border-theme-border text-sm focus:ring-2 focus:ring-theme-accent focus:border-transparent"
             />
           </div>
 
           {/* Frequency + Due Date */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Frequency</label>
+              <label className="block text-xs font-medium text-theme-text-primary mb-1.5">Frequency</label>
               <select
                 value={frequency}
                 onChange={e => setFrequency(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 rounded-lg border border-theme-border text-sm focus:ring-2 focus:ring-theme-accent focus:border-transparent"
               >
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
@@ -565,12 +565,12 @@ function AssignTaskModal({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Due Date</label>
+              <label className="block text-xs font-medium text-theme-text-primary mb-1.5">Due Date</label>
               <input
                 type="date"
                 value={dueDate}
                 onChange={e => setDueDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 rounded-lg border border-theme-border text-sm focus:ring-2 focus:ring-theme-accent focus:border-transparent"
               />
             </div>
           </div>
@@ -582,34 +582,34 @@ function AssignTaskModal({
                 type="checkbox"
                 checked={isKpi}
                 onChange={e => setIsKpi(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                className="w-4 h-4 rounded border-theme-border text-purple-600 focus:ring-purple-500"
               />
-              <span className="text-sm font-medium text-gray-700 inline-flex items-center gap-1">
+              <span className="text-sm font-medium text-theme-text-primary inline-flex items-center gap-1">
                 <Target className="w-4 h-4 text-purple-600" /> Mark as KPI
               </span>
             </label>
             {isKpi && (
               <div className="flex items-center gap-2">
-                <label className="text-xs font-medium text-gray-700">Weight:</label>
+                <label className="text-xs font-medium text-theme-text-primary">Weight:</label>
                 <input
                   type="number"
                   min={1}
                   max={10}
                   value={weight}
                   onChange={e => setWeight(parseInt(e.target.value) || 1)}
-                  className="w-16 px-2 py-1 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-16 px-2 py-1 rounded-lg border border-theme-border text-sm focus:ring-2 focus:ring-theme-accent focus:border-transparent"
                 />
               </div>
             )}
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 p-5 border-t border-gray-100">
-          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">Cancel</button>
+        <div className="flex items-center justify-end gap-2 p-5 border-t border-theme-border">
+          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-theme-text-secondary rounded-lg hover:bg-theme-muted">Cancel</button>
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-theme-accent text-white rounded-lg text-sm font-medium hover:bg-theme-accent-hover disabled:opacity-50"
           >
             {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
             Assign Task

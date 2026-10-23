@@ -14,7 +14,7 @@ interface Insight {
 const SEVERITY_STYLE: Record<string, { icon: React.ReactNode; badge: string }> = {
   high: { icon: <AlertTriangle className="w-4 h-4 text-red-400" />, badge: "bg-red-500/15 text-red-400 border-red-500/30" },
   medium: { icon: <AlertCircle className="w-4 h-4 text-amber-400" />, badge: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
-  low: { icon: <Info className="w-4 h-4 text-blue-400" />, badge: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
+  low: { icon: <Info className="w-4 h-4 text-blue-400" />, badge: "bg-blue-500/15 text-blue-400 border-theme-accent/30" },
 };
 
 export function AiInsightsCard() {

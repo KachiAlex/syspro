@@ -5,7 +5,7 @@ import { useTenantContext } from "@/components/tenant-admin/tenant-context";
 import { AlertCircle, CheckCircle2, Plus } from "lucide-react";
 
 const fmt = (n: number) => `₦${Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
-const inputCls = "rounded bg-slate-800 px-3 py-2 text-sm w-full";
+const inputCls = "rounded bg-theme-muted px-3 py-2 text-sm w-full";
 const btnCls = "flex items-center gap-1.5 rounded bg-sky-600 px-3 py-1.5 text-sm hover:bg-sky-500 disabled:opacity-50";
 
 export default function SalesPartnersPage() {
@@ -50,14 +50,14 @@ export default function SalesPartnersPage() {
     <div className="p-6 space-y-5">
       <div>
         <h1 className="text-xl font-semibold">Sales Partners &amp; Commissions</h1>
-        <p className="text-sm text-slate-400">Agents/resellers earn a % of tagged invoices — accrual and payout post through the GL.</p>
+        <p className="text-sm text-theme-text-secondary">Agents/resellers earn a % of tagged invoices — accrual and payout post through the GL.</p>
       </div>
 
       {error && <div className="flex items-center gap-2 rounded bg-rose-500/10 px-4 py-3 text-rose-400"><AlertCircle className="h-4 w-4" />{error}</div>}
       {msg && <div className="flex items-center gap-2 rounded bg-emerald-500/10 px-4 py-3 text-emerald-400"><CheckCircle2 className="h-4 w-4" />{msg}</div>}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded border border-slate-800 p-4 space-y-3">
+        <div className="rounded border border-theme-border p-4 space-y-3">
           <div className="font-medium text-sm">New Partner</div>
           <div className="grid gap-2 sm:grid-cols-2">
             <input className={inputCls} placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -77,7 +77,7 @@ export default function SalesPartnersPage() {
           </button>
         </div>
 
-        <div className="rounded border border-slate-800 p-4 space-y-3">
+        <div className="rounded border border-theme-border p-4 space-y-3">
           <div className="font-medium text-sm">Accrue Commission on Invoice</div>
           <div className="flex gap-2">
             <input className={`${inputCls} w-64`} placeholder="Invoice ID" value={accrue.invoiceId} onChange={(e) => setAccrue({ ...accrue, invoiceId: e.target.value })} />
@@ -94,13 +94,13 @@ export default function SalesPartnersPage() {
       </div>
 
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-slate-400 border-b border-slate-800">
+        <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border">
           <th className="py-2 pr-3">Partner</th><th className="py-2 pr-3">Type</th><th className="py-2 pr-3 text-right">Rate</th>
           <th className="py-2 pr-3 text-right">Accrued</th><th className="py-2 pr-3 text-right">Paid</th><th className="py-2">Status</th>
         </tr></thead>
         <tbody>
           {partners.map((p) => (
-            <tr key={p.id} className="border-b border-slate-800/60">
+            <tr key={p.id} className="border-b border-theme-border/60">
               <td className="py-2 pr-3">{p.name}</td>
               <td className="py-2 pr-3 capitalize">{p.partner_type}</td>
               <td className="py-2 pr-3 text-right">{p.commission_rate}%</td>
@@ -109,21 +109,21 @@ export default function SalesPartnersPage() {
               <td className="py-2">{p.active ? "Active" : "Inactive"}</td>
             </tr>
           ))}
-          {!partners.length && <tr><td colSpan={6} className="py-6 text-center text-slate-500">No partners</td></tr>}
+          {!partners.length && <tr><td colSpan={6} className="py-6 text-center text-theme-text-tertiary">No partners</td></tr>}
         </tbody>
       </table>
 
       <div>
         <div className="font-medium text-sm mb-2">Commission Ledger</div>
         <table className="w-full text-sm">
-          <thead><tr className="text-left text-slate-400 border-b border-slate-800">
+          <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border">
             <th className="py-2 pr-3">Date</th><th className="py-2 pr-3">Partner</th><th className="py-2 pr-3">Invoice</th>
             <th className="py-2 pr-3 text-right">Invoice Amt</th><th className="py-2 pr-3 text-right">Commission</th>
             <th className="py-2 pr-3">Status</th><th className="py-2" />
           </tr></thead>
           <tbody>
             {report.map((c) => (
-              <tr key={c.id} className="border-b border-slate-800/60">
+              <tr key={c.id} className="border-b border-theme-border/60">
                 <td className="py-2 pr-3 text-xs">{String(c.created_at).slice(0, 10)}</td>
                 <td className="py-2 pr-3">{c.partner_name}</td>
                 <td className="py-2 pr-3 font-mono text-xs">{c.invoice_number ?? String(c.invoice_id).slice(0, 8)}</td>
@@ -140,7 +140,7 @@ export default function SalesPartnersPage() {
                 </td>
               </tr>
             ))}
-            {!report.length && <tr><td colSpan={7} className="py-6 text-center text-slate-500">No commissions</td></tr>}
+            {!report.length && <tr><td colSpan={7} className="py-6 text-center text-theme-text-tertiary">No commissions</td></tr>}
           </tbody>
         </table>
       </div>

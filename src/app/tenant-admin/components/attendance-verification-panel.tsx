@@ -200,7 +200,7 @@ export function AttendanceVerificationPanel({ tenantSlug }: { tenantSlug?: strin
                   <div className="flex gap-2">
                     <button
                       onClick={() => showQr(loc)}
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-400 bg-blue-500/10 rounded hover:bg-blue-500/20"
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-400 bg-blue-500/10 rounded hover:bg-theme-accent-hover/20"
                     >
                       <QrCode className="w-3 h-3" /> QR
                     </button>
@@ -260,7 +260,7 @@ export function AttendanceVerificationPanel({ tenantSlug }: { tenantSlug?: strin
                 <button
                   onClick={addLocation}
                   disabled={locSaving || !locForm.name || !locForm.latitude || !locForm.longitude}
-                  className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover disabled:opacity-50"
                 >
                   <Plus className="w-4 h-4" /> Add
                 </button>
@@ -315,21 +315,21 @@ export function AttendanceVerificationPanel({ tenantSlug }: { tenantSlug?: strin
       </div>
 
       {qrFor && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setQrFor(null)}>
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50" onClick={() => setQrFor(null)}>
           <div className="bg-theme-surface rounded-xl shadow-xl border border-theme-border p-6 max-w-sm w-full mx-4 text-center" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-theme-text-primary">{qrFor.name} — Today&apos;s QR</h3>
               <button onClick={() => setQrFor(null)} className="text-theme-text-secondary hover:text-theme-text-primary"><X className="w-5 h-5" /></button>
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qrFor.dataUrl} alt="Check-in QR code" className="mx-auto w-64 h-64 border border-theme-border rounded-lg bg-white p-2" />
+            <img src={qrFor.dataUrl} alt="Check-in QR code" className="mx-auto w-64 h-64 border border-theme-border rounded-lg bg-theme-surface p-2" />
             <p className="text-xs text-theme-text-secondary mt-3">
               Valid until {new Date(qrFor.expiresAt).toLocaleString()}. Generating a new code invalidates this one.
             </p>
             <div className="mt-3 flex justify-center gap-2">
               <button
                 onClick={downloadQr}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
               >
                 Download PNG
               </button>
@@ -338,7 +338,7 @@ export function AttendanceVerificationPanel({ tenantSlug }: { tenantSlug?: strin
                   const loc = locations.find(l => l.id === qrFor.id);
                   if (loc) showQr(loc);
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-400 bg-blue-500/10 rounded-lg hover:bg-blue-500/20"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-400 bg-blue-500/10 rounded-lg hover:bg-theme-accent-hover/20"
               >
                 <RefreshCw className="w-3 h-3" /> Regenerate (rotates code)
               </button>

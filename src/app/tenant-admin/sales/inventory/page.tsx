@@ -165,19 +165,19 @@ export default function InventoryPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Inventory</h2>
+        <h2 className="text-2xl font-bold text-theme-text-primary">Inventory</h2>
         <Link
           href={`/tenant-admin/sales`}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted"
         >
           ← Back to Overview
         </Link>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-900 mb-2">Search</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-2">Search</label>
             <div className="relative">
               <Search className="absolute left-3 top-2.5 w-4 h-4 text-theme-text-tertiary" />
               <input
@@ -185,16 +185,16 @@ export default function InventoryPage() {
                 placeholder="Item name or SKU..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
               />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-900 mb-2">Status</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-2">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
             >
               {statuses.map((status) => (
                 <option key={status} value={status}>{status}</option>
@@ -204,14 +204,14 @@ export default function InventoryPage() {
           <div className="flex items-end gap-2">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
             >
               <Plus className="w-4 h-4" />
               Add Item
             </button>
             <button
               onClick={() => setShowImportModal(true)}
-              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted"
               title="Bulk import from CSV"
             >
               <Upload className="w-4 h-4" />
@@ -221,30 +221,30 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-theme-surface rounded-lg border border-theme-border overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-theme-muted border-b border-theme-border">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">SKU</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Item Name</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Quantity</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Reorder Level</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Unit Price</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Location</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Status</th>
-              <th className="px-6 py-3 text-center text-xs font-semibold text-gray-900">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">SKU</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Item Name</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Quantity</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Reorder Level</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Unit Price</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Location</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Status</th>
+              <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-primary">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-theme-border">
             {filteredItems.length > 0 ? (
               filteredItems.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.sku}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{item.name}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-gray-900">{item.quantity}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{item.reorderLevel}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">${item.unitPrice.toFixed(2)}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{item.location}</td>
+                <tr key={item.id} className="hover:bg-theme-muted">
+                  <td className="px-6 py-4 text-sm font-medium text-theme-text-primary">{item.sku}</td>
+                  <td className="px-6 py-4 text-sm text-theme-text-secondary">{item.name}</td>
+                  <td className="px-6 py-4 text-sm font-semibold text-theme-text-primary">{item.quantity}</td>
+                  <td className="px-6 py-4 text-sm text-theme-text-secondary">{item.reorderLevel}</td>
+                  <td className="px-6 py-4 text-sm text-theme-text-secondary">${item.unitPrice.toFixed(2)}</td>
+                  <td className="px-6 py-4 text-sm text-theme-text-secondary">{item.location}</td>
                   <td className="px-6 py-4 text-sm">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       item.status === 'In Stock' ? 'bg-green-100 text-green-800' :
@@ -258,13 +258,13 @@ export default function InventoryPage() {
                     <div className="flex items-center justify-center gap-2">
                       <button 
                         onClick={() => handleViewItem(item)}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover"
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-accent hover:text-theme-accent-hover"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => handleEditItem(item)}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700"
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-text-secondary hover:text-theme-text-primary"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
@@ -280,7 +280,7 @@ export default function InventoryPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-sm text-gray-600">
+                <td colSpan={8} className="px-6 py-8 text-center text-sm text-theme-text-secondary">
                   No items found
                 </td>
               </tr>
@@ -290,53 +290,53 @@ export default function InventoryPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Inventory Summary</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Inventory Summary</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Total Items</span>
-              <span className="font-semibold text-gray-900">{inventoryItems.length}</span>
+              <span className="text-theme-text-secondary">Total Items</span>
+              <span className="font-semibold text-theme-text-primary">{inventoryItems.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Total Quantity</span>
-              <span className="font-semibold text-gray-900">{inventoryItems.reduce((sum, item) => sum + item.quantity, 0)}</span>
+              <span className="text-theme-text-secondary">Total Quantity</span>
+              <span className="font-semibold text-theme-text-primary">{inventoryItems.reduce((sum, item) => sum + item.quantity, 0)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Total Value</span>
-              <span className="font-semibold text-gray-900">${inventoryItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0).toFixed(2)}</span>
+              <span className="text-theme-text-secondary">Total Value</span>
+              <span className="font-semibold text-theme-text-primary">${inventoryItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0).toFixed(2)}</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Breakdown</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Status Breakdown</h3>
           <div className="space-y-2">
             {statuses.filter(s => s !== 'All').map((status) => {
               const count = inventoryItems.filter(item => item.status === status).length;
               return (
                 <div key={status} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">{status}</span>
-                  <span className="text-sm font-semibold text-gray-900">{count}</span>
+                  <span className="text-sm text-theme-text-secondary">{status}</span>
+                  <span className="text-sm font-semibold text-theme-text-primary">{count}</span>
                 </div>
               );
             })}
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Low Stock Alerts</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Low Stock Alerts</h3>
           <div className="space-y-2">
             {inventoryItems
               .filter(item => item.status === 'Low Stock')
               .slice(0, 3)
               .map((item) => (
                 <div key={item.id} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">{item.name}</span>
+                  <span className="text-sm text-theme-text-secondary">{item.name}</span>
                   <span className="text-sm font-semibold text-amber-600">{item.quantity} left</span>
                 </div>
               ))}
             {inventoryItems.filter(item => item.status === 'Low Stock').length === 0 && (
-              <p className="text-sm text-gray-500">No low stock items</p>
+              <p className="text-sm text-theme-text-secondary">No low stock items</p>
             )}
           </div>
         </div>

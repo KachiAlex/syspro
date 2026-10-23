@@ -110,8 +110,8 @@ export default function OverviewTab({
   if (loading) {
     return (
       <div className="p-8 text-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
-        <p className="mt-4 text-gray-600">Loading overview...</p>
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-theme-border border-t-blue-600"></div>
+        <p className="mt-4 text-theme-text-secondary">Loading overview...</p>
       </div>
     );
   }
@@ -120,7 +120,7 @@ export default function OverviewTab({
     return (
       <div className="p-8 text-center">
         <AlertCircle className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
-        <p className="text-gray-600">Unable to load overview data</p>
+        <p className="text-theme-text-secondary">Unable to load overview data</p>
       </div>
     );
   }
@@ -165,20 +165,20 @@ export default function OverviewTab({
       {/* Charts & Details Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Revenue by Channel */}
-        <div className="border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue by Channel</h3>
+        <div className="border border-theme-border rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Revenue by Channel</h3>
           <div className="space-y-3">
             {data.channels?.map((channel) => (
               <div key={channel.name}>
                 <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-900">{channel.name}</span>
-                  <span className="text-sm font-semibold text-gray-900">
+                  <span className="text-sm font-medium text-theme-text-primary">{channel.name}</span>
+                  <span className="text-sm font-semibold text-theme-text-primary">
                     ${(channel.revenue / 1000).toFixed(0)}K ({channel.percentage}%)
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-theme-muted rounded-full h-2">
                   <div
-                    className="bg-blue-600 h-2 rounded-full"
+                    className="bg-theme-accent h-2 rounded-full"
                     style={{ width: `${channel.percentage}%` }}
                   ></div>
                 </div>
@@ -188,17 +188,17 @@ export default function OverviewTab({
         </div>
 
         {/* Top Campaigns */}
-        <div className="border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Campaigns</h3>
+        <div className="border border-theme-border rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Top Campaigns</h3>
           <div className="space-y-3">
             {data.topCampaigns?.map((campaign, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+                className="flex items-center justify-between p-3 bg-theme-muted rounded-lg hover:bg-theme-muted transition"
               >
                 <div>
-                  <p className="font-medium text-gray-900">{campaign.name}</p>
-                  <p className="text-sm text-gray-600">Revenue: ${(campaign.revenue / 1000).toFixed(0)}K</p>
+                  <p className="font-medium text-theme-text-primary">{campaign.name}</p>
+                  <p className="text-sm text-theme-text-secondary">Revenue: ${(campaign.revenue / 1000).toFixed(0)}K</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-green-600" />
@@ -212,23 +212,23 @@ export default function OverviewTab({
 
       {/* Quick Actions */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Quick Actions</h3>
         <div className="flex flex-wrap gap-3">
           <button
             onClick={() => onOpenCreateCampaign?.()}
-            className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-900 font-medium transition"
+            className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-theme-border rounded-lg hover:bg-theme-muted text-theme-text-primary font-medium transition"
           >
             Create Campaign <ArrowRight className="w-4 h-4" />
           </button>
           <button
             onClick={() => onNavigateTab?.("forecasting")}
-            className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-900 font-medium transition"
+            className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-theme-border rounded-lg hover:bg-theme-muted text-theme-text-primary font-medium transition"
           >
             View Forecasts <ArrowRight className="w-4 h-4" />
           </button>
           <button
             onClick={() => onExportReport?.()}
-            className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-900 font-medium transition"
+            className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-theme-border rounded-lg hover:bg-theme-muted text-theme-text-primary font-medium transition"
           >
             Export Report <ArrowRight className="w-4 h-4" />
           </button>
@@ -250,10 +250,10 @@ function KPICard({
   changePositive: boolean;
 }) {
   return (
-    <div className="bg-theme-muted border border-gray-200 rounded-lg p-4">
-      <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">{label}</p>
-      <p className="text-2xl font-bold text-gray-900 mt-2">{value}</p>
-      <p className={`text-sm mt-2 ${changePositive ? "text-green-600" : "text-gray-600"}`}>{change}</p>
+    <div className="bg-theme-muted border border-theme-border rounded-lg p-4">
+      <p className="text-xs font-medium text-theme-text-secondary uppercase tracking-wide">{label}</p>
+      <p className="text-2xl font-bold text-theme-text-primary mt-2">{value}</p>
+      <p className={`text-sm mt-2 ${changePositive ? "text-green-600" : "text-theme-text-secondary"}`}>{change}</p>
     </div>
   );
 }

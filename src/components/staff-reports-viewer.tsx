@@ -107,7 +107,7 @@ export default function StaffReportsViewer({
       case 'pending': return 'bg-amber-50 text-amber-700 border-amber-200';
       case 'reviewed': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'approved': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      default: return 'bg-slate-50 text-slate-700 border-slate-200';
+      default: return 'bg-theme-muted text-theme-text-primary border-theme-border';
     }
   };
 
@@ -161,8 +161,8 @@ export default function StaffReportsViewer({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
-        <span className="ml-2 text-slate-600">Loading reports...</span>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-theme-border"></div>
+        <span className="ml-2 text-theme-text-secondary">Loading reports...</span>
       </div>
     );
   }
@@ -180,17 +180,17 @@ export default function StaffReportsViewer({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-surface p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="rounded-full bg-slate-100 p-3">
-              <FileText className="h-6 w-6 text-slate-600" />
+            <div className="rounded-full bg-theme-muted p-3">
+              <FileText className="h-6 w-6 text-theme-text-secondary" />
             </div>
             <div>
-              <h1 className="text-2xl font-semibold text-slate-900">
+              <h1 className="text-2xl font-semibold text-theme-text-primary">
                 {viewMode === 'hr' ? 'Staff Reports Review' : 'All Staff Reports'}
               </h1>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-theme-text-tertiary">
                 {viewMode === 'hr'
                   ? 'Review and manage submitted staff reports'
                   : 'View all staff reports across the organization'
@@ -201,11 +201,11 @@ export default function StaffReportsViewer({
 
           {/* Filter */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-600">Filter:</span>
+            <span className="text-sm text-theme-text-secondary">Filter:</span>
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value as any)}
-              className="rounded-lg border border-slate-200 px-3 py-1 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+              className="rounded-lg border border-theme-border px-3 py-1 text-sm text-theme-text-primary focus:border-theme-border focus:outline-none"
             >
               <option value="all">All Reports</option>
               <option value="pending">Pending</option>
@@ -219,10 +219,10 @@ export default function StaffReportsViewer({
       {/* Reports List */}
       <div className="grid gap-4">
         {filteredReports.length === 0 ? (
-          <div className="rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-sm">
-            <FileText className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 mb-2">No reports found</h3>
-            <p className="text-slate-500">
+          <div className="rounded-3xl border border-theme-border bg-theme-surface p-8 text-center shadow-sm">
+            <FileText className="h-12 w-12 text-theme-text-secondary mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-theme-text-primary mb-2">No reports found</h3>
+            <p className="text-theme-text-tertiary">
               {filter === 'all'
                 ? 'No staff reports have been submitted yet.'
                 : `No ${filter} reports found.`
@@ -233,13 +233,13 @@ export default function StaffReportsViewer({
           filteredReports.map((report) => (
             <div
               key={report.id}
-              className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              className="rounded-3xl border border-theme-border bg-theme-surface p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => setSelectedReport(report)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold text-slate-900">
+                    <h3 className="text-lg font-semibold text-theme-text-primary">
                       {getReportTypeLabel(report.reportType)}
                     </h3>
                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(report.status)}`}>
@@ -248,7 +248,7 @@ export default function StaffReportsViewer({
                     </span>
                   </div>
 
-                  <div className="grid gap-2 text-sm text-slate-600 mb-3">
+                  <div className="grid gap-2 text-sm text-theme-text-secondary mb-3">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
                       <span>{new Date(report.reportDate).toLocaleDateString()}</span>
@@ -261,20 +261,20 @@ export default function StaffReportsViewer({
                       <Users className="h-4 w-4" />
                       <span>HOD: {getStaffMemberName(report.headOfDepartment)}</span>
                       {report.teamMembers.length > 0 && (
-                        <span className="text-slate-400">
+                        <span className="text-theme-text-secondary">
                           + {report.teamMembers.length} team member{report.teamMembers.length !== 1 ? 's' : ''}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-theme-text-secondary">
                     Submitted {new Date(report.submittedAt).toLocaleString()}
                   </p>
                 </div>
 
                 <div className="ml-4">
-                  <button className="rounded-full bg-slate-100 p-2 text-slate-600 hover:bg-slate-200">
+                  <button className="rounded-full bg-theme-muted p-2 text-theme-text-secondary hover:bg-theme-elevated">
                     <Eye className="h-4 w-4" />
                   </button>
                 </div>
@@ -287,14 +287,14 @@ export default function StaffReportsViewer({
       {/* Report Detail Modal */}
       {selectedReport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-overlay backdrop-blur-sm">
-          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-8 shadow-2xl">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl bg-theme-surface p-8 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold text-slate-900">
+              <h2 className="text-2xl font-semibold text-theme-text-primary">
                 {getReportTypeLabel(selectedReport.reportType)}
               </h2>
               <button
                 onClick={() => setSelectedReport(null)}
-                className="rounded-full p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="rounded-full p-2 text-theme-text-secondary hover:text-theme-text-secondary hover:bg-theme-muted"
               >
                 ✕
               </button>
@@ -302,22 +302,22 @@ export default function StaffReportsViewer({
 
             <div className="space-y-6">
               {/* Report Header */}
-              <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+              <div className="rounded-2xl border border-theme-border bg-theme-muted p-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <p className="text-sm text-slate-500">Submitted by</p>
-                    <p className="font-medium text-slate-900">{getStaffMemberDetails(selectedReport.employeeId)}</p>
+                    <p className="text-sm text-theme-text-tertiary">Submitted by</p>
+                    <p className="font-medium text-theme-text-primary">{getStaffMemberDetails(selectedReport.employeeId)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">Report Date</p>
-                    <p className="font-medium text-slate-900">{new Date(selectedReport.reportDate).toLocaleDateString()}</p>
+                    <p className="text-sm text-theme-text-tertiary">Report Date</p>
+                    <p className="font-medium text-theme-text-primary">{new Date(selectedReport.reportDate).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">Head of Department</p>
-                    <p className="font-medium text-slate-900">{getStaffMemberDetails(selectedReport.headOfDepartment)}</p>
+                    <p className="text-sm text-theme-text-tertiary">Head of Department</p>
+                    <p className="font-medium text-theme-text-primary">{getStaffMemberDetails(selectedReport.headOfDepartment)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">Status</p>
+                    <p className="text-sm text-theme-text-tertiary">Status</p>
                     <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(selectedReport.status)}`}>
                       {getStatusIcon(selectedReport.status)}
                       {selectedReport.status.charAt(0).toUpperCase() + selectedReport.status.slice(1)}
@@ -327,10 +327,10 @@ export default function StaffReportsViewer({
 
                 {selectedReport.teamMembers.length > 0 && (
                   <div className="mt-4">
-                    <p className="text-sm text-slate-500 mb-2">Team Members</p>
+                    <p className="text-sm text-theme-text-tertiary mb-2">Team Members</p>
                     <div className="flex flex-wrap gap-2">
                       {selectedReport.teamMembers.map((memberId) => (
-                        <span key={memberId} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-100 text-xs text-slate-700">
+                        <span key={memberId} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-theme-muted text-xs text-theme-text-primary">
                           <User className="h-3 w-3" />
                           {getStaffMemberName(memberId)}
                         </span>
@@ -343,42 +343,42 @@ export default function StaffReportsViewer({
               {/* Report Content */}
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">Objectives / Goals</h3>
-                  <p className="text-slate-700 whitespace-pre-wrap">{selectedReport.objectives}</p>
+                  <h3 className="text-lg font-semibold text-theme-text-primary mb-2">Objectives / Goals</h3>
+                  <p className="text-theme-text-primary whitespace-pre-wrap">{selectedReport.objectives}</p>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">Achievements / Progress</h3>
-                  <p className="text-slate-700 whitespace-pre-wrap">{selectedReport.achievements}</p>
+                  <h3 className="text-lg font-semibold text-theme-text-primary mb-2">Achievements / Progress</h3>
+                  <p className="text-theme-text-primary whitespace-pre-wrap">{selectedReport.achievements}</p>
                 </div>
 
                 {selectedReport.challenges && (
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">Challenges / Blockers</h3>
-                    <p className="text-slate-700 whitespace-pre-wrap">{selectedReport.challenges}</p>
+                    <h3 className="text-lg font-semibold text-theme-text-primary mb-2">Challenges / Blockers</h3>
+                    <p className="text-theme-text-primary whitespace-pre-wrap">{selectedReport.challenges}</p>
                   </div>
                 )}
 
                 {selectedReport.nextSteps && (
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">Next Steps / Action Items</h3>
-                    <p className="text-slate-700 whitespace-pre-wrap">{selectedReport.nextSteps}</p>
+                    <h3 className="text-lg font-semibold text-theme-text-primary mb-2">Next Steps / Action Items</h3>
+                    <p className="text-theme-text-primary whitespace-pre-wrap">{selectedReport.nextSteps}</p>
                   </div>
                 )}
 
                 {selectedReport.additionalNotes && (
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">Additional Notes</h3>
-                    <p className="text-slate-700 whitespace-pre-wrap">{selectedReport.additionalNotes}</p>
+                    <h3 className="text-lg font-semibold text-theme-text-primary mb-2">Additional Notes</h3>
+                    <p className="text-theme-text-primary whitespace-pre-wrap">{selectedReport.additionalNotes}</p>
                   </div>
                 )}
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
+              <div className="flex justify-end gap-3 pt-6 border-t border-theme-border">
                 <button
                   onClick={() => setSelectedReport(null)}
-                  className="px-4 py-2 text-slate-600 hover:text-slate-800"
+                  className="px-4 py-2 text-theme-text-secondary hover:text-theme-text-primary"
                 >
                   Close
                 </button>
@@ -386,13 +386,13 @@ export default function StaffReportsViewer({
                   <>
                     <button
                       onClick={() => updateReportStatus(selectedReport.id, 'reviewed')}
-                      className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+                      className="rounded-lg bg-theme-accent px-4 py-2 text-sm font-semibold text-theme-text-primary shadow-sm transition hover:bg-theme-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
                     >
                       Mark as Reviewed
                     </button>
                     <button
                       onClick={() => updateReportStatus(selectedReport.id, 'approved')}
-                      className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+                      className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-theme-text-primary shadow-sm transition hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
                     >
                       Approve Report
                     </button>

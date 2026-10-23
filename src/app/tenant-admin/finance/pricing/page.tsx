@@ -7,7 +7,7 @@ import { AlertCircle, CheckCircle2, Loader2, Plus, Search } from "lucide-react";
 const fmt = (n: number) =>
   `₦${Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
 
-const inputCls = "rounded bg-slate-800 px-3 py-2 text-sm w-full";
+const inputCls = "rounded bg-theme-muted px-3 py-2 text-sm w-full";
 const btnCls = "flex items-center gap-1.5 rounded bg-sky-600 px-3 py-1.5 text-sm hover:bg-sky-500 disabled:opacity-50";
 
 type Tab = "rules" | "schemes" | "coupons" | "resolve";
@@ -52,15 +52,15 @@ export default function PricingPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Pricing Engine</h1>
-          <p className="text-sm text-slate-400">Pricing rules, promotional schemes, coupons, and price resolution.</p>
+          <p className="text-sm text-theme-text-secondary">Pricing rules, promotional schemes, coupons, and price resolution.</p>
         </div>
-        {loading && <Loader2 className="h-5 w-5 animate-spin text-slate-400" />}
+        {loading && <Loader2 className="h-5 w-5 animate-spin text-theme-text-secondary" />}
       </div>
 
-      <div className="flex gap-1 border-b border-slate-800">
+      <div className="flex gap-1 border-b border-theme-border">
         {(["rules", "schemes", "coupons", "resolve"] as Tab[]).map((t) => (
           <button key={t} onClick={() => { setTab(t); setError(null); setMsg(null); }}
-            className={`px-3 py-2 text-sm capitalize ${tab === t ? "border-b-2 border-sky-500 text-sky-400" : "text-slate-400 hover:text-slate-200"}`}>
+            className={`px-3 py-2 text-sm capitalize ${tab === t ? "border-b-2 border-sky-500 text-sky-400" : "text-theme-text-secondary hover:text-theme-text-primary"}`}>
             {t === "resolve" ? "Test Resolve" : t}
           </button>
         ))}
@@ -96,7 +96,7 @@ function RulesTab({ rules, post, busy, reload }: any) {
   };
   return (
     <div className="space-y-4">
-      <div className="rounded border border-slate-800 p-4 space-y-3">
+      <div className="rounded border border-theme-border p-4 space-y-3">
         <div className="font-medium text-sm">New Pricing Rule</div>
         <div className="grid gap-2 sm:grid-cols-4">
           <input className={inputCls} placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -120,27 +120,27 @@ function RulesTab({ rules, post, busy, reload }: any) {
         </button>
       </div>
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-slate-400 border-b border-slate-800">
+        <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border">
           <th className="py-2 pr-3">Name</th><th className="py-2 pr-3">Pri</th><th className="py-2 pr-3">Scope</th>
           <th className="py-2 pr-3">Mode</th><th className="py-2 pr-3 text-right">Value</th><th className="py-2">Valid</th>
         </tr></thead>
         <tbody>
           {rules.map((r: any) => (
-            <tr key={r.id} className="border-b border-slate-800/60">
+            <tr key={r.id} className="border-b border-theme-border/60">
               <td className="py-2 pr-3">{r.name}</td>
               <td className="py-2 pr-3">{r.priority}</td>
-              <td className="py-2 pr-3 text-xs text-slate-400">
+              <td className="py-2 pr-3 text-xs text-theme-text-secondary">
                 {[r.item, r.item_category, r.party_id].filter(Boolean).join(" · ") || "Global"}
                 {r.min_qty ? ` · qty ≥ ${r.min_qty}` : ""}
               </td>
               <td className="py-2 pr-3">{r.mode}</td>
               <td className="py-2 pr-3 text-right font-mono">{r.mode === "price" ? fmt(r.value) : `${r.value}%`}</td>
-              <td className="py-2 text-xs text-slate-400">
+              <td className="py-2 text-xs text-theme-text-secondary">
                 {r.valid_from ? String(r.valid_from).slice(0, 10) : "…"} → {r.valid_to ? String(r.valid_to).slice(0, 10) : "…"}
               </td>
             </tr>
           ))}
-          {!rules.length && <tr><td colSpan={6} className="py-6 text-center text-slate-500">No pricing rules</td></tr>}
+          {!rules.length && <tr><td colSpan={6} className="py-6 text-center text-theme-text-tertiary">No pricing rules</td></tr>}
         </tbody>
       </table>
     </div>
@@ -159,7 +159,7 @@ function SchemesTab({ post, busy }: any) {
   };
   return (
     <div className="space-y-4 max-w-2xl">
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-theme-text-secondary">
         Promotional schemes — bundles of rules: <code className="font-mono">item, minQty, discountPct, freeItem, freeQty</code>
       </p>
       <div className="grid gap-2 sm:grid-cols-3">
@@ -213,7 +213,7 @@ function CouponsTab({ post, busy }: any) {
             Redeem
           </button>
         </div>
-        {redeemResult && <pre className="rounded bg-slate-800 p-3 text-xs overflow-auto">{JSON.stringify(redeemResult, null, 2)}</pre>}
+        {redeemResult && <pre className="rounded bg-theme-muted p-3 text-xs overflow-auto">{JSON.stringify(redeemResult, null, 2)}</pre>}
       </div>
     </div>
   );
@@ -239,7 +239,7 @@ function ResolveTab({ tenantSlug }: { tenantSlug: string }) {
   };
   return (
     <div className="space-y-4 max-w-2xl">
-      <p className="text-sm text-slate-400">Dry-run the pricing engine — which rule wins and the resulting price.</p>
+      <p className="text-sm text-theme-text-secondary">Dry-run the pricing engine — which rule wins and the resulting price.</p>
       <div className="grid gap-2 sm:grid-cols-3">
         <input className={inputCls} placeholder="Item" value={form.item} onChange={(e) => setForm({ ...form, item: e.target.value })} />
         <input className={inputCls} placeholder="Item category" value={form.itemCategory} onChange={(e) => setForm({ ...form, itemCategory: e.target.value })} />
@@ -251,9 +251,9 @@ function ResolveTab({ tenantSlug }: { tenantSlug: string }) {
       <button className={btnCls} disabled={busy || !form.item || !form.basePrice} onClick={run}><Search className="h-3.5 w-3.5" /> Resolve</button>
       {error && <div className="text-rose-400 text-sm">{error}</div>}
       {result && (
-        <div className="rounded border border-slate-800 p-4">
+        <div className="rounded border border-theme-border p-4">
           <div className="text-2xl font-mono">{fmt(result.price)}</div>
-          <div className="text-sm text-slate-400">Rule: {result.rule ?? "none (base price)"} · Mode: {result.mode ?? "—"}</div>
+          <div className="text-sm text-theme-text-secondary">Rule: {result.rule ?? "none (base price)"} · Mode: {result.mode ?? "—"}</div>
         </div>
       )}
     </div>

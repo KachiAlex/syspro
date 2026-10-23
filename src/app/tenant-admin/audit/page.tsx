@@ -160,7 +160,7 @@ export default function AuditPage() {
       case 'success': return 'bg-green-100 text-green-800';
       case 'failure': return 'bg-red-100 text-red-800';
       case 'warning': return 'bg-amber-100 text-amber-800';
-      default: return 'bg-gray-100 text-gray-900';
+      default: return 'bg-theme-muted text-theme-text-primary';
     }
   };
 
@@ -169,7 +169,7 @@ export default function AuditPage() {
       case 'success': return <CheckCircle className="w-4 h-4 text-green-600" />;
       case 'failure': return <XCircle className="w-4 h-4 text-red-600" />;
       case 'warning': return <AlertTriangle className="w-4 h-4 text-amber-600" />;
-      default: return <AlertTriangle className="w-4 h-4 text-gray-600" />;
+      default: return <AlertTriangle className="w-4 h-4 text-theme-text-secondary" />;
     }
   };
 
@@ -179,7 +179,7 @@ export default function AuditPage() {
       case 'medium': return 'bg-amber-100 text-amber-800';
       case 'high': return 'bg-orange-100 text-orange-800';
       case 'critical': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-900';
+      default: return 'bg-theme-muted text-theme-text-primary';
     }
   };
 
@@ -233,46 +233,46 @@ export default function AuditPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#F8FAFC]">Audit Trail</h1>
-          <p className="text-sm text-gray-600 mt-1">Activity logs and compliance tracking</p>
+          <h1 className="text-2xl font-bold text-theme-text-primary">Audit Trail</h1>
+          <p className="text-sm text-theme-text-secondary mt-1">Activity logs and compliance tracking</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Activities</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{auditLogs.length}</p>
-              <p className="text-xs text-blue-600 mt-2">Last 24 hours</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Total Activities</p>
+              <p className="text-3xl font-bold text-theme-text-primary mt-2">{auditLogs.length}</p>
+              <p className="text-xs text-theme-accent mt-2">Last 24 hours</p>
             </div>
             <FileText className="w-12 h-12 text-blue-100" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Successful</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Successful</p>
               <p className="text-3xl font-bold text-green-600 mt-2">{successfulActions}</p>
               <p className="text-xs text-green-600 mt-2">{((successfulActions / auditLogs.length) * 100).toFixed(1)}% success rate</p>
             </div>
             <CheckCircle className="w-12 h-12 text-green-100" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Failed</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Failed</p>
               <p className="text-3xl font-bold text-red-600 mt-2">{failedActions}</p>
               <p className="text-xs text-red-600 mt-2">Requires attention</p>
             </div>
             <XCircle className="w-12 h-12 text-red-100" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Critical Risk</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Critical Risk</p>
               <p className="text-3xl font-bold text-red-600 mt-2">{criticalRisk}</p>
               <p className="text-xs text-red-600 mt-2">Immediate action required</p>
             </div>
@@ -284,19 +284,19 @@ export default function AuditPage() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1">
           <div className="relative flex-1 max-w-md w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-text-tertiary w-4 h-4" />
             <input
               type="text"
               placeholder="Search audit logs..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
             />
           </div>
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
           >
             <option value="today">Today</option>
             <option value="yesterday">Yesterday</option>
@@ -306,7 +306,7 @@ export default function AuditPage() {
           <select
             value={selectedAction}
             onChange={(e) => setSelectedAction(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
           >
             <option value="all">All Actions</option>
             {actions.map(action => (
@@ -316,7 +316,7 @@ export default function AuditPage() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
           >
             <option value="all">All Status</option>
             <option value="success">Success</option>
@@ -326,7 +326,7 @@ export default function AuditPage() {
           <select
             value={selectedRiskLevel}
             onChange={(e) => setSelectedRiskLevel(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
           >
             <option value="all">All Risk Levels</option>
             <option value="low">Low</option>
@@ -337,7 +337,7 @@ export default function AuditPage() {
           <select
             value={selectedResourceType}
             onChange={(e) => setSelectedResourceType(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
           >
             <option value="all">All Resources</option>
             {resourceTypes.map(type => (
@@ -347,57 +347,57 @@ export default function AuditPage() {
         </div>
         <button
           onClick={exportLogs}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
         >
           <Download className="w-4 h-4" />
           Export
         </button>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-theme-surface rounded-lg border border-theme-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-theme-muted border-b border-theme-border">
               <tr>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resource</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Level</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Timestamp</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">User</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Action</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Resource</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Status</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Risk Level</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">IP Address</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-theme-border">
               {filteredLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50">
+                <tr key={log.id} className="hover:bg-theme-muted">
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-gray-400" />
+                      <Clock className="w-4 h-4 text-theme-text-tertiary" />
                       <div>
-                        <p className="text-sm text-gray-900">{log.timestamp}</p>
+                        <p className="text-sm text-theme-text-primary">{log.timestamp}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-gray-400" />
+                      <User className="w-4 h-4 text-theme-text-tertiary" />
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{log.userName}</p>
-                        <p className="text-xs text-gray-500">ID: {log.userId}</p>
+                        <p className="text-sm font-medium text-theme-text-primary">{log.userName}</p>
+                        <p className="text-xs text-theme-text-secondary">ID: {log.userId}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">{log.action}</span>
+                    <span className="text-sm text-theme-text-primary">{log.action}</span>
                   </td>
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       {getResourceIcon(log.resourceType)}
                       <div>
-                        <p className="text-sm text-gray-900">{log.resource}</p>
-                        <p className="text-xs text-gray-500">{log.resourceType}</p>
+                        <p className="text-sm text-theme-text-primary">{log.resource}</p>
+                        <p className="text-xs text-theme-text-secondary">{log.resourceType}</p>
                       </div>
                     </div>
                   </td>
@@ -415,11 +415,11 @@ export default function AuditPage() {
                     </span>
                   </td>
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">{log.ipAddress}</span>
+                    <span className="text-sm text-theme-text-primary">{log.ipAddress}</span>
                   </td>
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-1 sm:gap-2">
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-accent hover:text-blue-700">
                         <Eye className="w-3 h-3" />
                         <span className="hidden sm:inline">View</span>
                       </button>
@@ -433,30 +433,30 @@ export default function AuditPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Activity Summary</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Activity Summary</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Most Active User</span>
-              <span className="text-sm font-semibold text-gray-900">Sarah Johnson (3 actions)</span>
+              <span className="text-sm text-theme-text-secondary">Most Active User</span>
+              <span className="text-sm font-semibold text-theme-text-primary">Sarah Johnson (3 actions)</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Most Common Action</span>
-              <span className="text-sm font-semibold text-blue-600">User Login</span>
+              <span className="text-sm text-theme-text-secondary">Most Common Action</span>
+              <span className="text-sm font-semibold text-theme-accent">User Login</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">High Risk Activities</span>
+              <span className="text-sm text-theme-text-secondary">High Risk Activities</span>
               <span className="text-sm font-semibold text-orange-600">2</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Failed Login Attempts</span>
+              <span className="text-sm text-theme-text-secondary">Failed Login Attempts</span>
               <span className="text-sm font-semibold text-red-600">1</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Security Alerts</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Security Alerts</h3>
           <div className="space-y-4">
             <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
               <AlertTriangle className="w-5 h-5 text-red-600" />
@@ -473,9 +473,9 @@ export default function AuditPage() {
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <Shield className="w-5 h-5 text-blue-600" />
+              <Shield className="w-5 h-5 text-theme-accent" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">System Update</p>
+                <p className="text-sm font-medium text-theme-text-primary">System Update</p>
                 <p className="text-xs text-blue-700">Database backup completed</p>
               </div>
             </div>

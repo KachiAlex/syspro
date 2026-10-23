@@ -149,12 +149,12 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Modules</p>
-            <h2 className="text-2xl font-semibold text-gray-900">System Modules & Features</h2>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Modules</p>
+            <h2 className="text-2xl font-semibold text-theme-text-primary">System Modules & Features</h2>
+            <p className="mt-2 text-sm text-theme-text-secondary">
               Enable or disable modules for your organization and configure feature flags per region.
             </p>
           </div>
@@ -162,7 +162,7 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
             <select
               value={region}
               onChange={(e) => setRegion(e.target.value)}
-              className="bg-white rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="bg-theme-surface rounded-lg border border-theme-border px-3 py-2 text-sm"
             >
               {REGION_OPTIONS.map((r) => (
                 <option key={r} value={r}>
@@ -172,7 +172,7 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
             </select>
             <button
               onClick={load}
-              className="rounded-full border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-full border border-theme-border px-3 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted"
             >
               Refresh
             </button>
@@ -196,14 +196,14 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
         )}
 
         {/* Industry Profiles Section */}
-        <div className="mt-6 mb-6 rounded-lg border border-slate-200 p-4 bg-slate-50/50">
+        <div className="mt-6 mb-6 rounded-lg border border-theme-border p-4 bg-theme-muted/50">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">Industry Profiles</h3>
-              <p className="text-xs text-slate-600 mt-0.5">Select industry profiles to auto-enable relevant modules. Multiple profiles can be active simultaneously.</p>
+              <h3 className="text-sm font-semibold text-theme-text-primary">Industry Profiles</h3>
+              <p className="text-xs text-theme-text-secondary mt-0.5">Select industry profiles to auto-enable relevant modules. Multiple profiles can be active simultaneously.</p>
             </div>
             {profilesLoading && (
-              <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900"></div>
+              <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-theme-border border-t-slate-900"></div>
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -216,11 +216,11 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
                   className={`text-left rounded-lg border p-3 transition-all ${
                     isActive
                       ? "border-blue-400 bg-blue-50 ring-1 ring-blue-200"
-                      : "border-slate-200 bg-white hover:border-slate-300"
+                      : "border-theme-border bg-theme-surface hover:border-theme-border"
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-sm font-semibold text-theme-text-primary">
                       {isActive ? "✓" : "○"} {profile.label}
                     </span>
                     {isActive && (
@@ -229,8 +229,8 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-xs text-slate-600">{profile.description}</p>
-                  <p className="mt-1.5 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-theme-text-secondary">{profile.description}</p>
+                  <p className="mt-1.5 text-xs text-theme-text-secondary">
                     <span className="font-medium">Modules:</span> {profile.modules.join(", ")}
                   </p>
                 </button>
@@ -241,23 +241,23 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
 
         <div className="mt-6">
           {loading ? (
-            <div className="rounded-lg bg-slate-50 p-4 text-center text-sm text-slate-600">
-              <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900"></div>
+            <div className="rounded-lg bg-theme-muted p-4 text-center text-sm text-theme-text-secondary">
+              <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-theme-border border-t-slate-900"></div>
               <p className="mt-2">Loading modules…</p>
             </div>
           ) : (modules ?? []).length === 0 ? (
             <div className="rounded-lg bg-blue-50 p-4 text-center text-sm">
-              <p className="font-medium text-gray-900">No modules registered</p>
+              <p className="font-medium text-theme-text-primary">No modules registered</p>
               <p className="mt-1 text-blue-700">Modules will appear here once configured</p>
             </div>
           ) : (
             <div className="space-y-4">
               {modules.map((m) => (
-                <div key={m.id} className="rounded-lg border border-slate-200 p-4">
+                <div key={m.id} className="rounded-lg border border-theme-border p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-gray-900">
+                        <h4 className="font-semibold text-theme-text-primary">
                           {m.enabled ? "✓" : "○"} {m.name}
                         </h4>
                         {m.enabled && (
@@ -266,11 +266,11 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
                           </span>
                         )}
                       </div>
-                      <p className="mt-1 text-sm text-slate-600">
+                      <p className="mt-1 text-sm text-theme-text-secondary">
                         {MODULE_DESCRIPTIONS[m.key.toLowerCase()] || m.key}
                       </p>
                       {m.regions && m.regions.length > 0 && (
-                        <p className="mt-2 text-xs text-slate-500">
+                        <p className="mt-2 text-xs text-theme-text-tertiary">
                           <span className="font-medium">Regions:</span> {m.regions.join(", ")}
                         </p>
                       )}
@@ -281,9 +281,9 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
                           type="checkbox"
                           checked={m.enabled}
                           onChange={() => toggleModule(m)}
-                          className="bg-white h-4 w-4 rounded border-slate-300 text-black"
+                          className="bg-theme-surface h-4 w-4 rounded border-theme-border text-theme-text-primary"
                         />
-                        <span className="text-sm font-medium text-slate-700">
+                        <span className="text-sm font-medium text-theme-text-primary">
                           {m.enabled ? "Enabled" : "Disabled"}
                         </span>
                       </label>
@@ -292,7 +292,7 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
 
                   {m.flags && Object.keys(m.flags).length > 0 && (
                     <div className="mt-4 border-t pt-4">
-                      <p className="mb-3 text-xs font-semibold text-gray-900">Feature Flags</p>
+                      <p className="mb-3 text-xs font-semibold text-theme-text-primary">Feature Flags</p>
                       <div className="flex flex-wrap gap-2">
                         {Object.entries(m.flags).map(([key, value]) => {
                           const label = key === "beta" ? "🧪 Beta Features" : key === "ai_assist" ? "🤖 AI Assist" : key;
@@ -302,8 +302,8 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
                               onClick={() => toggleFlag(m, key, label)}
                               className={`inline-flex rounded-full px-3 py-1 text-xs font-medium transition-all ${
                                 value
-                                  ? "bg-blue-100 text-gray-900 hover:bg-blue-200"
-                                  : "border border-slate-200 text-slate-700 hover:bg-slate-50"
+                                  ? "bg-blue-100 text-theme-text-primary hover:bg-blue-200"
+                                  : "border border-theme-border text-theme-text-primary hover:bg-theme-muted"
                               }`}
                             >
                               {label} {value ? "✓" : "○"}

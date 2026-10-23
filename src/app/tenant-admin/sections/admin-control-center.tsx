@@ -64,27 +64,27 @@ const SECTIONS = [
 export default function AdminControlCenter() {
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Admin</p>
-        <h2 className="text-xl font-semibold text-gray-900">Tenant Control Center</h2>
-        <p className="mt-1 text-sm text-slate-500">Calm, governed starting point for tenant owners, super admins, and global leads.</p>
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
+        <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Admin</p>
+        <h2 className="text-xl font-semibold text-theme-text-primary">Tenant Control Center</h2>
+        <p className="mt-1 text-sm text-theme-text-tertiary">Calm, governed starting point for tenant owners, super admins, and global leads.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {SECTIONS.map((section) => (
-          <div key={section.key} className="rounded-2xl border border-slate-100 bg-theme-muted p-5 shadow-sm">
+          <div key={section.key} className="rounded-2xl border border-theme-border bg-theme-muted p-5 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-slate-700">
+              <div className="flex items-center gap-2 text-theme-text-primary">
                 <section.icon className="h-5 w-5" />
-                <span className="text-sm font-semibold text-gray-900">{section.title}</span>
+                <span className="text-sm font-semibold text-theme-text-primary">{section.title}</span>
               </div>
-              <span className="rounded-full bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">Admin-only</span>
+              <span className="rounded-full bg-theme-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-theme-text-tertiary">Admin-only</span>
             </div>
-            <p className="mt-2 text-sm text-slate-600">{section.summary}</p>
-            <ul className="mt-3 space-y-1 text-sm text-slate-700">
+            <p className="mt-2 text-sm text-theme-text-secondary">{section.summary}</p>
+            <ul className="mt-3 space-y-1 text-sm text-theme-text-primary">
               {section.bullets.map((item) => (
                 <li key={item} className="flex items-start gap-2">
-                  <Shield className="mt-[3px] h-3.5 w-3.5 text-slate-400" />
+                  <Shield className="mt-[3px] h-3.5 w-3.5 text-theme-text-secondary" />
                   <span>{item}</span>
                 </li>
               ))}

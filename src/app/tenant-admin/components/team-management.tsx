@@ -202,8 +202,8 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
       case 'finance': return 'bg-green-100 text-green-800';
       case 'hr': return 'bg-purple-100 text-purple-800';
       case 'operations': return 'bg-orange-100 text-orange-800';
-      case 'management': return 'bg-gray-100 text-gray-900';
-      default: return 'bg-gray-100 text-gray-900';
+      case 'management': return 'bg-theme-muted text-theme-text-primary';
+      default: return 'bg-theme-muted text-theme-text-primary';
     }
   };
 
@@ -212,8 +212,8 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
       case 'admin': return 'bg-red-100 text-red-800';
       case 'manager': return 'bg-indigo-100 text-indigo-800';
       case 'contributor': return 'bg-green-100 text-green-800';
-      case 'viewer': return 'bg-gray-100 text-gray-900';
-      default: return 'bg-gray-100 text-gray-900';
+      case 'viewer': return 'bg-theme-muted text-theme-text-primary';
+      default: return 'bg-theme-muted text-theme-text-primary';
     }
   };
 
@@ -222,12 +222,12 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Team Management</h2>
-          <p className="text-gray-600">Manage team members, permissions, and access control</p>
+          <h2 className="text-2xl font-bold text-theme-text-primary">Team Management</h2>
+          <p className="text-theme-text-secondary">Manage team members, permissions, and access control</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
         >
           <Plus className="w-4 h-4" />
           Add Team Member
@@ -236,39 +236,39 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Members</p>
-              <p className="text-2xl font-bold text-gray-900">{teamMembers.length}</p>
+              <p className="text-sm text-theme-text-secondary">Total Members</p>
+              <p className="text-2xl font-bold text-theme-text-primary">{teamMembers.length}</p>
             </div>
-            <Users className="w-8 h-8 text-blue-600" />
+            <Users className="w-8 h-8 text-theme-accent" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Active Members</p>
+              <p className="text-sm text-theme-text-secondary">Active Members</p>
               <p className="text-2xl font-bold text-green-900">{teamMembers.filter(m => m.isActive).length}</p>
             </div>
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Departments</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-theme-text-secondary">Departments</p>
+              <p className="text-2xl font-bold text-theme-text-primary">
                 {new Set(teamMembers.map(m => m.department)).size}
               </p>
             </div>
             <Shield className="w-8 h-8 text-purple-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Admins</p>
+              <p className="text-sm text-theme-text-secondary">Admins</p>
               <p className="text-2xl font-bold text-red-900">
                 {teamMembers.filter(m => m.role === 'admin').length}
               </p>
@@ -279,24 +279,24 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
         <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-theme-text-tertiary" />
               <input
                 type="text"
                 placeholder="Search team members..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full pl-10 pr-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
               />
             </div>
           </div>
           <select
             value={departmentFilter}
             onChange={(e) => setDepartmentFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+            className="px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
           >
             <option value="all">All Departments</option>
             <option value="sales">Sales</option>
@@ -308,7 +308,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+            className="px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
           >
             <option value="all">All Roles</option>
             <option value="admin">Admin</option>
@@ -320,36 +320,36 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
       </div>
 
       {/* Team Members Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-theme-surface rounded-lg border border-theme-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-theme-muted border-b border-theme-border">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Permissions</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Active</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Member</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Department</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Role</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Permissions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Last Active</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-theme-text-secondary uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-theme-border">
               {filteredMembers.map((member) => (
-                <tr key={member.id} className="hover:bg-gray-50">
+                <tr key={member.id} className="hover:bg-theme-muted">
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-gray-600">
+                      <div className="w-10 h-10 bg-theme-muted rounded-full flex items-center justify-center">
+                        <span className="text-sm font-medium text-theme-text-secondary">
                           {member.firstName.charAt(0)}{member.lastName.charAt(0)}
                         </span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-theme-text-primary">
                           {member.firstName} {member.lastName}
                         </p>
-                        <p className="text-sm text-gray-600">{member.email}</p>
-                        <p className="text-xs text-gray-500">{member.position}</p>
+                        <p className="text-sm text-theme-text-secondary">{member.email}</p>
+                        <p className="text-xs text-theme-text-secondary">{member.position}</p>
                       </div>
                     </div>
                   </td>
@@ -364,7 +364,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                     </span>
                   </td>
                   <td className="px-4 py-4">
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs text-theme-text-secondary">
                       <div className="flex flex-wrap gap-1">
                         {member.permissions.canSubmitData && (
                           <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded">Submit</span>
@@ -383,27 +383,27 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${member.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
-                      <span className="text-sm text-gray-600">
+                      <div className={`w-2 h-2 rounded-full ${member.isActive ? 'bg-green-500' : 'bg-theme-muted'}`} />
+                      <span className="text-sm text-theme-text-secondary">
                         {member.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-600">
+                  <td className="px-4 py-4 text-sm text-theme-text-secondary">
                     {new Date(member.lastActiveAt).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex items-center justify-center gap-2">
                       <button
                         onClick={() => openEditModal(member)}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-accent hover:text-blue-700"
                         title="Edit Member"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleToggleStatus(member.id, !member.isActive)}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700"
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-text-secondary hover:text-theme-text-primary"
                         title={member.isActive ? 'Deactivate' : 'Activate'}
                       >
                         {member.isActive ? <X className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
@@ -428,17 +428,17 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
 
       {/* Add Member Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+          <div className="bg-theme-surface rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-theme-border">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Add Team Member</h3>
+                <h3 className="text-lg font-semibold text-theme-text-primary">Add Team Member</h3>
                 <button
                   onClick={() => {
                     setShowAddModal(false);
                     resetForm();
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-theme-text-secondary hover:text-theme-text-primary"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -457,13 +457,13 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">First Name *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">First Name *</label>
                   <input
                     type="text"
                     value={formData.firstName}
                     onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                      errors.firstName ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                      errors.firstName ? 'border-red-500' : 'border-theme-border'
                     }`}
                     disabled={loading}
                   />
@@ -473,13 +473,13 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Last Name *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Last Name *</label>
                   <input
                     type="text"
                     value={formData.lastName}
                     onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                      errors.lastName ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                      errors.lastName ? 'border-red-500' : 'border-theme-border'
                     }`}
                     disabled={loading}
                   />
@@ -489,13 +489,13 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Email *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Email *</label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                      errors.email ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                      errors.email ? 'border-red-500' : 'border-theme-border'
                     }`}
                     disabled={loading}
                   />
@@ -505,13 +505,13 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Position *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Position *</label>
                   <input
                     type="text"
                     value={formData.position}
                     onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                      errors.position ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                      errors.position ? 'border-red-500' : 'border-theme-border'
                     }`}
                     disabled={loading}
                   />
@@ -521,11 +521,11 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Department</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Department</label>
                   <select
                     value={formData.department}
                     onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value as TeamMember['department'] }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                     disabled={loading}
                   >
                     <option value="sales">Sales</option>
@@ -537,11 +537,11 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Role</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Role</label>
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as TeamMember['role'] }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                     disabled={loading}
                   >
                     <option value="viewer">Viewer</option>
@@ -559,14 +559,14 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                     setShowAddModal(false);
                     resetForm();
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
                   disabled={loading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
                   disabled={loading}
                 >
                   {loading ? 'Adding...' : 'Add Member'}
@@ -579,18 +579,18 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
 
       {/* Edit Member Modal - Similar structure to Add Modal */}
       {showEditModal && selectedMember && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+          <div className="bg-theme-surface rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-theme-border">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Edit Team Member</h3>
+                <h3 className="text-lg font-semibold text-theme-text-primary">Edit Team Member</h3>
                 <button
                   onClick={() => {
                     setShowEditModal(false);
                     setSelectedMember(null);
                     resetForm();
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-theme-text-secondary hover:text-theme-text-primary"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -610,13 +610,13 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Same form fields as Add Modal */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">First Name *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">First Name *</label>
                   <input
                     type="text"
                     value={formData.firstName}
                     onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                      errors.firstName ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                      errors.firstName ? 'border-red-500' : 'border-theme-border'
                     }`}
                     disabled={loading}
                   />
@@ -626,13 +626,13 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Last Name *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Last Name *</label>
                   <input
                     type="text"
                     value={formData.lastName}
                     onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                      errors.lastName ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                      errors.lastName ? 'border-red-500' : 'border-theme-border'
                     }`}
                     disabled={loading}
                   />
@@ -642,13 +642,13 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Email *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Email *</label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                      errors.email ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                      errors.email ? 'border-red-500' : 'border-theme-border'
                     }`}
                     disabled={loading}
                   />
@@ -658,13 +658,13 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Position *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Position *</label>
                   <input
                     type="text"
                     value={formData.position}
                     onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                      errors.position ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                      errors.position ? 'border-red-500' : 'border-theme-border'
                     }`}
                     disabled={loading}
                   />
@@ -674,11 +674,11 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Department</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Department</label>
                   <select
                     value={formData.department}
                     onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value as TeamMember['department'] }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                     disabled={loading}
                   >
                     <option value="sales">Sales</option>
@@ -690,11 +690,11 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Role</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Role</label>
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as TeamMember['role'] }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                     disabled={loading}
                   >
                     <option value="viewer">Viewer</option>
@@ -713,14 +713,14 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                     setSelectedMember(null);
                     resetForm();
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
                   disabled={loading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
                   disabled={loading}
                 >
                   {loading ? 'Updating...' : 'Update Member'}

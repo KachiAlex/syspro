@@ -292,14 +292,14 @@ export default function StaffReports({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-surface p-6 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="rounded-full bg-slate-100 p-3">
-            <FileText className="h-6 w-6 text-slate-600" />
+          <div className="rounded-full bg-theme-muted p-3">
+            <FileText className="h-6 w-6 text-theme-text-secondary" />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Staff Reports</h1>
-            <p className="text-sm text-slate-500">Submit your daily, weekly, or monthly progress reports</p>
+            <h1 className="text-2xl font-semibold text-theme-text-primary">Staff Reports</h1>
+            <p className="text-sm text-theme-text-tertiary">Submit your daily, weekly, or monthly progress reports</p>
           </div>
         </div>
       </div>
@@ -307,19 +307,19 @@ export default function StaffReports({
       {/* Report Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Report Configuration */}
-        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Report Configuration</h2>
+        <div className="rounded-3xl border border-theme-border bg-theme-surface p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-theme-text-primary mb-4">Report Configuration</h2>
 
           <div className="grid gap-4 md:grid-cols-2">
             {/* Report Type */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
+              <label className="block text-sm font-medium text-theme-text-primary">
                 Report Type
               </label>
               <select
                 value={reportData.reportType}
                 onChange={(e) => handleInputChange('reportType', e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 focus:border-slate-400 focus:outline-none"
+                className="w-full rounded-2xl border border-theme-border px-4 py-3 text-theme-text-primary focus:border-theme-border focus:outline-none"
                 required
               >
                 <option value="daily">Daily Report</option>
@@ -330,14 +330,14 @@ export default function StaffReports({
 
             {/* Report Date */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
+              <label className="block text-sm font-medium text-theme-text-primary">
                 {getDateLabel()}
               </label>
               <input
                 type="date"
                 value={reportData.reportDate}
                 onChange={(e) => handleInputChange('reportDate', e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 focus:border-slate-400 focus:outline-none"
+                className="w-full rounded-2xl border border-theme-border px-4 py-3 text-theme-text-primary focus:border-theme-border focus:outline-none"
                 required
               />
             </div>
@@ -345,20 +345,20 @@ export default function StaffReports({
         </div>
 
         {/* Team & Stakeholders */}
-        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Team & Stakeholders</h2>
+        <div className="rounded-3xl border border-theme-border bg-theme-surface p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-theme-text-primary mb-4">Team & Stakeholders</h2>
 
           <div className="space-y-6">
             {/* Head of Department */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
+              <label className="block text-sm font-medium text-theme-text-primary">
                 Head of Department
-                <span className="text-slate-400 text-xs ml-1">(Required - will receive this report)</span>
+                <span className="text-theme-text-secondary text-xs ml-1">(Required - will receive this report)</span>
               </label>
               <select
                 value={reportData.headOfDepartment}
                 onChange={(e) => handleInputChange('headOfDepartment', e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 focus:border-slate-400 focus:outline-none"
+                className="w-full rounded-2xl border border-theme-border px-4 py-3 text-theme-text-primary focus:border-theme-border focus:outline-none"
                 required
                 disabled={loadingStaff}
               >
@@ -379,30 +379,30 @@ export default function StaffReports({
 
             {/* Team Members */}
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-slate-700">
+              <label className="block text-sm font-medium text-theme-text-primary">
                 Team Members Involved
-                <span className="text-slate-400 text-xs ml-1">(Optional - other staff who contributed to this work)</span>
+                <span className="text-theme-text-secondary text-xs ml-1">(Optional - other staff who contributed to this work)</span>
               </label>
 
               {loadingStaff ? (
-                <div className="text-sm text-slate-500">Loading staff members...</div>
+                <div className="text-sm text-theme-text-tertiary">Loading staff members...</div>
               ) : (
-                <div className="grid gap-2 max-h-48 overflow-y-auto border border-slate-200 rounded-2xl p-4">
+                <div className="grid gap-2 max-h-48 overflow-y-auto border border-theme-border rounded-2xl p-4">
                   {staffMembers
                     .filter(member => member.id !== employeeId) // Don't show current user
                     .map((member) => (
-                      <label key={member.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer">
+                      <label key={member.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-theme-muted cursor-pointer">
                         <input
                           type="checkbox"
                           checked={reportData.teamMembers.includes(member.id)}
                           onChange={() => handleTeamMemberToggle(member.id)}
-                          className="rounded border-slate-300 text-slate-900 focus:ring-slate-500"
+                          className="rounded border-theme-border text-theme-text-primary focus:ring-theme-border"
                         />
                         <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-slate-400" />
+                          <User className="h-4 w-4 text-theme-text-secondary" />
                           <div>
-                            <span className="text-sm font-medium text-slate-900">{member.name}</span>
-                            <span className="text-xs text-slate-500 ml-2">
+                            <span className="text-sm font-medium text-theme-text-primary">{member.name}</span>
+                            <span className="text-xs text-theme-text-tertiary ml-2">
                               {member.position} • {member.department}
                             </span>
                           </div>
@@ -414,11 +414,11 @@ export default function StaffReports({
 
               {reportData.teamMembers.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
-                  <span className="text-xs text-slate-500">Selected team members:</span>
+                  <span className="text-xs text-theme-text-tertiary">Selected team members:</span>
                   {reportData.teamMembers.map((memberId) => {
                     const member = staffMembers.find(m => m.id === memberId);
                     return member ? (
-                      <span key={memberId} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-100 text-xs text-slate-700">
+                      <span key={memberId} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-theme-muted text-xs text-theme-text-primary">
                         <User className="h-3 w-3" />
                         {member.name}
                       </span>
@@ -431,11 +431,11 @@ export default function StaffReports({
         </div>
 
         {/* AI Voice Draft */}
-        <div className="rounded-3xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 p-6 text-white shadow-lg">
+        <div className="rounded-3xl border border-theme-border bg-gradient-to-br from-theme-elevated via-theme-elevated to-theme-muted p-6 text-theme-text-primary shadow-lg">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-lg font-semibold">Generate Report with AI</p>
-              <p className="text-sm text-white/70">
+              <p className="text-sm text-theme-text-secondary">
                 Hit record, speak freely, and let the assistant map your rant to the structured template.
               </p>
             </div>
@@ -447,7 +447,7 @@ export default function StaffReports({
                   className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
                     isRecording
                       ? 'bg-rose-500/20 text-rose-100 ring-1 ring-rose-200/40'
-                      : 'bg-white/10 text-white hover:bg-white/20'
+                      : 'bg-theme-muted text-theme-text-primary hover:bg-theme-elevated'
                   }`}
                 >
                   {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
@@ -458,7 +458,7 @@ export default function StaffReports({
                 type="button"
                 onClick={generateDraftFromTranscript}
                 disabled={aiStatus === 'processing' || !aiTranscript.trim()}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-full bg-theme-surface px-4 py-2 text-sm font-semibold text-theme-text-primary shadow-sm transition hover:bg-theme-muted disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {aiStatus === 'processing' ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -472,7 +472,7 @@ export default function StaffReports({
 
           <div className="mt-4 space-y-4">
             {!speechSupported && (
-              <div className="rounded-2xl border border-white/15 glass px-4 py-3 text-sm text-slate-500">
+              <div className="rounded-2xl border border-theme-border glass px-4 py-3 text-sm text-theme-text-tertiary">
                 Your browser does not expose the Web Speech API. Paste your typed notes into the transcript box and the AI will still structure it for you.
               </div>
             )}
@@ -481,10 +481,10 @@ export default function StaffReports({
               value={aiTranscript}
               onChange={(e) => setAiTranscript(e.target.value)}
               placeholder="Record or paste your raw report. Mention objectives, wins, blockers, and next steps in plain language."
-              className="w-full rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/60 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[140px]"
+              className="w-full rounded-2xl border border-theme-border bg-theme-input-bg px-4 py-3 text-sm text-theme-text-primary placeholder:text-theme-text-tertiary focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/30 min-h-[140px]"
             />
 
-            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-wide text-white/70">
+            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-wide text-theme-text-secondary">
               {aiStatus === 'listening' && (
                 <div className="inline-flex items-center gap-2 text-amber-200">
                   <span className="h-2 w-2 rounded-full bg-amber-300 animate-ping" />
@@ -492,7 +492,7 @@ export default function StaffReports({
                 </div>
               )}
               {aiStatus === 'processing' && (
-                <div className="inline-flex items-center gap-2 text-slate-200">
+                <div className="inline-flex items-center gap-2 text-theme-text-primary">
                   <Loader2 className="h-3 w-3 animate-spin" />
                   Converting to template
                 </div>
@@ -526,100 +526,100 @@ export default function StaffReports({
         </div>
 
         {/* Report Content */}
-        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">
+        <div className="rounded-3xl border border-theme-border bg-theme-surface p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-theme-text-primary mb-4">
             {getReportTypeLabel(reportData.reportType)} Content
           </h2>
 
           <div className="space-y-6">
             {/* Objectives */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
+              <label className="block text-sm font-medium text-theme-text-primary">
                 Objectives / Goals
-                <span className="text-slate-400 text-xs ml-1">(What were you planning to achieve?)</span>
+                <span className="text-theme-text-secondary text-xs ml-1">(What were you planning to achieve?)</span>
               </label>
               <textarea
                 value={reportData.objectives}
                 onChange={(e) => handleInputChange('objectives', e.target.value)}
                 placeholder="List your objectives or goals for this period..."
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 focus:border-slate-400 focus:outline-none min-h-[100px] resize-vertical"
+                className="w-full rounded-2xl border border-theme-border px-4 py-3 text-theme-text-primary focus:border-theme-border focus:outline-none min-h-[100px] resize-vertical"
                 required
               />
             </div>
 
             {/* Achievements */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
+              <label className="block text-sm font-medium text-theme-text-primary">
                 Achievements / Progress
-                <span className="text-slate-400 text-xs ml-1">(What did you accomplish?)</span>
+                <span className="text-theme-text-secondary text-xs ml-1">(What did you accomplish?)</span>
               </label>
               <textarea
                 value={reportData.achievements}
                 onChange={(e) => handleInputChange('achievements', e.target.value)}
                 placeholder="Describe what you achieved or completed..."
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 focus:border-slate-400 focus:outline-none min-h-[100px] resize-vertical"
+                className="w-full rounded-2xl border border-theme-border px-4 py-3 text-theme-text-primary focus:border-theme-border focus:outline-none min-h-[100px] resize-vertical"
                 required
               />
             </div>
 
             {/* Challenges */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
+              <label className="block text-sm font-medium text-theme-text-primary">
                 Challenges / Blockers
-                <span className="text-slate-400 text-xs ml-1">(What obstacles did you face?)</span>
+                <span className="text-theme-text-secondary text-xs ml-1">(What obstacles did you face?)</span>
               </label>
               <textarea
                 value={reportData.challenges}
                 onChange={(e) => handleInputChange('challenges', e.target.value)}
                 placeholder="Describe any challenges, issues, or blockers encountered..."
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 focus:border-slate-400 focus:outline-none min-h-[80px] resize-vertical"
+                className="w-full rounded-2xl border border-theme-border px-4 py-3 text-theme-text-primary focus:border-theme-border focus:outline-none min-h-[80px] resize-vertical"
               />
             </div>
 
             {/* Next Steps */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
+              <label className="block text-sm font-medium text-theme-text-primary">
                 Next Steps / Action Items
-                <span className="text-slate-400 text-xs ml-1">(What will you do next?)</span>
+                <span className="text-theme-text-secondary text-xs ml-1">(What will you do next?)</span>
               </label>
               <textarea
                 value={reportData.nextSteps}
                 onChange={(e) => handleInputChange('nextSteps', e.target.value)}
                 placeholder="Outline your next steps or action items..."
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 focus:border-slate-400 focus:outline-none min-h-[80px] resize-vertical"
+                className="w-full rounded-2xl border border-theme-border px-4 py-3 text-theme-text-primary focus:border-theme-border focus:outline-none min-h-[80px] resize-vertical"
               />
             </div>
 
             {/* Additional Notes */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
+              <label className="block text-sm font-medium text-theme-text-primary">
                 Additional Notes
-                <span className="text-slate-400 text-xs ml-1">(Optional)</span>
+                <span className="text-theme-text-secondary text-xs ml-1">(Optional)</span>
               </label>
               <textarea
                 value={reportData.additionalNotes}
                 onChange={(e) => handleInputChange('additionalNotes', e.target.value)}
                 placeholder="Any additional information, feedback, or comments..."
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 focus:border-slate-400 focus:outline-none min-h-[60px] resize-vertical"
+                className="w-full rounded-2xl border border-theme-border px-4 py-3 text-theme-text-primary focus:border-theme-border focus:outline-none min-h-[60px] resize-vertical"
               />
             </div>
           </div>
         </div>
 
         {/* Submit Button */}
-        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="rounded-3xl border border-theme-border bg-theme-surface p-6 shadow-sm">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-slate-500">
+            <div className="text-sm text-theme-text-tertiary">
               Report will be submitted for review by your manager
             </div>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-full bg-theme-accent px-6 py-3 text-sm font-semibold text-theme-primary-fg shadow-sm hover:bg-theme-muted disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? (
                 <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-theme-primary-fg border-t-transparent" />
                   Submitting...
                 </>
               ) : (

@@ -1009,7 +1009,7 @@ function WorkOrderDetailModal({ wo, onClose }: { wo: any; onClose: () => void })
 // --- Shared Modal + Field ---
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
       <div className="bg-theme-surface rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-theme-surface border-b border-theme-border p-6 flex items-center justify-between">
           <h2 className="text-xl font-bold text-theme-text-primary">{title}</h2>

@@ -79,9 +79,9 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
       approved: "bg-green-100 text-green-800",
       rejected: "bg-red-100 text-red-800",
       escalated: "bg-orange-100 text-orange-800",
-      cancelled: "bg-gray-100 text-gray-900"
+      cancelled: "bg-theme-muted text-theme-text-primary"
     };
-    return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-900";
+    return colors[status as keyof typeof colors] || "bg-theme-muted text-theme-text-primary";
   };
 
   const handleDecision = async (approvalId: string, decision: "approved" | "rejected" | "escalated", comments?: string) => {
@@ -115,9 +115,9 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
   if (loading) {
     return (
       <div className="p-6">
-        <div className="rounded-lg bg-slate-50 p-8 text-center">
-          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900"></div>
-          <p className="mt-3 text-slate-600">Loading approvals…</p>
+        <div className="rounded-lg bg-theme-muted p-8 text-center">
+          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-theme-border border-t-slate-900"></div>
+          <p className="mt-3 text-theme-text-secondary">Loading approvals…</p>
         </div>
       </div>
     );
@@ -130,26 +130,26 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
 
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Financial Management</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Financial Management</p>
           <h1 className="text-2xl font-semibold text-theme-text-primary">Approvals</h1>
-          <p className="mt-1 text-sm text-slate-600">Review and authorize financial documents</p>
+          <p className="mt-1 text-sm text-theme-text-secondary">Review and authorize financial documents</p>
         </div>
         <button
           onClick={() => onNavigateTo?.("approval-rules")}
-          className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+          className="whitespace-nowrap rounded-full bg-theme-accent px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-theme-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
         >
           ⚙️ Configure Rules
         </button>
       </div>
 
       {/* Filters */}
-      <div className="rounded-2xl border border-slate-100 bg-white p-6">
-        <p className="mb-4 text-sm font-semibold text-gray-900">Filters</p>
+      <div className="rounded-2xl border border-theme-border bg-theme-surface p-6">
+        <p className="mb-4 text-sm font-semibold text-theme-text-primary">Filters</p>
         <div className="grid grid-cols-2 gap-4">
           <select
             value={filters.status}
             onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="rounded-lg border border-theme-border px-3 py-2 text-sm"
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>
@@ -161,7 +161,7 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
           <select
             value={filters.entityType}
             onChange={(e) => setFilters({ ...filters, entityType: e.target.value })}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="rounded-lg border border-theme-border px-3 py-2 text-sm"
           >
             <option value="">All Types</option>
             <option value="purchase_order">Purchase Orders</option>
@@ -175,47 +175,47 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
       </div>
 
       {/* Approvals Table */}
-      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+      <div className="rounded-2xl border border-theme-border bg-theme-surface shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="border-b border-slate-100 bg-slate-50">
+            <thead className="border-b border-theme-border bg-theme-muted">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">
                   Entity Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">
                   Entity ID
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">
                   Requested By
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">
                   Current Step
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">
                   Created
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-theme-border">
               {approvals.map((approval) => (
-                <tr key={approval.id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                <tr key={approval.id} className="hover:bg-theme-muted">
+                  <td className="px-6 py-4 text-sm font-medium text-theme-text-primary">
                     {approval.entityType?.replace("_", " ")}
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">
+                  <td className="px-6 py-4 text-sm text-theme-text-secondary">
                     {approval.entityId.slice(0, 8)}...
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">
+                  <td className="px-6 py-4 text-sm text-theme-text-secondary">
                     {approval.requestedByName || approval.requestedBy.slice(0, 8)}
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">
+                  <td className="px-6 py-4 text-sm text-theme-text-secondary">
                     Step {approval.currentStep + 1} of {approval.approverChain.length}
                   </td>
                   <td className="px-6 py-4">
@@ -227,7 +227,7 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
                       {approval.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">
+                  <td className="px-6 py-4 text-sm text-theme-text-secondary">
                     {format(new Date(approval.createdAt), "MMM dd, yyyy")}
                   </td>
                   <td className="px-6 py-4 text-sm">
@@ -254,7 +254,7 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
                           </button>
                         </>
                       )}
-                      <button className="text-blue-600 hover:text-gray-700">
+                      <button className="text-theme-accent hover:text-theme-text-primary">
                         Details
                       </button>
                     </div>
@@ -274,7 +274,7 @@ const STATUS_COLORS: Record<string, string> = {
   approved: "bg-green-100 text-green-900",
   rejected: "bg-rose-100 text-rose-900",
   escalated: "bg-orange-100 text-orange-900",
-  cancelled: "bg-slate-100 text-gray-900"
+  cancelled: "bg-theme-muted text-theme-text-primary"
 };
 
 function getStatusColor(status: string) {

@@ -84,8 +84,8 @@ export default function AttributionTab({
   if (loading) {
     return (
       <div className="p-8 text-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
-        <p className="mt-4 text-gray-600">Loading attribution data...</p>
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-theme-border border-t-blue-600"></div>
+        <p className="mt-4 text-theme-text-secondary">Loading attribution data...</p>
       </div>
     );
   }
@@ -94,7 +94,7 @@ export default function AttributionTab({
     return (
       <div className="p-8 text-center">
         <AlertCircle className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
-        <p className="text-gray-600">Unable to load attribution data</p>
+        <p className="text-theme-text-secondary">Unable to load attribution data</p>
       </div>
     );
   }
@@ -103,7 +103,7 @@ export default function AttributionTab({
     <div className="p-8 space-y-8">
       {/* Model Selector */}
       <div className="flex items-center gap-4">
-        <span className="text-sm font-medium text-gray-900">Attribution Model:</span>
+        <span className="text-sm font-medium text-theme-text-primary">Attribution Model:</span>
         <div className="flex gap-3">
           {(["first_touch", "last_touch", "linear"] as const).map((m) => (
             <button
@@ -111,7 +111,7 @@ export default function AttributionTab({
               onClick={() => setModel(m)}
               className={`px-4 py-2 rounded-lg font-medium transition ${
                 model === m
-                  ? "bg-blue-600 text-white"
+                  ? "bg-theme-accent text-white"
                   : "bg-blue-100 text-blue-700 hover:bg-blue-200"
               }`}
             >
@@ -139,30 +139,30 @@ export default function AttributionTab({
       </div>
 
       {/* Attribution by Channel */}
-      <div className="border border-gray-200 rounded-lg p-6">
+      <div className="border border-theme-border rounded-lg p-6">
         <div className="flex items-center gap-2 mb-6">
-          <BarChart3 className="w-5 h-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Revenue by Channel</h3>
+          <BarChart3 className="w-5 h-5 text-theme-accent" />
+          <h3 className="text-lg font-semibold text-theme-text-primary">Revenue by Channel</h3>
         </div>
 
         <div className="space-y-4">
           {data.byChannel?.map((item) => (
             <div key={item.channel}>
               <div className="flex justify-between mb-2">
-                <span className="font-medium text-gray-900">{item.channel}</span>
+                <span className="font-medium text-theme-text-primary">{item.channel}</span>
                 <div className="text-right">
-                  <p className="font-semibold text-gray-900">${(item.revenue / 1000).toFixed(0)}K</p>
-                  <p className="text-xs text-gray-600">{item.deals} deals</p>
+                  <p className="font-semibold text-theme-text-primary">${(item.revenue / 1000).toFixed(0)}K</p>
+                  <p className="text-xs text-theme-text-secondary">{item.deals} deals</p>
                 </div>
               </div>
               <div className="flex gap-2">
-                <div className="flex-1 bg-gray-200 rounded-full h-3">
+                <div className="flex-1 bg-theme-muted rounded-full h-3">
                   <div
-                    className="bg-blue-600 h-3 rounded-full"
+                    className="bg-theme-accent h-3 rounded-full"
                     style={{ width: `${item.percentage}%` }}
                   ></div>
                 </div>
-                <span className="text-sm font-medium text-gray-600 w-12 text-right">{item.percentage}%</span>
+                <span className="text-sm font-medium text-theme-text-secondary w-12 text-right">{item.percentage}%</span>
               </div>
             </div>
           ))}
@@ -170,29 +170,29 @@ export default function AttributionTab({
       </div>
 
       {/* Comparison Table */}
-      <div className="border border-gray-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performing Channels</h3>
+      <div className="border border-theme-border rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Top Performing Channels</h3>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-theme-muted border-b border-theme-border">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Channel</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Revenue</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Deals</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Avg Value</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Share</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary">Channel</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-theme-text-primary">Revenue</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-theme-text-primary">Deals</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-theme-text-primary">Avg Value</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-theme-text-primary">Share</th>
               </tr>
             </thead>
             <tbody>
               {data.byChannel?.map((item) => (
-                <tr key={item.channel} className="border-b border-gray-200 hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{item.channel}</td>
-                  <td className="px-4 py-3 text-right text-gray-900">${(item.revenue / 1000).toFixed(0)}K</td>
-                  <td className="px-4 py-3 text-right text-gray-900">{item.deals}</td>
-                  <td className="px-4 py-3 text-right text-gray-900">
+                <tr key={item.channel} className="border-b border-theme-border hover:bg-theme-muted">
+                  <td className="px-4 py-3 font-medium text-theme-text-primary">{item.channel}</td>
+                  <td className="px-4 py-3 text-right text-theme-text-primary">${(item.revenue / 1000).toFixed(0)}K</td>
+                  <td className="px-4 py-3 text-right text-theme-text-primary">{item.deals}</td>
+                  <td className="px-4 py-3 text-right text-theme-text-primary">
                     ${(item.revenue / item.deals / 1000).toFixed(0)}K
                   </td>
-                  <td className="px-4 py-3 text-right font-semibold text-blue-600">{item.percentage}%</td>
+                  <td className="px-4 py-3 text-right font-semibold text-theme-accent">{item.percentage}%</td>
                 </tr>
               ))}
             </tbody>
@@ -205,9 +205,9 @@ export default function AttributionTab({
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-theme-muted border border-gray-200 rounded-lg p-4">
-      <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">{label}</p>
-      <p className="text-2xl font-bold text-gray-900 mt-2">{value}</p>
+    <div className="bg-theme-muted border border-theme-border rounded-lg p-4">
+      <p className="text-xs font-medium text-theme-text-secondary uppercase tracking-wide">{label}</p>
+      <p className="text-2xl font-bold text-theme-text-primary mt-2">{value}</p>
     </div>
   );
 }

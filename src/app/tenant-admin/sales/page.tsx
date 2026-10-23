@@ -132,19 +132,19 @@ export default function SalesPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Sales & Procurement Overview</h2>
+        <h2 className="text-2xl font-bold text-theme-text-primary">Sales & Procurement Overview</h2>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+          <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted">
             <Filter className="w-4 h-4" />
             Filter
           </button>
-          <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+          <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted">
             <Download className="w-4 h-4" />
             Export
           </button>
           <button 
             onClick={() => setShowSalesOrderModal(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
           >
             <ShoppingCart className="w-4 h-4" />
             New Order
@@ -153,73 +153,73 @@ export default function SalesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Sales Orders</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{stats.orders}</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Total Sales Orders</p>
+              <p className="text-3xl font-bold text-theme-text-primary mt-2">{stats.orders}</p>
             </div>
-            <ShoppingCart className="w-12 h-12 text-blue-500" />
+            <ShoppingCart className="w-12 h-12 text-theme-accent" />
           </div>
-          <p className="text-xs text-gray-500 mt-4">This month</p>
+          <p className="text-xs text-theme-text-secondary mt-4">This month</p>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Total Revenue</p>
               <p className="text-3xl font-bold text-green-600 mt-2">${stats.revenue.toLocaleString()}</p>
             </div>
             <TrendingUp className="w-12 h-12 text-green-500" />
           </div>
-          <p className="text-xs text-gray-500 mt-4">This month</p>
+          <p className="text-xs text-theme-text-secondary mt-4">This month</p>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Suppliers</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Active Suppliers</p>
               <p className="text-3xl font-bold text-purple-600 mt-2">{stats.suppliers}</p>
             </div>
             <Users className="w-12 h-12 text-purple-100" />
           </div>
-          <p className="text-xs text-gray-500 mt-4">Total vendors</p>
+          <p className="text-xs text-theme-text-secondary mt-4">Total vendors</p>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Inventory Value</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Inventory Value</p>
               <p className="text-3xl font-bold text-amber-600 mt-2">${stats.inventoryValue.toLocaleString()}</p>
             </div>
             <Boxes className="w-12 h-12 text-amber-500" />
           </div>
-          <p className="text-xs text-gray-500 mt-4">Total stock</p>
+          <p className="text-xs text-theme-text-secondary mt-4">Total stock</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link
           href={`/tenant-admin/sales/orders`}
-          className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer"
+          className="bg-theme-surface rounded-lg border border-theme-border p-6 hover:shadow-lg transition-shadow cursor-pointer"
         >
           <div className="flex items-center gap-3 mb-3">
-            <ShoppingCart className="w-6 h-6 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Sales Orders</h3>
+            <ShoppingCart className="w-6 h-6 text-theme-accent" />
+            <h3 className="text-lg font-semibold text-theme-text-primary">Sales Orders</h3>
           </div>
-          <p className="text-sm text-gray-600 mb-4">Manage customer orders and sales</p>
+          <p className="text-sm text-theme-text-secondary mb-4">Manage customer orders and sales</p>
           <div className="flex items-center justify-between">
-            <span className="text-2xl font-bold text-blue-600">0</span>
-            <span className="text-xs font-medium text-blue-600">View →</span>
+            <span className="text-2xl font-bold text-theme-accent">0</span>
+            <span className="text-xs font-medium text-theme-accent">View →</span>
           </div>
         </Link>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6 hover:shadow-lg transition-shadow cursor-pointer">
           <div className="flex items-center gap-3 mb-3">
             <Users className="w-6 h-6 text-purple-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Suppliers</h3>
+            <h3 className="text-lg font-semibold text-theme-text-primary">Suppliers</h3>
           </div>
-          <p className="text-sm text-gray-600 mb-4">Manage vendor relationships</p>
+          <p className="text-sm text-theme-text-secondary mb-4">Manage vendor relationships</p>
           <div className="flex items-center justify-between">
             <span className="text-2xl font-bold text-purple-600">0</span>
             <button 
@@ -231,12 +231,12 @@ export default function SalesPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6 hover:shadow-lg transition-shadow cursor-pointer">
           <div className="flex items-center gap-3 mb-3">
             <Package className="w-6 h-6 text-green-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Purchase Orders</h3>
+            <h3 className="text-lg font-semibold text-theme-text-primary">Purchase Orders</h3>
           </div>
-          <p className="text-sm text-gray-600 mb-4">Track procurement orders</p>
+          <p className="text-sm text-theme-text-secondary mb-4">Track procurement orders</p>
           <div className="flex items-center justify-between">
             <span className="text-2xl font-bold text-green-600">0</span>
             <button 
@@ -248,12 +248,12 @@ export default function SalesPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6 hover:shadow-lg transition-shadow cursor-pointer">
           <div className="flex items-center gap-3 mb-3">
             <Boxes className="w-6 h-6 text-amber-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Inventory</h3>
+            <h3 className="text-lg font-semibold text-theme-text-primary">Inventory</h3>
           </div>
-          <p className="text-sm text-gray-600 mb-4">Manage stock levels</p>
+          <p className="text-sm text-theme-text-secondary mb-4">Manage stock levels</p>
           <div className="flex items-center justify-between">
             <span className="text-2xl font-bold text-amber-600">0</span>
             <button 
@@ -266,20 +266,20 @@ export default function SalesPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Recent Sales Orders</h3>
+          <h3 className="text-lg font-semibold text-theme-text-primary">Recent Sales Orders</h3>
           <div className="flex items-center gap-2">
-            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+            <button className="p-2 text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-muted rounded-lg">
               <Search className="w-4 h-4" />
             </button>
-            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+            <button className="p-2 text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-muted rounded-lg">
               <Filter className="w-4 h-4" />
             </button>
           </div>
         </div>
         <div className="space-y-3">
-          <div className="p-8 text-center text-gray-500 border border-dashed border-gray-200 rounded-lg">
+          <div className="p-8 text-center text-theme-text-secondary border border-dashed border-theme-border rounded-lg">
             No recent sales orders
           </div>
         </div>

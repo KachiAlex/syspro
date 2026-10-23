@@ -73,9 +73,9 @@ export default function PeopleAccessPage() {
       <h1 className="text-2xl font-bold mb-4">People & Access</h1>
       <Tabs.Root value={tab} onValueChange={setTab} className="w-full">
         <Tabs.List className="flex gap-4 border-b mb-4">
-          <Tabs.Trigger value="users" className={tab === 'users' ? 'font-bold border-b-2 border-blue-500' : ''}>Users</Tabs.Trigger>
-          <Tabs.Trigger value="roles" className={tab === 'roles' ? 'font-bold border-b-2 border-blue-500' : ''}>Roles</Tabs.Trigger>
-          <Tabs.Trigger value="delegation" className={tab === 'delegation' ? 'font-bold border-b-2 border-blue-500' : ''}>Delegation</Tabs.Trigger>
+          <Tabs.Trigger value="users" className={tab === 'users' ? 'font-bold border-b-2 border-theme-accent' : ''}>Users</Tabs.Trigger>
+          <Tabs.Trigger value="roles" className={tab === 'roles' ? 'font-bold border-b-2 border-theme-accent' : ''}>Roles</Tabs.Trigger>
+          <Tabs.Trigger value="delegation" className={tab === 'delegation' ? 'font-bold border-b-2 border-theme-accent' : ''}>Delegation</Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="users">
           {notif && (
@@ -83,7 +83,7 @@ export default function PeopleAccessPage() {
           )}
           <div className="mb-4 flex gap-2">
             <button
-              className="inline-flex items-center justify-center rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+              className="inline-flex items-center justify-center rounded-full bg-theme-accent px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-theme-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
               onClick={() => setInviteOpen(true)}
             >
               Invite User
@@ -98,7 +98,7 @@ export default function PeopleAccessPage() {
           {loading ? <div>Loading users…</div> : (
             <table className="min-w-full border text-sm">
               <thead>
-                <tr className="bg-gray-100">
+                <tr className="bg-theme-muted">
                   <th className="p-2 text-left">Email</th>
                   <th className="p-2 text-left">Name</th>
                   <th className="p-2 text-left">Status</th>
@@ -117,7 +117,7 @@ export default function PeopleAccessPage() {
                     <td className="p-2">{u.createdAt?.slice(0,10)}</td>
                     <td className="p-2 flex gap-2">
                       {u.status === 'invited' && (
-                        <button className="text-blue-600 hover:underline" onClick={async () => {
+                        <button className="text-theme-accent hover:underline" onClick={async () => {
                           // Simulate resend invite
                           notify(`Resent invite to ${u.email} (simulated email)`);
                         }}>Resend</button>
@@ -152,11 +152,11 @@ export default function PeopleAccessPage() {
           {/* Invite User Dialog */}
           {inviteOpen && (
             <div className="fixed inset-0 backdrop-overlay flex items-center justify-center z-50">
-              <div className="bg-white rounded shadow-lg p-6 w-full max-w-sm">
+              <div className="bg-theme-surface rounded shadow-lg p-6 w-full max-w-sm">
                 <h2 className="text-lg font-bold mb-2">Invite User</h2>
                 <input
                   type="email"
-                  className="border p-2 w-full mb-2 text-black"
+                  className="border p-2 w-full mb-2 text-theme-text-primary"
                   placeholder="user@email.com"
                   value={inviteEmail}
                   onChange={e => setInviteEmail(e.target.value)}
@@ -169,7 +169,7 @@ export default function PeopleAccessPage() {
                 <div className="flex gap-2 justify-end">
                   <button className="px-3 py-1" onClick={() => setInviteOpen(false)} disabled={inviteLoading}>Cancel</button>
                   <button
-                    className="bg-blue-600 text-black px-4 py-1 rounded"
+                    className="bg-theme-accent text-theme-text-primary px-4 py-1 rounded"
                     disabled={inviteLoading || !validateEmail(inviteEmail)}
                     onClick={async () => {
                       setInviteLoading(true);
@@ -204,13 +204,13 @@ export default function PeopleAccessPage() {
           {/* CSV Import Dialog */}
           {csvOpen && (
             <div className="fixed inset-0 backdrop-overlay flex items-center justify-center z-50">
-              <div className="bg-white rounded shadow-lg p-6 w-full max-w-sm">
+              <div className="bg-theme-surface rounded shadow-lg p-6 w-full max-w-sm">
                 <h2 className="text-lg font-bold mb-2">Import Users from CSV</h2>
                 <input
                   type="file"
                   accept=".csv"
                   ref={fileInputRef}
-                  className="mb-2 text-black"
+                  className="mb-2 text-theme-text-primary"
                   disabled={csvLoading}
                   onChange={async (e) => {
                     setCsvError('');
@@ -242,7 +242,7 @@ export default function PeopleAccessPage() {
                     }
                   }}
                 />
-                <div className="text-xs text-gray-500 mb-2">CSV must have columns: email,name</div>
+                <div className="text-xs text-theme-text-secondary mb-2">CSV must have columns: email,name</div>
                 {csvError && <div className="text-red-600 text-sm mb-2">{csvError}</div>}
                 <div className="flex gap-2 justify-end">
                   <button className="px-3 py-1" onClick={() => setCsvOpen(false)} disabled={csvLoading}>Cancel</button>

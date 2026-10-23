@@ -201,7 +201,7 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
   const monthLate = monthRecords.filter(r => r.status === 'late').length;
   const monthAbsent = monthRecords.filter(r => r.status === 'absent').length;
 
-  if (loading) return <div className="p-8 text-center"><Loader2 className="w-6 h-6 text-blue-600 animate-spin mx-auto" /></div>;
+  if (loading) return <div className="p-8 text-center"><Loader2 className="w-6 h-6 text-theme-accent animate-spin mx-auto" /></div>;
 
   const hasCheckedIn = !!todayRecord?.check_in;
   const hasCheckedOut = !!todayRecord?.check_out;
@@ -211,20 +211,20 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
     <div className="space-y-6">
       {/* Check-in/out + Today summary */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <div className="flex items-center gap-2 mb-4"><CalendarCheck className="w-5 h-5 text-blue-600" /><h3 className="text-sm font-semibold text-gray-900">Today — {fmtDate(today)}</h3></div>
+        <div className="bg-theme-surface rounded-2xl border border-theme-border p-5">
+          <div className="flex items-center gap-2 mb-4"><CalendarCheck className="w-5 h-5 text-theme-accent" /><h3 className="text-sm font-semibold text-theme-text-primary">Today — {fmtDate(today)}</h3></div>
           {error && <div className="mb-3 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700"><AlertCircle className="w-3.5 h-3.5" />{error}</div>}
           {success && <div className="mb-3 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-xs text-green-700"><CheckCircle className="w-3.5 h-3.5" />{success}</div>}
           {showCheckOutReminder && <div className="mb-3 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 animate-pulse"><Clock className="w-3.5 h-3.5" />Don&apos;t forget to check out!</div>}
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50"><div className="flex items-center gap-2"><Play className={`w-4 h-4 ${hasCheckedIn ? 'text-green-600' : 'text-gray-400'}`} /><span className="text-xs text-gray-600">Check In</span></div><span className={`text-sm font-bold ${hasCheckedIn ? 'text-green-700' : 'text-gray-400'}`}>{fmtTime(todayRecord?.check_in)}</span></div>
-            <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50"><div className="flex items-center gap-2"><Square className={`w-4 h-4 ${hasCheckedOut ? 'text-blue-600' : 'text-gray-400'}`} /><span className="text-xs text-gray-600">Check Out</span></div><span className={`text-sm font-bold ${hasCheckedOut ? 'text-blue-700' : 'text-gray-400'}`}>{fmtTime(todayRecord?.check_out)}</span></div>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-theme-muted"><div className="flex items-center gap-2"><Play className={`w-4 h-4 ${hasCheckedIn ? 'text-green-600' : 'text-theme-text-tertiary'}`} /><span className="text-xs text-theme-text-secondary">Check In</span></div><span className={`text-sm font-bold ${hasCheckedIn ? 'text-green-700' : 'text-theme-text-tertiary'}`}>{fmtTime(todayRecord?.check_in)}</span></div>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-theme-muted"><div className="flex items-center gap-2"><Square className={`w-4 h-4 ${hasCheckedOut ? 'text-theme-accent' : 'text-theme-text-tertiary'}`} /><span className="text-xs text-theme-text-secondary">Check Out</span></div><span className={`text-sm font-bold ${hasCheckedOut ? 'text-blue-700' : 'text-theme-text-tertiary'}`}>{fmtTime(todayRecord?.check_out)}</span></div>
           </div>
           <div className="flex gap-2 mt-4">
             <button onClick={() => handleAction('check_in')} disabled={actionLoading || hasCheckedIn} className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}{hasCheckedIn ? 'Checked In' : 'Check In'}</button>
-            <button onClick={() => handleAction('check_out')} disabled={actionLoading || !hasCheckedIn || hasCheckedOut} className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Square className="w-4 h-4" />}{hasCheckedOut ? 'Checked Out' : 'Check Out'}</button>
+            <button onClick={() => handleAction('check_out')} disabled={actionLoading || !hasCheckedIn || hasCheckedOut} className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Square className="w-4 h-4" />}{hasCheckedOut ? 'Checked Out' : 'Check Out'}</button>
           </div>
-          <p className="text-xs text-gray-400 mt-3 text-center">Current time: {currentTime}</p>
+          <p className="text-xs text-theme-text-tertiary mt-3 text-center">Current time: {currentTime}</p>
 
           {/* Work mode badge */}
           <div className="mt-3 flex items-center justify-center">
@@ -232,7 +232,7 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
               workMode === 'ONSITE' ? 'bg-blue-50 text-blue-700' :
               workMode === 'REMOTE' ? 'bg-purple-50 text-purple-700' :
               workMode === 'HYBRID' ? 'bg-teal-50 text-teal-700' :
-              'bg-gray-100 text-gray-600'
+              'bg-theme-muted text-theme-text-secondary'
             }`}>
               <MapPin className="w-3 h-3" />{workMode}
             </span>
@@ -254,7 +254,7 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
                   value={qrTokenInput}
                   onChange={(e) => setQrTokenInput(e.target.value)}
                   placeholder="Paste QR token"
-                  className="mt-2 w-full px-2 py-1.5 border border-blue-200 rounded text-xs text-gray-900"
+                  className="mt-2 w-full px-2 py-1.5 border border-blue-200 rounded text-xs text-theme-text-primary"
                 />
               )}
             </div>
@@ -283,14 +283,14 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
                     value={remoteDate}
                     min={today}
                     onChange={(e) => setRemoteDate(e.target.value)}
-                    className="w-full px-2 py-1.5 border border-purple-200 rounded text-xs text-gray-900"
+                    className="w-full px-2 py-1.5 border border-purple-200 rounded text-xs text-theme-text-primary"
                   />
                   <input
                     type="text"
                     value={remoteReason}
                     onChange={(e) => setRemoteReason(e.target.value)}
                     placeholder="Reason (optional)"
-                    className="w-full px-2 py-1.5 border border-purple-200 rounded text-xs text-gray-900"
+                    className="w-full px-2 py-1.5 border border-purple-200 rounded text-xs text-theme-text-primary"
                   />
                   <button
                     onClick={handleRemoteRequest}
@@ -316,53 +316,53 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
             </div>
           )}
           {todayRecord?.check_in_lat != null && (
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-400">
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-theme-text-tertiary">
               <MapPin className="w-3 h-3" />
               Check-in location: {Number(todayRecord.check_in_lat).toFixed(5)}, {Number(todayRecord.check_in_lng).toFixed(5)}
             </div>
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <div className="flex items-center gap-2 mb-4"><Timer className="w-5 h-5 text-indigo-600" /><h3 className="text-sm font-semibold text-gray-900">Work Hours</h3></div>
+        <div className="bg-theme-surface rounded-2xl border border-theme-border p-5">
+          <div className="flex items-center gap-2 mb-4"><Timer className="w-5 h-5 text-indigo-600" /><h3 className="text-sm font-semibold text-theme-text-primary">Work Hours</h3></div>
           <div className="space-y-4">
-            <div className="text-center py-3"><p className="text-xs text-gray-400 mb-1">Today</p><p className="text-3xl font-bold text-gray-900">{todayWorkHours || '—'}</p></div>
-            <div className="border-t border-gray-100 pt-3 text-center"><p className="text-xs text-gray-400 mb-1">This Week</p><p className="text-xl font-bold text-indigo-600">{weekHours}</p></div>
+            <div className="text-center py-3"><p className="text-xs text-theme-text-tertiary mb-1">Today</p><p className="text-3xl font-bold text-theme-text-primary">{todayWorkHours || '—'}</p></div>
+            <div className="border-t border-theme-border pt-3 text-center"><p className="text-xs text-theme-text-tertiary mb-1">This Week</p><p className="text-xl font-bold text-indigo-600">{weekHours}</p></div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <div className="flex items-center gap-2 mb-4"><CalendarCheck className="w-5 h-5 text-green-600" /><h3 className="text-sm font-semibold text-gray-900">{monthName} Summary</h3></div>
+        <div className="bg-theme-surface rounded-2xl border border-theme-border p-5">
+          <div className="flex items-center gap-2 mb-4"><CalendarCheck className="w-5 h-5 text-green-600" /><h3 className="text-sm font-semibold text-theme-text-primary">{monthName} Summary</h3></div>
           <div className="space-y-3">
-            <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Present</span><span className="text-sm font-bold text-green-700">{monthPresent}</span></div>
-            <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Late</span><span className="text-sm font-bold text-amber-700">{monthLate}</span></div>
-            <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Absent</span><span className="text-sm font-bold text-red-700">{monthAbsent}</span></div>
-            <div className="border-t border-gray-100 pt-3 flex items-center justify-between"><span className="text-xs text-gray-500">Total Recorded</span><span className="text-sm font-bold text-gray-900">{monthRecords.length}</span></div>
+            <div className="flex items-center justify-between"><span className="text-xs text-theme-text-secondary">Present</span><span className="text-sm font-bold text-green-700">{monthPresent}</span></div>
+            <div className="flex items-center justify-between"><span className="text-xs text-theme-text-secondary">Late</span><span className="text-sm font-bold text-amber-700">{monthLate}</span></div>
+            <div className="flex items-center justify-between"><span className="text-xs text-theme-text-secondary">Absent</span><span className="text-sm font-bold text-red-700">{monthAbsent}</span></div>
+            <div className="border-t border-theme-border pt-3 flex items-center justify-between"><span className="text-xs text-theme-text-secondary">Total Recorded</span><span className="text-sm font-bold text-theme-text-primary">{monthRecords.length}</span></div>
           </div>
         </div>
       </div>
 
       {/* Monthly Calendar Grid */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-5">
+      <div className="bg-theme-surface rounded-2xl border border-theme-border p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-900">Attendance Calendar</h3>
+          <h3 className="text-sm font-semibold text-theme-text-primary">Attendance Calendar</h3>
           <div className="flex items-center gap-2">
-            <button onClick={() => setCalMonth(new Date(calYear, calMonthIdx - 1, 1))} className="p-1.5 rounded-lg hover:bg-gray-100"><ChevronLeft className="w-4 h-4" /></button>
-            <span className="text-sm font-medium text-gray-700 min-w-[140px] text-center">{monthName}</span>
-            <button onClick={() => setCalMonth(new Date(calYear, calMonthIdx + 1, 1))} className="p-1.5 rounded-lg hover:bg-gray-100"><ChevronRight className="w-4 h-4" /></button>
+            <button onClick={() => setCalMonth(new Date(calYear, calMonthIdx - 1, 1))} className="p-1.5 rounded-lg hover:bg-theme-muted"><ChevronLeft className="w-4 h-4" /></button>
+            <span className="text-sm font-medium text-theme-text-primary min-w-[140px] text-center">{monthName}</span>
+            <button onClick={() => setCalMonth(new Date(calYear, calMonthIdx + 1, 1))} className="p-1.5 rounded-lg hover:bg-theme-muted"><ChevronRight className="w-4 h-4" /></button>
           </div>
         </div>
         <div className="flex items-center gap-4 mb-4 flex-wrap">
-          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-green-200" /><span className="text-xs text-gray-500">Present</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-amber-200" /><span className="text-xs text-gray-500">Late</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-blue-200" /><span className="text-xs text-gray-500">Half Day</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-red-200" /><span className="text-xs text-gray-500">Absent</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-gray-100" /><span className="text-xs text-gray-500">No Record</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-green-200" /><span className="text-xs text-theme-text-secondary">Present</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-amber-200" /><span className="text-xs text-theme-text-secondary">Late</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-blue-200" /><span className="text-xs text-theme-text-secondary">Half Day</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-red-200" /><span className="text-xs text-theme-text-secondary">Absent</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-theme-muted" /><span className="text-xs text-theme-text-secondary">No Record</span></div>
         </div>
         <div className="grid grid-cols-7 gap-2">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d} className="text-center text-xs font-semibold text-gray-400 py-1">{d}</div>)}
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d} className="text-center text-xs font-semibold text-theme-text-tertiary py-1">{d}</div>)}
           {calendarCells.map((cell, i) => (
-            <div key={i} className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs relative ${!cell.date ? 'bg-transparent' : cell.record?.status === 'present' ? 'bg-green-100 text-green-700' : cell.record?.status === 'late' ? 'bg-amber-100 text-amber-700' : cell.record?.status === 'half_day' ? 'bg-blue-100 text-blue-700' : cell.record?.status === 'absent' ? 'bg-red-100 text-red-700' : cell.isToday ? 'bg-blue-50 text-blue-600 ring-1 ring-blue-300' : 'bg-gray-50 text-gray-400'}`}>
+            <div key={i} className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs relative ${!cell.date ? 'bg-transparent' : cell.record?.status === 'present' ? 'bg-green-100 text-green-700' : cell.record?.status === 'late' ? 'bg-amber-100 text-amber-700' : cell.record?.status === 'half_day' ? 'bg-blue-100 text-blue-700' : cell.record?.status === 'absent' ? 'bg-red-100 text-red-700' : cell.isToday ? 'bg-blue-50 text-theme-accent ring-1 ring-blue-300' : 'bg-theme-muted text-theme-text-tertiary'}`}>
               {cell.day && (<><span className="font-medium">{cell.day}</span>{cell.record?.check_in && <span className="text-[8px] opacity-60 mt-0.5">{fmtTime(cell.record.check_in)}</span>}</>)}
             </div>
           ))}
@@ -371,34 +371,34 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
 
       {/* Team Attendance (HOD/HR only) */}
       {canViewTeam && (
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-2">
-            <Users className="w-5 h-5 text-blue-600" />
-            <h3 className="text-sm font-semibold text-gray-900">Team Attendance — Today</h3>
-            {teamLoading && <Loader2 className="w-4 h-4 text-blue-600 animate-spin ml-auto" />}
+        <div className="bg-theme-surface rounded-2xl border border-theme-border overflow-hidden">
+          <div className="px-6 py-4 border-b border-theme-border flex items-center gap-2">
+            <Users className="w-5 h-5 text-theme-accent" />
+            <h3 className="text-sm font-semibold text-theme-text-primary">Team Attendance — Today</h3>
+            {teamLoading && <Loader2 className="w-4 h-4 text-theme-accent animate-spin ml-auto" />}
           </div>
           {teamAttendance.length === 0 && !teamLoading ? (
-            <div className="p-8 text-center text-sm text-gray-500">No team members found.</div>
+            <div className="p-8 text-center text-sm text-theme-text-secondary">No team members found.</div>
           ) : (
-            <div className="overflow-x-auto"><table className="w-full min-w-[600px]"><thead className="bg-gray-50 border-b border-gray-200"><tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Name</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Role</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Check In</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Check Out</th>
-            </tr></thead><tbody className="divide-y divide-gray-200">{teamAttendance.map((m) => (
-              <tr key={m.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{m.name}</td>
-                <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap capitalize">{m.job_title || m.role}</td>
+            <div className="overflow-x-auto"><table className="w-full min-w-[600px]"><thead className="bg-theme-muted border-b border-theme-border"><tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Name</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Role</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Check In</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Check Out</th>
+            </tr></thead><tbody className="divide-y divide-theme-border">{teamAttendance.map((m) => (
+              <tr key={m.id} className="hover:bg-theme-muted">
+                <td className="px-4 py-3 text-sm text-theme-text-primary whitespace-nowrap">{m.name}</td>
+                <td className="px-4 py-3 text-sm text-theme-text-secondary whitespace-nowrap capitalize">{m.job_title || m.role}</td>
                 <td className="px-4 py-3 text-sm whitespace-nowrap">
                   {m.check_in ? (
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${m.status==='present'?'bg-green-100 text-green-800':m.status==='late'?'bg-amber-100 text-amber-800':'bg-gray-100 text-gray-600'}`}>{m.status || 'present'}</span>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${m.status==='present'?'bg-green-100 text-green-800':m.status==='late'?'bg-amber-100 text-amber-800':'bg-theme-muted text-theme-text-secondary'}`}>{m.status || 'present'}</span>
                   ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">Not checked in</span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-theme-muted text-theme-text-secondary">Not checked in</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{fmtTime(m.check_in)}</td>
-                <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{fmtTime(m.check_out)}</td>
+                <td className="px-4 py-3 text-sm text-theme-text-secondary whitespace-nowrap">{fmtTime(m.check_in)}</td>
+                <td className="px-4 py-3 text-sm text-theme-text-secondary whitespace-nowrap">{fmtTime(m.check_out)}</td>
               </tr>
             ))}</tbody></table></div>
           )}
@@ -406,24 +406,24 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
       )}
 
       {/* Recent records table */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200"><h3 className="text-sm font-semibold text-gray-900">Recent Records</h3></div>
-        {records.length === 0 ? <div className="p-8 text-center text-sm text-gray-500">No attendance records found.</div> : (
-          <div className="overflow-x-auto"><table className="w-full min-w-[600px]"><thead className="bg-gray-50 border-b border-gray-200"><tr>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Date</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Status</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Check In</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Check Out</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Hours</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Notes</th>
-          </tr></thead><tbody className="divide-y divide-gray-200">{records.slice(0, 15).map((a) => (
-            <tr key={a.id} className="hover:bg-gray-50">
-              <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{fmtDate(a.date)}</td>
+      <div className="bg-theme-surface rounded-2xl border border-theme-border overflow-hidden">
+        <div className="px-6 py-4 border-b border-theme-border"><h3 className="text-sm font-semibold text-theme-text-primary">Recent Records</h3></div>
+        {records.length === 0 ? <div className="p-8 text-center text-sm text-theme-text-secondary">No attendance records found.</div> : (
+          <div className="overflow-x-auto"><table className="w-full min-w-[600px]"><thead className="bg-theme-muted border-b border-theme-border"><tr>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Date</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Status</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Check In</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Check Out</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Hours</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Notes</th>
+          </tr></thead><tbody className="divide-y divide-theme-border">{records.slice(0, 15).map((a) => (
+            <tr key={a.id} className="hover:bg-theme-muted">
+              <td className="px-4 py-3 text-sm text-theme-text-primary whitespace-nowrap">{fmtDate(a.date)}</td>
               <td className="px-4 py-3 text-sm whitespace-nowrap"><span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${a.status==='present'?'bg-green-100 text-green-800':a.status==='late'?'bg-amber-100 text-amber-800':a.status==='half_day'?'bg-blue-100 text-blue-800':'bg-red-100 text-red-800'}`}>{a.status?.replace('_',' ')}</span></td>
-              <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{fmtTime(a.check_in)}</td>
-              <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{fmtTime(a.check_out)}</td>
-              <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{calcWorkHours(a.check_in, a.check_out) || '—'}</td>
-              <td className="px-4 py-3 text-sm text-gray-500">{a.notes || '—'}</td>
+              <td className="px-4 py-3 text-sm text-theme-text-secondary whitespace-nowrap">{fmtTime(a.check_in)}</td>
+              <td className="px-4 py-3 text-sm text-theme-text-secondary whitespace-nowrap">{fmtTime(a.check_out)}</td>
+              <td className="px-4 py-3 text-sm text-theme-text-secondary whitespace-nowrap">{calcWorkHours(a.check_in, a.check_out) || '—'}</td>
+              <td className="px-4 py-3 text-sm text-theme-text-secondary">{a.notes || '—'}</td>
             </tr>
           ))}</tbody></table></div>
         )}

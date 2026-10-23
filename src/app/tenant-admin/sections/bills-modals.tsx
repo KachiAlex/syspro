@@ -23,7 +23,7 @@ const FormAlert: React.FC<FormAlertProps> = ({ type, message, onClose }) => {
   return (
     <div className={`${bgColor} border ${borderColor} rounded-lg p-4 mb-4 flex justify-between items-center`}>
       <p className={`text-sm font-medium ${textColor}`}>{message}</p>
-      <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+      <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-primary">
         <X className="w-4 h-4" />
       </button>
     </div>
@@ -167,20 +167,20 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ isOpen, onClose, onS
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Bill</h3>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Add Bill</h3>
         {alert && <FormAlert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />}
 
         {showCreateVendor ? (
           <form onSubmit={handleCreateVendor} className="space-y-4">
-            <h4 className="text-sm font-medium text-gray-900">Create New Vendor</h4>
+            <h4 className="text-sm font-medium text-theme-text-primary">Create New Vendor</h4>
             <input
               type="text"
               placeholder="Vendor Name *"
               value={newVendor.name}
               onChange={(e) => setNewVendor({ ...newVendor, name: e.target.value })}
-              className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black placeholder:text-gray-700"
+              className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary placeholder:text-theme-text-primary"
               style={{ color: '#000000' }}
               required
             />
@@ -189,7 +189,7 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ isOpen, onClose, onS
               placeholder="Email"
               value={newVendor.email}
               onChange={(e) => setNewVendor({ ...newVendor, email: e.target.value })}
-              className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black placeholder:text-gray-700"
+              className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary placeholder:text-theme-text-primary"
               style={{ color: '#000000' }}
             />
             <input
@@ -197,13 +197,13 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ isOpen, onClose, onS
               placeholder="Phone"
               value={newVendor.phone}
               onChange={(e) => setNewVendor({ ...newVendor, phone: e.target.value })}
-              className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black placeholder:text-gray-700"
+              className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary placeholder:text-theme-text-primary"
               style={{ color: '#000000' }}
             />
             <select
               value={newVendor.paymentTerms}
               onChange={(e) => setNewVendor({ ...newVendor, paymentTerms: e.target.value })}
-              className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+              className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
             >
               <option value="net30">Net 30</option>
               <option value="net60">Net 60</option>
@@ -215,14 +215,14 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ isOpen, onClose, onS
               <button
                 type="button"
                 onClick={() => { setShowCreateVendor(false); setNewVendor({ name: '', email: '', phone: '', paymentTerms: 'net30' }); }}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50"
+                className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted"
               >
                 Back
               </button>
               <button
                 type="submit"
                 disabled={creatingVendor}
-                className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover disabled:opacity-50"
               >
                 {creatingVendor ? 'Creating...' : 'Create Vendor'}
               </button>
@@ -243,7 +243,7 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ isOpen, onClose, onS
                     setFormData(prev => ({ ...prev, vendor: val }));
                   }
                 }}
-                className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+                className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
                 required
                 disabled={vendorsLoading}
               >
@@ -254,13 +254,13 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ isOpen, onClose, onS
                 <option value="__create_new__">+ Create New Vendor</option>
               </select>
             </div>
-            <input type="date" value={formData.billDate} onChange={(e) => setFormData({...formData, billDate: e.target.value})} className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black" placeholder="Bill Date" />
-            <input type="date" value={formData.dueDate} onChange={(e) => setFormData({...formData, dueDate: e.target.value})} className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black" placeholder="Due Date *" required />
-            <input type="text" placeholder="Amount *" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black" required />
-            <textarea placeholder="Description" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black" rows={3} />
+            <input type="date" value={formData.billDate} onChange={(e) => setFormData({...formData, billDate: e.target.value})} className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary" placeholder="Bill Date" />
+            <input type="date" value={formData.dueDate} onChange={(e) => setFormData({...formData, dueDate: e.target.value})} className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary" placeholder="Due Date *" required />
+            <input type="text" placeholder="Amount *" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary" required />
+            <textarea placeholder="Description" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary" rows={3} />
             <div className="flex gap-3 pt-4">
-              <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Cancel</button>
-              <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:opacity-50">{loading ? 'Adding...' : 'Add Bill'}</button>
+              <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted">Cancel</button>
+              <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover disabled:opacity-50">{loading ? 'Adding...' : 'Add Bill'}</button>
             </div>
           </form>
         )}
@@ -379,9 +379,9 @@ export const MakePaymentModal: React.FC<MakePaymentModalProps> = ({ isOpen, onCl
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Make Payment</h3>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Make Payment</h3>
         {alert && <FormAlert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />}
         <form onSubmit={handleSubmit} className="space-y-4">
           <select
@@ -396,7 +396,7 @@ export const MakePaymentModal: React.FC<MakePaymentModalProps> = ({ isOpen, onCl
                 amount: selected?.balanceDue ? formatAmount(selected.balanceDue.toString()) : selected?.total ? formatAmount(selected.total.toString()) : ''
               });
             }}
-            className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+            className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
             required
             disabled={billsLoading}
           >
@@ -405,9 +405,9 @@ export const MakePaymentModal: React.FC<MakePaymentModalProps> = ({ isOpen, onCl
               <option key={b.id} value={b.id}>{b.billNumber || b.id} — {b.vendorId ? (b.vendorId) : ''} — ₦{(b.balanceDue || b.total || 0).toLocaleString()}</option>
             ))}
           </select>
-          <input type="text" inputMode="decimal" autoComplete="off" placeholder="Amount to Pay *" value={formData.amount} onChange={(e) => setFormData({...formData, amount: formatAmount(e.target.value)})} className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black" required />
-          <input type="date" value={formData.paymentDate} onChange={(e) => setFormData({...formData, paymentDate: e.target.value})} className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black" required />
-          <select value={formData.method} onChange={(e) => setFormData({...formData, method: e.target.value})} className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black">
+          <input type="text" inputMode="decimal" autoComplete="off" placeholder="Amount to Pay *" value={formData.amount} onChange={(e) => setFormData({...formData, amount: formatAmount(e.target.value)})} className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary" required />
+          <input type="date" value={formData.paymentDate} onChange={(e) => setFormData({...formData, paymentDate: e.target.value})} className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary" required />
+          <select value={formData.method} onChange={(e) => setFormData({...formData, method: e.target.value})} className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary">
             <option value="bank_transfer">Bank Transfer</option>
             <option value="check">Check</option>
             <option value="cash">Cash</option>
@@ -419,8 +419,8 @@ export const MakePaymentModal: React.FC<MakePaymentModalProps> = ({ isOpen, onCl
             <option value="stripe">Stripe</option>
           </select>
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-black rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? 'Processing...' : 'Pay Bill'}</button>
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted">Cancel</button>
+            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-theme-text-primary rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? 'Processing...' : 'Pay Bill'}</button>
           </div>
         </form>
       </div>
@@ -482,9 +482,9 @@ export const SchedulePaymentModal: React.FC<SchedulePaymentModalProps> = ({ isOp
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Schedule Payment</h3>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Schedule Payment</h3>
         {alert && <FormAlert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />}
         <form onSubmit={handleSubmit} className="space-y-4">
           <select
@@ -499,7 +499,7 @@ export const SchedulePaymentModal: React.FC<SchedulePaymentModalProps> = ({ isOp
                 amount: selected?.balanceDue ? selected.balanceDue.toString() : selected?.total ? selected.total.toString() : ''
               });
             }}
-            className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+            className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
             required
             disabled={billsLoading}
           >
@@ -508,11 +508,11 @@ export const SchedulePaymentModal: React.FC<SchedulePaymentModalProps> = ({ isOp
               <option key={b.id} value={b.id}>{b.billNumber || b.id} — {b.vendorId ? (b.vendorId) : ''} — ₦{(b.balanceDue || b.total || 0).toLocaleString()}</option>
             ))}
           </select>
-          <input type="date" value={formData.paymentDate} onChange={(e) => setFormData({...formData, paymentDate: e.target.value})} className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black" placeholder="Schedule Date *" required />
-          <input type="text" placeholder="Amount *" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black" required />
+          <input type="date" value={formData.paymentDate} onChange={(e) => setFormData({...formData, paymentDate: e.target.value})} className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary" placeholder="Schedule Date *" required />
+          <input type="text" placeholder="Amount *" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary" required />
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-purple-600 text-gray-900 rounded-lg hover:bg-purple-700 disabled:opacity-50">{loading ? 'Scheduling...' : 'Schedule'}</button>
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted">Cancel</button>
+            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-purple-600 text-theme-text-primary rounded-lg hover:bg-purple-700 disabled:opacity-50">{loading ? 'Scheduling...' : 'Schedule'}</button>
           </div>
         </form>
       </div>

@@ -100,7 +100,7 @@ export default function ReturnsPage() {
   const statusBadge = (s: string) =>
     s === "posted" ? "bg-emerald-500/15 text-emerald-400"
     : s === "pending_approval" ? "bg-amber-500/15 text-amber-400"
-    : "bg-slate-500/15 text-slate-400";
+    : "bg-theme-muted/15 text-theme-text-secondary";
 
   return (
     <div className="p-6 space-y-5">
@@ -109,11 +109,11 @@ export default function ReturnsPage() {
           <RotateCcw className="h-6 w-6 text-sky-400" />
           <div>
             <h1 className="text-xl font-semibold">Returns &amp; Credit/Debit Notes</h1>
-            <p className="text-sm text-slate-400">Sales returns issue credit notes; purchase returns issue debit notes — GL-aware with restock</p>
+            <p className="text-sm text-theme-text-secondary">Sales returns issue credit notes; purchase returns issue debit notes — GL-aware with restock</p>
           </div>
         </div>
         <div className="flex gap-2">
-          <select className="rounded bg-slate-800 px-3 py-1.5 text-sm"
+          <select className="rounded bg-theme-muted px-3 py-1.5 text-sm"
             value={directionFilter} onChange={(e) => setDirectionFilter(e.target.value)}>
             <option value="">All</option><option value="sales">Sales returns</option><option value="purchase">Purchase returns</option>
           </select>
@@ -126,11 +126,11 @@ export default function ReturnsPage() {
 
       {error && <div className="flex items-center gap-2 rounded bg-rose-500/10 px-4 py-3 text-rose-400"><AlertCircle className="h-4 w-4" />{error}</div>}
       {msg && <div className="rounded bg-emerald-500/10 px-4 py-3 text-emerald-400">{msg}</div>}
-      {loading && <Loader2 className="h-5 w-5 animate-spin text-slate-400" />}
+      {loading && <Loader2 className="h-5 w-5 animate-spin text-theme-text-secondary" />}
 
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-xs text-slate-400">
+          <tr className="text-left text-xs text-theme-text-secondary">
             {["", "Doc", "Direction", "Net", "Total", "Restock", "Status", "Reason"].map((h) => (
               <th key={h} className="px-3 py-2">{h}</th>
             ))}
@@ -139,7 +139,7 @@ export default function ReturnsPage() {
         <tbody>
           {returns.map((r) => (
             <React.Fragment key={r.id}>
-              <tr className="border-t border-slate-800 cursor-pointer hover:bg-slate-800/40"
+              <tr className="border-t border-theme-border cursor-pointer hover:bg-theme-muted/40"
                 onClick={() => setExpanded(expanded === r.id ? null : r.id)}>
                 <td className="px-3 py-2">
                   {r.direction === "sales"
@@ -150,18 +150,18 @@ export default function ReturnsPage() {
                 <td className="px-3 py-2 capitalize">{r.direction} return</td>
                 <td className="px-3 py-2">{fmt(r.netAmount)}</td>
                 <td className="px-3 py-2">{fmt(r.totalAmount)}</td>
-                <td className="px-3 py-2 text-slate-400">{r.restock ? "yes" : "no"}</td>
+                <td className="px-3 py-2 text-theme-text-secondary">{r.restock ? "yes" : "no"}</td>
                 <td className="px-3 py-2"><span className={`rounded px-2 py-0.5 text-xs ${statusBadge(r.status)}`}>{r.status.replace(/_/g, " ")}</span></td>
-                <td className="px-3 py-2 text-slate-400">{r.reason ?? "—"}</td>
+                <td className="px-3 py-2 text-theme-text-secondary">{r.reason ?? "—"}</td>
               </tr>
               {expanded === r.id && (
-                <tr className="bg-slate-900/60">
+                <tr className="bg-theme-surface/60">
                   <td colSpan={8} className="px-8 py-3">
                     <table className="w-full text-xs">
-                      <thead><tr className="text-slate-500"><th className="text-left">Item</th><th className="text-right">Qty</th><th className="text-right">Unit price</th></tr></thead>
+                      <thead><tr className="text-theme-text-tertiary"><th className="text-left">Item</th><th className="text-right">Qty</th><th className="text-right">Unit price</th></tr></thead>
                       <tbody>
                         {(r.items ?? []).map((it, i) => (
-                          <tr key={i} className="border-t border-slate-800/60">
+                          <tr key={i} className="border-t border-theme-border/60">
                             <td className="py-1">{it.description}</td>
                             <td className="text-right">{it.quantity}</td>
                             <td className="text-right">{fmt(it.unitPrice)}</td>
@@ -175,30 +175,30 @@ export default function ReturnsPage() {
             </React.Fragment>
           ))}
           {returns.length === 0 && !loading && (
-            <tr><td colSpan={8} className="px-3 py-6 text-center text-slate-500">No returns recorded</td></tr>
+            <tr><td colSpan={8} className="px-3 py-6 text-center text-theme-text-tertiary">No returns recorded</td></tr>
           )}
         </tbody>
       </table>
 
       {showNew && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-5 space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+          <div className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-lg border border-theme-border bg-theme-surface p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">New return</h2>
               <button onClick={() => setShowNew(false)}><X className="h-4 w-4" /></button>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <label className="text-xs text-slate-400">Direction
-                <select className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Direction
+                <select className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={form.direction}
                   onChange={(e) => setForm({ ...form, direction: e.target.value as "sales" | "purchase", documentId: "" })}>
                   <option value="sales">Sales return (credit note)</option>
                   <option value="purchase">Purchase return (debit note)</option>
                 </select>
               </label>
-              <label className="text-xs text-slate-400">
+              <label className="text-xs text-theme-text-secondary">
                 {form.direction === "sales" ? "Source invoice" : "Source bill"}
-                <select className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+                <select className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={form.documentId} onChange={(e) => setForm({ ...form, documentId: e.target.value })}>
                   <option value="">Select…</option>
                   {docs.map((d: any) => <option key={d.id} value={d.id}>{docLabel(d)}</option>)}
@@ -206,26 +206,26 @@ export default function ReturnsPage() {
               </label>
             </div>
 
-            <h3 className="text-xs font-semibold text-slate-300 pt-1">Returned items</h3>
+            <h3 className="text-xs font-semibold text-theme-text-primary pt-1">Returned items</h3>
             {items.map((it, i) => (
               <div key={i} className="grid grid-cols-[1fr_80px_56px_88px_60px_24px] gap-2 items-center">
-                <input className="rounded bg-slate-800 px-2 py-2 text-sm" placeholder="Description"
+                <input className="rounded bg-theme-muted px-2 py-2 text-sm" placeholder="Description"
                   value={it.description} onChange={(e) => {
                     const ls = [...items]; ls[i] = { ...it, description: e.target.value }; setItems(ls);
                   }} />
-                <input className="rounded bg-slate-800 px-2 py-2 text-sm" placeholder="SKU"
+                <input className="rounded bg-theme-muted px-2 py-2 text-sm" placeholder="SKU"
                   value={it.sku} onChange={(e) => {
                     const ls = [...items]; ls[i] = { ...it, sku: e.target.value }; setItems(ls);
                   }} />
-                <input type="number" className="rounded bg-slate-800 px-2 py-2 text-sm" placeholder="Qty"
+                <input type="number" className="rounded bg-theme-muted px-2 py-2 text-sm" placeholder="Qty"
                   value={it.quantity} onChange={(e) => {
                     const ls = [...items]; ls[i] = { ...it, quantity: e.target.value }; setItems(ls);
                   }} />
-                <input type="number" className="rounded bg-slate-800 px-2 py-2 text-sm" placeholder="Price"
+                <input type="number" className="rounded bg-theme-muted px-2 py-2 text-sm" placeholder="Price"
                   value={it.unitPrice} onChange={(e) => {
                     const ls = [...items]; ls[i] = { ...it, unitPrice: e.target.value }; setItems(ls);
                   }} />
-                <input type="number" className="rounded bg-slate-800 px-2 py-2 text-sm" placeholder="Tax%"
+                <input type="number" className="rounded bg-theme-muted px-2 py-2 text-sm" placeholder="Tax%"
                   value={it.taxRate} onChange={(e) => {
                     const ls = [...items]; ls[i] = { ...it, taxRate: e.target.value }; setItems(ls);
                   }} />
@@ -247,7 +247,7 @@ export default function ReturnsPage() {
                 {form.direction === "sales" ? "Restock items into inventory" : "Remove items from inventory"}
               </label>
             </div>
-            <input className="w-full rounded bg-slate-800 px-3 py-2 text-sm" placeholder="Reason (optional)"
+            <input className="w-full rounded bg-theme-muted px-3 py-2 text-sm" placeholder="Reason (optional)"
               value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
 
             <button

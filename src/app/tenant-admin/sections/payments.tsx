@@ -38,7 +38,7 @@ const STATUS_COLORS: Record<string, string> = {
   completed: "bg-green-500/10 text-green-400",
   pending: "bg-yellow-100 text-yellow-800",
   failed: "bg-red-500/10 text-red-400",
-  refunded: "bg-slate-100 text-slate-800",
+  refunded: "bg-theme-muted text-theme-text-primary",
 };
 
 export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | null }) {
@@ -221,31 +221,31 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
-          <p className="text-sm text-slate-600">Total Payments</p>
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-4">
+          <p className="text-sm text-theme-text-secondary">Total Payments</p>
           <p className="mt-2 text-2xl font-bold text-theme-text-primary">{formatCurrency(totalAmount)}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
-          <p className="text-sm text-slate-600">Pending</p>
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-4">
+          <p className="text-sm text-theme-text-secondary">Pending</p>
           <p className="mt-2 text-2xl font-bold text-orange-600">{formatCurrency(pendingAmount)}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
-          <p className="text-sm text-slate-600">Completed</p>
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-4">
+          <p className="text-sm text-theme-text-secondary">Completed</p>
           <p className="mt-2 text-2xl font-bold text-green-400">{completedCount}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
-          <p className="text-sm text-slate-600">Failed</p>
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-4">
+          <p className="text-sm text-theme-text-secondary">Failed</p>
           <p className="mt-2 text-2xl font-bold text-red-400">{failedCount}</p>
         </div>
       </div>
 
       {/* Filters and Actions */}
-      <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-lg font-semibold text-theme-text-primary">Payments</h3>
             {lastRefreshed && (
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-theme-text-tertiary mt-1">
                 Last updated: {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
             )}
@@ -253,7 +253,7 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
           <button
             onClick={handleRefreshPayments}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-theme-border rounded-lg text-theme-text-primary hover:bg-theme-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -264,7 +264,7 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-blue-50 rounded-lg border border-blue-200 px-3 py-2 text-sm text-blue-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="bg-blue-50 rounded-lg border border-blue-200 px-3 py-2 text-sm text-blue-700 focus:ring-2 focus:ring-theme-accent focus:border-theme-accent outline-none"
             >
               <option value="all">All Status</option>
               <option value="completed">Completed</option>
@@ -275,7 +275,7 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
             <select
               value={methodFilter}
               onChange={(e) => setMethodFilter(e.target.value)}
-              className="bg-blue-50 rounded-lg border border-blue-200 px-3 py-2 text-sm text-blue-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="bg-blue-50 rounded-lg border border-blue-200 px-3 py-2 text-sm text-blue-700 focus:ring-2 focus:ring-theme-accent focus:border-theme-accent outline-none"
             >
               <option value="all">All Methods</option>
               <option value="bank_transfer">Bank Transfer</option>
@@ -292,20 +292,20 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
               placeholder="Search payments..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-white flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="bg-theme-surface flex-1 rounded-lg border border-theme-border px-3 py-2 text-sm"
             />
           </div>
           <div className="flex gap-2 justify-end">
             <button
               onClick={() => setShowReconcile(true)}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+              className="rounded-lg border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted flex items-center gap-2"
             >
               <RotateCcw className="w-4 h-4" />
               Reconcile
             </button>
             <button
               onClick={() => setShowCreatePayment(true)}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 flex items-center gap-2"
+              className="rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-white hover:bg-theme-accent-hover flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Create Payment
@@ -315,28 +315,28 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
       </div>
 
       {/* Payments Table */}
-      <div className="rounded-lg border border-slate-200 bg-theme-muted overflow-hidden">
+      <div className="rounded-lg border border-theme-border bg-theme-muted overflow-hidden">
         <div className="overflow-x-auto">
           {loading ? (
             <div className="space-y-3 p-6">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="p-4 bg-slate-50 rounded-lg animate-pulse">
+                <div key={i} className="p-4 bg-theme-muted rounded-lg animate-pulse">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-4 bg-slate-300 rounded"></div>
+                    <div className="w-12 h-4 bg-theme-muted rounded"></div>
                     <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-slate-300 rounded w-32"></div>
-                      <div className="h-3 bg-slate-300 rounded w-24"></div>
+                      <div className="h-4 bg-theme-muted rounded w-32"></div>
+                      <div className="h-3 bg-theme-muted rounded w-24"></div>
                     </div>
-                    <div className="w-16 h-4 bg-slate-300 rounded"></div>
+                    <div className="w-16 h-4 bg-theme-muted rounded"></div>
                   </div>
                 </div>
               ))}
             </div>
           ) : filteredPayments.length === 0 ? (
             <div className="p-12 text-center">
-              <CreditCard className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-600 font-medium mb-2">No payments found</p>
-              <p className="text-sm text-slate-500 mb-4">
+              <CreditCard className="w-12 h-12 text-theme-text-primary mx-auto mb-4" />
+              <p className="text-theme-text-secondary font-medium mb-2">No payments found</p>
+              <p className="text-sm text-theme-text-tertiary mb-4">
                 {payments.length === 0 
                   ? 'Create your first payment to get started'
                   : 'Try adjusting your filters or search query'}
@@ -344,7 +344,7 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
               {payments.length === 0 && (
                 <button
                   onClick={() => setShowCreatePayment(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Create Payment
@@ -353,43 +353,43 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
             </div>
           ) : (
             <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-theme-muted border-b border-theme-border">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Reference</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Method</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">ID</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Reference</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Method</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-theme-border">
                 {filteredPayments.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-slate-50">
+                  <tr key={payment.id} className="hover:bg-theme-muted">
                     <td className="px-4 py-3 text-sm font-medium text-theme-text-primary">{payment.id}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{payment.reference}</td>
+                    <td className="px-4 py-3 text-sm text-theme-text-secondary">{payment.reference}</td>
                     <td className="px-4 py-3 text-sm font-semibold text-theme-text-primary">{formatCurrency(payment.amount, payment.currency)}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 capitalize">{payment.method}</td>
+                    <td className="px-4 py-3 text-sm text-theme-text-secondary capitalize">{payment.method}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[payment.status] || "bg-theme-border"}`}>
                         {payment.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
+                    <td className="px-4 py-3 text-sm text-theme-text-secondary">
                       {payment.date ? new Date(payment.date).toLocaleDateString() : "—"}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <div className="flex gap-1">
                         <button
                           onClick={() => handleViewPayment(payment)}
-                          className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-50"
+                          className="rounded-lg border border-theme-border p-1.5 text-theme-text-secondary hover:bg-theme-muted"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeletePayment(payment.id)}
-                          className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-50"
+                          className="rounded-lg border border-theme-border p-1.5 text-theme-text-secondary hover:bg-theme-muted"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

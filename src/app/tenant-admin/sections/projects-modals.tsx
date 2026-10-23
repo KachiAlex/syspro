@@ -98,11 +98,11 @@ export function CreateProjectModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Create New Project</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-theme-surface border-b border-theme-border p-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-theme-text-primary">Create New Project</h2>
+          <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-primary">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -118,7 +118,7 @@ export function CreateProjectModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Project Name <span className="text-red-600">*</span>
               </label>
               <input
@@ -126,13 +126,13 @@ export function CreateProjectModal({
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
                 placeholder="Project name"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Owner
               </label>
               <input
@@ -140,21 +140,21 @@ export function CreateProjectModal({
                 name="owner"
                 value={formData.owner}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
                 placeholder="Project owner"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               Objective <span className="text-red-600">*</span>
             </label>
             <textarea
               name="objective"
               value={formData.objective}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="Project objective"
               rows={2}
               required
@@ -162,14 +162,14 @@ export function CreateProjectModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               Description
             </label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="Project description"
               rows={3}
             />
@@ -177,7 +177,7 @@ export function CreateProjectModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Subsidiary
               </label>
               <input
@@ -185,12 +185,12 @@ export function CreateProjectModal({
                 name="subsidiary"
                 value={formData.subsidiary}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
                 placeholder="Subsidiary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Branch
               </label>
               <input
@@ -198,14 +198,14 @@ export function CreateProjectModal({
                 name="branch"
                 value={formData.branch}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
                 placeholder="Branch"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               Departments
             </label>
             <input
@@ -213,14 +213,14 @@ export function CreateProjectModal({
               name="departments"
               value={formData.departments}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="Engineering, Marketing, Sales (comma separated)"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Start Date <span className="text-red-600">*</span>
               </label>
               <input
@@ -228,12 +228,12 @@ export function CreateProjectModal({
                 name="startDate"
                 value={formData.startDate}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 End Date
               </label>
               <input
@@ -241,14 +241,14 @@ export function CreateProjectModal({
                 name="endDate"
                 value={formData.endDate}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Budget Approved
               </label>
               <input
@@ -256,20 +256,20 @@ export function CreateProjectModal({
                 name="budgetApproved"
                 value={formData.budgetApproved}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
                 placeholder="0.00"
                 step="0.01"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Priority
               </label>
               <select
                 name="priority"
                 value={formData.priority}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               >
                 <option value="Low">Low</option>
                 <option value="Medium">Medium</option>
@@ -279,18 +279,18 @@ export function CreateProjectModal({
             </div>
           </div>
 
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
+          <div className="flex gap-3 pt-4 border-t border-theme-border">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+              className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover disabled:bg-theme-muted transition-colors"
             >
               {loading ? 'Creating...' : 'Create Project'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors"
             >
               Cancel
             </button>
@@ -313,11 +313,11 @@ export function ViewProjectModal({
   if (!isOpen || !project) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4">
-        <div className="border-b border-gray-200 p-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Project Details</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-2xl w-full mx-4">
+        <div className="border-b border-theme-border p-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-theme-text-primary">Project Details</h2>
+          <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-primary">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -325,44 +325,44 @@ export function ViewProjectModal({
         <div className="p-6 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-gray-600">Project Name</p>
-              <p className="text-lg font-medium text-gray-900">{project.name}</p>
+              <p className="text-sm text-theme-text-secondary">Project Name</p>
+              <p className="text-lg font-medium text-theme-text-primary">{project.name}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Owner</p>
-              <p className="text-lg font-medium text-gray-900">{project.ownerName || project.owner}</p>
+              <p className="text-sm text-theme-text-secondary">Owner</p>
+              <p className="text-lg font-medium text-theme-text-primary">{project.ownerName || project.owner}</p>
             </div>
           </div>
 
           <div>
-            <p className="text-sm text-gray-600">Objective</p>
-            <p className="text-lg font-medium text-gray-900">{project.objective}</p>
+            <p className="text-sm text-theme-text-secondary">Objective</p>
+            <p className="text-lg font-medium text-theme-text-primary">{project.objective}</p>
           </div>
 
           {project.description && (
             <div>
-              <p className="text-sm text-gray-600">Description</p>
-              <p className="text-gray-900">{project.description}</p>
+              <p className="text-sm text-theme-text-secondary">Description</p>
+              <p className="text-theme-text-primary">{project.description}</p>
             </div>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-gray-600">Status</p>
-              <p className="text-lg font-medium text-gray-900 capitalize">
+              <p className="text-sm text-theme-text-secondary">Status</p>
+              <p className="text-lg font-medium text-theme-text-primary capitalize">
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                   project.status === 'Completed' ? 'bg-green-100 text-green-800' :
                   project.status === 'Active' ? 'bg-blue-100 text-blue-800' :
                   project.status === 'On Hold' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-gray-100 text-gray-900'
+                  'bg-theme-muted text-theme-text-primary'
                 }`}>
                   {project.status}
                 </span>
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Priority</p>
-              <p className="text-lg font-medium text-gray-900 capitalize">
+              <p className="text-sm text-theme-text-secondary">Priority</p>
+              <p className="text-lg font-medium text-theme-text-primary capitalize">
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                   project.priority === 'Critical' ? 'bg-red-100 text-red-800' :
                   project.priority === 'High' ? 'bg-orange-100 text-orange-800' :
@@ -377,43 +377,43 @@ export function ViewProjectModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-gray-600">Start Date</p>
-              <p className="text-lg font-medium text-gray-900">{project.startDate}</p>
+              <p className="text-sm text-theme-text-secondary">Start Date</p>
+              <p className="text-lg font-medium text-theme-text-primary">{project.startDate}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">End Date</p>
-              <p className="text-lg font-medium text-gray-900">{project.endDate || 'N/A'}</p>
+              <p className="text-sm text-theme-text-secondary">End Date</p>
+              <p className="text-lg font-medium text-theme-text-primary">{project.endDate || 'N/A'}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-gray-600">Budget Approved</p>
-              <p className="text-lg font-medium text-gray-900">${project.budgetApproved.toFixed(2)}</p>
+              <p className="text-sm text-theme-text-secondary">Budget Approved</p>
+              <p className="text-lg font-medium text-theme-text-primary">${project.budgetApproved.toFixed(2)}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Budget Spent</p>
-              <p className="text-lg font-medium text-gray-900">${project.budgetSpent.toFixed(2)}</p>
+              <p className="text-sm text-theme-text-secondary">Budget Spent</p>
+              <p className="text-lg font-medium text-theme-text-primary">${project.budgetSpent.toFixed(2)}</p>
             </div>
           </div>
 
           {project.departments && project.departments.length > 0 && (
             <div>
-              <p className="text-sm text-gray-600">Departments</p>
-              <p className="text-gray-900">{project.departments.join(', ')}</p>
+              <p className="text-sm text-theme-text-secondary">Departments</p>
+              <p className="text-theme-text-primary">{project.departments.join(', ')}</p>
             </div>
           )}
 
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
-            <button className="flex-1 px-4 py-2 bg-gray-100 text-gray-900 rounded-lg hover:bg-gray-200 transition-colors">
+          <div className="flex gap-3 pt-4 border-t border-theme-border">
+            <button className="flex-1 px-4 py-2 bg-theme-muted text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors">
               Edit Project
             </button>
-            <button className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors">
+            <button className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors">
               Manage Tasks
             </button>
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors"
             >
               Close
             </button>
@@ -472,14 +472,14 @@ export function ManageTeamModal({
   if (!isOpen || !project) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-lg w-full mx-4">
-        <div className="border-b border-gray-200 p-6 flex items-center justify-between">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-lg w-full mx-4">
+        <div className="border-b border-theme-border p-6 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Manage Team</h2>
-            <p className="text-sm text-gray-600">{project.name}</p>
+            <h2 className="text-2xl font-bold text-theme-text-primary">Manage Team</h2>
+            <p className="text-sm text-theme-text-secondary">{project.name}</p>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-primary">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -494,14 +494,14 @@ export function ManageTeamModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               Team Members (comma-separated)
             </label>
             <textarea
               name="teamMembers"
               value={formData.teamMembers}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="e.g., John Doe, Jane Smith, Mike Jones"
               rows={4}
               required
@@ -509,31 +509,31 @@ export function ManageTeamModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               Roles/Designations (comma-separated)
             </label>
             <textarea
               name="roles"
               value={formData.roles}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="e.g., Developer, Designer, QA"
               rows={4}
             />
           </div>
 
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
+          <div className="flex gap-3 pt-4 border-t border-theme-border">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+              className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover disabled:bg-theme-muted transition-colors"
             >
               {loading ? 'Assigning...' : 'Assign Team'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors"
             >
               Cancel
             </button>
@@ -594,14 +594,14 @@ export function ManageTasksModal({
   if (!isOpen || !project) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-lg w-full mx-4">
-        <div className="border-b border-gray-200 p-6 flex items-center justify-between">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-lg w-full mx-4">
+        <div className="border-b border-theme-border p-6 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Add Task</h2>
-            <p className="text-sm text-gray-600">{project.name}</p>
+            <h2 className="text-2xl font-bold text-theme-text-primary">Add Task</h2>
+            <p className="text-sm text-theme-text-secondary">{project.name}</p>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-primary">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -616,7 +616,7 @@ export function ManageTasksModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               Task Name <span className="text-red-600">*</span>
             </label>
             <input
@@ -624,14 +624,14 @@ export function ManageTasksModal({
               name="taskName"
               value={formData.taskName}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="Task name"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               Assignee
             </label>
             <input
@@ -639,14 +639,14 @@ export function ManageTasksModal({
               name="assignee"
               value={formData.assignee}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="Team member name"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Due Date <span className="text-red-600">*</span>
               </label>
               <input
@@ -654,19 +654,19 @@ export function ManageTasksModal({
                 name="dueDate"
                 value={formData.dueDate}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Priority
               </label>
               <select
                 name="priority"
                 value={formData.priority}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -675,18 +675,18 @@ export function ManageTasksModal({
             </div>
           </div>
 
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
+          <div className="flex gap-3 pt-4 border-t border-theme-border">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+              className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover disabled:bg-theme-muted transition-colors"
             >
               {loading ? 'Creating...' : 'Create Task'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors"
             >
               Cancel
             </button>

@@ -284,7 +284,7 @@ export default function SettingsPage() {
               onChange={(e) => updateSetting(setting.id, e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            <div className="w-11 h-6 bg-theme-muted peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-theme-surface after:border-theme-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-theme-accent"></div>
           </label>
         );
       case 'select':
@@ -292,7 +292,7 @@ export default function SettingsPage() {
           <select
             value={setting.value as string}
             onChange={(e) => updateSetting(setting.id, e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
           >
             {setting.options?.map(option => (
               <option key={option} value={option}>{option}</option>
@@ -305,7 +305,7 @@ export default function SettingsPage() {
             value={setting.value as string}
             onChange={(e) => updateSetting(setting.id, e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
           />
         );
       case 'number':
@@ -314,7 +314,7 @@ export default function SettingsPage() {
             type="number"
             value={setting.value as number}
             onChange={(e) => updateSetting(setting.id, parseInt(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
           />
         );
       case 'email':
@@ -323,7 +323,7 @@ export default function SettingsPage() {
             type="email"
             value={setting.value as string}
             onChange={(e) => updateSetting(setting.id, e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
           />
         );
       case 'phone':
@@ -332,7 +332,7 @@ export default function SettingsPage() {
             type="tel"
             value={setting.value as string}
             onChange={(e) => updateSetting(setting.id, e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
           />
         );
       default:
@@ -341,7 +341,7 @@ export default function SettingsPage() {
             type="text"
             value={setting.value as string}
             onChange={(e) => updateSetting(setting.id, e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
           />
         );
     }
@@ -362,7 +362,7 @@ export default function SettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-theme-text-primary">Settings</h1>
-          <p className="text-sm text-gray-600 mt-1">System configuration and preferences</p>
+          <p className="text-sm text-theme-text-secondary mt-1">System configuration and preferences</p>
         </div>
       </div>
 
@@ -375,7 +375,7 @@ export default function SettingsPage() {
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 selectedCategory === category
                   ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  : 'text-theme-text-secondary hover:bg-theme-muted'
               }`}
             >
               {getCategoryIcon(category)}
@@ -392,14 +392,14 @@ export default function SettingsPage() {
           )}
           <button
             onClick={exportSettings}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted"
           >
             <Download className="w-4 h-4" />
             Export
           </button>
           <button
             onClick={resetSettings}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted"
           >
             <RotateCcw className="w-4 h-4" />
             Reset
@@ -410,7 +410,7 @@ export default function SettingsPage() {
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
               saveSuccess
                 ? 'bg-green-600 hover:bg-green-700'
-                : 'bg-blue-600 hover:bg-blue-700'
+                : 'bg-theme-accent hover:bg-theme-accent-hover'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {saveSuccess ? (
@@ -428,24 +428,24 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200">
+      <div className="bg-theme-surface rounded-lg border border-theme-border">
         <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">{selectedCategory} Settings</h2>
+          <h2 className="text-lg font-semibold text-theme-text-primary mb-6">{selectedCategory} Settings</h2>
           <div className="space-y-6">
             {filteredSettings.map(setting => (
               <div key={setting.id} className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
                 <div className="lg:col-span-2">
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
+                  <label className="block text-sm font-medium text-theme-text-primary mb-1">
                     {setting.name}
                   </label>
-                  <p className="text-xs text-gray-500 mb-2">{setting.description}</p>
+                  <p className="text-xs text-theme-text-secondary mb-2">{setting.description}</p>
                   {renderSettingInput(setting)}
                 </div>
                 <div className="flex items-center justify-center">
                   <div className="text-center">
                     {setting.type === 'boolean' ? (
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                        setting.value ? 'bg-green-100' : 'bg-gray-100'
+                        setting.value ? 'bg-green-100' : 'bg-theme-muted'
                       }`}>
                         {setting.value ? (
                           <CheckCircle className="w-6 h-6 text-green-600" />
@@ -455,10 +455,10 @@ export default function SettingsPage() {
                       </div>
                     ) : (
                       <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center">
-                        <span className="text-xs font-semibold text-blue-600 uppercase">{setting.type.slice(0, 3)}</span>
+                        <span className="text-xs font-semibold text-theme-accent uppercase">{setting.type.slice(0, 3)}</span>
                       </div>
                     )}
-                    <p className="text-xs text-gray-500 mt-2 capitalize">{setting.type}</p>
+                    <p className="text-xs text-theme-text-secondary mt-2 capitalize">{setting.type}</p>
                   </div>
                 </div>
               </div>
@@ -468,40 +468,40 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">System Information</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">System Information</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">System Version</span>
-              <span className="text-sm font-medium text-gray-900">v2.4.1</span>
+              <span className="text-sm text-theme-text-secondary">System Version</span>
+              <span className="text-sm font-medium text-theme-text-primary">v2.4.1</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Last Updated</span>
-              <span className="text-sm font-medium text-gray-900">March 15, 2024</span>
+              <span className="text-sm text-theme-text-secondary">Last Updated</span>
+              <span className="text-sm font-medium text-theme-text-primary">March 15, 2024</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Database Version</span>
-              <span className="text-sm font-medium text-gray-900">PostgreSQL 14.2</span>
+              <span className="text-sm text-theme-text-secondary">Database Version</span>
+              <span className="text-sm font-medium text-theme-text-primary">PostgreSQL 14.2</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">API Version</span>
-              <span className="text-sm font-medium text-gray-900">v1.8.0</span>
+              <span className="text-sm text-theme-text-secondary">API Version</span>
+              <span className="text-sm font-medium text-theme-text-primary">v1.8.0</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Quick Actions</h3>
           <div className="space-y-3">
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover">
               <Database className="w-4 h-4" />
               Backup Database
             </button>
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted">
               <RotateCcw className="w-4 h-4" />
               Clear Cache
             </button>
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted">
               <Users className="w-4 h-4" />
               Send Test Notification
             </button>

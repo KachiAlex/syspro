@@ -18,12 +18,12 @@ export function SiteNav() {
         <span className="font-jakarta text-[20px] font-extrabold tracking-[-.02em]" style={{ background: 'linear-gradient(90deg,#F8FAFC,#94A3B8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Pisairtel ERP</span>
       </Link>
       <div className="hidden md:flex items-center gap-7">
-        <Link href="/features" className="text-[#94A3B8] text-sm font-medium cursor-pointer hover:text-[#F8FAFC] transition-colors font-jakarta">Features</Link>
-        <Link href="/how-it-works" className="text-[#94A3B8] text-sm font-medium cursor-pointer hover:text-[#F8FAFC] transition-colors font-jakarta">How it works</Link>
-        <Link href="/pricing" className="text-[#94A3B8] text-sm font-medium cursor-pointer hover:text-[#F8FAFC] transition-colors font-jakarta">Pricing</Link>
+        <Link href="/features" className="text-theme-text-secondary text-sm font-medium cursor-pointer hover:text-theme-text-primary transition-colors font-jakarta">Features</Link>
+        <Link href="/how-it-works" className="text-theme-text-secondary text-sm font-medium cursor-pointer hover:text-theme-text-primary transition-colors font-jakarta">How it works</Link>
+        <Link href="/pricing" className="text-theme-text-secondary text-sm font-medium cursor-pointer hover:text-theme-text-primary transition-colors font-jakarta">Pricing</Link>
       </div>
       <div className="flex items-center gap-3">
-        <Link href="/login" className="hidden sm:inline-flex items-center px-[18px] py-[8px] border border-[rgba(255,255,255,0.07)] rounded-lg text-[#F8FAFC] font-jakarta text-[13.5px] font-semibold hover:border-[#E31E24] hover:text-[#E8286E] transition-all">Sign in</Link>
+        <Link href="/login" className="hidden sm:inline-flex items-center px-[18px] py-[8px] border border-[rgba(255,255,255,0.07)] rounded-lg text-theme-text-primary font-jakarta text-[13.5px] font-semibold hover:border-theme-accent hover:text-[#E8286E] transition-all">Sign in</Link>
         <Link href="/signup" className="inline-flex items-center px-5 py-[8px] rounded-lg text-white font-jakarta text-[13.5px] font-bold transition-transform hover:-translate-y-[1px]" style={{ background: 'linear-gradient(135deg,#E31E24,#C0208A)', boxShadow: '0 4px 14px rgba(227,30,36,.35)' }}>Get started</Link>
       </div>
     </nav>

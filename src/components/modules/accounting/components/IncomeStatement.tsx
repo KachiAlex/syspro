@@ -16,19 +16,19 @@ export const IncomeStatement: React.FC<IncomeStatementProps> = ({
   netIncome = '$88,677'
 }) => {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Income Statement (YTD)</h3>
+    <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+      <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Income Statement (YTD)</h3>
       <div className="space-y-3">
         <div className="flex justify-between items-center py-2 border-b">
-          <span className="text-gray-600">Revenue</span>
+          <span className="text-theme-text-secondary">Revenue</span>
           <span className="font-semibold">{revenue}</span>
         </div>
         <div className="flex justify-between items-center py-2 border-b">
-          <span className="text-gray-600">Cost of Goods Sold</span>
+          <span className="text-theme-text-secondary">Cost of Goods Sold</span>
           <span className="font-semibold">{cogs}</span>
         </div>
         <div className="flex justify-between items-center py-2 border-b">
-          <span className="text-gray-600 ml-4">Gross Profit</span>
+          <span className="text-theme-text-secondary ml-4">Gross Profit</span>
           <span className="font-semibold text-green-600">{grossProfit}</span>
         </div>
         <div className="flex justify-between items-center py-2">

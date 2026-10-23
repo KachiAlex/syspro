@@ -294,8 +294,8 @@ export function CollaborationPanel({
     switch (status) {
       case 'editing': return 'bg-green-500';
       case 'viewing': return 'bg-blue-500';
-      case 'idle': return 'bg-gray-400';
-      default: return 'bg-gray-400';
+      case 'idle': return 'bg-theme-muted';
+      default: return 'bg-theme-muted';
     }
   };
 
@@ -308,7 +308,7 @@ export function CollaborationPanel({
     isReply?: boolean; 
     parentCommentId?: string; 
   }) => (
-    <div className={`${isReply ? 'ml-8 border-l-2 border-gray-200 pl-4' : ''}`}>
+    <div className={`${isReply ? 'ml-8 border-l-2 border-theme-border pl-4' : ''}`}>
       <div className="flex items-start gap-3">
         {/* User Avatar */}
         <div className="flex-shrink-0">
@@ -319,8 +319,8 @@ export function CollaborationPanel({
               className="w-8 h-8 rounded-full"
             />
           ) : (
-            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-              <User className="w-4 h-4 text-gray-600" />
+            <div className="w-8 h-8 bg-theme-muted rounded-full flex items-center justify-center">
+              <User className="w-4 h-4 text-theme-text-secondary" />
             </div>
           )}
         </div>
@@ -329,20 +329,20 @@ export function CollaborationPanel({
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-gray-900">{comment.userName}</span>
+              <span className="font-medium text-theme-text-primary">{comment.userName}</span>
               {comment.isPinned && <Pin className="w-3 h-3 text-yellow-500" />}
               {comment.resolved && <CheckCircle className="w-3 h-3 text-green-500" />}
-              {comment.edited && <Edit3 className="w-3 h-3 text-gray-400" />}
+              {comment.edited && <Edit3 className="w-3 h-3 text-theme-text-tertiary" />}
             </div>
             
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">{formatTime(comment.timestamp)}</span>
+              <span className="text-xs text-theme-text-secondary">{formatTime(comment.timestamp)}</span>
               
               <div className="flex items-center gap-1">
                 {!isReply && (
                   <button
                     onClick={() => setReplyingTo(comment.id)}
-                    className="p-1 text-gray-400 hover:text-gray-600"
+                    className="p-1 text-theme-text-tertiary hover:text-theme-text-secondary"
                     title="Reply"
                   >
                     <Reply className="w-3 h-3" />
@@ -351,7 +351,7 @@ export function CollaborationPanel({
                 
                 <button
                   onClick={() => handleEditComment(comment.id)}
-                  className="p-1 text-gray-400 hover:text-gray-600"
+                  className="p-1 text-theme-text-tertiary hover:text-theme-text-secondary"
                   title="Edit"
                 >
                   <Edit className="w-3 h-3" />
@@ -359,7 +359,7 @@ export function CollaborationPanel({
                 
                 <button
                   onClick={() => handlePinComment(comment.id)}
-                  className="p-1 text-gray-400 hover:text-gray-600"
+                  className="p-1 text-theme-text-tertiary hover:text-theme-text-secondary"
                   title="Pin"
                 >
                   <Bookmark className="w-3 h-3" />
@@ -367,7 +367,7 @@ export function CollaborationPanel({
                 
                 <button
                   onClick={() => handleResolveComment(comment.id)}
-                  className="p-1 text-gray-400 hover:text-gray-600"
+                  className="p-1 text-theme-text-tertiary hover:text-theme-text-secondary"
                   title="Resolve"
                 >
                   <CheckCircle className="w-3 h-3" />
@@ -375,7 +375,7 @@ export function CollaborationPanel({
                 
                 <button
                   onClick={() => handleDeleteComment(comment.id)}
-                  className="p-1 text-gray-400 hover:text-red-600"
+                  className="p-1 text-theme-text-tertiary hover:text-red-600"
                   title="Delete"
                 >
                   <Trash2 className="w-3 h-3" />
@@ -390,13 +390,13 @@ export function CollaborationPanel({
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 rows={3}
               />
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={() => handleSaveEdit(comment.id)}
-                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                  className="px-3 py-1 bg-theme-accent text-white text-sm rounded hover:bg-theme-accent-hover"
                 >
                   Save
                 </button>
@@ -405,7 +405,7 @@ export function CollaborationPanel({
                     setEditingComment(null);
                     setEditContent('');
                   }}
-                  className="px-3 py-1 border border-gray-300 text-sm rounded hover:bg-gray-50"
+                  className="px-3 py-1 border border-theme-border text-sm rounded hover:bg-theme-muted"
                 >
                   Cancel
                 </button>
@@ -413,11 +413,11 @@ export function CollaborationPanel({
             </div>
           ) : (
             <div className="mb-2">
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.content}</p>
+              <p className="text-sm text-theme-text-primary whitespace-pre-wrap">{comment.content}</p>
               {comment.mentions && comment.mentions.length > 0 && (
                 <div className="flex items-center gap-1 mt-1">
-                  <AtSign className="w-3 h-3 text-gray-400" />
-                  <span className="text-xs text-gray-500">
+                  <AtSign className="w-3 h-3 text-theme-text-tertiary" />
+                  <span className="text-xs text-theme-text-secondary">
                     Mentioned: {comment.mentions.join(', ')}
                   </span>
                 </div>
@@ -432,13 +432,13 @@ export function CollaborationPanel({
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Write a reply..."
-                className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 rows={2}
               />
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={handleAddComment}
-                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                  className="px-3 py-1 bg-theme-accent text-white text-sm rounded hover:bg-theme-accent-hover"
                 >
                   Reply
                 </button>
@@ -447,7 +447,7 @@ export function CollaborationPanel({
                     setReplyingTo(null);
                     setNewComment('');
                   }}
-                  className="px-3 py-1 border border-gray-300 text-sm rounded hover:bg-gray-50"
+                  className="px-3 py-1 border border-theme-border text-sm rounded hover:bg-theme-muted"
                 >
                   Cancel
                 </button>
@@ -474,12 +474,12 @@ export function CollaborationPanel({
   );
 
   return (
-    <div className={`bg-white border border-gray-200 rounded-lg ${className}`}>
+    <div className={`bg-theme-surface border border-theme-border rounded-lg ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+      <div className="flex items-center justify-between p-4 border-b border-theme-border">
         <div className="flex items-center gap-3">
-          <Users className="w-5 h-5 text-gray-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Collaboration</h3>
+          <Users className="w-5 h-5 text-theme-text-secondary" />
+          <h3 className="text-lg font-semibold text-theme-text-primary">Collaboration</h3>
           <div className="flex items-center gap-1">
             {activeUsers.slice(0, 3).map(user => (
               <div key={user.id} className="relative">
@@ -492,7 +492,7 @@ export function CollaborationPanel({
               </div>
             ))}
             {activeUsers.length > 3 && (
-              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs text-gray-600 border-2 border-white">
+              <div className="w-6 h-6 bg-theme-muted rounded-full flex items-center justify-center text-xs text-theme-text-secondary border-2 border-white">
                 +{activeUsers.length - 3}
               </div>
             )}
@@ -503,7 +503,7 @@ export function CollaborationPanel({
           <button
             onClick={() => setShowUsers(!showUsers)}
             className={`px-3 py-1 text-sm rounded ${
-              showUsers ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              showUsers ? 'bg-blue-100 text-blue-800' : 'bg-theme-muted text-theme-text-secondary hover:bg-theme-muted'
             }`}
           >
             <Eye className="w-3 h-3 mr-1" />
@@ -513,14 +513,14 @@ export function CollaborationPanel({
           <button
             onClick={() => setShowComments(!showComments)}
             className={`px-3 py-1 text-sm rounded ${
-              showComments ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              showComments ? 'bg-blue-100 text-blue-800' : 'bg-theme-muted text-theme-text-secondary hover:bg-theme-muted'
             }`}
           >
             <MessageSquare className="w-3 h-3 mr-1" />
             Comments
           </button>
           
-          <button className="p-1 text-gray-400 hover:text-gray-600">
+          <button className="p-1 text-theme-text-tertiary hover:text-theme-text-secondary">
             <Share2 className="w-4 h-4" />
           </button>
         </div>
@@ -528,8 +528,8 @@ export function CollaborationPanel({
 
       {/* Active Users */}
       {showUsers && (
-        <div className="p-4 border-b border-gray-200">
-          <h4 className="text-sm font-medium text-gray-900 mb-3">Active Users ({activeUsers.length})</h4>
+        <div className="p-4 border-b border-theme-border">
+          <h4 className="text-sm font-medium text-theme-text-primary mb-3">Active Users ({activeUsers.length})</h4>
           <div className="space-y-2">
             {activeUsers.map(user => (
               <div key={user.id} className="flex items-center justify-between">
@@ -539,13 +539,13 @@ export function CollaborationPanel({
                     alt={user.name}
                     className="w-6 h-6 rounded-full"
                   />
-                  <span className="text-sm text-gray-700">{user.name}</span>
+                  <span className="text-sm text-theme-text-primary">{user.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${getStatusColor(user.status)}`}></div>
-                  <span className="text-xs text-gray-500 capitalize">{user.status}</span>
+                  <span className="text-xs text-theme-text-secondary capitalize">{user.status}</span>
                   {user.cursor && (
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-theme-text-tertiary">
                       Line {user.cursor.line}, Col {user.cursor.column}
                     </span>
                   )}
@@ -558,29 +558,29 @@ export function CollaborationPanel({
 
       {/* Comments Section */}
       {showComments && (
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-theme-border">
           {/* New Comment Input */}
           <div className="p-4">
             <div className="flex gap-3">
-              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                <User className="w-4 h-4 text-gray-600" />
+              <div className="w-8 h-8 bg-theme-muted rounded-full flex items-center justify-center flex-shrink-0">
+                <User className="w-4 h-4 text-theme-text-secondary" />
               </div>
               <div className="flex-1">
                 <textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Add a comment... Use @ to mention users"
-                  className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
                   rows={3}
                 />
                 <div className="flex justify-between items-center mt-2">
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-theme-text-secondary">
                     {newComment.length} characters
                   </div>
                   <button
                     onClick={handleAddComment}
                     disabled={!newComment.trim()}
-                    className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-4 py-2 bg-theme-accent text-white text-sm rounded hover:bg-theme-accent-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     <Send className="w-3 h-3" />
                     Comment
@@ -593,10 +593,10 @@ export function CollaborationPanel({
           {/* Comments List */}
           <div className="max-h-96 overflow-y-auto" ref={commentsRef}>
             {comments.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <MessageSquare className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+              <div className="p-8 text-center text-theme-text-secondary">
+                <MessageSquare className="w-8 h-8 mx-auto mb-2 text-theme-text-tertiary" />
                 <p className="text-sm">No comments yet</p>
-                <p className="text-xs text-gray-400 mt-1">Be the first to comment</p>
+                <p className="text-xs text-theme-text-tertiary mt-1">Be the first to comment</p>
               </div>
             ) : (
               <div className="p-4 space-y-4">
@@ -610,8 +610,8 @@ export function CollaborationPanel({
       )}
 
       {/* Recent Events */}
-      <div className="p-4 border-t border-gray-200">
-        <h4 className="text-sm font-medium text-gray-900 mb-3">Recent Activity</h4>
+      <div className="p-4 border-t border-theme-border">
+        <h4 className="text-sm font-medium text-theme-text-primary mb-3">Recent Activity</h4>
         <div className="space-y-2">
           {events.slice(0, 5).map(event => (
             <div key={event.id} className="flex items-center gap-2 text-sm">
@@ -619,12 +619,12 @@ export function CollaborationPanel({
                 event.type === 'edit' ? 'bg-blue-500' :
                 event.type === 'comment' ? 'bg-green-500' :
                 event.type === 'share' ? 'bg-purple-500' :
-                'bg-gray-500'
+                'bg-theme-muted'
               }`}></div>
-              <span className="text-gray-600">
+              <span className="text-theme-text-secondary">
                 {event.user.name} {event.action}
               </span>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-theme-text-tertiary">
                 {formatTime(event.timestamp)}
               </span>
             </div>

@@ -28,28 +28,28 @@ export default function SupportSlaPage() {
     return d;
   };
 
-  const input = "rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm";
+  const input = "rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm";
   const btn = "rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium hover:bg-emerald-500 disabled:opacity-50";
-  const btnSm = "rounded bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700";
+  const btnSm = "rounded bg-theme-muted px-2 py-1 text-xs hover:bg-theme-elevated";
   const th = "p-3";
 
   if (!tenantSlug) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 text-slate-100">
+    <div className="min-h-screen bg-theme-bg p-6 text-theme-text-primary">
       <div className="mx-auto max-w-6xl">
         <h1 className="mb-1 text-2xl font-bold">SLA &amp; Warranty</h1>
-        <p className="mb-4 text-sm text-slate-400">Business-hours SLA engine, breach detection, warranty claims</p>
-        <div className="mb-4 flex gap-1 rounded-lg bg-slate-900 p-1">
+        <p className="mb-4 text-sm text-theme-text-secondary">Business-hours SLA engine, breach detection, warranty claims</p>
+        <div className="mb-4 flex gap-1 rounded-lg bg-theme-surface p-1">
           {(["claims", "engine"] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`rounded-md px-3 py-1.5 text-sm capitalize ${tab === t ? "bg-slate-700" : "text-slate-400 hover:text-white"}`}>
+              className={`rounded-md px-3 py-1.5 text-sm capitalize ${tab === t ? "bg-theme-elevated" : "text-theme-text-secondary hover:text-theme-text-primary"}`}>
               {t === "claims" ? "Warranty Claims" : "SLA Engine"}
             </button>
           ))}
         </div>
         {error && <div className="mb-4 rounded-lg bg-red-900/40 p-3 text-sm text-red-300">{error}<button onClick={() => setError("")} className="ml-2 underline">dismiss</button></div>}
-        {msg && <div className="mb-4 rounded-lg bg-slate-800 p-3 text-sm">{msg}<button onClick={() => setMsg("")} className="ml-2 underline">dismiss</button></div>}
+        {msg && <div className="mb-4 rounded-lg bg-theme-muted p-3 text-sm">{msg}<button onClick={() => setMsg("")} className="ml-2 underline">dismiss</button></div>}
 
         {tab === "claims" && (
           <div className="space-y-4">
@@ -64,11 +64,11 @@ export default function SupportSlaPage() {
                 customerName: f.wCust, warrantyExpiry: f.wExpiry || null, complaint: f.wComplaint,
               })}>New Claim</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Claim</th><th className={th}>Serial</th><th className={th}>Customer</th><th className={th}>Complaint</th><th className={th}>Status</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Claim</th><th className={th}>Serial</th><th className={th}>Customer</th><th className={th}>Complaint</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
                 {claims.map((c) => (
-                  <tr key={c.id} className="border-t border-slate-800/50">
+                  <tr key={c.id} className="border-t border-theme-border">
                     <td className={`${th} font-mono`}>{c.claim_number}</td><td className={th}>{c.serial_no ?? "—"}</td>
                     <td className={th}>{c.customer_name ?? "—"}</td><td className={th}>{c.complaint}</td>
                     <td className={th}>{c.status}</td>
@@ -86,7 +86,7 @@ export default function SupportSlaPage() {
                     </td>
                   </tr>
                 ))}
-                {!claims.length && <tr><td colSpan={6} className="p-6 text-center text-slate-500">No warranty claims</td></tr>}
+                {!claims.length && <tr><td colSpan={6} className="p-6 text-center text-theme-text-tertiary">No warranty claims</td></tr>}
               </tbody>
             </table>
           </div>
@@ -94,15 +94,15 @@ export default function SupportSlaPage() {
 
         {tab === "engine" && (
           <div className="space-y-4">
-            <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+            <div className="rounded-xl border border-theme-border bg-theme-surface p-4">
               <h3 className="mb-2 font-semibold">Breach detection</h3>
-              <p className="mb-3 text-sm text-slate-400">Scans open tickets for response/resolution deadline breaches — marks them and notifies the assignee. Wire to a cron for continuous coverage.</p>
+              <p className="mb-3 text-sm text-theme-text-secondary">Scans open tickets for response/resolution deadline breaches — marks them and notifies the assignee. Wire to a cron for continuous coverage.</p>
               <button className={btn} onClick={async () => {
                 const d = await post({ action: "detect-breaches" });
                 setMsg(d ? `Marked ${d.breached} ticket(s) as breached` : "");
               }}>Run Breach Detection</button>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+            <div className="rounded-xl border border-theme-border bg-theme-surface p-4">
               <h3 className="mb-2 font-semibold">Recalculate a ticket&rsquo;s SLA</h3>
               <div className="flex gap-2">
                 <input placeholder="Ticket ID" value={f.tId ?? ""} onChange={(e) => setF({ ...f, tId: e.target.value })} className={input} />
@@ -112,9 +112,9 @@ export default function SupportSlaPage() {
                 }}>Recalc</button>
               </div>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+            <div className="rounded-xl border border-theme-border bg-theme-surface p-4">
               <h3 className="mb-2 font-semibold">Policy calendar</h3>
-              <p className="mb-3 text-sm text-slate-400">Set business hours + pause/fulfil statuses on an SLA policy (defaults: Mon–Fri, 08:00–17:00).</p>
+              <p className="mb-3 text-sm text-theme-text-secondary">Set business hours + pause/fulfil statuses on an SLA policy (defaults: Mon–Fri, 08:00–17:00).</p>
               <div className="flex flex-wrap gap-2">
                 <input placeholder="Policy ID" value={f.polId ?? ""} onChange={(e) => setF({ ...f, polId: e.target.value })} className={input} />
                 <input placeholder="Days csv (mon,tue)" value={f.polDays ?? ""} onChange={(e) => setF({ ...f, polDays: e.target.value })} className={input} />

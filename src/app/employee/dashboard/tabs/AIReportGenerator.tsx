@@ -502,25 +502,25 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
   const wordCount = currentTranscript.trim().split(/\s+/).filter(Boolean).length;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
-      <div className="bg-white rounded-2xl max-w-3xl w-full my-4 max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-theme-overlay z-40 flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
+      <div className="bg-theme-surface rounded-2xl max-w-3xl w-full my-4 max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+        <div className="sticky top-0 bg-theme-surface border-b border-theme-border px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg flex items-center justify-center"><Wand2 className="w-4 h-4 text-white" /></div>
-            <h3 className="text-sm font-semibold text-gray-900">AI Report Generator</h3>
+            <h3 className="text-sm font-semibold text-theme-text-primary">AI Report Generator</h3>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-theme-muted"><X className="w-4 h-4" /></button>
         </div>
 
         {/* Step indicator */}
-        <div className="px-6 py-3 border-b border-gray-100 flex items-center gap-2">
+        <div className="px-6 py-3 border-b border-theme-border flex items-center gap-2">
           <StepBadge num={1} label="Setup" active={step === 'setup'} done={step !== 'setup'} />
-          <div className={`h-px flex-1 ${step !== 'setup' ? 'bg-green-400' : 'bg-gray-200'}`} />
+          <div className={`h-px flex-1 ${step !== 'setup' ? 'bg-green-400' : 'bg-theme-muted'}`} />
           <StepBadge num={2} label="Dictate" active={step === 'dictate'} done={step === 'generating' || step === 'review'} />
-          <div className={`h-px flex-1 ${step === 'generating' || step === 'review' ? 'bg-green-400' : 'bg-gray-200'}`} />
+          <div className={`h-px flex-1 ${step === 'generating' || step === 'review' ? 'bg-green-400' : 'bg-theme-muted'}`} />
           <StepBadge num={3} label="AI Process" active={step === 'generating'} done={step === 'review'} />
-          <div className={`h-px flex-1 ${step === 'review' ? 'bg-green-400' : 'bg-gray-200'}`} />
+          <div className={`h-px flex-1 ${step === 'review' ? 'bg-green-400' : 'bg-theme-muted'}`} />
           <StepBadge num={4} label="Review" active={step === 'review'} done={false} />
         </div>
 
@@ -534,20 +534,20 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
                 <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
                   <Wand2 className="w-7 h-7 text-white" />
                 </div>
-                <h3 className="text-base font-semibold text-gray-900">Generate a Report with AI</h3>
-                <p className="text-sm text-gray-500 mt-1">Dictate or type your report section by section, and AI will structure it into a professional report.</p>
+                <h3 className="text-base font-semibold text-theme-text-primary">Generate a Report with AI</h3>
+                <p className="text-sm text-theme-text-secondary mt-1">Dictate or type your report section by section, and AI will structure it into a professional report.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Report Type</label>
-                  <select value={reportType} onChange={(e) => setReportType(e.target.value as ReportType)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500">
+                  <label className="block text-xs font-semibold text-theme-text-primary mb-1.5">Report Type</label>
+                  <select value={reportType} onChange={(e) => setReportType(e.target.value as ReportType)} className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent">
                     {reportTypes.map(rt => <option key={rt.value} value={rt.value}>{rt.label} — {rt.desc}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Report Date</label>
-                  <input type="date" value={reportDate} onChange={(e) => setReportDate(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
+                  <label className="block text-xs font-semibold text-theme-text-primary mb-1.5">Report Date</label>
+                  <input type="date" value={reportDate} onChange={(e) => setReportDate(e.target.value)} className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent" />
                 </div>
               </div>
 
@@ -561,10 +561,10 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
               )}
 
               {/* Team member tagging */}
-              <div className="rounded-xl border border-gray-200 p-4">
-                <label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5 mb-2">
+              <div className="rounded-xl border border-theme-border p-4">
+                <label className="text-xs font-semibold text-theme-text-primary flex items-center gap-1.5 mb-2">
                   <Users className="w-3.5 h-3.5" />Tag Team Members
-                  <span className="text-gray-400 font-normal">(optional)</span>
+                  <span className="text-theme-text-tertiary font-normal">(optional)</span>
                 </label>
 
                 {/* Tagged members */}
@@ -583,7 +583,7 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
                 {/* Search input */}
                 <div className="relative">
                   <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-text-tertiary" />
                     <input
                       type="text"
                       value={colleagueSearch}
@@ -591,36 +591,36 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
                       onFocus={() => searchResults.length > 0 && setShowSearchDropdown(true)}
                       onBlur={() => setTimeout(() => setShowSearchDropdown(false), 200)}
                       placeholder="Search by name, role, or department..."
-                      className="w-full pl-8 pr-3 py-2 text-xs border border-gray-300 rounded-lg outline-none focus:border-blue-500"
+                      className="w-full pl-8 pr-3 py-2 text-xs border border-theme-border rounded-lg outline-none focus:border-theme-accent"
                     />
-                    {searching && <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 animate-spin" />}
+                    {searching && <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-text-tertiary animate-spin" />}
                   </div>
 
                   {/* Search results dropdown */}
                   {showSearchDropdown && searchResults.length > 0 && (
-                    <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    <div className="absolute z-20 mt-1 w-full bg-theme-surface border border-theme-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
                       {searchResults.map(c => (
                         <button
                           key={c.id}
                           onClick={() => tagMember(c)}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-blue-50 border-b border-gray-100 last:border-0"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-theme-muted border-b border-theme-border last:border-0"
                         >
-                          <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 flex-shrink-0">
+                          <div className="w-7 h-7 rounded-full bg-theme-muted flex items-center justify-center text-xs font-bold text-theme-text-secondary flex-shrink-0">
                             {c.name.charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-medium text-gray-900 truncate">{c.name}</p>
-                            <p className="text-[10px] text-gray-400 truncate">
+                            <p className="text-xs font-medium text-theme-text-primary truncate">{c.name}</p>
+                            <p className="text-[10px] text-theme-text-tertiary truncate">
                               {c.job_title || c.role || 'Staff'}{c.department_name ? ` · ${c.department_name}` : ''}
                             </p>
                           </div>
-                          <UserPlus className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                          <UserPlus className="w-3.5 h-3.5 text-theme-accent flex-shrink-0" />
                         </button>
                       ))}
                     </div>
                   )}
                   {showSearchDropdown && searchResults.length === 0 && !searching && colleagueSearch.trim() && (
-                    <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-center text-xs text-gray-400">
+                    <div className="absolute z-20 mt-1 w-full bg-theme-surface border border-theme-border rounded-lg shadow-lg p-3 text-center text-xs text-theme-text-tertiary">
                       No colleagues found matching &quot;{colleagueSearch}&quot;
                     </div>
                   )}
@@ -628,12 +628,12 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
               </div>
 
               {/* Section preview */}
-              <div className="rounded-xl bg-gray-50 border border-gray-200 p-4">
-                <p className="text-xs font-semibold text-gray-700 mb-2">You&apos;ll be guided through {DICTATION_SECTIONS.length} sections:</p>
+              <div className="rounded-xl bg-theme-muted border border-theme-border p-4">
+                <p className="text-xs font-semibold text-theme-text-primary mb-2">You&apos;ll be guided through {DICTATION_SECTIONS.length} sections:</p>
                 <div className="grid grid-cols-2 gap-2">
                   {DICTATION_SECTIONS.map((s, i) => (
-                    <div key={s.key} className="flex items-center gap-2 text-xs text-gray-600">
-                      <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500">{i + 1}</span>
+                    <div key={s.key} className="flex items-center gap-2 text-xs text-theme-text-secondary">
+                      <span className="w-5 h-5 rounded-full bg-theme-muted flex items-center justify-center text-[10px] font-bold text-theme-text-secondary">{i + 1}</span>
                       <span>{s.icon}</span>
                       <span>{s.label}</span>
                       {s.required && <span className="text-red-400">*</span>}
@@ -643,10 +643,10 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
               </div>
 
               <div className="flex items-center gap-2">
-                <button onClick={() => setInputMode('voice')} className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${inputMode === 'voice' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                <button onClick={() => setInputMode('voice')} className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${inputMode === 'voice' ? 'bg-theme-accent text-white' : 'bg-theme-muted text-theme-text-secondary hover:bg-theme-muted'}`}>
                   <Mic className="w-3.5 h-3.5" />Voice Dictation
                 </button>
-                <button onClick={() => setInputMode('text')} className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${inputMode === 'text' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                <button onClick={() => setInputMode('text')} className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${inputMode === 'text' ? 'bg-theme-accent text-white' : 'bg-theme-muted text-theme-text-secondary hover:bg-theme-muted'}`}>
                   <Type className="w-3.5 h-3.5" />Type / Paste
                 </button>
               </div>
@@ -662,10 +662,10 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
             <div className="space-y-4">
               {/* Progress bar */}
               <div className="flex items-center gap-2">
-                <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="flex-1 h-2 bg-theme-muted rounded-full overflow-hidden">
                   <div className="h-full bg-gradient-to-r from-purple-500 to-blue-600 rounded-full transition-all duration-300" style={{ width: `${(completedSections / totalSections) * 100}%` }} />
                 </div>
-                <span className="text-xs font-medium text-gray-500">{completedSections}/{totalSections}</span>
+                <span className="text-xs font-medium text-theme-text-secondary">{completedSections}/{totalSections}</span>
               </div>
 
               {/* Section tabs */}
@@ -674,7 +674,7 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
                   const isDone = sectionTranscripts[s.key]?.trim().length > 0;
                   const isCurrent = i === currentSectionIdx;
                   return (
-                    <button key={s.key} onClick={() => goToSection(i)} className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg transition-colors ${isCurrent ? 'bg-blue-600 text-white' : isDone ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                    <button key={s.key} onClick={() => goToSection(i)} className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg transition-colors ${isCurrent ? 'bg-theme-accent text-white' : isDone ? 'bg-green-100 text-green-700' : 'bg-theme-muted text-theme-text-secondary hover:bg-theme-muted'}`}>
                       {isDone && <CheckCircle className="w-3 h-3" />}
                       <span>{s.icon}</span>
                       <span>{s.label}</span>
@@ -689,7 +689,7 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
                 <div className="flex items-start gap-3">
                   <div className="text-2xl">{currentSection.icon}</div>
                   <div className="flex-1">
-                    <h4 className="text-sm font-semibold text-gray-900">Section {currentSectionIdx + 1}: {currentSection.label}{currentSection.required && <span className="text-red-500 ml-1">*</span>}</h4>
+                    <h4 className="text-sm font-semibold text-theme-text-primary">Section {currentSectionIdx + 1}: {currentSection.label}{currentSection.required && <span className="text-red-500 ml-1">*</span>}</h4>
                     <p className="text-sm text-blue-700 mt-1">{currentSection.prompt}</p>
                   </div>
                 </div>
@@ -699,7 +699,7 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
               {inputMode === 'voice' && (
                 <div className="flex items-center justify-center py-4">
                   <button onClick={isRecording ? stopRecording : startRecording}
-                    className={`relative w-16 h-16 rounded-full flex items-center justify-center transition-all ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-blue-600 hover:bg-blue-700'} text-white`}>
+                    className={`relative w-16 h-16 rounded-full flex items-center justify-center transition-all ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-theme-accent hover:bg-theme-accent-hover'} text-white`}>
                     {isRecording ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
                     {isRecording && <span className="absolute inset-0 rounded-full border-4 border-red-300 animate-ping" />}
                   </button>
@@ -709,35 +709,35 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
               {/* Transcript */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold text-gray-700">
+                  <label className="text-xs font-semibold text-theme-text-primary">
                     {currentSection.label} {isRecording && <span className="text-red-500 ml-1">● Recording</span>}
                   </label>
-                  {wordCount > 0 && <span className="text-xs text-gray-400">{wordCount} words</span>}
+                  {wordCount > 0 && <span className="text-xs text-theme-text-tertiary">{wordCount} words</span>}
                 </div>
                 <textarea
                   value={currentTranscript + (interimText ? ' ' + interimText : '')}
                   onChange={(e) => { setCurrentTranscript(e.target.value); setInterimText(''); }}
                   rows={5}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 resize-y"
+                  className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent resize-y"
                   placeholder={currentSection.placeholder}
                 />
                 {currentTranscript && (
-                  <button onClick={() => { setCurrentTranscript(''); setInterimText(''); }} className="mt-1 text-xs text-gray-400 hover:text-gray-600">Clear this section</button>
+                  <button onClick={() => { setCurrentTranscript(''); setInterimText(''); }} className="mt-1 text-xs text-theme-text-tertiary hover:text-theme-text-secondary">Clear this section</button>
                 )}
               </div>
 
               {/* Navigation */}
-              <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                <button onClick={handlePrevSection} disabled={currentSectionIdx === 0} className="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed">
+              <div className="flex items-center justify-between pt-2 border-t border-theme-border">
+                <button onClick={handlePrevSection} disabled={currentSectionIdx === 0} className="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium text-theme-text-secondary rounded-lg hover:bg-theme-muted disabled:opacity-30 disabled:cursor-not-allowed">
                   <ArrowLeft className="w-3.5 h-3.5" />Previous
                 </button>
 
                 <div className="flex items-center gap-2">
                   {!currentSection.required && (
-                    <button onClick={handleSkipSection} className="px-3 py-2 text-xs font-medium text-gray-400 hover:text-gray-600">Skip</button>
+                    <button onClick={handleSkipSection} className="px-3 py-2 text-xs font-medium text-theme-text-tertiary hover:text-theme-text-secondary">Skip</button>
                   )}
                   {currentSectionIdx < DICTATION_SECTIONS.length - 1 ? (
-                    <button onClick={handleNextSection} className="inline-flex items-center gap-1 px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                    <button onClick={handleNextSection} className="inline-flex items-center gap-1 px-4 py-2 text-xs font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover">
                       Next Section <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   ) : (
@@ -759,11 +759,11 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
                 </div>
                 <div className="absolute -inset-2 border-4 border-purple-200 rounded-2xl animate-ping opacity-75" />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 mt-4">AI is refining your report...</h3>
-              <p className="text-xs text-gray-500 mt-1">Structuring your dictation into a professional {reportType} report</p>
+              <h3 className="text-sm font-semibold text-theme-text-primary mt-4">AI is refining your report...</h3>
+              <p className="text-xs text-theme-text-secondary mt-1">Structuring your dictation into a professional {reportType} report</p>
               <div className="flex items-center justify-center gap-1.5 mt-4">
                 <Loader2 className="w-4 h-4 text-purple-600 animate-spin" />
-                <span className="text-xs text-gray-400">This usually takes 5-10 seconds</span>
+                <span className="text-xs text-theme-text-tertiary">This usually takes 5-10 seconds</span>
               </div>
             </div>
           )}
@@ -777,14 +777,14 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
               </div>
 
               <div className="flex items-center gap-2">
-                <button onClick={handleRegenerate} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                <button onClick={handleRegenerate} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-theme-text-secondary bg-theme-muted rounded-lg hover:bg-theme-muted">
                   <RefreshCw className="w-3.5 h-3.5" />Back to Dictation
                 </button>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Title</label>
-                <input type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
+                <label className="block text-xs font-semibold text-theme-text-primary mb-1">Title</label>
+                <input type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent" />
               </div>
 
               <EditField label="Objectives" value={editObjectives} onChange={setEditObjectives} required />
@@ -801,15 +801,15 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
               <EditField label="Additional Notes" value={editAdditionalNotes} onChange={setEditAdditionalNotes} />
 
               {editKpiMetrics.length > 0 && (
-                <div className="border-t border-gray-200 pt-4">
-                  <label className="block text-xs font-semibold text-gray-700 mb-2">KPI Metrics (AI-detected)</label>
+                <div className="border-t border-theme-border pt-4">
+                  <label className="block text-xs font-semibold text-theme-text-primary mb-2">KPI Metrics (AI-detected)</label>
                   <div className="space-y-2">
                     {editKpiMetrics.map((m, idx) => (
-                      <div key={idx} className="grid grid-cols-12 gap-2 items-center p-2 rounded-lg bg-gray-50">
-                        <input type="text" value={m.name} onChange={(e) => setEditKpiMetrics(editKpiMetrics.map((mm, i) => i === idx ? { ...mm, name: e.target.value } : mm))} className="col-span-4 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" placeholder="KPI name" />
-                        <input type="text" value={m.target} onChange={(e) => setEditKpiMetrics(editKpiMetrics.map((mm, i) => i === idx ? { ...mm, target: e.target.value } : mm))} className="col-span-3 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" placeholder="Target" />
-                        <input type="text" value={m.actual} onChange={(e) => setEditKpiMetrics(editKpiMetrics.map((mm, i) => i === idx ? { ...mm, actual: e.target.value } : mm))} className="col-span-3 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500" placeholder="Actual" />
-                        <select value={m.status} onChange={(e) => setEditKpiMetrics(editKpiMetrics.map((mm, i) => i === idx ? { ...mm, status: e.target.value } : mm))} className="col-span-2 border border-gray-300 rounded px-1 py-1 text-xs outline-none">
+                      <div key={idx} className="grid grid-cols-12 gap-2 items-center p-2 rounded-lg bg-theme-muted">
+                        <input type="text" value={m.name} onChange={(e) => setEditKpiMetrics(editKpiMetrics.map((mm, i) => i === idx ? { ...mm, name: e.target.value } : mm))} className="col-span-4 border border-theme-border rounded px-2 py-1 text-xs outline-none focus:border-theme-accent" placeholder="KPI name" />
+                        <input type="text" value={m.target} onChange={(e) => setEditKpiMetrics(editKpiMetrics.map((mm, i) => i === idx ? { ...mm, target: e.target.value } : mm))} className="col-span-3 border border-theme-border rounded px-2 py-1 text-xs outline-none focus:border-theme-accent" placeholder="Target" />
+                        <input type="text" value={m.actual} onChange={(e) => setEditKpiMetrics(editKpiMetrics.map((mm, i) => i === idx ? { ...mm, actual: e.target.value } : mm))} className="col-span-3 border border-theme-border rounded px-2 py-1 text-xs outline-none focus:border-theme-accent" placeholder="Actual" />
+                        <select value={m.status} onChange={(e) => setEditKpiMetrics(editKpiMetrics.map((mm, i) => i === idx ? { ...mm, status: e.target.value } : mm))} className="col-span-2 border border-theme-border rounded px-1 py-1 text-xs outline-none">
                           <option value="not_started">—</option><option value="on_track">On Track</option><option value="ahead">Ahead</option><option value="behind">Behind</option>
                         </select>
                       </div>
@@ -818,14 +818,14 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
                 </div>
               )}
 
-              <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
-                <button onClick={handleSubmit} className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+              <div className="flex items-center gap-3 pt-4 border-t border-theme-border">
+                <button onClick={handleSubmit} className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover">
                   <CheckCircle className="w-4 h-4" />Submit Report
                 </button>
-                <button onClick={handleRegenerate} className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                <button onClick={handleRegenerate} className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-theme-text-secondary bg-theme-muted rounded-lg hover:bg-theme-muted">
                   <RefreshCw className="w-4 h-4" />Back to Dictation
                 </button>
-                <button onClick={onClose} className="ml-auto px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-700">Cancel</button>
+                <button onClick={onClose} className="ml-auto px-4 py-2.5 text-sm font-medium text-theme-text-secondary hover:text-theme-text-primary">Cancel</button>
               </div>
             </div>
           )}
@@ -838,10 +838,10 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
 function StepBadge({ num, label, active, done }: { num: number; label: string; active: boolean; done: boolean }) {
   return (
     <div className="flex items-center gap-1.5">
-      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${done ? 'bg-green-500 text-white' : active ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-400'}`}>
+      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${done ? 'bg-green-500 text-white' : active ? 'bg-theme-accent text-white' : 'bg-theme-muted text-theme-text-tertiary'}`}>
         {done ? <CheckCircle className="w-3.5 h-3.5" /> : num}
       </div>
-      <span className={`text-xs font-medium ${active || done ? 'text-gray-700' : 'text-gray-400'}`}>{label}</span>
+      <span className={`text-xs font-medium ${active || done ? 'text-theme-text-primary' : 'text-theme-text-tertiary'}`}>{label}</span>
     </div>
   );
 }
@@ -849,8 +849,8 @@ function StepBadge({ num, label, active, done }: { num: number; label: string; a
 function EditField({ label, value, onChange, required }: { label: string; value: string; onChange: (v: string) => void; required?: boolean }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-gray-700 mb-1">{label}{required && <span className="text-red-500 ml-0.5">*</span>}</label>
-      <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={value ? Math.min(Math.max(value.split('\n').length, 2), 6) : 2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 resize-y" />
+      <label className="block text-xs font-semibold text-theme-text-primary mb-1">{label}{required && <span className="text-red-500 ml-0.5">*</span>}</label>
+      <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={value ? Math.min(Math.max(value.split('\n').length, 2), 6) : 2} className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent resize-y" />
     </div>
   );
 }

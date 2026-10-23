@@ -107,8 +107,8 @@ export default function ProjectsTeam({ projects, tenantSlug }: ProjectsTeamProps
     switch (role) {
       case 'lead': return 'bg-purple-100 text-purple-800 border border-purple-200';
       case 'member': return 'bg-blue-100 text-blue-800 border border-blue-200';
-      case 'viewer': return 'bg-gray-100 text-gray-900 border border-gray-200';
-      default: return 'bg-gray-100 text-gray-900 border border-gray-200';
+      case 'viewer': return 'bg-theme-muted text-theme-text-primary border border-theme-border';
+      default: return 'bg-theme-muted text-theme-text-primary border border-theme-border';
     }
   };
 
@@ -119,11 +119,11 @@ export default function ProjectsTeam({ projects, tenantSlug }: ProjectsTeamProps
 
       <div className="flex gap-4 items-end">
         <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-900 mb-2">Select Project</label>
+          <label className="block text-sm font-medium text-theme-text-primary mb-2">Select Project</label>
           <select
             value={selectedProjectId}
             onChange={(e) => setSelectedProjectId(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+            className="w-full rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-theme-text-primary focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 transition"
           >
             {projects.map(p => (
               <option key={p.id} value={p.id}>{p.name}</option>
@@ -132,20 +132,20 @@ export default function ProjectsTeam({ projects, tenantSlug }: ProjectsTeamProps
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Team Member</h3>
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Add Team Member</h3>
         <div className="flex gap-2 flex-col md:flex-row">
           <input
             type="email"
             placeholder="Enter email address..."
             value={newMemberEmail}
             onChange={(e) => setNewMemberEmail(e.target.value)}
-            className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+            className="flex-1 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-theme-text-primary placeholder-theme-text-tertiary focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 transition"
           />
           <select
             value={newMemberRole}
             onChange={(e) => setNewMemberRole(e.target.value as TeamMember['role'])}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+            className="rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-theme-text-primary focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 transition"
           >
             <option value="member">Member</option>
             <option value="lead">Lead</option>
@@ -153,7 +153,7 @@ export default function ProjectsTeam({ projects, tenantSlug }: ProjectsTeamProps
           </select>
           <button
             onClick={handleAddMember}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-2 rounded-lg bg-theme-accent px-4 py-2 text-sm font-semibold text-white hover:bg-theme-accent-hover transition-colors whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
             Add Member
@@ -162,44 +162,44 @@ export default function ProjectsTeam({ projects, tenantSlug }: ProjectsTeamProps
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-gray-500">Loading team members...</div>
+        <div className="text-center py-8 text-theme-text-secondary">Loading team members...</div>
       ) : teamMembers.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 mx-auto mb-4">
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-12 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-theme-muted mx-auto mb-4">
             <Users className="w-8 h-8 text-theme-text-tertiary" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No team members yet</h3>
-          <p className="text-gray-600">Add team members to collaborate on this project</p>
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-2">No team members yet</h3>
+          <p className="text-theme-text-secondary">Add team members to collaborate on this project</p>
         </div>
       ) : (
-        <div className="rounded-lg border border-gray-200 bg-theme-muted overflow-hidden">
+        <div className="rounded-lg border border-theme-border bg-theme-muted overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-theme-muted border-b border-theme-border">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Role</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Joined</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-theme-text-primary">Name</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-theme-text-primary">Email</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-theme-text-primary">Role</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-theme-text-primary">Joined</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-theme-text-primary">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-theme-border">
               {teamMembers.map(member => (
-                <tr key={member.id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4 text-sm text-gray-900 font-medium">{member.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{member.email}</td>
+                <tr key={member.id} className="hover:bg-theme-muted transition">
+                  <td className="px-6 py-4 text-sm text-theme-text-primary font-medium">{member.name}</td>
+                  <td className="px-6 py-4 text-sm text-theme-text-secondary">{member.email}</td>
                   <td className="px-6 py-4">
                     <select
                       value={member.role}
                       onChange={(e) => handleUpdateRole(member.id, e.target.value as TeamMember['role'])}
-                      className={`bg-white px-3 py-1 rounded-full text-xs font-semibold ${getRoleColor(member.role)} border cursor-pointer`}
+                      className={`bg-theme-surface px-3 py-1 rounded-full text-xs font-semibold ${getRoleColor(member.role)} border cursor-pointer`}
                     >
                       <option value="viewer">Viewer</option>
                       <option value="member">Member</option>
                       <option value="lead">Lead</option>
                     </select>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{new Date(member.joinDate).toLocaleDateString()}</td>
+                  <td className="px-6 py-4 text-sm text-theme-text-secondary">{new Date(member.joinDate).toLocaleDateString()}</td>
                   <td className="px-6 py-4">
                     <button
                       onClick={() => handleRemoveMember(member.id)}

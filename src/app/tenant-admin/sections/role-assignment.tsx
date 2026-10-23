@@ -62,7 +62,7 @@ const DEFAULT_ROLES = [
     id: "viewer",
     name: "Viewer",
     description: "Read-only access",
-    color: "bg-blue-50 border-blue-200 text-gray-900",
+    color: "bg-blue-50 border-blue-200 text-theme-text-primary",
     scope: "tenant",
     permissions: [],
   },
@@ -132,14 +132,14 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
           mergedRoles[existingIndex] = {
             ...customRole,
             description: customRole.name,
-            color: "bg-indigo-50 border-indigo-200 text-gray-900", // Custom role color
+            color: "bg-indigo-50 border-indigo-200 text-theme-text-primary", // Custom role color
           };
         } else {
           // Add new custom role
           mergedRoles.push({
             ...customRole,
             description: customRole.name,
-            color: "bg-indigo-50 border-indigo-200 text-gray-900",
+            color: "bg-indigo-50 border-indigo-200 text-theme-text-primary",
           });
         }
       });
@@ -261,7 +261,7 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
 
   const getRoleColor = (roleId: string) => {
     const role = roles.find((r: Role) => r.id === roleId);
-    return role?.color || "bg-gray-50 border-gray-200";
+    return role?.color || "bg-theme-muted border-theme-border";
   };
 
   return (
@@ -284,7 +284,7 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
                 value={selectedUser || ""}
                 onChange={(e) => setSelectedUser(e.target.value)}
                 disabled={loading || assigning}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg appearance-none cursor-pointer disabled:bg-white text-black"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg appearance-none cursor-pointer disabled:bg-theme-surface text-theme-text-primary"
               >
                 <option value="">
                   {loading ? "Loading users..." : "Choose a user..."}
@@ -320,10 +320,10 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
                       disabled={isCurrent || assigning}
                       className={`p-3 rounded-lg border-2 text-left transition-all ${
                         isSelected
-                          ? "border-blue-500 bg-blue-50"
+                          ? "border-theme-accent bg-blue-50"
                           : isCurrent
-                            ? "border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed"
-                            : "border-gray-200 hover:border-blue-300"
+                            ? "border-theme-border bg-theme-muted opacity-50 cursor-not-allowed"
+                            : "border-theme-border hover:border-blue-300"
                       } ${role.color}`}
                     >
                       <div className="flex items-start justify-between">
@@ -337,7 +337,7 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
                           <Check className="w-4 h-4 mt-0.5" />
                         )}
                         {isCurrent && (
-                          <div className="text-xs bg-theme-muted px-2 py-1 rounded border border-gray-300">
+                          <div className="text-xs bg-theme-muted px-2 py-1 rounded border border-theme-border">
                             Current
                           </div>
                         )}
@@ -380,7 +380,7 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
             <Loader className="w-5 h-5 animate-spin text-theme-text-tertiary" />
           </div>
         ) : users.length === 0 ? (
-          <p className="text-gray-500 py-4">No users found</p>
+          <p className="text-theme-text-secondary py-4">No users found</p>
         ) : (
           <div className="space-y-3">
             {users
@@ -408,7 +408,7 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
       <div className="border rounded-lg p-6 bg-theme-muted">
         <button
           onClick={toggleHistory}
-          className="flex items-center justify-between w-full mb-4 hover:text-blue-600 transition-colors"
+          className="flex items-center justify-between w-full mb-4 hover:text-theme-accent transition-colors"
         >
           <div className="flex items-center gap-2">
             <History className="w-5 h-5" />
@@ -426,18 +426,18 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
                 <Loader className="w-5 h-5 animate-spin text-theme-text-tertiary" />
               </div>
             ) : history.length === 0 ? (
-              <p className="text-gray-500 py-4">No role changes recorded</p>
+              <p className="text-theme-text-secondary py-4">No role changes recorded</p>
             ) : (
               <div className="space-y-2">
                 {history.map((entry) => (
                   <div
                     key={entry.id}
-                    className="p-3 border border-gray-200 rounded-lg bg-gray-50 text-sm"
+                    className="p-3 border border-theme-border rounded-lg bg-theme-muted text-sm"
                   >
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="font-medium">{entry.userEmail}</div>
-                        <div className="text-xs text-gray-600 mt-1">
+                        <div className="text-xs text-theme-text-secondary mt-1">
                           {entry.oldRoleId ? (
                             <>
                               <span className="inline-block px-2 py-1 bg-blue-100 rounded mx-1">
@@ -457,7 +457,7 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
                             </>
                           )}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-theme-text-secondary mt-1">
                           {entry.assignedByEmail
                             ? `Assigned by ${entry.assignedByEmail}`
                             : "System assignment"}{" "}

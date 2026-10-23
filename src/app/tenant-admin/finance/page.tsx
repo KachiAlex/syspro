@@ -54,11 +54,11 @@ const periodToTimeframe: Record<string, string> = {
 };
 
 const categoryColors = [
-  "bg-[#E31E24]",
-  "bg-[#10B981]",
-  "bg-[#F59E0B]",
+  "bg-theme-accent",
+  "bg-theme-success",
+  "bg-theme-warning",
   "bg-[#E8286E]",
-  "bg-[#EF4444]",
+  "bg-theme-danger",
   "bg-[#14B8A6]",
   "bg-[#FCD34D]",
   "bg-[#C0208A]",
@@ -137,17 +137,17 @@ export default function FinanceDashboard() {
   const expenseBreakdown = data?.expenseBreakdown ?? [];
 
   const iconForMetric = (label: string) => {
-    if (label.toLowerCase().includes("revenue")) return <TrendingUp className="h-6 w-6 text-[#10B981]" />;
-    if (label.toLowerCase().includes("burn") || label.toLowerCase().includes("expense")) return <TrendingDown className="h-6 w-6 text-[#EF4444]" />;
+    if (label.toLowerCase().includes("revenue")) return <TrendingUp className="h-6 w-6 text-theme-success" />;
+    if (label.toLowerCase().includes("burn") || label.toLowerCase().includes("expense")) return <TrendingDown className="h-6 w-6 text-theme-danger" />;
     if (label.toLowerCase().includes("cash")) return <DollarSign className="h-6 w-6 text-theme-primary" />;
     return <PieChart className="h-6 w-6 text-theme-accent" />;
   };
 
   const statusBadge = (status: string) => {
     const classes: Record<string, string> = {
-      current: "bg-[rgba(16,185,129,.12)] text-[#10B981]",
-      due_soon: "bg-[rgba(245,158,11,.12)] text-[#F59E0B]",
-      overdue: "bg-[rgba(239,68,68,.12)] text-[#EF4444]",
+      current: "bg-[rgba(16,185,129,.12)] text-theme-success",
+      due_soon: "bg-[rgba(245,158,11,.12)] text-theme-warning",
+      overdue: "bg-[rgba(239,68,68,.12)] text-theme-danger",
     };
     return classes[status] || "bg-[rgba(255,255,255,.04)] text-theme-text-secondary";
   };
@@ -182,7 +182,7 @@ export default function FinanceDashboard() {
       </div>
 
       {error && (
-        <div className="bg-[rgba(239,68,68,.08)] border border-[rgba(239,68,68,.2)] text-[#EF4444] px-4 py-3 rounded-[10px]">
+        <div className="bg-[rgba(239,68,68,.08)] border border-[rgba(239,68,68,.2)] text-theme-danger px-4 py-3 rounded-[10px]">
           {error}
           <button onClick={loadDashboard} className="ml-4 underline text-sm">Retry</button>
         </div>
@@ -204,7 +204,7 @@ export default function FinanceDashboard() {
               <div className="text-2xl font-bold text-theme-text-primary font-jakarta">{metric.value}</div>
               <div
                 className={`text-sm mt-2 flex items-center gap-1 font-jakarta ${
-                  metric.trend === "up" ? "text-[#10B981]" : "text-[#EF4444]"
+                  metric.trend === "up" ? "text-theme-success" : "text-theme-danger"
                 }`}
               >
                 {metric.trend === "up" ? "↑" : "↓"}
@@ -253,7 +253,7 @@ export default function FinanceDashboard() {
                 <div className="text-right">
                   <p
                     className={`font-semibold font-jakarta ${
-                      transaction.type === "income" ? "text-[#10B981]" : "text-[#EF4444]"
+                      transaction.type === "income" ? "text-theme-success" : "text-theme-danger"
                     }`}
                   >
                     {transaction.type === "income" ? "+" : "-"}
@@ -305,7 +305,7 @@ export default function FinanceDashboard() {
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <div className={`text-xs mt-1 font-jakarta ${category.direction === "up" ? "text-[#EF4444]" : "text-[#10B981]"}`}>
+                  <div className={`text-xs mt-1 font-jakarta ${category.direction === "up" ? "text-theme-danger" : "text-theme-success"}`}>
                     {category.delta}
                   </div>
                 </div>
@@ -333,9 +333,9 @@ export default function FinanceDashboard() {
           style={{ boxShadow: '0 4px 14px rgba(0,0,0,.2)' }}
         >
           <div className="w-10 h-10 rounded-[10px] bg-[rgba(245,158,11,.12)] flex items-center justify-center mx-auto mb-3">
-            <DollarSign className="h-5 w-5 text-[#F59E0B]" />
+            <DollarSign className="h-5 w-5 text-theme-warning" />
           </div>
-          <p className="text-sm font-medium text-theme-text-primary font-jakarta group-hover:text-[#F59E0B] transition-colors">Bills</p>
+          <p className="text-sm font-medium text-theme-text-primary font-jakarta group-hover:text-theme-warning transition-colors">Bills</p>
         </Link>
         <Link
           href="/tenant-admin/payments"
@@ -343,9 +343,9 @@ export default function FinanceDashboard() {
           style={{ boxShadow: '0 4px 14px rgba(0,0,0,.2)' }}
         >
           <div className="w-10 h-10 rounded-[10px] bg-[rgba(16,185,129,.12)] flex items-center justify-center mx-auto mb-3">
-            <TrendingUp className="h-5 w-5 text-[#10B981]" />
+            <TrendingUp className="h-5 w-5 text-theme-success" />
           </div>
-          <p className="text-sm font-medium text-theme-text-primary font-jakarta group-hover:text-[#10B981] transition-colors">Payments</p>
+          <p className="text-sm font-medium text-theme-text-primary font-jakarta group-hover:text-theme-success transition-colors">Payments</p>
         </Link>
         <Link
           href="/tenant-admin/finance/reports"

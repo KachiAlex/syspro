@@ -222,11 +222,11 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-slate-900 shadow-2xl z-50 flex flex-col border-l border-slate-200 dark:border-slate-700">
+      <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-theme-surface dark:bg-theme-surface shadow-2xl z-50 flex flex-col border-l border-theme-border dark:border-theme-border">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-600 to-indigo-600">
+        <div className="flex items-center justify-between p-4 border-b border-theme-border dark:border-theme-border bg-gradient-to-r from-blue-600 to-indigo-600">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-theme-surface/20 flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -239,14 +239,14 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
           <div className="flex items-center gap-2">
             <button
               onClick={handleNewConversation}
-              className="text-xs text-blue-100 hover:text-white px-2 py-1 rounded hover:bg-white/10 transition-colors"
+              className="text-xs text-blue-100 hover:text-theme-text-primary px-2 py-1 rounded hover:bg-theme-surface/10 transition-colors"
               title="New conversation"
             >
               New
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-theme-surface/10 transition-colors"
             >
               <X className="w-5 h-5 text-white" />
             </button>
@@ -258,7 +258,7 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
           <div className={`px-4 py-1.5 border-b text-xs flex items-center gap-2 ${
             quota.exceeded
               ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800"
-              : "bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700"
+              : "bg-theme-muted dark:bg-theme-muted text-theme-text-tertiary dark:text-theme-text-secondary border-theme-border dark:border-theme-border"
           }`}>
             <Gauge className="w-3.5 h-3.5 flex-shrink-0" />
             <span className="flex-1">
@@ -271,12 +271,12 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
         )}
 
         {/* Capability selector */}
-        <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 relative">
+        <div className="px-4 py-2 border-b border-theme-border dark:border-theme-border bg-theme-muted dark:bg-theme-muted relative">
           <button
             onClick={() => setShowCapabilityMenu(!showCapabilityMenu)}
-            className="flex items-center gap-2 w-full text-left text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+            className="flex items-center gap-2 w-full text-left text-sm text-theme-text-primary dark:text-theme-text-primary hover:text-theme-text-primary dark:hover:text-theme-text-primary transition-colors"
           >
-            <Bot className="w-4 h-4 text-blue-600" />
+            <Bot className="w-4 h-4 text-theme-accent" />
             <span className="flex-1">
               {capabilityOptions.find((c) => c.value === selectedCapability)?.label || "Select capability"}
             </span>
@@ -284,7 +284,7 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
           </button>
 
           {showCapabilityMenu && (
-            <div className="absolute left-4 right-4 top-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-10 py-1">
+            <div className="absolute left-4 right-4 top-full mt-1 bg-theme-surface dark:bg-theme-muted border border-theme-border dark:border-theme-border rounded-lg shadow-lg z-10 py-1">
               {capabilityOptions.map((cap) => (
                 <button
                   key={cap.value}
@@ -292,12 +292,12 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
                     setSelectedCapability(cap.value);
                     setShowCapabilityMenu(false);
                   }}
-                  className={`w-full text-left px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${
+                  className={`w-full text-left px-3 py-2 hover:bg-theme-muted dark:hover:bg-theme-elevated transition-colors ${
                     selectedCapability === cap.value ? "bg-blue-50 dark:bg-blue-900/30" : ""
                   }`}
                 >
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">{cap.label}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{cap.description}</p>
+                  <p className="text-sm font-medium text-theme-text-primary dark:text-white">{cap.label}</p>
+                  <p className="text-xs text-theme-text-tertiary dark:text-theme-text-secondary">{cap.description}</p>
                 </button>
               ))}
             </div>
@@ -311,10 +311,10 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mx-auto mb-3">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <h3 className="text-sm font-semibold text-theme-text-primary dark:text-theme-text-primary mb-1">
                 Ask the AI Agent
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+              <p className="text-xs text-theme-text-tertiary dark:text-theme-text-secondary max-w-xs mx-auto">
                 Select a capability above and type your request. The agent will analyze your data and respond with insights, reports, or recommendations.
               </p>
               <div className="mt-4 space-y-1.5 text-left max-w-xs mx-auto">
@@ -322,10 +322,10 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
                   <button
                     key={cap.value}
                     onClick={() => setSelectedCapability(cap.value)}
-                    className="w-full text-left px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs"
+                    className="w-full text-left px-3 py-2 rounded-lg bg-theme-muted dark:bg-theme-muted hover:bg-theme-elevated dark:hover:bg-theme-elevated transition-colors text-xs"
                   >
-                    <span className="font-medium text-slate-700 dark:text-slate-300">{cap.label}:</span>{" "}
-                    <span className="text-slate-500 dark:text-slate-400">{cap.description}</span>
+                    <span className="font-medium text-theme-text-primary dark:text-theme-text-primary">{cap.label}:</span>{" "}
+                    <span className="text-theme-text-tertiary dark:text-theme-text-secondary">{cap.description}</span>
                   </button>
                 ))}
               </div>
@@ -336,11 +336,11 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
             <div key={idx} className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
               <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
                 msg.role === "user"
-                  ? "bg-slate-200 dark:bg-slate-700"
+                  ? "bg-theme-muted dark:bg-theme-elevated"
                   : "bg-gradient-to-br from-blue-500 to-indigo-600"
               }`}>
                 {msg.role === "user" ? (
-                  <User className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                  <User className="w-4 h-4 text-theme-text-secondary dark:text-theme-text-primary" />
                 ) : (
                   <Bot className="w-4 h-4 text-white" />
                 )}
@@ -348,15 +348,15 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
               <div className={`flex-1 min-w-0 ${msg.role === "user" ? "text-right" : ""}`}>
                 <div className={`inline-block text-left rounded-xl px-3 py-2 text-sm max-w-full ${
                   msg.role === "user"
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200"
+                    ? "bg-theme-accent text-white"
+                    : "bg-theme-muted dark:bg-theme-muted text-theme-text-primary dark:text-theme-text-primary"
                 }`}>
                   <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                 </div>
 
                 {/* Metadata */}
                 {msg.metadata && (
-                  <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                  <div className="flex items-center gap-2 mt-1 text-xs text-theme-text-secondary">
                     <span className="capitalize">{String(msg.metadata.source)}</span>
                     <span>·</span>
                     <span>{(Number(msg.metadata.durationMs) / 1000).toFixed(1)}s</span>
@@ -373,14 +373,14 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
                 {msg.result != null ? (
                   <button
                     onClick={() => toggleResult(idx)}
-                    className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 mt-1 flex items-center gap-1"
+                    className="text-xs text-theme-accent hover:text-blue-700 dark:text-blue-400 mt-1 flex items-center gap-1"
                   >
                     {expandedResults.has(idx) ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                     {expandedResults.has(idx) ? "Hide" : "Show"} raw result
                   </button>
                 ) : null}
                 {msg.result != null && expandedResults.has(idx) ? (
-                  <pre className="mt-1 text-xs bg-slate-900 text-slate-300 rounded-lg p-2 overflow-x-auto max-h-48 overflow-y-auto">
+                  <pre className="mt-1 text-xs bg-theme-surface text-theme-text-primary rounded-lg p-2 overflow-x-auto max-h-48 overflow-y-auto">
                     {JSON.stringify(msg.result, null, 2)}
                   </pre>
                 ) : null}
@@ -425,19 +425,19 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
                 <Bot className="w-4 h-4 text-white" />
               </div>
-              <div className="bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2.5 space-y-1">
+              <div className="bg-theme-muted dark:bg-theme-muted rounded-xl px-3 py-2.5 space-y-1">
                 {steps.length === 0 ? (
-                  <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                  <Loader2 className="w-4 h-4 text-theme-accent animate-spin" />
                 ) : (
                   steps.map((s, i) => (
-                    <div key={i} className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
-                      {s.status === "running" && <Loader2 className="w-3 h-3 text-blue-600 animate-spin" />}
-                      {s.status === "pending" && <span className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600" />}
+                    <div key={i} className="flex items-center gap-1.5 text-xs text-theme-text-secondary dark:text-theme-text-primary">
+                      {s.status === "running" && <Loader2 className="w-3 h-3 text-theme-accent animate-spin" />}
+                      {s.status === "pending" && <span className="w-3 h-3 rounded-full border border-theme-border dark:border-theme-border" />}
                       {s.status === "done" && <span className="w-3 h-3 rounded-full bg-emerald-500 text-white text-[9px] flex items-center justify-center">✓</span>}
                       {s.status === "failed" && <span className="w-3 h-3 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center">✕</span>}
-                      {s.status === "skipped" && <span className="w-3 h-3 rounded-full bg-slate-400 text-white text-[9px] flex items-center justify-center">–</span>}
+                      {s.status === "skipped" && <span className="w-3 h-3 rounded-full bg-theme-muted text-theme-text-primary text-[9px] flex items-center justify-center">–</span>}
                       <span className="capitalize">{s.capability?.replace(/_/g, " ")}</span>
-                      {s.detail && <span className="text-slate-400">— {s.detail}</span>}
+                      {s.detail && <span className="text-theme-text-secondary">— {s.detail}</span>}
                     </div>
                   ))
                 )}
@@ -447,8 +447,8 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
         </div>
 
         {/* Input */}
-        <div className="border-t border-slate-200 dark:border-slate-700 p-3">
-          <div className="flex items-end gap-2 bg-slate-100 dark:bg-slate-800 rounded-xl p-2">
+        <div className="border-t border-theme-border dark:border-theme-border p-3">
+          <div className="flex items-end gap-2 bg-theme-muted dark:bg-theme-muted rounded-xl p-2">
             <textarea
               ref={inputRef}
               value={input}
@@ -456,18 +456,18 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
               onKeyDown={handleKeyDown}
               placeholder={selectedCapability === "auto" ? "Ask anything — e.g. \"screen REQ-12's applicants\"" : `Ask about ${capabilityOptions.find((c) => c.value === selectedCapability)?.label?.toLowerCase() || "anything"}...`}
               rows={1}
-              className="flex-1 bg-transparent text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none resize-none max-h-32"
+              className="flex-1 bg-transparent text-sm text-theme-text-primary dark:text-theme-text-primary placeholder-theme-text-tertiary outline-none resize-none max-h-32"
               style={{ minHeight: "24px" }}
             />
             <button
               onClick={handleSend}
               disabled={!input.trim() || loading}
-              className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+              className="p-2 rounded-lg bg-theme-accent text-white hover:bg-theme-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
             >
               <Send className="w-4 h-4" />
             </button>
           </div>
-          <p className="text-xs text-slate-400 mt-1.5 text-center">
+          <p className="text-xs text-theme-text-secondary mt-1.5 text-center">
             Press Enter to send · Shift+Enter for new line
           </p>
         </div>

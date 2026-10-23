@@ -135,32 +135,32 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
       {/* Summary cards (fast, top-line metrics) */}
       {summary && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-slate-100 bg-theme-muted p-4 text-sm text-slate-700">
-            <div className="text-xs text-slate-400">Reports</div>
+          <div className="rounded-2xl border border-theme-border bg-theme-muted p-4 text-sm text-theme-text-primary">
+            <div className="text-xs text-theme-text-secondary">Reports</div>
             <div className="text-2xl font-semibold">{summary.totalReports}</div>
-            <div className="text-xs text-slate-500">Total saved reports</div>
+            <div className="text-xs text-theme-text-tertiary">Total saved reports</div>
           </div>
-          <div className="rounded-2xl border border-slate-100 bg-theme-muted p-4 text-sm text-slate-700">
-            <div className="text-xs text-slate-400">Queue</div>
+          <div className="rounded-2xl border border-theme-border bg-theme-muted p-4 text-sm text-theme-text-primary">
+            <div className="text-xs text-theme-text-secondary">Queue</div>
             <div className="text-2xl font-semibold">{summary.queuedJobs}</div>
-            <div className="text-xs text-slate-500">Jobs queued now</div>
+            <div className="text-xs text-theme-text-tertiary">Jobs queued now</div>
           </div>
-          <div className="rounded-2xl border border-slate-100 bg-theme-muted p-4 text-sm text-slate-700">
-            <div className="text-xs text-slate-400">Recent</div>
+          <div className="rounded-2xl border border-theme-border bg-theme-muted p-4 text-sm text-theme-text-primary">
+            <div className="text-xs text-theme-text-secondary">Recent</div>
             <div className="text-2xl font-semibold">{summary.runsLast7}</div>
-            <div className="text-xs text-slate-500">Runs last 7 days</div>
+            <div className="text-xs text-theme-text-tertiary">Runs last 7 days</div>
           </div>
         </div>
       )}
 
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Reports</p>
-            <h2 className="text-xl font-semibold text-gray-900">Operational, financial, and executive</h2>
-            <p className="mt-1 text-sm text-slate-500">Cross-module reporting with scheduling and exports.</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Reports</p>
+            <h2 className="text-xl font-semibold text-theme-text-primary">Operational, financial, and executive</h2>
+            <p className="mt-1 text-sm text-theme-text-tertiary">Cross-module reporting with scheduling and exports.</p>
           </div>
-          <button onClick={() => { fetchSummary(); loadReports(); }} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50" disabled={loading}>
+          <button onClick={() => { fetchSummary(); loadReports(); }} className="inline-flex items-center gap-2 rounded-full border border-theme-border px-3 py-2 text-sm text-theme-text-primary hover:bg-theme-muted" disabled={loading}>
             <RefreshCcw className="h-4 w-4" /> Refresh
           </button>
         </div>
@@ -168,24 +168,24 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
         <form className="mt-4 space-y-3" onSubmit={handleCreate}>
           <div className="grid gap-3 md:grid-cols-3">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Name</label>
-              <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Name</label>
+              <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Type</label>
-              <input value={form.reportType} onChange={(e) => setForm((p) => ({ ...p, reportType: e.target.value }))} className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="operational / financial / executive" />
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Type</label>
+              <input value={form.reportType} onChange={(e) => setForm((p) => ({ ...p, reportType: e.target.value }))} className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm" placeholder="operational / financial / executive" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Schedule (cron)</label>
-              <input value={form.schedule} onChange={(e) => setForm((p) => ({ ...p, schedule: e.target.value }))} className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="0 6 * * *" />
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Schedule (cron)</label>
+              <input value={form.schedule} onChange={(e) => setForm((p) => ({ ...p, schedule: e.target.value }))} className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm" placeholder="0 6 * * *" />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">Definition (JSON)</label>
-            <textarea value={form.definition} onChange={(e) => setForm((p) => ({ ...p, definition: e.target.value }))} className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-xs" rows={4} />
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">Definition (JSON)</label>
+            <textarea value={form.definition} onChange={(e) => setForm((p) => ({ ...p, definition: e.target.value }))} className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 font-mono text-xs" rows={4} />
           </div>
           <div className="flex gap-3">
-            <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-slate-800">
+            <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-full bg-theme-surface px-4 py-2 text-sm font-medium text-theme-text-primary shadow-sm hover:bg-theme-muted">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Create report
             </button>
             {error && <span className="text-sm text-rose-600">{error}</span>}
@@ -193,40 +193,40 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
         </form>
       </div>
 
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Report catalog</p>
-            <h3 className="text-lg font-semibold text-gray-900">Reports</h3>
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Report catalog</p>
+            <h3 className="text-lg font-semibold text-theme-text-primary">Reports</h3>
           </div>
         </div>
           {loading ? (
-          <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading reports…</div>
+          <div className="flex items-center gap-2 text-sm text-theme-text-tertiary"><Loader2 className="h-4 w-4 animate-spin" /> Loading reports…</div>
         ) : reports.length === 0 ? (
-          <div className="text-sm text-slate-500">No reports yet. Create one above.</div>
+          <div className="text-sm text-theme-text-tertiary">No reports yet. Create one above.</div>
         ) : (
           <div className="max-h-96 overflow-y-auto" onScroll={handleScroll} ref={listRef}>
             {reports.map((r, index) => (
               <div key={r.id} className="p-2">
-                <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                <div className="rounded-2xl border border-theme-border bg-theme-muted p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{r.name}</p>
-                      <p className="text-xs text-slate-500">{r.reportType}</p>
+                      <p className="text-sm font-semibold text-theme-text-primary">{r.name}</p>
+                      <p className="text-xs text-theme-text-tertiary">{r.reportType}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => runReport(r)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-theme-muted">
+                      <button onClick={() => runReport(r)} className="inline-flex items-center gap-2 rounded-full border border-theme-border px-3 py-1 text-xs text-theme-text-primary hover:bg-theme-muted">
                         <Play className="h-3 w-3" /> Run now
                       </button>
-                      <button onClick={() => loadJobs(r.id)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-theme-muted">
+                      <button onClick={() => loadJobs(r.id)} className="inline-flex items-center gap-2 rounded-full border border-theme-border px-3 py-1 text-xs text-theme-text-primary hover:bg-theme-muted">
                         History
                       </button>
                     </div>
                   </div>
                   <div className="mt-3 flex items-center justify-between">
-                    <div className="text-xs text-slate-600">{r.schedule || "On-demand"}</div>
+                    <div className="text-xs text-theme-text-secondary">{r.schedule || "On-demand"}</div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => { setSelectedDefinition(r.definition); setDefOpen(true); }} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-theme-muted">View definition</button>
+                      <button onClick={() => { setSelectedDefinition(r.definition); setDefOpen(true); }} className="inline-flex items-center gap-2 rounded-full border border-theme-border px-3 py-1 text-xs text-theme-text-primary hover:bg-theme-muted">View definition</button>
                     </div>
                   </div>
                 </div>
@@ -237,7 +237,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
                 <button
                   onClick={() => { if (nextCursor) loadReports(nextCursor); else loadReports(null); }}
                   disabled={loading}
-                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-theme-muted"
+                  className="inline-flex items-center gap-2 rounded-full border border-theme-border px-4 py-2 text-sm text-theme-text-primary hover:bg-theme-muted"
                 >
                   Load more
                 </button>

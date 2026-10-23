@@ -404,11 +404,11 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
   };
 
   const SectionShell = ({ title, description, actions, children }: { title: string; description?: string; actions?: ReactNode; children: ReactNode }) => (
-    <div className="space-y-6 rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+    <div className="space-y-6 rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
-          {description && <p className="text-sm text-slate-500">{description}</p>}
+          <h3 className="text-xl font-semibold text-theme-text-primary">{title}</h3>
+          {description && <p className="text-sm text-theme-text-tertiary">{description}</p>}
         </div>
         {actions}
       </div>
@@ -420,9 +420,9 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {overview?.metrics?.map((metric) => (
-          <div key={metric.id} className="rounded-3xl border border-slate-100 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{metric.label}</p>
-            <p className="mt-2 text-2xl font-semibold text-gray-900">{metric.value}</p>
+          <div key={metric.id} className="rounded-3xl border border-theme-border bg-theme-muted p-4">
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">{metric.label}</p>
+            <p className="mt-2 text-2xl font-semibold text-theme-text-primary">{metric.value}</p>
             {metric.delta !== undefined && (
               <p className={`text-xs font-medium ${metric.deltaDirection === "up" ? "text-emerald-600" : "text-rose-600"}`}>
                 {metric.deltaDirection === "up" ? "▲" : "▼"} {metric.delta}% vs prior period
@@ -435,21 +435,21 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
       <SectionShell title="Revenue vs target" description="RevOps consumes CRM + Finance data in read-only mode to avoid record conflicts.">
         <div className="grid gap-6 lg:grid-cols-2">
           <div>
-            <p className="text-sm text-slate-500">Current period ({overview?.revenueVsTarget.period || "TBD"})</p>
-            <p className="mt-3 text-3xl font-semibold text-gray-900">
+            <p className="text-sm text-theme-text-tertiary">Current period ({overview?.revenueVsTarget.period || "TBD"})</p>
+            <p className="mt-3 text-3xl font-semibold text-theme-text-primary">
               {overview ? currencyFormatter.format(overview.revenueVsTarget.actual) : "--"}
-              <span className="text-base font-normal text-slate-500"> / {overview ? currencyFormatter.format(overview.revenueVsTarget.target) : "--"}</span>
+              <span className="text-base font-normal text-theme-text-tertiary"> / {overview ? currencyFormatter.format(overview.revenueVsTarget.target) : "--"}</span>
             </p>
-            <div className="mt-4 h-3 w-full rounded-full bg-slate-100">
+            <div className="mt-4 h-3 w-full rounded-full bg-theme-muted">
               <div
                 className="h-3 rounded-full bg-indigo-500"
                 style={{ width: `${Math.min(100, overview ? (overview.revenueVsTarget.actual / Math.max(overview.revenueVsTarget.target, 1)) * 100 : 0)}%` }}
               />
             </div>
           </div>
-          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-            <h4 className="text-sm font-semibold text-gray-900">Executive highlights</h4>
-            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-600">
+          <div className="rounded-2xl border border-theme-border bg-theme-muted p-4">
+            <h4 className="text-sm font-semibold text-theme-text-primary">Executive highlights</h4>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-theme-text-secondary">
               {overview?.executiveHighlights && overview.executiveHighlights.length > 0 ? (
                 overview.executiveHighlights.map((note) => <li key={note}>{note}</li>)
               ) : (
@@ -464,7 +464,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <tr className="text-left text-xs uppercase tracking-wide text-theme-text-tertiary">
                 <th className="pb-2">Campaign</th>
                 <th className="pb-2">Channel</th>
                 <th className="pb-2">Region</th>
@@ -474,24 +474,24 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
                 <th className="pb-2 text-right">ROI</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-theme-border">
               {campaigns.length > 0 ? (
                 campaigns.slice(0, 6).map((campaign) => (
                   <tr key={campaign.id}>
-                    <td className="py-3 font-medium text-gray-900">{campaign.name}</td>
-                    <td className="py-3 text-slate-500">{campaign.channel}</td>
-                    <td className="py-3 text-slate-500">{campaign.region}</td>
+                    <td className="py-3 font-medium text-theme-text-primary">{campaign.name}</td>
+                    <td className="py-3 text-theme-text-tertiary">{campaign.channel}</td>
+                    <td className="py-3 text-theme-text-tertiary">{campaign.region}</td>
                     <td className="py-3">
-                      <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">{campaign.status?.replace(/_/g, " ")}</span>
+                      <span className="rounded-full bg-theme-muted px-2 py-1 text-xs font-medium text-theme-text-primary">{campaign.status?.replace(/_/g, " ")}</span>
                     </td>
-                    <td className="py-3 text-right text-slate-500">{currencyFormatter.format(campaign.actualSpend)}</td>
-                    <td className="py-3 text-right text-slate-500">{currencyFormatter.format(campaign.revenueAttributed)}</td>
-                    <td className="py-3 text-right font-semibold text-gray-900">{campaign.roi.toFixed(2)}x</td>
+                    <td className="py-3 text-right text-theme-text-tertiary">{currencyFormatter.format(campaign.actualSpend)}</td>
+                    <td className="py-3 text-right text-theme-text-tertiary">{currencyFormatter.format(campaign.revenueAttributed)}</td>
+                    <td className="py-3 text-right font-semibold text-theme-text-primary">{campaign.roi.toFixed(2)}x</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="py-6 text-center text-sm text-slate-500">
+                  <td colSpan={7} className="py-6 text-center text-sm text-theme-text-tertiary">
                     Add a campaign to see ROI insights.
                   </td>
                 </tr>
@@ -516,7 +516,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
               setCampaignForm(DEFAULT_CAMPAIGN_FORM());
               setCampaignModalOpen(true);
             }}
-            className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+            className="inline-flex items-center gap-2 rounded-full bg-theme-surface px-4 py-2 text-sm font-semibold text-theme-text-primary"
           >
             <PlusIcon /> New campaign
           </button>
@@ -527,7 +527,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
               setLeadSourceForm(DEFAULT_LEAD_SOURCE_FORM());
               setLeadSourceModalOpen(true);
             }}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600"
+            className="inline-flex items-center gap-2 rounded-full border border-theme-border px-4 py-2 text-sm text-theme-text-secondary"
           >
             Register source
           </button>
@@ -537,7 +537,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr className="text-left text-xs uppercase tracking-wide text-theme-text-tertiary">
               <th className="pb-2">Campaign</th>
               <th className="pb-2">Region</th>
               <th className="pb-2">Channel</th>
@@ -547,27 +547,27 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
               <th className="pb-2 text-right">ROI</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-theme-border">
             {campaigns.length > 0 ? (
               campaigns.map((campaign) => (
                 <tr key={campaign.id}>
                   <td className="py-3">
-                    <p className="font-semibold text-gray-900">{campaign.name}</p>
-                    <p className="text-xs text-slate-500">{campaign.campaignCode}</p>
+                    <p className="font-semibold text-theme-text-primary">{campaign.name}</p>
+                    <p className="text-xs text-theme-text-tertiary">{campaign.campaignCode}</p>
                   </td>
-                  <td className="py-3 text-slate-500">{campaign.branch ? `${campaign.region} • ${campaign.branch}` : campaign.region}</td>
-                  <td className="py-3 text-slate-500">{campaign.channel}</td>
-                  <td className="py-3 text-slate-500">{currencyFormatter.format(campaign.budget)}</td>
-                  <td className="py-3 text-slate-500">{currencyFormatter.format(campaign.actualSpend)}</td>
+                  <td className="py-3 text-theme-text-tertiary">{campaign.branch ? `${campaign.region} • ${campaign.branch}` : campaign.region}</td>
+                  <td className="py-3 text-theme-text-tertiary">{campaign.channel}</td>
+                  <td className="py-3 text-theme-text-tertiary">{currencyFormatter.format(campaign.budget)}</td>
+                  <td className="py-3 text-theme-text-tertiary">{currencyFormatter.format(campaign.actualSpend)}</td>
                   <td className="py-3">
-                    <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">{campaign.status?.replace(/_/g, " ")}</span>
+                    <span className="rounded-full bg-theme-muted px-2 py-1 text-xs font-medium text-theme-text-primary">{campaign.status?.replace(/_/g, " ")}</span>
                   </td>
-                  <td className="py-3 text-right font-semibold text-gray-900">{campaign.roi.toFixed(2)}x</td>
+                  <td className="py-3 text-right font-semibold text-theme-text-primary">{campaign.roi.toFixed(2)}x</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="py-6 text-center text-sm text-slate-500">
+                <td colSpan={7} className="py-6 text-center text-sm text-theme-text-tertiary">
                   No campaigns yet. Create one to unlock attribution and spend controls.
                 </td>
               </tr>
@@ -590,7 +590,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
             setLeadSourceForm(DEFAULT_LEAD_SOURCE_FORM(campaigns[0]?.id));
             setLeadSourceModalOpen(true);
           }}
-          className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+          className="inline-flex items-center gap-2 rounded-full bg-theme-surface px-4 py-2 text-sm font-semibold text-theme-text-primary"
         >
           <PlusIcon /> New source
         </button>
@@ -599,7 +599,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr className="text-left text-xs uppercase tracking-wide text-theme-text-tertiary">
               <th className="pb-2">Source</th>
               <th className="pb-2">Channel</th>
               <th className="pb-2">Region</th>
@@ -608,17 +608,17 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
               <th className="pb-2">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-theme-border">
             {leadSources.length > 0 ? (
               leadSources.map((source) => (
                 <tr key={source.id}>
-                  <td className="py-3 font-semibold text-gray-900">{source.name}</td>
-                  <td className="py-3 text-slate-500">{source.channel}</td>
-                  <td className="py-3 text-slate-500">{source.branch ? `${source.region} • ${source.branch}` : source.region}</td>
-                  <td className="py-3 text-slate-500">{campaigns.find((c) => c.id === source.campaignId)?.name ?? "Not linked"}</td>
-                  <td className="py-3 text-slate-500">{source.costCenter}</td>
+                  <td className="py-3 font-semibold text-theme-text-primary">{source.name}</td>
+                  <td className="py-3 text-theme-text-tertiary">{source.channel}</td>
+                  <td className="py-3 text-theme-text-tertiary">{source.branch ? `${source.region} • ${source.branch}` : source.region}</td>
+                  <td className="py-3 text-theme-text-tertiary">{campaigns.find((c) => c.id === source.campaignId)?.name ?? "Not linked"}</td>
+                  <td className="py-3 text-theme-text-tertiary">{source.costCenter}</td>
                   <td className="py-3">
-                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${source.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-600"}`}>
+                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${source.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-theme-muted text-theme-text-secondary"}`}>
                       {source.status}
                     </span>
                   </td>
@@ -626,7 +626,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="py-6 text-center text-sm text-slate-500">
+                <td colSpan={6} className="py-6 text-center text-sm text-theme-text-tertiary">
                   Register a source to unify attribution naming.
                 </td>
               </tr>
@@ -645,7 +645,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
         <select
           value={attributionModel}
           onChange={(event) => setAttributionModel(event.target.value as AttributionModel)}
-          className="bg-white rounded-full border border-slate-200 px-3 py-2 text-sm text-black"
+          className="bg-theme-surface rounded-full border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
         >
           {MODEL_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
@@ -665,47 +665,47 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
           </div>
           <div className="grid gap-6 lg:grid-cols-2">
             <div>
-              <h4 className="text-sm font-semibold text-gray-900">By campaign</h4>
+              <h4 className="text-sm font-semibold text-theme-text-primary">By campaign</h4>
               <ul className="mt-3 space-y-3 text-sm">
                 {attribution.campaigns.length > 0 ? (
                   attribution.campaigns.map((campaign) => (
-                    <li key={campaign.campaignId} className="rounded-2xl border border-slate-100 px-4 py-3">
+                    <li key={campaign.campaignId} className="rounded-2xl border border-theme-border px-4 py-3">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-semibold text-gray-900">{campaign.name}</p>
-                          <p className="text-xs text-slate-500">{campaign.influencedDeals} influenced deals</p>
+                          <p className="font-semibold text-theme-text-primary">{campaign.name}</p>
+                          <p className="text-xs text-theme-text-tertiary">{campaign.influencedDeals} influenced deals</p>
                         </div>
-                        <p className="font-semibold text-gray-900">{campaign.roi.toFixed(2)}x</p>
+                        <p className="font-semibold text-theme-text-primary">{campaign.roi.toFixed(2)}x</p>
                       </div>
                     </li>
                   ))
                 ) : (
-                  <p className="text-sm text-slate-500">No attribution data for this model yet.</p>
+                  <p className="text-sm text-theme-text-tertiary">No attribution data for this model yet.</p>
                 )}
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-gray-900">By channel</h4>
+              <h4 className="text-sm font-semibold text-theme-text-primary">By channel</h4>
               <ul className="mt-3 space-y-3 text-sm">
                 {attribution.channels.length > 0 ? (
                   attribution.channels.map((channel) => (
-                    <li key={channel.channel} className="flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-3">
+                    <li key={channel.channel} className="flex items-center justify-between rounded-2xl border border-theme-border px-4 py-3">
                       <div>
-                        <p className="font-semibold text-gray-900">{channel.channel}</p>
-                        <p className="text-xs text-slate-500">CPA {currencyFormatter.format(channel.costPerAcquisition)}</p>
+                        <p className="font-semibold text-theme-text-primary">{channel.channel}</p>
+                        <p className="text-xs text-theme-text-tertiary">CPA {currencyFormatter.format(channel.costPerAcquisition)}</p>
                       </div>
-                      <p className="font-semibold text-gray-900">{channel.roi.toFixed(2)}x</p>
+                      <p className="font-semibold text-theme-text-primary">{channel.roi.toFixed(2)}x</p>
                     </li>
                   ))
                 ) : (
-                  <p className="text-sm text-slate-500">Awaiting channel data.</p>
+                  <p className="text-sm text-theme-text-tertiary">Awaiting channel data.</p>
                 )}
               </ul>
             </div>
           </div>
         </div>
       ) : (
-        <p className="text-sm text-slate-500">Attribution summary unavailable. Confirm data syncs for CRM + Finance.</p>
+        <p className="text-sm text-theme-text-tertiary">Attribution summary unavailable. Confirm data syncs for CRM + Finance.</p>
       )}
     </SectionShell>
   );
@@ -721,16 +721,16 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
         <StatPill label="Avg deal size" value={currencyFormatter.format(salesSnapshot?.avgDealSize ?? 0)} />
         <StatPill label="Pipeline coverage" value={`${salesSnapshot?.pipelineCoverage ?? 0}x`} />
       </div>
-      <form onSubmit={handleTargetSubmit} className="mt-6 grid gap-3 rounded-xl border border-slate-200 p-4 md:grid-cols-6">
+      <form onSubmit={handleTargetSubmit} className="mt-6 grid gap-3 rounded-xl border border-theme-border p-4 md:grid-cols-6">
         <input
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          className="rounded-lg border border-theme-border px-3 py-2 text-sm"
           placeholder="Owner name"
           value={targetForm.ownerName}
           onChange={(e) => setTargetForm((f) => ({ ...f, ownerName: e.target.value }))}
           required
         />
         <select
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          className="rounded-lg border border-theme-border px-3 py-2 text-sm"
           value={targetForm.ownerType}
           onChange={(e) => setTargetForm((f) => ({ ...f, ownerType: e.target.value as "team" | "rep" }))}
         >
@@ -738,14 +738,14 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
           <option value="rep">Rep</option>
         </select>
         <input
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          className="rounded-lg border border-theme-border px-3 py-2 text-sm"
           placeholder="Period (2026-10 or 2026-Q4)"
           value={targetForm.period}
           onChange={(e) => setTargetForm((f) => ({ ...f, period: e.target.value }))}
           required
         />
         <select
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          className="rounded-lg border border-theme-border px-3 py-2 text-sm"
           value={targetForm.periodType}
           onChange={(e) => setTargetForm((f) => ({ ...f, periodType: e.target.value as "monthly" | "quarterly" }))}
         >
@@ -753,7 +753,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
           <option value="quarterly">Quarterly</option>
         </select>
         <input
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          className="rounded-lg border border-theme-border px-3 py-2 text-sm"
           type="number"
           min="0"
           placeholder="Target amount"
@@ -761,14 +761,14 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
           onChange={(e) => setTargetForm((f) => ({ ...f, targetAmount: e.target.value }))}
           required
         />
-        <button type="submit" className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
+        <button type="submit" className="rounded-lg bg-theme-surface px-4 py-2 text-sm font-semibold text-theme-text-primary hover:bg-theme-muted">
           Add target
         </button>
       </form>
       <div className="overflow-x-auto">
         <table className="mt-6 w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr className="text-left text-xs uppercase tracking-wide text-theme-text-tertiary">
               <th className="pb-2">Owner</th>
               <th className="pb-2">Period</th>
               <th className="pb-2">Target</th>
@@ -776,22 +776,22 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
               <th className="pb-2">Attainment</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-theme-border">
             {salesTargets.length > 0 ? (
               salesTargets.map((target) => (
                 <tr key={target.id}>
-                  <td className="py-3 font-semibold text-gray-900">{target.ownerName}</td>
-                  <td className="py-3 text-slate-500">{target.period}</td>
-                  <td className="py-3 text-slate-500">{currencyFormatter.format(target.targetAmount)}</td>
-                  <td className="py-3 text-slate-500">{currencyFormatter.format(target.achievedAmount)}</td>
-                  <td className="py-3 font-semibold text-gray-900">
+                  <td className="py-3 font-semibold text-theme-text-primary">{target.ownerName}</td>
+                  <td className="py-3 text-theme-text-tertiary">{target.period}</td>
+                  <td className="py-3 text-theme-text-tertiary">{currencyFormatter.format(target.targetAmount)}</td>
+                  <td className="py-3 text-theme-text-tertiary">{currencyFormatter.format(target.achievedAmount)}</td>
+                  <td className="py-3 font-semibold text-theme-text-primary">
                     {Math.round((target.achievedAmount / Math.max(target.targetAmount, 1)) * 100)}%
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="py-6 text-center text-sm text-slate-500">
+                <td colSpan={5} className="py-6 text-center text-sm text-theme-text-tertiary">
                   Targets will appear once configured in RevOps.
                 </td>
               </tr>
@@ -814,7 +814,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
             setAssetForm(DEFAULT_ASSET_FORM());
             setAssetModalOpen(true);
           }}
-          className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+          className="inline-flex items-center gap-2 rounded-full bg-theme-surface px-4 py-2 text-sm font-semibold text-theme-text-primary"
         >
           <PlusIcon /> Publish asset
         </button>
@@ -823,16 +823,16 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
       <div className="grid gap-4 md:grid-cols-2">
         {assets.length > 0 ? (
           assets.map((asset) => (
-            <div key={asset.id} className="rounded-2xl border border-slate-100 p-4">
+            <div key={asset.id} className="rounded-2xl border border-theme-border p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm uppercase tracking-[0.3em] text-slate-400">{asset.assetType}</p>
-                  <h4 className="mt-1 text-lg font-semibold text-gray-900">{asset.title}</h4>
+                  <p className="text-sm uppercase tracking-[0.3em] text-theme-text-secondary">{asset.assetType}</p>
+                  <h4 className="mt-1 text-lg font-semibold text-theme-text-primary">{asset.title}</h4>
                 </div>
-                <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">{asset.audience}</span>
+                <span className="rounded-full bg-theme-muted px-2 py-1 text-xs font-medium text-theme-text-primary">{asset.audience}</span>
               </div>
-              <p className="mt-3 text-sm text-slate-500">{asset.summary}</p>
-              <div className="mt-4 flex items-center gap-4 text-xs text-slate-500">
+              <p className="mt-3 text-sm text-theme-text-tertiary">{asset.summary}</p>
+              <div className="mt-4 flex items-center gap-4 text-xs text-theme-text-tertiary">
                 <span>{asset.version}</span>
                 <span>{asset.usageMetrics.downloads} downloads</span>
                 <span>{asset.usageMetrics.crmLinks} CRM links</span>
@@ -840,7 +840,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
             </div>
           ))
         ) : (
-          <p className="text-sm text-slate-500">No assets yet.</p>
+          <p className="text-sm text-theme-text-tertiary">No assets yet.</p>
         )}
       </div>
     </SectionShell>
@@ -850,21 +850,21 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
     <SectionShell title="Forecast & intelligence" description="RevOps blends CRM pipeline, historical win rates, and finance realizations.">
       {forecast ? (
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-2xl border border-slate-100 p-6">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{forecast.periodStart.slice(0, 10)} → {forecast.periodEnd.slice(0, 10)}</p>
-            <h4 className="mt-2 text-3xl font-semibold text-gray-900">{currencyFormatter.format(forecast.forecastLikely)}</h4>
-            <p className="text-sm text-slate-500">Low {currencyFormatter.format(forecast.forecastLow)} • High {currencyFormatter.format(forecast.forecastHigh)}</p>
-            <p className="mt-3 text-sm text-slate-500">Confidence {Math.round(forecast.confidence * 100)}%</p>
+          <div className="rounded-2xl border border-theme-border p-6">
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">{forecast.periodStart.slice(0, 10)} → {forecast.periodEnd.slice(0, 10)}</p>
+            <h4 className="mt-2 text-3xl font-semibold text-theme-text-primary">{currencyFormatter.format(forecast.forecastLikely)}</h4>
+            <p className="text-sm text-theme-text-tertiary">Low {currencyFormatter.format(forecast.forecastLow)} • High {currencyFormatter.format(forecast.forecastHigh)}</p>
+            <p className="mt-3 text-sm text-theme-text-tertiary">Confidence {Math.round(forecast.confidence * 100)}%</p>
           </div>
-          <div className="rounded-2xl border border-slate-100 p-6">
-            <h4 className="text-sm font-semibold text-gray-900">Risk alerts</h4>
+          <div className="rounded-2xl border border-theme-border p-6">
+            <h4 className="text-sm font-semibold text-theme-text-primary">Risk alerts</h4>
             <ul className="mt-3 space-y-3 text-sm">
               {forecast.riskAlerts.map((alert) => (
                 <li key={alert.id} className="flex items-start gap-3">
-                  <AlertTriangle className={`mt-0.5 h-4 w-4 ${alert.severity === "high" ? "text-rose-600" : alert.severity === "medium" ? "text-amber-500" : "text-slate-400"}`} />
+                  <AlertTriangle className={`mt-0.5 h-4 w-4 ${alert.severity === "high" ? "text-rose-600" : alert.severity === "medium" ? "text-amber-500" : "text-theme-text-secondary"}`} />
                   <div>
-                    <p className="font-semibold text-gray-900">{alert.label}</p>
-                    <p className="text-xs text-slate-500">{alert.detail ?? "Monitor closely"}</p>
+                    <p className="font-semibold text-theme-text-primary">{alert.label}</p>
+                    <p className="text-xs text-theme-text-tertiary">{alert.detail ?? "Monitor closely"}</p>
                   </div>
                 </li>
               ))}
@@ -872,7 +872,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
           </div>
         </div>
       ) : (
-        <p className="text-sm text-slate-500">Forecast data unavailable.</p>
+        <p className="text-sm text-theme-text-tertiary">Forecast data unavailable.</p>
       )}
     </SectionShell>
   );
@@ -945,22 +945,22 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
     <div className="space-y-8">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Revenue intelligence</p>
-          <h2 className="text-2xl font-semibold text-gray-900">Revenue Operations (RevOps)</h2>
-          <p className="text-sm text-slate-500">Align demand, spend, and revenue without duplicating CRM data.</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Revenue intelligence</p>
+          <h2 className="text-2xl font-semibold text-theme-text-primary">Revenue Operations (RevOps)</h2>
+          <p className="text-sm text-theme-text-tertiary">Align demand, spend, and revenue without duplicating CRM data.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleRefresh}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-theme-muted px-4 py-2 text-sm text-slate-600"
+            className="inline-flex items-center gap-2 rounded-full border border-theme-border bg-theme-muted px-4 py-2 text-sm text-theme-text-secondary"
           >
             <RefreshCcw className="h-4 w-4" /> Refresh data
           </button>
         </div>
       </div>
 
-      {loading && <div className="rounded-3xl border border-slate-100 bg-theme-muted p-4 text-sm text-slate-500">Syncing RevOps telemetry…</div>}
+      {loading && <div className="rounded-3xl border border-theme-border bg-theme-muted p-4 text-sm text-theme-text-tertiary">Syncing RevOps telemetry…</div>}
       {error && (
         <FormAlert
           type="error"
@@ -971,7 +971,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
       )}
 
       <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="rounded-3xl border border-slate-100 bg-theme-muted p-4">
+        <aside className="rounded-3xl border border-theme-border bg-theme-muted p-4">
           <nav className="space-y-1">
             {navItems.map((item) => (
               <button
@@ -979,7 +979,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
                 type="button"
                 onClick={() => setView(item.key as RevOpsView)}
                 className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold ${
-                  view === item.key ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"
+                  view === item.key ? "bg-theme-surface text-theme-text-primary" : "text-theme-text-secondary hover:bg-theme-muted"
                 }`}
               >
                 <item.icon className="h-4 w-4" />
@@ -1016,10 +1016,10 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
               />
             )}
             <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setCampaignModalOpen(false)} className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">
+              <button type="button" onClick={() => setCampaignModalOpen(false)} className="rounded-full border border-theme-border px-4 py-2 text-sm text-theme-text-secondary">
                 Cancel
               </button>
-              <button type="submit" className="rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-black">
+              <button type="submit" className="rounded-full bg-theme-muted px-4 py-2 text-sm font-semibold text-theme-text-primary">
                 Create campaign
               </button>
             </div>
@@ -1038,10 +1038,10 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
               <Input label="Subsidiary" value={leadSourceForm.subsidiary} onChange={(value) => setLeadSourceForm((prev) => ({ ...prev, subsidiary: value }))} />
               <Input label="Cost center" value={leadSourceForm.costCenter} onChange={(value) => setLeadSourceForm((prev) => ({ ...prev, costCenter: value }))} required />
             </div>
-            <label className="block text-sm font-medium text-gray-900">
+            <label className="block text-sm font-medium text-theme-text-primary">
               Campaign link
               <select
-                className="bg-white mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-black"
+                className="bg-theme-surface mt-1 w-full rounded-2xl border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
                 value={leadSourceForm.campaignId}
                 onChange={(event) => setLeadSourceForm((prev) => ({ ...prev, campaignId: event.target.value }))}
               >
@@ -1062,10 +1062,10 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
               />
             )}
             <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setLeadSourceModalOpen(false)} className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">
+              <button type="button" onClick={() => setLeadSourceModalOpen(false)} className="rounded-full border border-theme-border px-4 py-2 text-sm text-theme-text-secondary">
                 Cancel
               </button>
-              <button type="submit" className="rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-black">
+              <button type="submit" className="rounded-full bg-theme-muted px-4 py-2 text-sm font-semibold text-theme-text-primary">
                 Register
               </button>
             </div>
@@ -1096,10 +1096,10 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
               />
             )}
             <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setAssetModalOpen(false)} className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">
+              <button type="button" onClick={() => setAssetModalOpen(false)} className="rounded-full border border-theme-border px-4 py-2 text-sm text-theme-text-secondary">
                 Cancel
               </button>
-              <button type="submit" className="rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-black">
+              <button type="submit" className="rounded-full bg-theme-muted px-4 py-2 text-sm font-semibold text-theme-text-primary">
                 Publish asset
               </button>
             </div>
@@ -1111,26 +1111,26 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
 }
 
 const StatPill = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{label}</p>
-    <p className="mt-2 text-xl font-semibold text-gray-900">{value}</p>
+  <div className="rounded-2xl border border-theme-border bg-theme-muted p-4">
+    <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">{label}</p>
+    <p className="mt-2 text-xl font-semibold text-theme-text-primary">{value}</p>
   </div>
 );
 
 const InfoCard = ({ icon, title, detail }: { icon: ReactNode; title: string; detail: string }) => (
-  <div className="flex items-start gap-3 rounded-2xl border border-slate-100 p-4">
-    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-50 text-slate-600">{icon}</div>
+  <div className="flex items-start gap-3 rounded-2xl border border-theme-border p-4">
+    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-theme-muted text-theme-text-secondary">{icon}</div>
     <div>
-      <p className="font-semibold text-gray-900">{title}</p>
-      <p className="text-sm text-slate-500">{detail}</p>
+      <p className="font-semibold text-theme-text-primary">{title}</p>
+      <p className="text-sm text-theme-text-tertiary">{detail}</p>
     </div>
   </div>
 );
 
 const GuardrailCard = ({ title, bullets }: { title: string; bullets: string[] }) => (
-  <div className="rounded-2xl border border-slate-100 p-4">
-    <p className="text-sm font-semibold text-gray-900">{title}</p>
-    <ul className="mt-2 space-y-1 text-sm text-slate-500">
+  <div className="rounded-2xl border border-theme-border p-4">
+    <p className="text-sm font-semibold text-theme-text-primary">{title}</p>
+    <ul className="mt-2 space-y-1 text-sm text-theme-text-tertiary">
       {bullets.map((item) => (
         <li key={item} className="flex items-start gap-2">
           <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-500" />
@@ -1142,7 +1142,7 @@ const GuardrailCard = ({ title, bullets }: { title: string; bullets: string[] })
 );
 
 const Input = ({ label, value, onChange, type = "text", required, placeholder }: { label: string; value: string; onChange: (value: string) => void; type?: string; required?: boolean; placeholder?: string }) => (
-  <label className="block text-sm font-medium text-gray-900">
+  <label className="block text-sm font-medium text-theme-text-primary">
     {label}
     <input
       type={type}
@@ -1150,31 +1150,31 @@ const Input = ({ label, value, onChange, type = "text", required, placeholder }:
       required={required}
       placeholder={placeholder}
       onChange={(event) => onChange(event.target.value)}
-      className="bg-white mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-black"
+      className="bg-theme-surface mt-1 w-full rounded-2xl border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
     />
   </label>
 );
 
 const Textarea = ({ label, value, onChange, required }: { label: string; value: string; onChange: (value: string) => void; required?: boolean }) => (
-  <label className="block text-sm font-medium text-gray-900">
+  <label className="block text-sm font-medium text-theme-text-primary">
     {label}
     <textarea
       value={value}
       required={required}
       onChange={(event) => onChange(event.target.value)}
-      className="bg-white mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-black"
+      className="bg-theme-surface mt-1 w-full rounded-2xl border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
       rows={3}
     />
   </label>
 );
 
 const Select = ({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: ReadonlyArray<SelectOption> }) => (
-  <label className="block text-sm font-medium text-gray-900">
+  <label className="block text-sm font-medium text-theme-text-primary">
     {label}
     <select
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="bg-white mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-black"
+      className="bg-theme-surface mt-1 w-full rounded-2xl border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
     >
       {options.map((option) => {
         const optionValue = typeof option === "string" ? option : option.value;
@@ -1190,11 +1190,11 @@ const Select = ({ label, value, onChange, options }: { label: string; value: str
 );
 
 const Modal = ({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-    <div className="w-full max-w-3xl rounded-3xl bg-white p-6 shadow-2xl">
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay p-4">
+    <div className="w-full max-w-3xl rounded-3xl bg-theme-surface p-6 shadow-2xl">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
-        <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
+        <h3 className="text-xl font-semibold text-theme-text-primary">{title}</h3>
+        <button onClick={onClose} className="text-theme-text-tertiary hover:text-theme-text-primary">
           ×
         </button>
       </div>

@@ -18,17 +18,17 @@ export const BalanceSheet: React.FC<BalanceSheetProps> = ({
   equity = '$100,567'
 }) => {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Balance Sheet</h3>
+    <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+      <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Balance Sheet</h3>
       <div className="space-y-3">
         <div className="border-b pb-3">
-          <h4 className="font-medium text-gray-900 mb-2">Assets</h4>
+          <h4 className="font-medium text-theme-text-primary mb-2">Assets</h4>
           <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-600">Cash</span>
+            <span className="text-theme-text-secondary">Cash</span>
             <span>{assets}</span>
           </div>
           <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-600">Accounts Receivable</span>
+            <span className="text-theme-text-secondary">Accounts Receivable</span>
             <span>{accountsReceivable}</span>
           </div>
           <div className="flex justify-between font-semibold text-sm border-t pt-1">
@@ -37,9 +37,9 @@ export const BalanceSheet: React.FC<BalanceSheetProps> = ({
           </div>
         </div>
         <div>
-          <h4 className="font-medium text-gray-900 mb-2">Liabilities & Equity</h4>
+          <h4 className="font-medium text-theme-text-primary mb-2">Liabilities & Equity</h4>
           <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-600">Total Liabilities</span>
+            <span className="text-theme-text-secondary">Total Liabilities</span>
             <span>{liabilities}</span>
           </div>
           <div className="flex justify-between font-semibold text-sm border-t pt-1">

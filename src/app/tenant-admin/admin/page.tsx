@@ -115,7 +115,7 @@ export default function AdminPage() {
       case 'active': return 'bg-green-100 text-green-800';
       case 'inactive': return 'bg-red-100 text-red-800';
       case 'pending': return 'bg-amber-100 text-amber-800';
-      default: return 'bg-gray-100 text-gray-900';
+      default: return 'bg-theme-muted text-theme-text-primary';
     }
   };
 
@@ -124,7 +124,7 @@ export default function AdminPage() {
       case 'active': return <CheckCircle className="w-4 h-4 text-green-600" />;
       case 'inactive': return <AlertCircle className="w-4 h-4 text-red-600" />;
       case 'pending': return <AlertCircle className="w-4 h-4 text-amber-600" />;
-      default: return <AlertCircle className="w-4 h-4 text-gray-600" />;
+      default: return <AlertCircle className="w-4 h-4 text-theme-text-secondary" />;
     }
   };
 
@@ -172,16 +172,16 @@ export default function AdminPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#F8FAFC]">Admin</h1>
-          <p className="text-sm text-gray-600 mt-1">System administration and branch management</p>
+          <h1 className="text-2xl font-bold text-theme-text-primary">Admin</h1>
+          <p className="text-sm text-theme-text-secondary mt-1">System administration and branch management</p>
         </div>
         <div className="flex items-center gap-3">
-          <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent">
             <option>Last 30 Days</option>
             <option>Last Quarter</option>
             <option>Last Year</option>
           </select>
-          <button onClick={() => setShowAddBranch(true)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+          <button onClick={() => setShowAddBranch(true)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover">
             <Plus className="w-4 h-4" />
             Add Branch
           </button>
@@ -189,40 +189,40 @@ export default function AdminPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Branches</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{branches.length}</p>
-              <p className="text-xs text-blue-600 mt-2">↑ 2 new this month</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Total Branches</p>
+              <p className="text-3xl font-bold text-theme-text-primary mt-2">{branches.length}</p>
+              <p className="text-xs text-theme-accent mt-2">↑ 2 new this month</p>
             </div>
             <Building className="w-12 h-12 text-blue-100" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Branches</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Active Branches</p>
               <p className="text-3xl font-bold text-green-600 mt-2">{activeBranches}</p>
               <p className="text-xs text-green-600 mt-2">80% operational</p>
             </div>
             <CheckCircle className="w-12 h-12 text-green-100" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Employees</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Total Employees</p>
               <p className="text-3xl font-bold text-purple-600 mt-2">{totalEmployees.toLocaleString()}</p>
               <p className="text-xs text-purple-600 mt-2">↑ 8.3% growth</p>
             </div>
             <Users className="w-12 h-12 text-purple-100" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Total Revenue</p>
               <p className="text-3xl font-bold text-amber-600 mt-2">${(totalRevenue / 1000000).toFixed(1)}M</p>
               <p className="text-xs text-amber-600 mt-2">↑ 12.4% YoY</p>
             </div>
@@ -231,29 +231,29 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-theme-surface rounded-lg border border-theme-border overflow-hidden">
         <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Access</h3>
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Quick Access</h3>
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
             {tabs.map((tab) => (
               <Link
                 key={tab.id}
                 href={tab.href}
-                className="group block p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200 hover:from-gray-100 hover:to-gray-200 transition-all duration-200"
+                className="group block p-6 bg-gradient-to-br from-theme-muted to-theme-elevated rounded-lg border border-theme-border hover:from-theme-elevated hover:to-theme-muted transition-all duration-200"
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <tab.icon className="w-8 h-8 text-gray-600 group-hover:text-gray-700" />
+                  <tab.icon className="w-8 h-8 text-theme-text-secondary group-hover:text-theme-text-primary" />
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-gray-700">{tab.name}</h3>
+                    <h3 className="text-lg font-semibold text-theme-text-primary group-hover:text-theme-text-primary">{tab.name}</h3>
                     {tab.count !== undefined && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-900 group-hover:bg-gray-300">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-theme-muted text-theme-text-primary group-hover:bg-theme-elevated">
                         {tab.count}
                       </span>
                     )}
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 group-hover:text-gray-700">{tab.description}</p>
-                <div className="mt-4 flex items-center text-sm font-medium text-gray-900 group-hover:text-gray-700">
+                <p className="text-sm text-theme-text-secondary group-hover:text-theme-text-primary">{tab.description}</p>
+                <div className="mt-4 flex items-center text-sm font-medium text-theme-text-primary group-hover:text-theme-text-primary">
                   Access →
                 </div>
               </Link>
@@ -262,10 +262,10 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200">
+      <div className="bg-theme-surface rounded-lg border border-theme-border">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Branch Management</h3>
+            <h3 className="text-lg font-semibold text-theme-text-primary">Branch Management</h3>
             <div className="flex items-center gap-4">
               <div className="relative">
                 <input
@@ -273,14 +273,14 @@ export default function AdminPage() {
                   placeholder="Search branches..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="pl-10 pr-4 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 />
-                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-text-tertiary w-4 h-4" />
               </div>
               <select
                 value={selectedContinent}
                 onChange={(e) => setSelectedContinent(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
               >
                 <option value="all">All Continents</option>
                 {continents.map(continent => (
@@ -290,7 +290,7 @@ export default function AdminPage() {
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -302,32 +302,32 @@ export default function AdminPage() {
 
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-theme-muted border-b border-theme-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Branch</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employees</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manager</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Branch</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Location</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Employees</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Manager</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Revenue</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-theme-border">
                 {filteredBranches.map((branch) => (
-                  <tr key={branch.id} className="hover:bg-gray-50">
+                  <tr key={branch.id} className="hover:bg-theme-muted">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{branch.name}</p>
-                        <p className="text-xs text-gray-500">{branch.code}</p>
+                        <p className="text-sm font-medium text-theme-text-primary">{branch.name}</p>
+                        <p className="text-xs text-theme-text-secondary">{branch.code}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-gray-400" />
+                        <MapPin className="w-4 h-4 text-theme-text-tertiary" />
                         <div>
-                          <p className="text-sm text-gray-900">{branch.city}</p>
-                          <p className="text-xs text-gray-500">{branch.country}</p>
+                          <p className="text-sm text-theme-text-primary">{branch.city}</p>
+                          <p className="text-xs text-theme-text-secondary">{branch.country}</p>
                         </div>
                       </div>
                     </td>
@@ -339,22 +339,22 @@ export default function AdminPage() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-primary">
                       {branch.employees.toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-primary">
                       {branch.manager}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-primary">
                       {branch.currency} {(branch.revenue / 1000000).toFixed(1)}M
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                        <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-accent hover:text-blue-700">
                           <Eye className="w-3 h-3" />
                           View
                         </button>
-                        <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700">
+                        <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-text-secondary hover:text-theme-text-primary">
                           <Edit className="w-3 h-3" />
                           Edit
                         </button>
@@ -373,8 +373,8 @@ export default function AdminPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Geographic Distribution</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Geographic Distribution</h3>
           <div className="space-y-4">
             {continents.map(continent => {
               const continentBranches = branches.filter(b => b.continent === continent);
@@ -384,20 +384,20 @@ export default function AdminPage() {
               return (
                 <div key={continent} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Globe className="w-4 h-4 text-gray-400" />
+                    <Globe className="w-4 h-4 text-theme-text-tertiary" />
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{continent}</p>
-                      <p className="text-xs text-gray-500">{continentBranches.length} branches</p>
+                      <p className="text-sm font-medium text-theme-text-primary">{continent}</p>
+                      <p className="text-xs text-theme-text-secondary">{continentBranches.length} branches</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
+                    <div className="w-24 bg-theme-muted rounded-full h-2">
                       <div
                         className="bg-blue-500 h-2 rounded-full"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
-                    <span className="text-sm font-medium text-gray-900">{percentage.toFixed(1)}%</span>
+                    <span className="text-sm font-medium text-theme-text-primary">{percentage.toFixed(1)}%</span>
                   </div>
                 </div>
               );
@@ -405,30 +405,30 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Recent Activity</h3>
           <div className="space-y-4">
             {recentAudits.slice(0, 4).map((audit) => (
               <div key={audit.id} className="flex items-center gap-3">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                 <div className="flex-1">
-                  <p className="text-sm text-gray-900">{audit.action} on {audit.resource}</p>
-                  <p className="text-xs text-gray-500">{audit.user} • {audit.timestamp ? new Date(audit.timestamp).toLocaleString() : '—'}</p>
+                  <p className="text-sm text-theme-text-primary">{audit.action} on {audit.resource}</p>
+                  <p className="text-xs text-theme-text-secondary">{audit.user} • {audit.timestamp ? new Date(audit.timestamp).toLocaleString() : '—'}</p>
                 </div>
               </div>
             ))}
             {recentAudits.length === 0 && (
-              <p className="text-sm text-gray-600">No recent activity.</p>
+              <p className="text-sm text-theme-text-secondary">No recent activity.</p>
             )}
           </div>
         </div>
       </div>
       {showAddBranch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) setShowAddBranch(false); }}>
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowAddBranch(false); }}>
+          <div className="w-full max-w-md rounded-xl bg-theme-surface p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Add Branch</h2>
-              <button onClick={() => setShowAddBranch(false)} className="text-gray-400 hover:text-gray-600">
+              <h2 className="text-lg font-semibold text-theme-text-primary">Add Branch</h2>
+              <button onClick={() => setShowAddBranch(false)} className="text-theme-text-tertiary hover:text-theme-text-secondary">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -437,28 +437,28 @@ export default function AdminPage() {
             )}
             <form onSubmit={handleAddBranch} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Branch Name</label>
-                <input value={branchForm.name} onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="Branch name" required />
+                <label className="block text-sm font-medium text-theme-text-primary">Branch Name</label>
+                <input value={branchForm.name} onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary" placeholder="Branch name" required />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Branch Code</label>
-                <input value={branchForm.code} onChange={(e) => setBranchForm({ ...branchForm, code: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="e.g. NYC-01" />
+                <label className="block text-sm font-medium text-theme-text-primary">Branch Code</label>
+                <input value={branchForm.code} onChange={(e) => setBranchForm({ ...branchForm, code: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary" placeholder="e.g. NYC-01" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Manager</label>
-                <input value={branchForm.manager} onChange={(e) => setBranchForm({ ...branchForm, manager: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="Manager name" required />
+                <label className="block text-sm font-medium text-theme-text-primary">Manager</label>
+                <input value={branchForm.manager} onChange={(e) => setBranchForm({ ...branchForm, manager: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary" placeholder="Manager name" required />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">City</label>
-                <input value={branchForm.city} onChange={(e) => setBranchForm({ ...branchForm, city: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="City" />
+                <label className="block text-sm font-medium text-theme-text-primary">City</label>
+                <input value={branchForm.city} onChange={(e) => setBranchForm({ ...branchForm, city: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary" placeholder="City" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Country</label>
-                <input value={branchForm.country} onChange={(e) => setBranchForm({ ...branchForm, country: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="Country" />
+                <label className="block text-sm font-medium text-theme-text-primary">Country</label>
+                <input value={branchForm.country} onChange={(e) => setBranchForm({ ...branchForm, country: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary" placeholder="Country" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Continent</label>
-                <select value={branchForm.continent} onChange={(e) => setBranchForm({ ...branchForm, continent: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black">
+                <label className="block text-sm font-medium text-theme-text-primary">Continent</label>
+                <select value={branchForm.continent} onChange={(e) => setBranchForm({ ...branchForm, continent: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary">
                   <option value="">Select continent</option>
                   <option value="Africa">Africa</option>
                   <option value="Asia">Asia</option>
@@ -469,8 +469,8 @@ export default function AdminPage() {
                 </select>
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setShowAddBranch(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button type="submit" disabled={addBranchLoading} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{addBranchLoading ? 'Creating...' : 'Add Branch'}</button>
+                <button type="button" onClick={() => setShowAddBranch(false)} className="rounded-lg border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted">Cancel</button>
+                <button type="submit" disabled={addBranchLoading} className="rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-white hover:bg-theme-accent-hover disabled:opacity-50">{addBranchLoading ? 'Creating...' : 'Add Branch'}</button>
               </div>
             </form>
           </div>

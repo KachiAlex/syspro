@@ -20,7 +20,7 @@ export function FormAlert({ type, title, message, onClose, dismissible = true }:
     error: "text-rose-600",
     success: "text-emerald-600",
     warning: "text-amber-600",
-    info: "text-blue-600",
+    info: "text-theme-accent",
   };
 
   return (

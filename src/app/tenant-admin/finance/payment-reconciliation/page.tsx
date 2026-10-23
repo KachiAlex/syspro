@@ -129,7 +129,7 @@ export default function PaymentReconciliationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-theme-muted p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {alert && (
           <div className={`p-4 rounded-lg border ${alert.type === "success" ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800"}`}>
@@ -142,24 +142,24 @@ export default function PaymentReconciliationPage() {
 
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-black">Payment Reconciliation</h1>
-            <p className="text-black mt-1">
+            <h1 className="text-3xl font-bold text-theme-text-primary">Payment Reconciliation</h1>
+            <p className="text-theme-text-primary mt-1">
               Match unallocated {partyType === "customer" ? "customer payments" : "vendor payments"} against open {partyType === "customer" ? "invoices" : "bills"}
             </p>
           </div>
-          <button onClick={load} disabled={loading} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-900">
+          <button onClick={load} disabled={loading} className="flex items-center gap-2 px-4 py-2 bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted text-theme-text-primary">
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Refresh
           </button>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-wrap items-center gap-4">
-          <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+        <div className="bg-theme-surface rounded-lg shadow-sm border border-theme-border p-4 flex flex-wrap items-center gap-4">
+          <div className="flex rounded-lg border border-theme-border overflow-hidden">
             {(["customer", "supplier"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => { setPartyType(t); setPartyId(""); setSelectedPayment(null); setAllocations({}); }}
-                className={`px-5 py-2 text-sm font-medium ${partyType === t ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+                className={`px-5 py-2 text-sm font-medium ${partyType === t ? "bg-theme-accent text-white" : "bg-theme-surface text-theme-text-primary hover:bg-theme-muted"}`}
               >
                 {t === "customer" ? "Receivables" : "Payables"}
               </button>
@@ -168,7 +168,7 @@ export default function PaymentReconciliationPage() {
           <select
             value={partyId}
             onChange={(e) => { setPartyId(e.target.value); setSelectedPayment(null); setAllocations({}); }}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-56"
+            className="px-4 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent min-w-56"
           >
             <option value="">All {partyType === "customer" ? "customers" : "suppliers"}</option>
             {parties.map((p) => (
@@ -179,28 +179,28 @@ export default function PaymentReconciliationPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Unallocated payments */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-bold text-black mb-4">
-              Unallocated Payments <span className="text-sm font-normal text-gray-500">({payments.length})</span>
+          <div className="bg-theme-surface rounded-lg shadow-sm border border-theme-border p-6">
+            <h2 className="text-lg font-bold text-theme-text-primary mb-4">
+              Unallocated Payments <span className="text-sm font-normal text-theme-text-secondary">({payments.length})</span>
             </h2>
             {payments.length === 0 ? (
-              <p className="text-sm text-gray-500 py-6 text-center">No unallocated payments — everything is fully applied.</p>
+              <p className="text-sm text-theme-text-secondary py-6 text-center">No unallocated payments — everything is fully applied.</p>
             ) : (
-              <div className="divide-y divide-gray-100 max-h-[480px] overflow-y-auto">
+              <div className="divide-y divide-theme-border max-h-[480px] overflow-y-auto">
                 {payments.map((p) => (
                   <button
                     key={p.id}
                     onClick={() => { setSelectedPayment(p); setAllocations({}); }}
-                    className={`w-full text-left py-3 px-3 rounded-lg transition ${selectedPayment?.id === p.id ? "bg-blue-50 ring-1 ring-blue-300" : "hover:bg-gray-50"}`}
+                    className={`w-full text-left py-3 px-3 rounded-lg transition ${selectedPayment?.id === p.id ? "bg-blue-50 ring-1 ring-blue-300" : "hover:bg-theme-muted"}`}
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">{p.reference}</p>
-                        <p className="text-xs text-gray-500">{p.date} · {p.party ?? "Unassigned"} · {p.method ?? ""}</p>
+                        <p className="font-medium text-theme-text-primary">{p.reference}</p>
+                        <p className="text-xs text-theme-text-secondary">{p.date} · {p.party ?? "Unassigned"} · {p.method ?? ""}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-amber-600">{fmt(p.unallocated)}</p>
-                        <p className="text-xs text-gray-400">of {fmt(p.amount)}</p>
+                        <p className="text-xs text-theme-text-tertiary">of {fmt(p.amount)}</p>
                       </div>
                     </div>
                   </button>
@@ -210,21 +210,21 @@ export default function PaymentReconciliationPage() {
           </div>
 
           {/* Open documents */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-bold text-black mb-4">
-              Open {partyType === "customer" ? "Invoices" : "Bills"} <span className="text-sm font-normal text-gray-500">({documents.length})</span>
+          <div className="bg-theme-surface rounded-lg shadow-sm border border-theme-border p-6">
+            <h2 className="text-lg font-bold text-theme-text-primary mb-4">
+              Open {partyType === "customer" ? "Invoices" : "Bills"} <span className="text-sm font-normal text-theme-text-secondary">({documents.length})</span>
             </h2>
             {!selectedPayment ? (
-              <p className="text-sm text-gray-500 py-6 text-center">Select a payment on the left to allocate it against open documents.</p>
+              <p className="text-sm text-theme-text-secondary py-6 text-center">Select a payment on the left to allocate it against open documents.</p>
             ) : documents.length === 0 ? (
-              <p className="text-sm text-gray-500 py-6 text-center">No open {partyType === "customer" ? "invoices" : "bills"} to reconcile.</p>
+              <p className="text-sm text-theme-text-secondary py-6 text-center">No open {partyType === "customer" ? "invoices" : "bills"} to reconcile.</p>
             ) : (
-              <div className="divide-y divide-gray-100 max-h-[480px] overflow-y-auto">
+              <div className="divide-y divide-theme-border max-h-[480px] overflow-y-auto">
                 {documents.map((d) => (
                   <div key={d.id} className="py-3 px-3 flex items-center gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900">{d.number}</p>
-                      <p className="text-xs text-gray-500">{d.date} · {d.party} · due {fmt(d.balanceDue)}</p>
+                      <p className="font-medium text-theme-text-primary">{d.number}</p>
+                      <p className="text-xs text-theme-text-secondary">{d.date} · {d.party} · due {fmt(d.balanceDue)}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <input
@@ -234,11 +234,11 @@ export default function PaymentReconciliationPage() {
                         placeholder="0.00"
                         value={allocations[d.id] ?? ""}
                         onChange={(e) => setAllocations((prev) => ({ ...prev, [d.id]: e.target.value }))}
-                        className="w-28 px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-28 px-3 py-1.5 border border-theme-border rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-theme-accent"
                       />
                       <button
                         onClick={() => setAllocations((prev) => ({ ...prev, [d.id]: Math.min(d.balanceDue, remaining + (parseFloat(prev[d.id]) || 0)).toFixed(2) }))}
-                        className="text-xs text-blue-600 hover:underline whitespace-nowrap"
+                        className="text-xs text-theme-accent hover:underline whitespace-nowrap"
                       >
                         Full
                       </button>
@@ -252,20 +252,20 @@ export default function PaymentReconciliationPage() {
 
         {/* Allocation bar */}
         {selectedPayment && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-wrap items-center justify-between gap-4 sticky bottom-4">
-            <div className="text-sm text-gray-700">
+          <div className="bg-theme-surface rounded-lg shadow-sm border border-theme-border p-4 flex flex-wrap items-center justify-between gap-4 sticky bottom-4">
+            <div className="text-sm text-theme-text-primary">
               <span className="font-medium">{selectedPayment.reference}</span>
-              <ArrowRight className="inline h-4 w-4 mx-2 text-gray-400" />
+              <ArrowRight className="inline h-4 w-4 mx-2 text-theme-text-tertiary" />
               allocating <span className="font-semibold">{fmt(allocatedTotal)}</span> of{" "}
               <span className="font-semibold">{fmt(selectedPayment.unallocated)}</span>
-              <span className={`ml-3 ${remaining < -0.009 ? "text-red-600 font-medium" : "text-gray-500"}`}>
+              <span className={`ml-3 ${remaining < -0.009 ? "text-red-600 font-medium" : "text-theme-text-secondary"}`}>
                 ({fmt(remaining)} remaining)
               </span>
             </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => { setSelectedPayment(null); setAllocations({}); }}
-                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg"
+                className="px-4 py-2 text-sm text-theme-text-primary hover:bg-theme-muted rounded-lg"
               >
                 Cancel
               </button>

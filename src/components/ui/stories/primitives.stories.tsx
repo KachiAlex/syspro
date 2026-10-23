@@ -64,11 +64,11 @@ export const Theme: StoryObj = {
             <div className="text-xs opacity-80">Accent</div>
             <div className="font-semibold">var(--color-accent)</div>
           </div>
-          <div className="w-36 p-3 rounded-lg bg-slate-50">
+          <div className="w-36 p-3 rounded-lg bg-theme-muted">
             <div className="text-xs opacity-80">Surface</div>
             <div className="font-semibold">var(--color-surface)</div>
           </div>
-          <div className="w-36 p-3 rounded-lg bg-white border">
+          <div className="w-36 p-3 rounded-lg bg-theme-surface border">
             <div className="text-xs opacity-80">Border</div>
             <div className="font-semibold">var(--color-border)</div>
           </div>
@@ -78,7 +78,7 @@ export const Theme: StoryObj = {
       <Panel>
         <h4 className="text-sm font-semibold mb-3">Typography</h4>
         <p className="text-lg">Inter — UI workhorse for modern interfaces</p>
-        <p className="text-sm text-slate-500">Weights: 300 / 400 / 600 / 700</p>
+        <p className="text-sm text-theme-text-tertiary">Weights: 300 / 400 / 600 / 700</p>
       </Panel>
     </div>
   )

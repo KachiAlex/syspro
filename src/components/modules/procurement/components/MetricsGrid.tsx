@@ -27,9 +27,9 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {metricsList.map((metric, i) => (
-        <div key={i} className="text-center p-4 bg-gray-50 rounded-lg">
-          <p className="text-2xl font-bold text-gray-900">{metric.value}</p>
-          <p className="text-sm text-gray-600">{metric.label}</p>
+        <div key={i} className="text-center p-4 bg-theme-muted rounded-lg">
+          <p className="text-2xl font-bold text-theme-text-primary">{metric.value}</p>
+          <p className="text-sm text-theme-text-secondary">{metric.label}</p>
         </div>
       ))}
     </div>

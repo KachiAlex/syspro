@@ -125,19 +125,19 @@ export default function ProjectArchivePage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Project Archive</h2>
+        <h2 className="text-2xl font-bold text-theme-text-primary">Project Archive</h2>
         <Link
           href={`/tenant-admin/projects`}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted"
         >
           ← Back to Overview
         </Link>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-900 mb-2">Search</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-2">Search</label>
             <div className="relative">
               <Search className="absolute left-3 top-2.5 w-4 h-4 text-theme-text-tertiary" />
               <input
@@ -145,14 +145,14 @@ export default function ProjectArchivePage() {
                 placeholder="Project name or manager..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
               />
             </div>
           </div>
           <div className="flex items-end">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-theme-text-secondary">
               {selectedProjects.size > 0 && (
-                <span className="font-medium text-blue-600">
+                <span className="font-medium text-theme-accent">
                   {selectedProjects.size} project{selectedProjects.size > 1 ? 's' : ''} selected
                 </span>
               )}
@@ -172,11 +172,11 @@ export default function ProjectArchivePage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-theme-surface rounded-lg border border-theme-border overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-theme-muted border-b border-theme-border">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">
                 <input
                   type="checkbox"
                   checked={selectedProjects.size === filteredProjects.length && filteredProjects.length > 0}
@@ -187,46 +187,46 @@ export default function ProjectArchivePage() {
                       setSelectedProjects(new Set());
                     }
                   }}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-theme-border text-theme-accent focus:ring-theme-accent"
                 />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Project Name</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Manager</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Completed</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Duration</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Budget</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Team</th>
-              <th className="px-6 py-3 text-center text-xs font-semibold text-gray-900">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Project Name</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Manager</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Completed</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Duration</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Budget</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Team</th>
+              <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-primary">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-theme-border">
             {filteredProjects.length > 0 ? (
               filteredProjects.map((project) => (
-                <tr key={project.id} className="hover:bg-gray-50">
+                <tr key={project.id} className="hover:bg-theme-muted">
                   <td className="px-6 py-4">
                     <input
                       type="checkbox"
                       checked={selectedProjects.has(project.id)}
                       onChange={() => toggleProjectSelection(project.id)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-theme-border text-theme-accent focus:ring-theme-accent"
                     />
                   </td>
                   <td className="px-6 py-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{project.name}</p>
-                      <p className="text-xs text-gray-600 mt-1">{project.description}</p>
+                      <p className="text-sm font-medium text-theme-text-primary">{project.name}</p>
+                      <p className="text-xs text-theme-text-secondary mt-1">{project.description}</p>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{project.managerName || project.manager}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{project.completionDate}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{project.duration}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-gray-900">{project.budget}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{project.teamMembers}</td>
+                  <td className="px-6 py-4 text-sm text-theme-text-secondary">{project.managerName || project.manager}</td>
+                  <td className="px-6 py-4 text-sm text-theme-text-secondary">{project.completionDate}</td>
+                  <td className="px-6 py-4 text-sm text-theme-text-secondary">{project.duration}</td>
+                  <td className="px-6 py-4 text-sm font-semibold text-theme-text-primary">{project.budget}</td>
+                  <td className="px-6 py-4 text-sm text-theme-text-secondary">{project.teamMembers}</td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <button 
                         onClick={() => handleViewProject(project)}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover transition-colors"
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-accent hover:text-theme-accent-hover transition-colors"
                         title="View Details"
                       >
                         <Eye className="w-4 h-4" />
@@ -251,7 +251,7 @@ export default function ProjectArchivePage() {
               ))
             ) : (
               <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-sm text-gray-600">
+                <td colSpan={8} className="px-6 py-8 text-center text-sm text-theme-text-secondary">
                   No archived projects found
                 </td>
               </tr>
@@ -261,36 +261,36 @@ export default function ProjectArchivePage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Archive Summary</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Archive Summary</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Total Archived</span>
-              <span className="font-semibold text-gray-900">{projects.length}</span>
+              <span className="text-theme-text-secondary">Total Archived</span>
+              <span className="font-semibold text-theme-text-primary">{projects.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Total Budget Spent</span>
-              <span className="font-semibold text-gray-900">${projects.reduce((sum, p) => sum + (parseFloat(String(p.budget || 0).replace(/[^0-9.\-]/g, '')) || 0), 0).toLocaleString()}</span>
+              <span className="text-theme-text-secondary">Total Budget Spent</span>
+              <span className="font-semibold text-theme-text-primary">${projects.reduce((sum, p) => sum + (parseFloat(String(p.budget || 0).replace(/[^0-9.\-]/g, '')) || 0), 0).toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Avg Team Size</span>
-              <span className="font-semibold text-gray-900">{projects.length > 0 ? Math.round(projects.reduce((sum, p) => sum + (p.teamMembers || 0), 0) / projects.length) : 0} members</span>
+              <span className="text-theme-text-secondary">Avg Team Size</span>
+              <span className="font-semibold text-theme-text-primary">{projects.length > 0 ? Math.round(projects.reduce((sum, p) => sum + (p.teamMembers || 0), 0) / projects.length) : 0} members</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Success Rate</span>
+              <span className="text-theme-text-secondary">Success Rate</span>
               <span className="font-semibold text-green-600">{projects.length > 0 ? Math.round((projects.filter(p => p.finalStatus === 'Completed' || p.finalStatus === 'Archived').length / projects.length) * 100) : 0}%</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Completions</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Recent Completions</h3>
           <div className="space-y-3">
             {filteredProjects.slice(0, 3).map((project) => (
-              <div key={project.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+              <div key={project.id} className="flex items-center justify-between p-3 border border-theme-border rounded-lg">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{project.name}</p>
-                  <p className="text-xs text-gray-600">{project.completionDate}</p>
+                  <p className="text-sm font-medium text-theme-text-primary">{project.name}</p>
+                  <p className="text-xs text-theme-text-secondary">{project.completionDate}</p>
                 </div>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                   Completed

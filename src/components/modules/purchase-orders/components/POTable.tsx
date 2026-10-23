@@ -26,7 +26,7 @@ export const POTable: React.FC<POTableProps> = ({
       case 'Received':
         return 'bg-blue-100 text-blue-800';
       case 'Closed':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-theme-muted text-theme-text-primary';
       case 'Pending':
         return 'bg-yellow-100 text-yellow-800';
       default:
@@ -35,32 +35,32 @@ export const POTable: React.FC<POTableProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+    <div className="bg-theme-surface rounded-lg border border-theme-border p-6 mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Purchase Orders</h3>
-        <span className="text-sm text-gray-500">Showing {purchaseOrders.length}</span>
+        <h3 className="text-lg font-semibold text-theme-text-primary">Purchase Orders</h3>
+        <span className="text-sm text-theme-text-secondary">Showing {purchaseOrders.length}</span>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-theme-muted border-b">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">PO #</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vendor</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">PO #</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Vendor</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Date</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Items</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Amount</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {purchaseOrders.map((po, i) => (
-              <tr key={i} className="hover:bg-gray-50">
-                <td className="px-4 py-3 text-sm font-semibold text-gray-900">{po.poNumber}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{po.vendor}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{po.date}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{po.items}</td>
-                <td className="px-4 py-3 text-sm font-semibold text-gray-900">{po.amount}</td>
+              <tr key={i} className="hover:bg-theme-muted">
+                <td className="px-4 py-3 text-sm font-semibold text-theme-text-primary">{po.poNumber}</td>
+                <td className="px-4 py-3 text-sm text-theme-text-primary">{po.vendor}</td>
+                <td className="px-4 py-3 text-sm text-theme-text-primary">{po.date}</td>
+                <td className="px-4 py-3 text-sm text-theme-text-primary">{po.items}</td>
+                <td className="px-4 py-3 text-sm font-semibold text-theme-text-primary">{po.amount}</td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusStyles(po.status)}`}>
                     {po.status}
@@ -70,7 +70,7 @@ export const POTable: React.FC<POTableProps> = ({
                   <div className="flex gap-2">
                     <button 
                       onClick={() => onView(po)}
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-theme-accent hover:text-blue-800"
                       title="View PO"
                     >
                       <Eye className="w-4 h-4" />

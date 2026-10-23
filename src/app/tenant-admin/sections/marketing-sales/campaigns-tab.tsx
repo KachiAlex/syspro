@@ -232,8 +232,8 @@ export default function CampaignsTab({
   if (loading) {
     return (
       <div className="p-8 text-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
-        <p className="mt-4 text-gray-600">Loading campaigns...</p>
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-theme-border border-t-blue-600"></div>
+        <p className="mt-4 text-theme-text-secondary">Loading campaigns...</p>
       </div>
     );
   }
@@ -251,12 +251,12 @@ export default function CampaignsTab({
       {/* Header & Create Button */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Campaigns</h2>
+          <h2 className="text-2xl font-bold text-theme-text-primary">Campaigns</h2>
           <p className="text-theme-text-secondary mt-1">{filteredCampaigns.length} campaigns</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
+          className="flex items-center gap-2 px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover font-medium transition"
         >
           <Plus className="w-4 h-4" />
           Create Campaign
@@ -265,14 +265,14 @@ export default function CampaignsTab({
 
       {/* Filters */}
       <div className="flex items-center gap-3">
-        <Filter className="w-5 h-5 text-gray-600" />
+        <Filter className="w-5 h-5 text-theme-text-secondary" />
         {["all", "active", "planning", "completed"].map((status) => (
           <button
             key={status}
             onClick={() => setFilterStatus(status)}
             className={`px-3 py-1 rounded-full text-sm font-medium transition ${
               filterStatus === status
-                ? "bg-blue-600 text-white"
+                ? "bg-theme-accent text-white"
                 : "bg-blue-100 text-blue-700 hover:bg-blue-200"
             }`}
           >
@@ -285,27 +285,27 @@ export default function CampaignsTab({
       {filteredCampaigns.length === 0 ? (
         <div className="text-center py-12">
           <AlertCircle className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
-          <p className="text-gray-600">No campaigns found</p>
+          <p className="text-theme-text-secondary">No campaigns found</p>
         </div>
       ) : (
-        <div className="overflow-x-auto border border-gray-200 rounded-lg">
+        <div className="overflow-x-auto border border-theme-border rounded-lg">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-theme-muted border-b border-theme-border">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Campaign</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Channel</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900 uppercase">Budget / Spent</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900 uppercase">Revenue</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900 uppercase">ROI</th>
-                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-900 uppercase">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary uppercase">Campaign</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary uppercase">Channel</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary uppercase">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-theme-text-primary uppercase">Budget / Spent</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-theme-text-primary uppercase">Revenue</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-theme-text-primary uppercase">ROI</th>
+                <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-primary uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-theme-border">
               {filteredCampaigns.map((campaign) => (
-                <tr key={campaign.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium text-gray-900">{campaign.name}</td>
-                  <td className="px-6 py-4 text-gray-600 capitalize">{campaign.channel?.replace("_", " ")}</td>
+                <tr key={campaign.id} className="hover:bg-theme-muted">
+                  <td className="px-6 py-4 font-medium text-theme-text-primary">{campaign.name}</td>
+                  <td className="px-6 py-4 text-theme-text-secondary capitalize">{campaign.channel?.replace("_", " ")}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
@@ -313,16 +313,16 @@ export default function CampaignsTab({
                           ? "bg-green-100 text-green-800"
                           : campaign.status === "planning"
                           ? "bg-yellow-100 text-yellow-800"
-                          : "bg-gray-100 text-gray-900"
+                          : "bg-theme-muted text-theme-text-primary"
                       }`}
                     >
                       {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right text-gray-900">
+                  <td className="px-6 py-4 text-right text-theme-text-primary">
                     ${(campaign.actualSpend / 1000).toFixed(0)}K / ${(campaign.budget / 1000).toFixed(0)}K
                   </td>
-                  <td className="px-6 py-4 text-right text-gray-900">${(campaign.revenue / 1000).toFixed(0)}K</td>
+                  <td className="px-6 py-4 text-right text-theme-text-primary">${(campaign.revenue / 1000).toFixed(0)}K</td>
                   <td className="px-6 py-4 text-right">
                     <span className="font-semibold text-green-600">{campaign.roi.toFixed(2)}x</span>
                   </td>
@@ -330,17 +330,17 @@ export default function CampaignsTab({
                     <div className="flex items-center justify-center gap-2">
                       <button
                         onClick={() => openViewModal(campaign)}
-                        className="p-1 hover:bg-gray-200 rounded transition"
+                        className="p-1 hover:bg-theme-muted rounded transition"
                         title="View"
                       >
-                        <Eye className="w-4 h-4 text-gray-600" />
+                        <Eye className="w-4 h-4 text-theme-text-secondary" />
                       </button>
                       <button
                         onClick={() => openEditModal(campaign)}
-                        className="p-1 hover:bg-gray-200 rounded transition"
+                        className="p-1 hover:bg-theme-muted rounded transition"
                         title="Edit"
                       >
-                        <Edit2 className="w-4 h-4 text-gray-600" />
+                        <Edit2 className="w-4 h-4 text-theme-text-secondary" />
                       </button>
                       <button
                         onClick={() => openDeleteModal(campaign)}

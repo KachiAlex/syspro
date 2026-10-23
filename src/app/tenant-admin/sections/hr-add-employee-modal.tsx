@@ -223,12 +223,12 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-theme-surface border-b border-theme-border p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">Add Employee</h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <h2 className="text-2xl font-bold text-theme-text-primary">Add Employee</h2>
+            <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-primary">
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -239,8 +239,8 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
               onClick={() => setActiveTab('manual')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'manual'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-theme-accent text-theme-accent'
+                  : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
               }`}
             >
               Manual Entry
@@ -249,8 +249,8 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
               onClick={() => setActiveTab('excel')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'excel'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-theme-accent text-theme-accent'
+                  : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
               }`}
             >
               Excel Import
@@ -259,8 +259,8 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
               onClick={() => setActiveTab('invite')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'invite'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-theme-accent text-theme-accent'
+                  : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
               }`}
             >
               Invite Link
@@ -283,44 +283,44 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
             <form onSubmit={handleSubmitManual} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">First Name *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">First Name *</label>
                   <input
                     type="text"
                     value={formData.firstName}
                     onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                    className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                     disabled={loading}
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Last Name *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Last Name *</label>
                   <input
                     type="text"
                     value={formData.lastName}
                     onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                    className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                     disabled={loading}
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Email *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Email *</label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                     disabled={loading}
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Department *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Department *</label>
                   <select
                     value={formData.department}
                     onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
-                    className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                     disabled={loading}
                     required
                   >
@@ -331,43 +331,43 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Position *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Position *</label>
                   <input
                     type="text"
                     value={formData.position}
                     onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
-                    className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                     disabled={loading}
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Start Date *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Start Date *</label>
                   <input
                     type="date"
                     value={formData.startDate}
                     onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                     disabled={loading}
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Salary</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Salary</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-gray-500 text-sm">{CURRENCY_SYMBOLS[currency] || currency}</span>
+                    <span className="absolute left-3 top-2.5 text-theme-text-secondary text-sm">{CURRENCY_SYMBOLS[currency] || currency}</span>
                     <input
                       type="text"
                       value={formData.salary}
                       onChange={(e) => setFormData(prev => ({ ...prev, salary: e.target.value }))}
-                      className="bg-white w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                      className="bg-theme-surface w-full pl-8 pr-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                       disabled={loading}
                       placeholder="65,000"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Currency</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Currency</label>
                   <select
                     value={currency}
                     onChange={(e) => {
@@ -375,7 +375,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                       setCurrency(newCurrency);
                       HRService.setTenantCurrency(tenantSlug, newCurrency).catch(() => {});
                     }}
-                    className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                     disabled={loading}
                   >
                     {CURRENCY_OPTIONS.map((c) => (
@@ -384,11 +384,11 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Employment Type</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Employment Type</label>
                   <select
                     value={formData.employmentType}
                     onChange={(e) => setFormData(prev => ({ ...prev, employmentType: e.target.value }))}
-                    className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                     disabled={loading}
                   >
                     <option value="Full-time">Full-time</option>
@@ -398,11 +398,11 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Role</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Role</label>
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
-                    className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                     disabled={loading}
                   >
                     <option value="Staff">Staff</option>
@@ -420,12 +420,12 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                     type="checkbox"
                     checked={activatePortal}
                     onChange={(e) => setActivatePortal(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300"
+                    className="mt-0.5 w-4 h-4 text-theme-accent rounded border-theme-border"
                     disabled={loading}
                   />
                   <div>
-                    <span className="text-sm font-medium text-gray-900">Create portal account</span>
-                    <p className="text-xs text-gray-600 mt-0.5">
+                    <span className="text-sm font-medium text-theme-text-primary">Create portal account</span>
+                    <p className="text-xs text-theme-text-secondary mt-0.5">
                       Generates a secure password so this employee can log in to their self-service dashboard immediately.
                     </p>
                   </div>
@@ -441,22 +441,22 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                       <p className="text-sm font-semibold text-green-900">
                         Employee added &mdash; portal account activated
                       </p>
-                      <p className="text-xs text-gray-600 mt-1">
+                      <p className="text-xs text-theme-text-secondary mt-1">
                         Copy these credentials and share them securely with the employee. They can log in at{' '}
                         <span className="font-mono text-blue-700">/login</span>
                       </p>
-                      <div className="mt-3 grid grid-cols-1 gap-2 bg-white border border-green-200 rounded-lg p-3">
+                      <div className="mt-3 grid grid-cols-1 gap-2 bg-theme-surface border border-green-200 rounded-lg p-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600">Name</span>
-                          <span className="text-sm font-medium text-gray-900">{createdCredentials.name}</span>
+                          <span className="text-xs text-theme-text-secondary">Name</span>
+                          <span className="text-sm font-medium text-theme-text-primary">{createdCredentials.name}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600">Email</span>
-                          <span className="text-sm font-mono text-gray-900">{createdCredentials.email}</span>
+                          <span className="text-xs text-theme-text-secondary">Email</span>
+                          <span className="text-sm font-mono text-theme-text-primary">{createdCredentials.email}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600">Password</span>
-                          <span className="text-sm font-mono text-gray-900 select-all">{createdCredentials.password}</span>
+                          <span className="text-xs text-theme-text-secondary">Password</span>
+                          <span className="text-sm font-mono text-theme-text-primary select-all">{createdCredentials.password}</span>
                         </div>
                       </div>
                       <button
@@ -489,14 +489,14 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                           role: 'Staff'
                         });
                       }}
-                      className="flex-1 px-3 py-2 text-sm border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50"
+                      className="flex-1 px-3 py-2 text-sm border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted"
                     >
                       Add another
                     </button>
                     <button
                       type="button"
                       onClick={onClose}
-                      className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      className="flex-1 px-3 py-2 text-sm bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover"
                     >
                       Done
                     </button>
@@ -509,14 +509,14 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                   <button
                     type="button"
                     onClick={onClose}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
                     disabled={loading}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    className="flex-1 px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
                     disabled={loading}
                   >
                     {loading ? 'Adding...' : 'Add Employee'}
@@ -530,17 +530,17 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
           {activeTab === 'excel' && (
             <form onSubmit={handleExcelUpload} className="space-y-6">
               <div className="text-center">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
+                <div className="border-2 border-dashed border-theme-border rounded-lg p-8">
                   <Upload className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Excel File</h3>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <h3 className="text-lg font-medium text-theme-text-primary mb-2">Upload Excel File</h3>
+                  <p className="text-sm text-theme-text-secondary mb-4">
                     Upload a CSV file with employee data. Required columns: firstName, lastName, email, department, position. Optional: startDate, salary, employmentType (full-time, part-time, contract, intern), role (staff, hod, admin, executive).
                   </p>
 
                   <button
                     type="button"
                     onClick={downloadSampleFile}
-                    className="inline-flex items-center gap-2 px-4 py-2 mb-4 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2 mb-4 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-theme-muted transition-colors"
                   >
                     <FileSpreadsheet className="w-4 h-4" />
                     Download Sample CSV
@@ -550,13 +550,13 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                     type="file"
                     accept=".xlsx,.xls,.csv"
                     onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
-                    className="bg-white hidden text-black"
+                    className="bg-theme-surface hidden text-theme-text-primary"
                     id="excel-upload"
                   />
                   
                   <label
                     htmlFor="excel-upload"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 cursor-pointer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover cursor-pointer"
                   >
                     <Upload className="w-4 h-4" />
                     Choose File
@@ -564,7 +564,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                   
                   {excelFile && (
                     <div className="mt-4">
-                      <p className="text-sm text-gray-600">Selected file: {excelFile.name}</p>
+                      <p className="text-sm text-theme-text-secondary">Selected file: {excelFile.name}</p>
                     </div>
                   )}
                 </div>
@@ -576,9 +576,9 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                     <span>Uploading...</span>
                     <span>{uploadProgress}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-theme-muted rounded-full h-2">
                     <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      className="bg-theme-accent h-2 rounded-full transition-all duration-300"
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
@@ -651,14 +651,14 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
                   disabled={loading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
                   disabled={loading || !excelFile}
                 >
                   {loading ? 'Uploading...' : 'Upload Employees'}
@@ -671,7 +671,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
           {activeTab === 'invite' && (
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium text-theme-text-primary mb-2">
                   <Users className="w-4 h-4 inline mr-1" />
                   Email Addresses
                 </label>
@@ -679,7 +679,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                   value={inviteEmails}
                   onChange={(e) => setInviteEmails(e.target.value)}
                   rows={4}
-                  className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   placeholder="Enter email addresses, one per line or separated by commas"
                 />
                 {errors.emails && (
@@ -691,7 +691,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                 <button
                   onClick={generateInviteLink}
                   disabled={loading || !inviteEmails.trim()}
-                  className="w-full px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
                 >
                   {loading ? 'Generating...' : 'Generate Invite Link'}
                 </button>
@@ -710,11 +710,11 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                         type="text"
                         value={inviteLink}
                         readOnly
-                        className="flex-1 px-3 py-2 bg-white border border-green-300 rounded-lg text-sm text-black"
+                        className="flex-1 px-3 py-2 bg-theme-surface border border-green-300 rounded-lg text-sm text-theme-text-primary"
                       />
                       <button
                         onClick={copyInviteLink}
-                        className="px-4 py-2 bg-green-600 text-black rounded-lg hover:bg-green-700 transition-colors"
+                        className="px-4 py-2 bg-green-600 text-theme-text-primary rounded-lg hover:bg-green-700 transition-colors"
                       >
                         Copy Link
                       </button>
@@ -727,7 +727,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                       setInviteLink('');
                       setInviteEmails('');
                     }}
-                    className="w-full px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="w-full px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors"
                   >
                     Generate Another Link
                   </button>

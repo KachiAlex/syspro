@@ -20,7 +20,7 @@ export function BalanceSheetComponent({
     return (
       <Card className="p-6">
         <div className="flex items-center justify-center h-64">
-          <p className="text-gray-500">Loading Balance Sheet...</p>
+          <p className="text-theme-text-secondary">Loading Balance Sheet...</p>
         </div>
       </Card>
     );
@@ -29,7 +29,7 @@ export function BalanceSheetComponent({
   if (!report) {
     return (
       <Card className="p-6">
-        <p className="text-gray-500">No report data available</p>
+        <p className="text-theme-text-secondary">No report data available</p>
       </Card>
     );
   }
@@ -55,20 +55,20 @@ export function BalanceSheetComponent({
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Balance Sheet</h2>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-theme-text-secondary">
             As of {report.asOfDate.toLocaleDateString()}
           </p>
         </div>
         <div className="space-x-2">
           <button
             onClick={() => onExport?.('csv')}
-            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm font-medium"
+            className="px-4 py-2 bg-theme-muted hover:bg-theme-elevated rounded text-sm font-medium"
           >
             Export CSV
           </button>
           <button
             onClick={() => onExport?.('pdf')}
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm font-medium"
+            className="px-4 py-2 bg-blue-500 hover:bg-theme-accent-hover text-white rounded text-sm font-medium"
           >
             Export PDF
           </button>
@@ -80,7 +80,7 @@ export function BalanceSheetComponent({
         <div className="flex justify-between items-center">
           <div>
             <p className="font-semibold">Accounting Equation: Assets = Liabilities + Equity</p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-theme-text-secondary">
               {formatCurrency(report.totalAssets)} = {formatCurrency(report.totalLiabilities)} +
               {formatCurrency(report.totalEquity)}
             </p>
@@ -98,25 +98,25 @@ export function BalanceSheetComponent({
           {report.assets.map((line) => (
             <div
               key={line.code}
-              className="flex justify-between items-center py-2 border-b hover:bg-gray-50 cursor-pointer"
+              className="flex justify-between items-center py-2 border-b hover:bg-theme-muted cursor-pointer"
               onClick={() => onDrillDown?.(line.code)}
             >
               <div>
                 <p className="font-medium">{line.name}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-theme-text-secondary">
                   {line.code} • {line.accountType}
                 </p>
               </div>
               <div className="text-right">
                 <p className="font-medium">{formatCurrency(line.balance)}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-theme-text-secondary">
                   {formatPercent(line.percentOfTotal || 0)}
                 </p>
               </div>
             </div>
           ))}
         </div>
-        <div className="flex justify-between items-center pt-4 border-t-2 border-gray-300 font-bold text-lg">
+        <div className="flex justify-between items-center pt-4 border-t-2 border-theme-border font-bold text-lg">
           <span>Total Assets</span>
           <span>{formatCurrency(report.totalAssets)}</span>
         </div>
@@ -129,25 +129,25 @@ export function BalanceSheetComponent({
           {report.liabilities.map((line) => (
             <div
               key={line.code}
-              className="flex justify-between items-center py-2 border-b hover:bg-gray-50 cursor-pointer"
+              className="flex justify-between items-center py-2 border-b hover:bg-theme-muted cursor-pointer"
               onClick={() => onDrillDown?.(line.code)}
             >
               <div>
                 <p className="font-medium">{line.name}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-theme-text-secondary">
                   {line.code} • {line.accountType}
                 </p>
               </div>
               <div className="text-right">
                 <p className="font-medium">{formatCurrency(line.balance)}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-theme-text-secondary">
                   {formatPercent(line.percentOfTotal || 0)}
                 </p>
               </div>
             </div>
           ))}
         </div>
-        <div className="flex justify-between items-center pt-4 border-t-2 border-gray-300 font-bold text-lg">
+        <div className="flex justify-between items-center pt-4 border-t-2 border-theme-border font-bold text-lg">
           <span>Total Liabilities</span>
           <span>{formatCurrency(report.totalLiabilities)}</span>
         </div>
@@ -160,25 +160,25 @@ export function BalanceSheetComponent({
           {report.equity.map((line) => (
             <div
               key={line.code}
-              className="flex justify-between items-center py-2 border-b hover:bg-gray-50 cursor-pointer"
+              className="flex justify-between items-center py-2 border-b hover:bg-theme-muted cursor-pointer"
               onClick={() => onDrillDown?.(line.code)}
             >
               <div>
                 <p className="font-medium">{line.name}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-theme-text-secondary">
                   {line.code} • {line.accountType}
                 </p>
               </div>
               <div className="text-right">
                 <p className="font-medium">{formatCurrency(line.balance)}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-theme-text-secondary">
                   {formatPercent(line.percentOfTotal || 0)}
                 </p>
               </div>
             </div>
           ))}
         </div>
-        <div className="flex justify-between items-center pt-4 border-t-2 border-gray-300 font-bold text-lg">
+        <div className="flex justify-between items-center pt-4 border-t-2 border-theme-border font-bold text-lg">
           <span>Total Equity</span>
           <span>{formatCurrency(report.totalEquity)}</span>
         </div>
@@ -187,19 +187,19 @@ export function BalanceSheetComponent({
       {/* Financial Ratios */}
       <div className="grid grid-cols-3 gap-4">
         <Card className="p-6">
-          <p className="text-sm text-gray-600 mb-2">Current Ratio</p>
+          <p className="text-sm text-theme-text-secondary mb-2">Current Ratio</p>
           <p className="text-2xl font-bold">
             {report.totalAssets > 0 ? (report.totalAssets / (report.totalLiabilities || 1)).toFixed(2) : '0.00'}
           </p>
         </Card>
         <Card className="p-6">
-          <p className="text-sm text-gray-600 mb-2">Debt-to-Equity</p>
+          <p className="text-sm text-theme-text-secondary mb-2">Debt-to-Equity</p>
           <p className="text-2xl font-bold">
             {report.totalEquity > 0 ? (report.totalLiabilities / report.totalEquity).toFixed(2) : '0.00'}
           </p>
         </Card>
         <Card className="p-6">
-          <p className="text-sm text-gray-600 mb-2">Equity Ratio</p>
+          <p className="text-sm text-theme-text-secondary mb-2">Equity Ratio</p>
           <p className="text-2xl font-bold">
             {formatPercent(
               report.totalAssets > 0

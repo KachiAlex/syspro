@@ -157,7 +157,7 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
         <button
           onClick={handleRefreshVendors}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg text-theme-text-primary hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-theme-border rounded-lg text-theme-text-primary hover:bg-theme-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -166,7 +166,7 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-theme-text-secondary">Total Vendors</p>
@@ -175,7 +175,7 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
             <Building className="w-8 h-8 text-theme-accent" />
           </div>
         </div>
-        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-theme-text-secondary">Active Vendors</p>
@@ -184,7 +184,7 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
             <FileText className="w-8 h-8 text-green-400" />
           </div>
         </div>
-        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-theme-text-secondary">Countries</p>
@@ -193,7 +193,7 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
             <Star className="w-8 h-8 text-yellow-600" />
           </div>
         </div>
-        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-theme-text-secondary">Payment Terms</p>
@@ -205,13 +205,13 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
       </div>
 
       {/* Actions */}
-      <div className="bg-theme-muted rounded-lg border border-gray-200 p-4 mb-6">
+      <div className="bg-theme-muted rounded-lg border border-theme-border p-4 mb-6">
         <div className="flex flex-wrap gap-3">
-          <button onClick={() => setShowAddModal(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          <button onClick={() => setShowAddModal(true)} className="px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover">
             <Plus className="w-4 h-4 mr-2 inline" />
             Add Vendor
           </button>
-          <button onClick={handleExport} className="px-4 py-2 border border-gray-300 text-theme-text-primary rounded-lg hover:bg-gray-50">
+          <button onClick={handleExport} className="px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted">
             <Download className="w-4 h-4 mr-2 inline" />
             Export
           </button>
@@ -219,14 +219,14 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
       </div>
 
       {/* Filters */}
-      <div className="bg-theme-muted rounded-lg border border-gray-200 p-4 mb-6">
+      <div className="bg-theme-muted rounded-lg border border-theme-border p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg text-white">
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary">
             <option value="All">All Status</option>
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
           </select>
-          <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg text-white">
+          <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary">
             <option value="All">All Categories</option>
             <option value="Technology">Technology</option>
             <option value="Office Supplies">Office Supplies</option>
@@ -237,9 +237,9 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
             placeholder="Search vendors..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg flex-1 text-white"
+            className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg flex-1 text-theme-text-primary"
           />
-          <button className="px-4 py-2 bg-gray-100 text-theme-text-primary rounded-lg hover:bg-gray-200">
+          <button className="px-4 py-2 bg-theme-muted text-theme-text-primary rounded-lg hover:bg-theme-muted">
             <Filter className="w-4 h-4 mr-2 inline" />
             Filters
           </button>
@@ -252,7 +252,7 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
           <div key={i} className="bg-theme-muted rounded-xl border border-theme-border p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-theme-muted rounded-lg flex items-center justify-center">
                   <Building className="w-6 h-6 text-theme-text-secondary" />
                 </div>
                 <div>
@@ -261,7 +261,7 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
                 </div>
               </div>
               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                vendor.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-theme-text-primary'
+                vendor.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-theme-muted text-theme-text-primary'
               }`}>{vendor.status}</span>
             </div>
             
@@ -304,7 +304,7 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
                 return (
                   <div key={country} className="flex items-center gap-3">
                     <span className="text-sm font-medium w-24 truncate">{country}</span>
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div className="flex-1 bg-theme-muted rounded-full h-2">
                       <div className="h-2 rounded-full bg-blue-500" style={{ width: `${pct}%` }}></div>
                     </div>
                     <span className="text-sm w-8 text-right">{count}</span>
@@ -326,7 +326,7 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
                 return (
                   <div key={terms} className="flex items-center gap-3">
                     <span className="text-sm font-medium w-24 uppercase">{terms}</span>
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div className="flex-1 bg-theme-muted rounded-full h-2">
                       <div className="h-2 rounded-full bg-green-500" style={{ width: `${pct}%` }}></div>
                     </div>
                     <span className="text-sm w-8 text-right">{count}</span>
@@ -342,11 +342,11 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
 
       {/* Add Vendor Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+          <div className="bg-theme-surface rounded-xl shadow-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Add Vendor</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
+              <h3 className="text-lg font-semibold text-theme-text-primary">Add Vendor</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-theme-text-tertiary hover:text-theme-text-secondary">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -356,40 +356,40 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
                 placeholder="Vendor name *"
                 value={newVendor.name}
                 onChange={(e) => setNewVendor({ ...newVendor, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
               />
               <input
                 type="text"
                 placeholder="Vendor code *"
                 value={newVendor.code}
                 onChange={(e) => setNewVendor({ ...newVendor, code: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
               />
               <input
                 type="email"
                 placeholder="Email"
                 value={newVendor.email}
                 onChange={(e) => setNewVendor({ ...newVendor, email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
               />
               <input
                 type="text"
                 placeholder="Phone"
                 value={newVendor.phone}
                 onChange={(e) => setNewVendor({ ...newVendor, phone: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
               />
               <input
                 type="text"
                 placeholder="Country"
                 value={newVendor.country}
                 onChange={(e) => setNewVendor({ ...newVendor, country: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
               />
               <select
                 value={newVendor.paymentTerms}
                 onChange={(e) => setNewVendor({ ...newVendor, paymentTerms: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
               >
                 <option value="net30">Net 30</option>
                 <option value="net60">Net 60</option>
@@ -400,7 +400,7 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
               <button
                 onClick={handleCreateVendor}
                 disabled={creating}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="w-full px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover disabled:opacity-50"
               >
                 {creating ? 'Creating...' : 'Create Vendor'}
               </button>

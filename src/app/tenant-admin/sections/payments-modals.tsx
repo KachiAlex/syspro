@@ -111,12 +111,12 @@ export function CreatePaymentModalV2({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+      <div className="w-full max-w-md rounded-xl bg-theme-surface shadow-xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 sticky top-0 bg-white">
-          <h2 className="text-lg font-semibold text-gray-900">Create Payment</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
+        <div className="flex items-center justify-between border-b border-theme-border px-6 py-4 sticky top-0 bg-theme-surface">
+          <h2 className="text-lg font-semibold text-theme-text-primary">Create Payment</h2>
+          <button onClick={onClose} className="text-theme-text-tertiary hover:text-theme-text-primary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -129,7 +129,7 @@ export function CreatePaymentModalV2({
             </div>
           )}
           <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-gray-900 mb-2">
+            <label htmlFor="amount" className="block text-sm font-medium text-theme-text-primary mb-2">
               Amount
             </label>
             <input
@@ -140,20 +140,20 @@ export function CreatePaymentModalV2({
               value={formData.amount}
               onChange={(e) => { setSubmitError(""); setFormData({ ...formData, amount: formatAmount(e.target.value) }); }}
               placeholder="0.00"
-              className={`bg-white w-full rounded-lg border px-3 py-2 text-sm text-black ${ errors.amount ? "border-rose-300 bg-rose-50" : "border-slate-200" }`}
+              className={`bg-theme-surface w-full rounded-lg border px-3 py-2 text-sm text-theme-text-primary ${ errors.amount ? "border-rose-300 bg-rose-50" : "border-theme-border" }`}
             />
             {errors.amount && <p className="text-xs text-rose-600 mt-1">{errors.amount}</p>}
           </div>
 
           <div>
-            <label htmlFor="method" className="block text-sm font-medium text-gray-900 mb-2">
+            <label htmlFor="method" className="block text-sm font-medium text-theme-text-primary mb-2">
               Payment Method
             </label>
             <select
               id="method"
               value={formData.method}
               onChange={(e) => { setSubmitError(""); setFormData({ ...formData, method: e.target.value }); }}
-              className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
+              className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
             >
               <option value="bank_transfer">Bank Transfer</option>
               <option value="check">Check</option>
@@ -168,7 +168,7 @@ export function CreatePaymentModalV2({
           </div>
 
           <div>
-            <label htmlFor="reference" className="block text-sm font-medium text-gray-900 mb-2">
+            <label htmlFor="reference" className="block text-sm font-medium text-theme-text-primary mb-2">
               Reference/Invoice
             </label>
             <input
@@ -177,13 +177,13 @@ export function CreatePaymentModalV2({
               value={formData.reference}
               onChange={(e) => { setSubmitError(""); setFormData({ ...formData, reference: e.target.value }); }}
               placeholder="e.g., INV-2024-001"
-              className={`bg-white w-full rounded-lg border px-3 py-2 text-sm text-black ${ errors.reference ? "border-rose-300 bg-rose-50" : "border-slate-200" }`}
+              className={`bg-theme-surface w-full rounded-lg border px-3 py-2 text-sm text-theme-text-primary ${ errors.reference ? "border-rose-300 bg-rose-50" : "border-theme-border" }`}
             />
             {errors.reference && <p className="text-xs text-rose-600 mt-1">{errors.reference}</p>}
           </div>
 
           <div>
-            <label htmlFor="date" className="block text-sm font-medium text-gray-900 mb-2">
+            <label htmlFor="date" className="block text-sm font-medium text-theme-text-primary mb-2">
               Payment Date
             </label>
             <input
@@ -191,12 +191,12 @@ export function CreatePaymentModalV2({
               type="date"
               value={formData.date}
               onChange={(e) => { setSubmitError(""); setFormData({ ...formData, date: e.target.value }); }}
-              className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
+              className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
             />
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-900 mb-2">
+            <label htmlFor="description" className="block text-sm font-medium text-theme-text-primary mb-2">
               Description (Optional)
             </label>
             <textarea
@@ -205,24 +205,24 @@ export function CreatePaymentModalV2({
               onChange={(e) => { setSubmitError(""); setFormData({ ...formData, description: e.target.value }); }}
               placeholder="Additional notes..."
               rows={2}
-              className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
+              className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
             />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4 flex gap-3 sticky bottom-0 bg-white">
+        <div className="border-t border-theme-border px-6 py-4 flex gap-3 sticky bottom-0 bg-theme-surface">
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-slate-200 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-elevated disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-accent-hover disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>
@@ -268,16 +268,16 @@ export function ViewPaymentModal({
     completed: "bg-green-100 text-green-800",
     pending: "bg-yellow-100 text-yellow-800",
     failed: "bg-red-100 text-red-800",
-    refunded: "bg-slate-100 text-slate-800",
+    refunded: "bg-theme-muted text-theme-text-primary",
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+      <div className="w-full max-w-md rounded-xl bg-theme-surface shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">Payment #{payment.id}</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
+        <div className="flex items-center justify-between border-b border-theme-border px-6 py-4">
+          <h2 className="text-lg font-semibold text-theme-text-primary">Payment #{payment.id}</h2>
+          <button onClick={onClose} className="text-theme-text-tertiary hover:text-theme-text-primary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -286,59 +286,59 @@ export function ViewPaymentModal({
         <div className="space-y-6 px-6 py-6">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-500">Status</span>
-              <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusColor[payment.status] || "bg-gray-100"}`}>
+              <span className="text-xs font-medium text-theme-text-tertiary">Status</span>
+              <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusColor[payment.status] || "bg-theme-muted"}`}>
                 {payment.status}
               </span>
             </div>
           </div>
 
           <div>
-            <p className="text-xs font-medium text-slate-500">Amount</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">₦{payment.amount.toLocaleString()}</p>
+            <p className="text-xs font-medium text-theme-text-tertiary">Amount</p>
+            <p className="text-2xl font-bold text-theme-text-primary mt-1">₦{payment.amount.toLocaleString()}</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-xs font-medium text-slate-500">Method</p>
-              <p className="text-sm font-semibold text-gray-900 mt-1 capitalize">{payment.method}</p>
+              <p className="text-xs font-medium text-theme-text-tertiary">Method</p>
+              <p className="text-sm font-semibold text-theme-text-primary mt-1 capitalize">{payment.method}</p>
             </div>
             {payment.date && (
               <div>
-                <p className="text-xs font-medium text-slate-500">Date</p>
-                <p className="text-sm text-slate-600 mt-1">{new Date(payment.date).toLocaleDateString()}</p>
+                <p className="text-xs font-medium text-theme-text-tertiary">Date</p>
+                <p className="text-sm text-theme-text-secondary mt-1">{new Date(payment.date).toLocaleDateString()}</p>
               </div>
             )}
           </div>
 
           {payment.reference && (
             <div>
-              <p className="text-xs font-medium text-slate-500">Reference</p>
-              <p className="text-sm text-slate-600 mt-1">{payment.reference}</p>
+              <p className="text-xs font-medium text-theme-text-tertiary">Reference</p>
+              <p className="text-sm text-theme-text-secondary mt-1">{payment.reference}</p>
             </div>
           )}
 
           {payment.description && (
             <div>
-              <p className="text-xs font-medium text-slate-500">Notes</p>
-              <p className="text-sm text-slate-600 mt-1">{payment.description}</p>
+              <p className="text-xs font-medium text-theme-text-tertiary">Notes</p>
+              <p className="text-sm text-theme-text-secondary mt-1">{payment.description}</p>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4 space-y-3">
+        <div className="border-t border-theme-border px-6 py-4 space-y-3">
           {onRefund && payment.status === "completed" && (
             <button
               onClick={onRefund}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
             >
               Request Refund
             </button>
           )}
           <button
             onClick={onClose}
-            className="w-full rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-slate-200"
+            className="w-full rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-elevated"
           >
             Close
           </button>
@@ -367,12 +367,12 @@ export function RefundPaymentModal({
   if (!isOpen || !payment) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+      <div className="w-full max-w-md rounded-xl bg-theme-surface shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">Request Refund</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
+        <div className="flex items-center justify-between border-b border-theme-border px-6 py-4">
+          <h2 className="text-lg font-semibold text-theme-text-primary">Request Refund</h2>
+          <button onClick={onClose} className="text-theme-text-tertiary hover:text-theme-text-primary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -387,7 +387,7 @@ export function RefundPaymentModal({
           </div>
 
           <div>
-            <label htmlFor="reason" className="block text-sm font-medium text-gray-900 mb-2">
+            <label htmlFor="reason" className="block text-sm font-medium text-theme-text-primary mb-2">
               Refund Reason
             </label>
             <textarea
@@ -396,24 +396,24 @@ export function RefundPaymentModal({
               onChange={(e) => setReason(e.target.value)}
               placeholder="Why are you requesting this refund?"
               rows={4}
-              className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
+              className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
             />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4 flex gap-3">
+        <div className="border-t border-theme-border px-6 py-4 flex gap-3">
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-slate-200 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-elevated disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={() => onSubmit(reason)}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-orange-700 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-orange-700 disabled:opacity-50"
           >
             {isLoading ? "Processing..." : "Submit Refund"}
           </button>
@@ -440,12 +440,12 @@ export function ReconcilePaymentsModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+      <div className="w-full max-w-md rounded-xl bg-theme-surface shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">Reconcile Payments</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
+        <div className="flex items-center justify-between border-b border-theme-border px-6 py-4">
+          <h2 className="text-lg font-semibold text-theme-text-primary">Reconcile Payments</h2>
+          <button onClick={onClose} className="text-theme-text-tertiary hover:text-theme-text-primary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -453,15 +453,15 @@ export function ReconcilePaymentsModal({
         {/* Content */}
         <div className="space-y-4 px-6 py-6">
           <div className="rounded-lg bg-blue-50 p-3 border border-blue-200">
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-theme-text-primary">
               You have {pendingCount} pending payment(s)
             </p>
             <p className="text-xs text-blue-700 mt-1">Reconciliation will match payments with invoices and update statuses</p>
           </div>
 
           <div>
-            <p className="text-sm font-medium text-gray-900 mb-2">Reconciliation will:</p>
-            <ul className="list-disc list-inside space-y-1 text-sm text-slate-600">
+            <p className="text-sm font-medium text-theme-text-primary mb-2">Reconciliation will:</p>
+            <ul className="list-disc list-inside space-y-1 text-sm text-theme-text-secondary">
               <li>Match payments to invoices</li>
               <li>Update payment statuses</li>
               <li>Flag discrepancies</li>
@@ -471,18 +471,18 @@ export function ReconcilePaymentsModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4 flex gap-3">
+        <div className="border-t border-theme-border px-6 py-4 flex gap-3">
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-slate-200 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-elevated disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={onReconcile}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-blue-700 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-accent-hover disabled:opacity-50"
           >
             {isLoading ? "Reconciling..." : "Start Reconcile"}
           </button>

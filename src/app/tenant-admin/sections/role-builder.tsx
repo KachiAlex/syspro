@@ -244,12 +244,12 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">People & Access</p>
-            <h2 className="text-2xl font-semibold text-gray-900">Organizational Roles</h2>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">People & Access</p>
+            <h2 className="text-2xl font-semibold text-theme-text-primary">Organizational Roles</h2>
+            <p className="mt-2 text-sm text-theme-text-secondary">
               Create roles with specific access levels. Each role can be scoped to your organization, regions, or branches.
             </p>
           </div>
@@ -259,7 +259,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
               form.resetForm();
             }}
             disabled={!canCreate || permissions.loading}
-            className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+            className="whitespace-nowrap rounded-full bg-theme-accent px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-theme-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent disabled:cursor-not-allowed disabled:opacity-50"
             title={!canCreate ? "You don't have permission to create roles" : undefined}
           >
             {showCreateForm ? "Cancel" : "+ Create Role"}
@@ -287,35 +287,35 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
           <form className="mt-6 space-y-6 border-t pt-6" onSubmit={handleCreate}>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Role Name</label>
+                <label className="block text-sm font-semibold text-theme-text-primary mb-2">Role Name</label>
                 <input
                   {...form.getFieldProps("name")}
                   placeholder="e.g., Regional Sales Manager"
-                  className={`bg-white w-full rounded-lg border px-3 py-2 text-sm ${ form.errorMap.name ? "border-rose-300 bg-rose-50" : "border-slate-200" }`}
+                  className={`bg-theme-surface w-full rounded-lg border px-3 py-2 text-sm ${ form.errorMap.name ? "border-rose-300 bg-rose-50" : "border-theme-border" }`}
                 />
                 {form.errorMap.name && <p className="mt-1 text-xs text-rose-600">{form.errorMap.name}</p>}
-                <p className="mt-1 text-xs text-slate-500">Choose a descriptive name for this organizational role</p>
+                <p className="mt-1 text-xs text-theme-text-tertiary">Choose a descriptive name for this organizational role</p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Scope Level</label>
+                <label className="block text-sm font-semibold text-theme-text-primary mb-2">Scope Level</label>
                 <select
                   value={form.values.scope}
                   onChange={(e) => form.setValue("scope", e.target.value as Role["scope"])}
-                  className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm"
                 >
                   <option value="tenant">🏢 Tenant-wide (entire organization)</option>
                   <option value="region">🗺️ Regional (specific region only)</option>
                   <option value="branch">🏪 Branch (specific branch only)</option>
                 </select>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-theme-text-tertiary">
                   {SCOPE_INFO[form.values.scope as keyof typeof SCOPE_INFO].description}
                 </p>
               </div>
             </div>
 
             <div className="border-t pt-4">
-              <h3 className="mb-4 text-base font-semibold text-gray-900">Permissions</h3>
+              <h3 className="mb-4 text-base font-semibold text-theme-text-primary">Permissions</h3>
               
               {/* Admin Option */}
               <div className="mb-6 rounded-lg border-2 border-purple-200 bg-purple-50 p-4">
@@ -330,7 +330,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                         (form as any).setFieldValues({ permissions: ["all"] });
                       }
                     }}
-                    className="bg-white mt-1 h-5 w-5 rounded border-slate-300 text-black"
+                    className="bg-theme-surface mt-1 h-5 w-5 rounded border-theme-border text-theme-text-primary"
                   />
                   <div>
                     <p className="font-semibold text-purple-900">⚡ {ADMIN_PERMISSION.label}</p>
@@ -341,7 +341,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
 
               {/* Module Permissions */}
               {form.values.permissions.includes("all") ? (
-                <div className="rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
+                <div className="rounded-lg bg-theme-muted p-4 text-sm text-theme-text-secondary">
                   <p className="font-medium">Full admin access selected</p>
                   <p className="mt-1">This role has access to all modules and features.</p>
                 </div>
@@ -350,10 +350,10 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                   {allModules.map((moduleKey) => {
                     const moduleGroup = PERMISSION_GROUPS[moduleKey as keyof typeof PERMISSION_GROUPS];
                     return (
-                      <div key={moduleKey} className="rounded-lg border border-slate-200 p-4">
+                      <div key={moduleKey} className="rounded-lg border border-theme-border p-4">
                         <div className="mb-3">
-                          <p className="font-semibold text-gray-900">{moduleGroup.label}</p>
-                          <p className="text-xs text-slate-600">{moduleGroup.description}</p>
+                          <p className="font-semibold text-theme-text-primary">{moduleGroup.label}</p>
+                          <p className="text-xs text-theme-text-secondary">{moduleGroup.description}</p>
                         </div>
                         <div className="space-y-2">
                           {moduleGroup.permissions.map((perm) => (
@@ -362,11 +362,11 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                                 type="checkbox"
                                 checked={form.values.permissions.includes(perm.id)}
                                 onChange={() => togglePerm(perm.id)}
-                                className="bg-white mt-1 h-4 w-4 rounded border-slate-300 text-black"
+                                className="bg-theme-surface mt-1 h-4 w-4 rounded border-theme-border text-theme-text-primary"
                               />
                               <div className="flex-1">
-                                <p className="text-sm font-medium text-gray-900">{perm.label}</p>
-                                <p className="text-xs text-slate-600">{perm.description}</p>
+                                <p className="text-sm font-medium text-theme-text-primary">{perm.label}</p>
+                                <p className="text-xs text-theme-text-secondary">{perm.description}</p>
                               </div>
                             </label>
                           ))}
@@ -392,7 +392,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                   setShowCreateForm(false);
                   form.resetForm();
                 }}
-                className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-full border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted"
               >
                 Cancel
               </button>
@@ -402,20 +402,20 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
       </div>
 
       {/* Existing Roles Section */}
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="mb-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Current Roles</p>
-          <h3 className="text-lg font-semibold text-gray-900">Manage organizational roles</h3>
+          <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Current Roles</p>
+          <h3 className="text-lg font-semibold text-theme-text-primary">Manage organizational roles</h3>
         </div>
 
         {loading ? (
-          <div className="rounded-lg bg-slate-50 p-4 text-center text-sm text-slate-600">
-            <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900"></div>
+          <div className="rounded-lg bg-theme-muted p-4 text-center text-sm text-theme-text-secondary">
+            <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-theme-border border-t-slate-900"></div>
             <p className="mt-2">Loading roles…</p>
           </div>
         ) : (roles ?? []).length === 0 ? (
           <div className="rounded-lg bg-blue-50 p-4 text-center text-sm">
-            <p className="font-medium text-gray-900">No roles created yet</p>
+            <p className="font-medium text-theme-text-primary">No roles created yet</p>
             <p className="mt-1 text-blue-700">Create your first role to define organizational access levels</p>
           </div>
         ) : (
@@ -429,27 +429,27 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                   key={role.id}
                   className={`rounded-lg border transition-all ${
                     editingId === role.id
-                      ? "bg-slate-50 ring-2 ring-blue-200"
-                      : "border-slate-200 hover:border-slate-300"
+                      ? "bg-theme-muted ring-2 ring-blue-200"
+                      : "border-theme-border hover:border-theme-border"
                   }`}
                 >
                   {editingId === role.id ? (
                     <div className="p-4 space-y-4">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-2">Role Name</label>
+                        <label className="block text-sm font-semibold text-theme-text-primary mb-2">Role Name</label>
                         <input
                           value={editForm.name}
                           onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                          className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                          className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-2">Scope</label>
+                        <label className="block text-sm font-semibold text-theme-text-primary mb-2">Scope</label>
                         <select
                           value={editForm.scope}
                           onChange={(e) => setEditForm({ ...editForm, scope: e.target.value as Role["scope"] })}
-                          className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                          className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm"
                         >
                           <option value="tenant">🏢 Tenant-wide</option>
                           <option value="region">🗺️ Regional</option>
@@ -458,7 +458,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-2">Permissions</label>
+                        <label className="block text-sm font-semibold text-theme-text-primary mb-2">Permissions</label>
                         <div className="mb-4 rounded-lg border-2 border-purple-200 bg-purple-50 p-3">
                           <label className="flex items-start gap-3">
                             <input
@@ -471,7 +471,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                                   setEditForm({ ...editForm, permissions: ["all"] });
                                 }
                               }}
-                              className="bg-white mt-1 h-4 w-4 rounded border-slate-300 text-black"
+                              className="bg-theme-surface mt-1 h-4 w-4 rounded border-theme-border text-theme-text-primary"
                             />
                             <div>
                               <p className="text-sm font-semibold text-purple-900">⚡ Full Admin Access</p>
@@ -485,8 +485,8 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                             {allModules.map((moduleKey) => {
                               const moduleGroup = PERMISSION_GROUPS[moduleKey as keyof typeof PERMISSION_GROUPS];
                               return (
-                                <div key={moduleKey} className="rounded-lg border border-slate-200 p-3">
-                                  <p className="mb-2 text-xs font-semibold text-gray-900">{moduleGroup.label}</p>
+                                <div key={moduleKey} className="rounded-lg border border-theme-border p-3">
+                                  <p className="mb-2 text-xs font-semibold text-theme-text-primary">{moduleGroup.label}</p>
                                   <div className="space-y-1">
                                     {moduleGroup.permissions.map((perm) => (
                                       <label key={perm.id} className="flex items-center gap-2">
@@ -494,9 +494,9 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                                           type="checkbox"
                                           checked={editForm.permissions.includes(perm.id)}
                                           onChange={() => toggleEditPerm(perm.id)}
-                                          className="bg-white h-4 w-4 rounded border-slate-300 text-black"
+                                          className="bg-theme-surface h-4 w-4 rounded border-theme-border text-theme-text-primary"
                                         />
-                                        <span className="text-xs text-slate-700">{perm.label}</span>
+                                        <span className="text-xs text-theme-text-primary">{perm.label}</span>
                                       </label>
                                     ))}
                                   </div>
@@ -516,7 +516,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                         </button>
                         <button
                           onClick={cancelEdit}
-                          className="rounded-full border border-slate-300 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                          className="rounded-full border border-theme-border px-4 py-2 text-xs font-medium text-theme-text-primary hover:bg-theme-muted"
                         >
                           Cancel
                         </button>
@@ -526,8 +526,8 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                     <div className="p-4">
                       <div className="flex items-start justify-between gap-4 mb-3">
                         <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900">{role.name}</h4>
-                          <p className="text-xs text-slate-600 mt-1">
+                          <h4 className="font-semibold text-theme-text-primary">{role.name}</h4>
+                          <p className="text-xs text-theme-text-secondary mt-1">
                             {scopeInfo.icon} {scopeInfo.label}
                           </p>
                         </div>
@@ -535,7 +535,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                           <button
                             onClick={() => startEdit(role)}
                             disabled={!canEdit || permissions.loading}
-                            className="rounded-full border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="rounded-full border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-theme-muted disabled:opacity-50 disabled:cursor-not-allowed"
                             title={!canEdit ? "You don't have permission to edit roles" : undefined}
                           >
                             Edit
@@ -566,8 +566,8 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                               if (modulePerms.length === 0) return null;
                               return (
                                 <div key={moduleKey} className="text-xs">
-                                  <span className="font-semibold text-gray-900">{moduleGroup.label}:</span>{" "}
-                                  <span className="text-slate-600">{modulePerms.map((p) => p.label).join(" + ")}</span>
+                                  <span className="font-semibold text-theme-text-primary">{moduleGroup.label}:</span>{" "}
+                                  <span className="text-theme-text-secondary">{modulePerms.map((p) => p.label).join(" + ")}</span>
                                 </div>
                               );
                             })}
@@ -584,27 +584,27 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
       </div>
 
       {/* Support Section */}
-      <div className="rounded-3xl border border-slate-100 bg-gradient-to-br from-blue-50 to-slate-50 p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-gradient-to-br from-blue-50 to-slate-50 p-6 shadow-sm">
         <div className="mb-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Scope Levels Explained</p>
-          <h3 className="text-lg font-semibold text-gray-900">Which scope should you use?</h3>
+          <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Scope Levels Explained</p>
+          <h3 className="text-lg font-semibold text-theme-text-primary">Which scope should you use?</h3>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-lg bg-theme-muted p-3">
-            <p className="font-semibold text-gray-900">🏢 Tenant-wide</p>
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="font-semibold text-theme-text-primary">🏢 Tenant-wide</p>
+            <p className="mt-1 text-xs text-theme-text-secondary">
               Access applies to all regions and branches in your organization
             </p>
           </div>
           <div className="rounded-lg bg-theme-muted p-3">
-            <p className="font-semibold text-gray-900">🗺️ Regional</p>
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="font-semibold text-theme-text-primary">🗺️ Regional</p>
+            <p className="mt-1 text-xs text-theme-text-secondary">
               Access limited to a specific region only (useful for regional managers)
             </p>
           </div>
           <div className="rounded-lg bg-theme-muted p-3">
-            <p className="font-semibold text-gray-900">🏪 Branch</p>
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="font-semibold text-theme-text-primary">🏪 Branch</p>
+            <p className="mt-1 text-xs text-theme-text-secondary">
               Access limited to a specific branch only (useful for branch managers)
             </p>
           </div>

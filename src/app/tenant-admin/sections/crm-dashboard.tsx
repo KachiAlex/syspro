@@ -1664,7 +1664,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                   key={opt.key}
                   onClick={() => handleViewChange(opt.key)}
                   className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                    active ? "bg-blue-600 text-white" : "text-theme-text-primary hover:bg-gray-100"
+                    active ? "bg-theme-accent text-white" : "text-theme-text-primary hover:bg-theme-muted"
                   }`}
                 >
                   {opt.label}
@@ -1677,7 +1677,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200 bg-theme-muted rounded-xl border border-theme-border">
+      <div className="border-b border-theme-border bg-theme-muted rounded-xl border border-theme-border">
         <div className="flex flex-wrap gap-0">
           {[
             { key: "overview" as const, label: "Overview", icon: BarChart3 },
@@ -1694,8 +1694,8 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                 onClick={() => setActiveTab(tab.key)}
                 className={`flex items-center gap-2 px-3 sm:px-6 py-3 sm:py-4 font-medium border-b-2 transition-colors text-sm sm:text-base ${
                   isActive
-                    ? "border-blue-500 text-theme-accent"
-                    : "border-transparent text-theme-text-primary hover:text-theme-text-secondary hover:bg-gray-50"
+                    ? "border-theme-accent text-theme-accent"
+                    : "border-transparent text-theme-text-primary hover:text-theme-text-secondary hover:bg-theme-muted"
                 }`}
               >
                 <Icon className="w-5 h-5 flex-shrink-0" />
@@ -1792,19 +1792,19 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => openLeadModal("create")}
-                  className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-gray-200 rounded-lg hover:bg-blue-50 text-theme-text-primary font-medium transition"
+                  className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-theme-border rounded-lg hover:bg-theme-muted text-theme-text-primary font-medium transition"
                 >
                   Add New Lead <ChevronRight className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => openDealModal("create")}
-                  className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-gray-200 rounded-lg hover:bg-blue-50 text-theme-text-primary font-medium transition"
+                  className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-theme-border rounded-lg hover:bg-theme-muted text-theme-text-primary font-medium transition"
                 >
                   Create Deal <ChevronRight className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setActiveTab("leads")}
-                  className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-gray-200 rounded-lg hover:bg-blue-50 text-theme-text-primary font-medium transition"
+                  className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-theme-border rounded-lg hover:bg-theme-muted text-theme-text-primary font-medium transition"
                 >
                   View All Leads <ChevronRight className="w-4 h-4" />
                 </button>
@@ -1826,7 +1826,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                     const color = activity.entityType === "deal" ? "text-green-400 bg-green-100"
                       : activity.entityType === "lead" ? "text-theme-accent bg-blue-100"
                       : activity.entityType === "customer" ? "text-theme-accent bg-purple-100"
-                      : "text-theme-text-secondary bg-gray-100";
+                      : "text-theme-text-secondary bg-theme-muted";
                     const Icon = icon;
                     const timeAgo = (() => {
                       const diff = Date.now() - new Date(activity.createdAt).getTime();
@@ -1867,13 +1867,13 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
               <div className="flex gap-2">
                 <button
                   onClick={() => openLeadModal("create")}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
+                  className="flex items-center gap-2 px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover font-medium transition"
                 >
                   <Plus className="w-4 h-4" /> Add Lead
                 </button>
                 <button
                   onClick={handleExportLeads}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-theme-text-primary rounded-lg hover:bg-gray-50 font-medium transition"
+                  className="flex items-center gap-2 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted font-medium transition"
                 >
                   <Download className="w-4 h-4" /> Export
                 </button>
@@ -1888,7 +1888,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                   onClick={() => setLeadFilter(option.value as LeadFilterKey)}
                   className={`px-3 py-1 rounded-full text-sm font-medium transition ${
                     leadFilter === option.value
-                      ? "bg-blue-600 text-white"
+                      ? "bg-theme-accent text-white"
                       : "bg-blue-100 text-blue-700 hover:bg-blue-200"
                   }`}
                 >
@@ -1898,7 +1898,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
             </div>
 
             {/* Leads Table */}
-            <div className="overflow-x-auto border border-gray-200 rounded-lg">
+            <div className="overflow-x-auto border border-theme-border rounded-lg">
               <table className="w-full">
                 <thead className="bg-theme-bg border-b border-theme-border">
                   <tr>
@@ -1920,7 +1920,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                     </tr>
                   )}
                   {filteredLeads.map((lead) => (
-                    <tr key={lead.id} className="hover:bg-gray-50">
+                    <tr key={lead.id} className="hover:bg-theme-muted">
                       <td className="px-6 py-4 font-medium text-theme-text-primary">
                         <div className="flex flex-col">
                           <span>{lead.contactName}</span>
@@ -1940,24 +1940,24 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                         <div className="flex items-center justify-center gap-2">
                           <button
                             title="View"
-                            className="p-1 hover:bg-gray-200 rounded transition"
+                            className="p-1 hover:bg-theme-muted rounded transition"
                             onClick={() => openLeadModal("view", lead)}
                           >
                             <Eye className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           <button
                             title="Edit"
-                            className="p-1 hover:bg-gray-200 rounded transition"
+                            className="p-1 hover:bg-theme-muted rounded transition"
                             onClick={() => openLeadModal("edit", lead)}
                           >
                             <Edit2 className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           <button
                             title="Assign to Team Member"
-                            className="p-1 hover:bg-blue-100 rounded transition"
+                            className="p-1 hover:bg-theme-muted rounded transition"
                             onClick={() => handleOpenAssignLead(lead)}
                           >
-                            <UserCog className="w-4 h-4 text-blue-500" />
+                            <UserCog className="w-4 h-4 text-theme-accent" />
                           </button>
                           <button
                             title="Convert to Deal"
@@ -2010,7 +2010,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => openContactModal("create")}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
+                  className="flex items-center gap-2 px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover font-medium transition"
                 >
                   <Plus className="w-4 h-4" /> Add Contact
                 </button>
@@ -2022,7 +2022,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                 </button>
                 <button
                   onClick={handleExportContacts}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-theme-text-primary rounded-lg hover:bg-gray-50 font-medium transition"
+                  className="flex items-center gap-2 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted font-medium transition"
                 >
                   <Download className="w-4 h-4" /> Export
                 </button>
@@ -2037,7 +2037,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                   onClick={() => setContactFilter(option.value as ContactFilterKey)}
                   className={`px-3 py-1 rounded-full text-sm font-medium transition ${
                     contactFilter === option.value
-                      ? "bg-blue-600 text-white"
+                      ? "bg-theme-accent text-white"
                       : "bg-blue-100 text-blue-700 hover:bg-blue-200"
                   }`}
                 >
@@ -2062,7 +2062,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                   </button>
                   <button
                     onClick={() => setIsBulkEditContactsModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-theme-accent text-white rounded-lg text-sm font-medium hover:bg-theme-accent-hover transition"
                     disabled={isSubmitting}
                   >
                     <Edit2 className="w-4 h-4" /> Bulk Edit
@@ -2076,7 +2076,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                   </button>
                   <button
                     onClick={clearContactSelection}
-                    className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-theme-border text-theme-text-primary rounded-lg text-sm font-medium hover:bg-theme-muted transition"
                   >
                     Clear
                   </button>
@@ -2085,7 +2085,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
             )}
 
             {/* Contacts Table */}
-            <div className="overflow-x-auto border border-gray-200 rounded-lg">
+            <div className="overflow-x-auto border border-theme-border rounded-lg">
               <table className="w-full">
                 <thead className="bg-theme-bg border-b border-theme-border">
                   <tr>
@@ -2094,7 +2094,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                         type="checkbox"
                         checked={filteredContacts.length > 0 && selectedContactIds.size === filteredContacts.length}
                         onChange={toggleSelectAllContacts}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="w-4 h-4 rounded border-theme-border text-theme-accent focus:ring-theme-accent"
                       />
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Contact</th>
@@ -2114,13 +2114,13 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                     </tr>
                   )}
                   {filteredContacts.map((contact) => (
-                    <tr key={contact.id} className={`hover:bg-gray-50 ${selectedContactIds.has(contact.id) ? "bg-blue-50" : ""}`}>
+                    <tr key={contact.id} className={`hover:bg-theme-muted ${selectedContactIds.has(contact.id) ? "bg-blue-50" : ""}`}>
                       <td className="px-4 py-4">
                         <input
                           type="checkbox"
                           checked={selectedContactIds.has(contact.id)}
                           onChange={() => toggleContactSelection(contact.id)}
-                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="w-4 h-4 rounded border-theme-border text-theme-accent focus:ring-theme-accent"
                         />
                       </td>
                       <td className="px-6 py-4 font-medium text-theme-text-primary">{contact.contactName}</td>
@@ -2132,14 +2132,14 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                         <div className="flex items-center justify-center gap-2">
                           <button
                             title="View"
-                            className="p-1 hover:bg-gray-200 rounded transition"
+                            className="p-1 hover:bg-theme-muted rounded transition"
                             onClick={() => openContactModal("view", contact)}
                           >
                             <Eye className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           <button
                             title="Edit"
-                            className="p-1 hover:bg-gray-200 rounded transition"
+                            className="p-1 hover:bg-theme-muted rounded transition"
                             onClick={() => openContactModal("edit", contact)}
                           >
                             <Edit2 className="w-4 h-4 text-theme-text-secondary" />
@@ -2192,13 +2192,13 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                   <Upload className="w-4 h-4" /> Import CSV
                 </button>
                 <button onClick={handleExportCustomers}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-theme-text-primary rounded-lg hover:bg-gray-50 font-medium transition">
+                  className="flex items-center gap-2 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted font-medium transition">
                   <Download className="w-4 h-4" /> Export
                 </button>
               </div>
             </div>
 
-            <div className="overflow-x-auto border border-gray-200 rounded-lg">
+            <div className="overflow-x-auto border border-theme-border rounded-lg">
               <table className="w-full">
                 <thead className="bg-theme-bg border-b border-theme-border">
                   <tr>
@@ -2215,7 +2215,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                     <tr><td colSpan={6} className="px-6 py-8 text-center text-sm text-theme-text-tertiary">No customers yet. Add manually, import from CSV, or convert a lead.</td></tr>
                   )}
                   {customers.map((customer) => (
-                    <tr key={customer.id} className="hover:bg-gray-50">
+                    <tr key={customer.id} className="hover:bg-theme-muted">
                       <td className="px-6 py-4 font-medium text-theme-text-primary">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
@@ -2231,15 +2231,15 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${
                           customer.status === "active" ? "bg-green-100 text-green-700"
                           : customer.status === "prospect" ? "bg-blue-100 text-blue-700"
-                          : "bg-gray-100 text-theme-text-secondary"
+                          : "bg-theme-muted text-theme-text-secondary"
                         }`}>{customer.status}</span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <button title="View" className="p-1 hover:bg-gray-200 rounded transition" onClick={() => openCustomerModal("view", customer)}>
+                          <button title="View" className="p-1 hover:bg-theme-muted rounded transition" onClick={() => openCustomerModal("view", customer)}>
                             <Eye className="w-4 h-4 text-theme-text-secondary" />
                           </button>
-                          <button title="Edit" className="p-1 hover:bg-gray-200 rounded transition" onClick={() => openCustomerModal("edit", customer)}>
+                          <button title="Edit" className="p-1 hover:bg-theme-muted rounded transition" onClick={() => openCustomerModal("edit", customer)}>
                             <Edit2 className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           <button title="Delete" className="p-1 hover:bg-red-100 rounded transition" onClick={() => { setSelectedCustomer(customer); setShowDeleteCustomerModal(true); }}>
@@ -2272,7 +2272,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                 </button>
                 <button
                   onClick={handleExportDeals}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-theme-text-primary rounded-lg hover:bg-gray-50 font-medium transition"
+                  className="flex items-center gap-2 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted font-medium transition"
                 >
                   <Download className="w-4 h-4" /> Export
                 </button>
@@ -2287,7 +2287,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                   onClick={() => setDealFilter(option.value as DealFilterKey)}
                   className={`px-3 py-1 rounded-full text-sm font-medium transition ${
                     dealFilter === option.value
-                      ? "bg-blue-600 text-white"
+                      ? "bg-theme-accent text-white"
                       : "bg-blue-100 text-blue-700 hover:bg-blue-200"
                   }`}
                 >
@@ -2297,7 +2297,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
             </div>
 
             {/* Deals Table */}
-            <div className="overflow-x-auto border border-gray-200 rounded-lg">
+            <div className="overflow-x-auto border border-theme-border rounded-lg">
               <table className="w-full">
                 <thead className="bg-theme-bg border-b border-theme-border">
                   <tr>
@@ -2319,7 +2319,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                     </tr>
                   )}
                   {filteredDeals.map((deal) => (
-                    <tr key={deal.id} className="hover:bg-gray-50">
+                    <tr key={deal.id} className="hover:bg-theme-muted">
                       <td className="px-6 py-4 font-medium text-theme-text-primary">{deal.name}</td>
                       <td className="px-6 py-4 text-theme-text-secondary">{deal.company}</td>
                       <td className="px-6 py-4 text-right font-semibold text-theme-text-primary">
@@ -2335,13 +2335,13 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            className="p-1 hover:bg-gray-200 rounded transition"
+                            className="p-1 hover:bg-theme-muted rounded transition"
                             onClick={() => openDealModal("view", deal)}
                           >
                             <Eye className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           <button
-                            className="p-1 hover:bg-gray-200 rounded transition"
+                            className="p-1 hover:bg-theme-muted rounded transition"
                             onClick={() => openDealModal("edit", deal)}
                           >
                             <Edit2 className="w-4 h-4 text-theme-text-secondary" />

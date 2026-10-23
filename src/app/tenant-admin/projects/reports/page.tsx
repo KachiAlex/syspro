@@ -134,7 +134,7 @@ export default function ProjectReportsPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Project Reports & Analytics</h2>
+        <h2 className="text-2xl font-bold text-theme-text-primary">Project Reports & Analytics</h2>
         <div className="flex items-center gap-3">
           {/* Role-based action buttons */}
           {userRole.canSubmitReports && (
@@ -150,7 +150,7 @@ export default function ProjectReportsPage() {
           {userRole.canCreateReports && (
             <button
               onClick={() => setShowAdminReportModal(true)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover transition-colors"
             >
               <BarChart3 className="w-4 h-4" />
               Create Report
@@ -159,7 +159,7 @@ export default function ProjectReportsPage() {
           
           <Link
             href={`/tenant-admin/projects`}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted"
           >
             ← Back to Overview
           </Link>
@@ -169,9 +169,9 @@ export default function ProjectReportsPage() {
       {/* User role indicator */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-blue-600" />
+          <Users className="w-5 h-5 text-theme-accent" />
           <div>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-theme-text-primary">
               Current Role: {userRole.reportingLevel.charAt(0).toUpperCase() + userRole.reportingLevel.slice(1)}
             </p>
             <p className="text-xs text-blue-700 mt-1">
@@ -184,38 +184,38 @@ export default function ProjectReportsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm font-medium text-gray-600 mb-2">Total Projects</p>
-          <p className="text-3xl font-bold text-gray-900">{stats.totalProjects}</p>
-          <p className="text-xs text-gray-500 mt-2">All time</p>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <p className="text-sm font-medium text-theme-text-secondary mb-2">Total Projects</p>
+          <p className="text-3xl font-bold text-theme-text-primary">{stats.totalProjects}</p>
+          <p className="text-xs text-theme-text-secondary mt-2">All time</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm font-medium text-gray-600 mb-2">Completion Rate</p>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <p className="text-sm font-medium text-theme-text-secondary mb-2">Completion Rate</p>
           <p className="text-3xl font-bold text-green-600">{stats.completionRate}%</p>
-          <p className="text-xs text-gray-500 mt-2">Overall progress</p>
+          <p className="text-xs text-theme-text-secondary mt-2">Overall progress</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm font-medium text-gray-600 mb-2">Total Budget</p>
-          <p className="text-3xl font-bold text-blue-600">${stats.totalBudget}K</p>
-          <p className="text-xs text-gray-500 mt-2">Allocated</p>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <p className="text-sm font-medium text-theme-text-secondary mb-2">Total Budget</p>
+          <p className="text-3xl font-bold text-theme-accent">${stats.totalBudget}K</p>
+          <p className="text-xs text-theme-text-secondary mt-2">Allocated</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm font-medium text-gray-600 mb-2">Avg Duration</p>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <p className="text-sm font-medium text-theme-text-secondary mb-2">Avg Duration</p>
           <p className="text-3xl font-bold text-purple-600">{stats.avgDuration}mo</p>
-          <p className="text-xs text-gray-500 mt-2">Per project</p>
+          <p className="text-xs text-theme-text-secondary mt-2">Per project</p>
         </div>
       </div>
 
       {/* Reports received from staff (for admins) */}
       {userRole.reportingLevel !== 'staff' && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Reports Received from Staff</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Reports Received from Staff</h3>
           <div className="space-y-3">
             {reports.map((report: any) => (
-              <div key={report.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+              <div key={report.id} className="flex items-center justify-between p-4 border border-theme-border rounded-lg hover:bg-theme-muted">
                 <div>
-                  <p className="font-medium text-gray-900">{report.project || report.title || 'Project Report'}</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="font-medium text-theme-text-primary">{report.project || report.title || 'Project Report'}</p>
+                  <p className="text-sm text-theme-text-secondary">
                     {report.type} by {report.submittedBy || report.createdBy || 'Staff'} • {new Date(report.date || report.createdAt).toLocaleDateString()}
                   </p>
                 </div>
@@ -227,20 +227,20 @@ export default function ProjectReportsPage() {
                   }`}>
                     {report.status}
                   </span>
-                  <button className="text-blue-600 hover:text-theme-accent-hover">
+                  <button className="text-theme-accent hover:text-theme-accent-hover">
                     <Download className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             ))}
-            {reports.length === 0 && <p className="text-sm text-gray-500 text-center py-4">No reports found</p>}
+            {reports.length === 0 && <p className="text-sm text-theme-text-secondary text-center py-4">No reports found</p>}
           </div>
         </div>
       )}
 
       {/* Available Reports */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Available Reports</h3>
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Available Reports</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[
             'Project Summary Report',
@@ -254,10 +254,10 @@ export default function ProjectReportsPage() {
           ].map((report, idx) => (
             <button
               key={idx}
-              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between p-4 border border-theme-border rounded-lg hover:bg-theme-muted transition-colors"
             >
-              <span className="text-sm font-medium text-gray-900">{report}</span>
-              <Download className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-medium text-theme-text-primary">{report}</span>
+              <Download className="w-4 h-4 text-theme-accent" />
             </button>
           ))}
         </div>

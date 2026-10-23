@@ -35,26 +35,26 @@ export default function HrDepthPage() {
     return d;
   };
 
-  const input = "rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm";
+  const input = "rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm";
   const btn = "rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium hover:bg-emerald-500 disabled:opacity-50";
-  const btnSm = "rounded bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700";
+  const btnSm = "rounded bg-theme-muted px-2 py-1 text-xs hover:bg-theme-elevated";
   const th = "p-3";
 
   if (!tenantSlug) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 text-slate-100">
+    <div className="min-h-screen bg-theme-bg p-6 text-theme-text-primary">
       <div className="mx-auto max-w-6xl">
         <h1 className="mb-1 text-2xl font-bold">HR Depth</h1>
-        <p className="mb-4 text-sm text-slate-400">Check-ins, leave allocations &amp; accrual, employee advances, onboarding/separation</p>
-        <div className="mb-4 flex gap-1 rounded-lg bg-slate-900 p-1">
+        <p className="mb-4 text-sm text-theme-text-secondary">Check-ins, leave allocations &amp; accrual, employee advances, onboarding/separation</p>
+        <div className="mb-4 flex gap-1 rounded-lg bg-theme-surface p-1">
           {TABS.map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`rounded-md px-3 py-1.5 text-sm capitalize ${tab === t ? "bg-slate-700" : "text-slate-400 hover:text-white"}`}>{t}</button>
+              className={`rounded-md px-3 py-1.5 text-sm capitalize ${tab === t ? "bg-theme-elevated" : "text-theme-text-secondary hover:text-theme-text-primary"}`}>{t}</button>
           ))}
         </div>
         {error && <div className="mb-4 rounded-lg bg-red-900/40 p-3 text-sm text-red-300">{error}<button onClick={() => setError("")} className="ml-2 underline">dismiss</button></div>}
-        {msg && <div className="mb-4 rounded-lg bg-slate-800 p-3 text-sm">{msg}<button onClick={() => setMsg("")} className="ml-2 underline">dismiss</button></div>}
+        {msg && <div className="mb-4 rounded-lg bg-theme-muted p-3 text-sm">{msg}<button onClick={() => setMsg("")} className="ml-2 underline">dismiss</button></div>}
 
         {tab === "checkins" && (
           <div className="space-y-4">
@@ -65,16 +65,16 @@ export default function HrDepthPage() {
               </select>
               <button className={btn} onClick={() => post({ action: "checkin", employeeId: f.ckEmp, logType: f.ckType ?? "in" })}>Record</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Employee</th><th className={th}>Time</th><th className={th}>Type</th><th className={th}>Source</th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Employee</th><th className={th}>Time</th><th className={th}>Type</th><th className={th}>Source</th></tr></thead>
               <tbody>
                 {data.checkins?.map((c: any) => (
-                  <tr key={c.id} className="border-t border-slate-800/50">
+                  <tr key={c.id} className="border-t border-theme-border">
                     <td className={th}>{c.employee_id}</td><td className={th}>{String(c.timestamp).slice(0, 16)}</td>
                     <td className={th}>{c.log_type}</td><td className={th}>{c.source}</td>
                   </tr>
                 ))}
-                {!data.checkins?.length && <tr><td colSpan={4} className="p-6 text-center text-slate-500">No check-ins</td></tr>}
+                {!data.checkins?.length && <tr><td colSpan={4} className="p-6 text-center text-theme-text-tertiary">No check-ins</td></tr>}
               </tbody>
             </table>
           </div>
@@ -88,22 +88,22 @@ export default function HrDepthPage() {
               <input type="number" placeholder="Year" value={f.alYear ?? new Date().getFullYear()} onChange={(e) => setF({ ...f, alYear: e.target.value })} className={`${input} w-24`} />
               <input type="number" placeholder="Days" value={f.alDays ?? ""} onChange={(e) => setF({ ...f, alDays: e.target.value })} className={`${input} w-24`} />
               <button className={btn} onClick={() => post({ action: "upsert-allocation", employeeId: f.alEmp, leaveType: f.alType, year: Number(f.alYear ?? new Date().getFullYear()), allocatedDays: Number(f.alDays) })}>Allocate</button>
-              <button className="rounded-lg bg-blue-700 px-3 py-2 text-sm hover:bg-blue-600" onClick={async () => {
+              <button className="rounded-lg bg-theme-accent px-3 py-2 text-sm hover:bg-theme-accent-hover" onClick={async () => {
                 const d = await post({ action: "run-accrual" });
                 setMsg(d ? `Accrued ${d.accrued} balance(s) for ${d.period}` : "");
               }}>Run Monthly Accrual</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Employee</th><th className={th}>Type</th><th className={th}>Year</th><th className={th}>Allocated</th><th className={th}>Carried</th><th className={th}>Status</th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Employee</th><th className={th}>Type</th><th className={th}>Year</th><th className={th}>Allocated</th><th className={th}>Carried</th><th className={th}>Status</th></tr></thead>
               <tbody>
                 {data.allocations?.map((a: any) => (
-                  <tr key={a.id} className="border-t border-slate-800/50">
+                  <tr key={a.id} className="border-t border-theme-border">
                     <td className={th}>{a.employee_id}</td><td className={th}>{a.leave_type}</td>
                     <td className={th}>{a.year}</td><td className={th}>{a.allocated_days}</td>
                     <td className={th}>{a.carried_over_days}</td><td className={th}>{a.status}</td>
                   </tr>
                 ))}
-                {!data.allocations?.length && <tr><td colSpan={6} className="p-6 text-center text-slate-500">No allocations</td></tr>}
+                {!data.allocations?.length && <tr><td colSpan={6} className="p-6 text-center text-theme-text-tertiary">No allocations</td></tr>}
               </tbody>
             </table>
           </div>
@@ -117,11 +117,11 @@ export default function HrDepthPage() {
               <input placeholder="Purpose" value={f.adPurpose ?? ""} onChange={(e) => setF({ ...f, adPurpose: e.target.value })} className={`${input} flex-1`} />
               <button className={btn} onClick={() => post({ action: "create-advance", employeeId: f.adEmp, amount: Number(f.adAmt), purpose: f.adPurpose })}>Request</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Advance</th><th className={th}>Employee</th><th className={th}>Amount</th><th className={th}>Repaid</th><th className={th}>Status</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Advance</th><th className={th}>Employee</th><th className={th}>Amount</th><th className={th}>Repaid</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.advances?.map((a: any) => (
-                  <tr key={a.id} className="border-t border-slate-800/50">
+                  <tr key={a.id} className="border-t border-theme-border">
                     <td className={`${th} font-mono`}>{a.advance_number}</td><td className={th}>{a.employee_name ?? a.employee_id}</td>
                     <td className={th}>{Number(a.amount).toLocaleString()}</td><td className={th}>{Number(a.repaid ?? 0).toLocaleString()}</td>
                     <td className={th}>{a.status}</td>
@@ -144,7 +144,7 @@ export default function HrDepthPage() {
                     </td>
                   </tr>
                 ))}
-                {!data.advances?.length && <tr><td colSpan={6} className="p-6 text-center text-slate-500">No advances</td></tr>}
+                {!data.advances?.length && <tr><td colSpan={6} className="p-6 text-center text-theme-text-tertiary">No advances</td></tr>}
               </tbody>
             </table>
           </div>
@@ -161,14 +161,14 @@ export default function HrDepthPage() {
               <button className={btn} onClick={() => post({ action: "create-lifecycle", kind: f.lcKind ?? "onboarding", employeeId: f.lcEmp, employeeName: f.lcName })}>Start</button>
             </div>
             {data.lifecycles?.map((lc: any) => (
-              <div key={lc.id} className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+              <div key={lc.id} className="rounded-xl border border-theme-border bg-theme-surface p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <b>{lc.employee_name ?? lc.employee_id} — {lc.kind}</b>
-                  <span className={`rounded-full px-2 py-0.5 text-xs ${lc.status === "completed" ? "bg-emerald-900/60 text-emerald-300" : "bg-slate-700"}`}>{lc.status}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-xs ${lc.status === "completed" ? "bg-emerald-900/60 text-emerald-300" : "bg-theme-elevated"}`}>{lc.status}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-1">
                   {(lc.checklist ?? []).map((t: any, i: number) => (
-                    <label key={i} className="flex items-center gap-2 text-sm text-slate-300">
+                    <label key={i} className="flex items-center gap-2 text-sm text-theme-text-primary">
                       <input type="checkbox" checked={t.done} onChange={(e) => post({ action: "complete-task", lifecycleId: lc.id, taskIndex: i, done: e.target.checked })} />
                       <span className={t.done ? "line-through opacity-60" : ""}>{t.task}</span>
                     </label>
@@ -176,7 +176,7 @@ export default function HrDepthPage() {
                 </div>
               </div>
             ))}
-            {!data.lifecycles?.length && <p className="text-sm text-slate-500">No lifecycle records</p>}
+            {!data.lifecycles?.length && <p className="text-sm text-theme-text-tertiary">No lifecycle records</p>}
           </div>
         )}
       </div>

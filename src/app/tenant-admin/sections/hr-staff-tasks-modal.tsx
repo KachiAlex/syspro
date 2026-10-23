@@ -146,7 +146,7 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay p-4">
       <div className="bg-theme-bg w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl border border-theme-border shadow-xl">
         <div className="flex items-center justify-between p-6 border-b border-theme-border">
           <div>
@@ -178,7 +178,7 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
                 <select
                   value={newEmployeeId}
                   onChange={(e) => setNewEmployeeId(e.target.value)}
-                  className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 >
                   <option value="">Select staff member</option>
                   {staff.map((e) => (
@@ -191,7 +191,7 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
                 <select
                   value={newFrequency}
                   onChange={(e) => setNewFrequency(e.target.value as any)}
-                  className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -204,7 +204,7 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
                   type="date"
                   value={newDueDate}
                   onChange={(e) => setNewDueDate(e.target.value)}
-                  className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 />
               </div>
               <div>
@@ -214,7 +214,7 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="Task title"
-                  className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 />
               </div>
             </div>
@@ -225,7 +225,7 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
                 onChange={(e) => setNewDescription(e.target.value)}
                 placeholder="Optional description..."
                 rows={2}
-                className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
               />
             </div>
             <div>
@@ -235,7 +235,7 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
                 onChange={(e) => setNewExpectedOutcome(e.target.value)}
                 placeholder="Describe the expected result / KPI..."
                 rows={2}
-                className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -247,7 +247,7 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
                   max={10}
                   value={newWeight}
                   onChange={(e) => setNewWeight(Number(e.target.value) || 1)}
-                  className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 />
               </div>
               <div className="flex items-end pb-2">
@@ -266,7 +266,7 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
               <button
                 onClick={handleCreate}
                 disabled={creating}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover disabled:opacity-50"
               >
                 {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Assign Task
@@ -316,7 +316,7 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
                               key={s}
                               onClick={() => handleStatusChange(task.id, s)}
                               className={`text-xs px-2 py-1 rounded border border-theme-border ${
-                                task.status === s ? 'bg-blue-600 text-white border-blue-600' : 'text-theme-text-secondary hover:text-theme-text-primary'
+                                task.status === s ? 'bg-theme-accent text-white border-theme-accent' : 'text-theme-text-secondary hover:text-theme-text-primary'
                               }`}
                             >
                               {s.replace('-', ' ')}

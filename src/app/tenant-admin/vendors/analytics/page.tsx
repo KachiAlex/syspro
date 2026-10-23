@@ -82,16 +82,16 @@ export default function VendorAnalyticsPage() {
           <BarChart3 className="h-6 w-6 text-sky-400" />
           <div>
             <h1 className="text-xl font-semibold">Vendor Analytics</h1>
-            <p className="text-sm text-slate-400">Spend, AP aging, and vendor risk scores</p>
+            <p className="text-sm text-theme-text-secondary">Spend, AP aging, and vendor risk scores</p>
           </div>
         </div>
         <div className="flex items-end gap-2">
-          <label className="text-xs text-slate-400">From
-            <input type="date" className="block rounded bg-slate-800 px-3 py-1.5 text-sm"
+          <label className="text-xs text-theme-text-secondary">From
+            <input type="date" className="block rounded bg-theme-muted px-3 py-1.5 text-sm"
               value={dates.from} onChange={(e) => setDates({ ...dates, from: e.target.value })} />
           </label>
-          <label className="text-xs text-slate-400">To
-            <input type="date" className="block rounded bg-slate-800 px-3 py-1.5 text-sm"
+          <label className="text-xs text-theme-text-secondary">To
+            <input type="date" className="block rounded bg-theme-muted px-3 py-1.5 text-sm"
               value={dates.to} onChange={(e) => setDates({ ...dates, to: e.target.value })} />
           </label>
           <button onClick={() => void load()}
@@ -101,16 +101,16 @@ export default function VendorAnalyticsPage() {
 
       {error && <div className="flex items-center gap-2 rounded bg-rose-500/10 px-4 py-3 text-rose-400"><AlertCircle className="h-4 w-4" />{error}</div>}
 
-      <div className="flex gap-1 border-b border-slate-800">
+      <div className="flex gap-1 border-b border-theme-border">
         {([["dashboard", "Overview"], ["spend", "Spend"], ["aging", "AP aging"], ["risk", "Risk"]] as const).map(([key, label]) => (
           <button key={key} onClick={() => setTab(key)}
             className={`px-4 py-2 text-sm border-b-2 -mb-px ${
-              tab === key ? "border-sky-400 text-sky-400" : "border-transparent text-slate-400 hover:text-slate-200"}`}>
+              tab === key ? "border-sky-400 text-sky-400" : "border-transparent text-theme-text-secondary hover:text-theme-text-primary"}`}>
             {label}
           </button>
         ))}
       </div>
-      {loading && <Loader2 className="h-5 w-5 animate-spin text-slate-400" />}
+      {loading && <Loader2 className="h-5 w-5 animate-spin text-theme-text-secondary" />}
 
       {tab === "dashboard" && dashboard && (
         <div className="space-y-5">
@@ -122,14 +122,14 @@ export default function VendorAnalyticsPage() {
               ["Overdue", fmt(dashboard.overdueAmount)],
               ["Pending approvals", dashboard.pendingApprovals],
             ].map(([l, v]) => (
-              <div key={l as string} className="rounded-lg border border-slate-700 bg-slate-900/60 px-4 py-3">
-                <div className="text-xs text-slate-400">{l}</div>
+              <div key={l as string} className="rounded-lg border border-theme-border bg-theme-surface/60 px-4 py-3">
+                <div className="text-xs text-theme-text-secondary">{l}</div>
                 <div className="text-lg font-semibold">{v}</div>
               </div>
             ))}
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-4">
+            <div className="rounded-lg border border-theme-border bg-theme-surface/60 p-4">
               <h2 className="text-sm font-semibold mb-3">Monthly spend trend</h2>
               <div className="flex items-end gap-1 h-36">
                 {dashboard.monthlyTrend.map((t) => (
@@ -137,12 +137,12 @@ export default function VendorAnalyticsPage() {
                     <div className="w-full rounded-t bg-sky-600/70"
                       style={{ height: `${Math.max(4, (t.spend / maxTrend) * 120)}px` }}
                       title={`${t.month}: ${fmt(t.spend)}`} />
-                    <span className="text-[10px] text-slate-500">{t.month.slice(5, 7)}</span>
+                    <span className="text-[10px] text-theme-text-tertiary">{t.month.slice(5, 7)}</span>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-4">
+            <div className="rounded-lg border border-theme-border bg-theme-surface/60 p-4">
               <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
                 <ShieldAlert className="h-4 w-4 text-amber-400" /> Risk distribution
               </h2>
@@ -152,13 +152,13 @@ export default function VendorAnalyticsPage() {
                 return (
                   <div key={l} className="mb-2 flex items-center gap-2 text-sm">
                     <span className="w-16 capitalize">{l}</span>
-                    <div className="flex-1 rounded bg-slate-800 h-3">
+                    <div className="flex-1 rounded bg-theme-muted h-3">
                       <div className={`h-3 rounded ${
                         l === "low" ? "bg-emerald-500" : l === "medium" ? "bg-amber-500"
                         : l === "high" ? "bg-orange-500" : "bg-rose-500"}`}
                         style={{ width: `${(n / total) * 100}%` }} />
                     </div>
-                    <span className="w-8 text-right text-slate-400">{n}</span>
+                    <span className="w-8 text-right text-theme-text-secondary">{n}</span>
                   </div>
                 );
               })}
@@ -170,7 +170,7 @@ export default function VendorAnalyticsPage() {
       {tab === "spend" && (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs text-slate-400">
+            <tr className="text-left text-xs text-theme-text-secondary">
               {["Vendor", "Total spend", "Bills", "Avg bill", "Payments", "Last txn"].map((h) => (
                 <th key={h} className="px-3 py-2">{h}</th>
               ))}
@@ -178,19 +178,19 @@ export default function VendorAnalyticsPage() {
           </thead>
           <tbody>
             {spend.map((s) => (
-              <tr key={s.vendorId} className="border-t border-slate-800">
+              <tr key={s.vendorId} className="border-t border-theme-border">
                 <td className="px-3 py-2">{s.vendorName}</td>
                 <td className="px-3 py-2 font-semibold">{fmt(s.totalSpend)}</td>
                 <td className="px-3 py-2">{s.billCount}</td>
-                <td className="px-3 py-2 text-slate-400">{fmt(s.avgBillAmount)}</td>
+                <td className="px-3 py-2 text-theme-text-secondary">{fmt(s.avgBillAmount)}</td>
                 <td className="px-3 py-2">{s.paymentCount}</td>
-                <td className="px-3 py-2 text-slate-400">
+                <td className="px-3 py-2 text-theme-text-secondary">
                   {s.lastTransactionDate ? String(s.lastTransactionDate).slice(0, 10) : "—"}
                 </td>
               </tr>
             ))}
             {spend.length === 0 && !loading && (
-              <tr><td colSpan={6} className="px-3 py-6 text-center text-slate-500">No vendor spend in range</td></tr>
+              <tr><td colSpan={6} className="px-3 py-6 text-center text-theme-text-tertiary">No vendor spend in range</td></tr>
             )}
           </tbody>
         </table>
@@ -199,7 +199,7 @@ export default function VendorAnalyticsPage() {
       {tab === "aging" && (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs text-slate-400">
+            <tr className="text-left text-xs text-theme-text-secondary">
               {["Vendor", "Current", "31–60", "61–90", "90+", "Total", "Oldest overdue"].map((h) => (
                 <th key={h} className="px-3 py-2">{h}</th>
               ))}
@@ -207,18 +207,18 @@ export default function VendorAnalyticsPage() {
           </thead>
           <tbody>
             {aging.map((a) => (
-              <tr key={a.vendorId} className="border-t border-slate-800">
+              <tr key={a.vendorId} className="border-t border-theme-border">
                 <td className="px-3 py-2">{a.vendorName}</td>
                 <td className="px-3 py-2">{fmt(a.current)}</td>
                 <td className="px-3 py-2">{fmt(a.days31)}</td>
                 <td className="px-3 py-2">{fmt(a.days61)}</td>
                 <td className={`px-3 py-2 ${a.days90 > 0 ? "text-rose-400" : ""}`}>{fmt(a.days90)}</td>
                 <td className="px-3 py-2 font-semibold">{fmt(a.total)}</td>
-                <td className="px-3 py-2 text-slate-400">{a.oldestOverdueDays}d</td>
+                <td className="px-3 py-2 text-theme-text-secondary">{a.oldestOverdueDays}d</td>
               </tr>
             ))}
             {aging.length === 0 && !loading && (
-              <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-500">No outstanding vendor balances</td></tr>
+              <tr><td colSpan={7} className="px-3 py-6 text-center text-theme-text-tertiary">No outstanding vendor balances</td></tr>
             )}
           </tbody>
         </table>
@@ -227,7 +227,7 @@ export default function VendorAnalyticsPage() {
       {tab === "risk" && (
         <div className="space-y-3">
           {risk.map((r) => (
-            <div key={r.vendorId} className="rounded-lg border border-slate-700 bg-slate-900/60 p-4">
+            <div key={r.vendorId} className="rounded-lg border border-theme-border bg-theme-surface/60 p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="font-medium">{r.vendorName}</span>
@@ -236,20 +236,20 @@ export default function VendorAnalyticsPage() {
                   </span>
                 </div>
               </div>
-              <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-400">
+              <div className="mt-2 flex flex-wrap gap-3 text-xs text-theme-text-secondary">
                 {Object.entries(r.factors ?? {}).map(([k, v]) => (
-                  <span key={k}>{k.replace(/([A-Z])/g, " $1").toLowerCase()}: <b className="text-slate-200">{v}</b></span>
+                  <span key={k}>{k.replace(/([A-Z])/g, " $1").toLowerCase()}: <b className="text-theme-text-primary">{v}</b></span>
                 ))}
               </div>
               {(r.recommendations ?? []).length > 0 && (
-                <ul className="mt-2 list-inside list-disc text-xs text-slate-400">
+                <ul className="mt-2 list-inside list-disc text-xs text-theme-text-secondary">
                   {r.recommendations.map((rec, i) => <li key={i}>{rec}</li>)}
                 </ul>
               )}
             </div>
           ))}
           {risk.length === 0 && !loading && (
-            <div className="py-6 text-center text-slate-500">No vendors to score</div>
+            <div className="py-6 text-center text-theme-text-tertiary">No vendors to score</div>
           )}
         </div>
       )}

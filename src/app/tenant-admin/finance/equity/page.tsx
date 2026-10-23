@@ -5,7 +5,7 @@ import { useTenantContext } from "@/components/tenant-admin/tenant-context";
 import { AlertCircle, CheckCircle2, Plus } from "lucide-react";
 
 const fmt = (n: number) => `₦${Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
-const inputCls = "rounded bg-slate-800 px-3 py-2 text-sm w-full";
+const inputCls = "rounded bg-theme-muted px-3 py-2 text-sm w-full";
 const btnCls = "flex items-center gap-1.5 rounded bg-sky-600 px-3 py-1.5 text-sm hover:bg-sky-500 disabled:opacity-50";
 
 type Tab = "shareholders" | "types" | "transfer" | "ledger" | "balance";
@@ -57,12 +57,12 @@ export default function EquityPage() {
     <div className="p-6 space-y-5">
       <div>
         <h1 className="text-xl font-semibold">Share Capital &amp; Equity</h1>
-        <p className="text-sm text-slate-400">Share types, shareholders, issues/transfers/buy-backs, share ledger and balance.</p>
+        <p className="text-sm text-theme-text-secondary">Share types, shareholders, issues/transfers/buy-backs, share ledger and balance.</p>
       </div>
-      <div className="flex gap-1 border-b border-slate-800 overflow-x-auto">
+      <div className="flex gap-1 border-b border-theme-border overflow-x-auto">
         {(["shareholders", "types", "transfer", "ledger", "balance"] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`px-3 py-2 text-sm whitespace-nowrap capitalize ${tab === t ? "border-b-2 border-sky-500 text-sky-400" : "text-slate-400 hover:text-slate-200"}`}>
+            className={`px-3 py-2 text-sm whitespace-nowrap capitalize ${tab === t ? "border-b-2 border-sky-500 text-sky-400" : "text-theme-text-secondary hover:text-theme-text-primary"}`}>
             {t === "types" ? "Share Types" : t === "transfer" ? "New Transfer" : t}
           </button>
         ))}
@@ -84,7 +84,7 @@ function ShareholdersTab({ rows, post, busy, reload }: any) {
   const [form, setForm] = useState({ name: "", email: "", folioNo: "" });
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2 items-end rounded border border-slate-800 p-4">
+      <div className="flex flex-wrap gap-2 items-end rounded border border-theme-border p-4">
         <input className={`${inputCls} w-56`} placeholder="Shareholder name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <input className={`${inputCls} w-56`} placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
         <input className={`${inputCls} w-36`} placeholder="Folio no" value={form.folioNo} onChange={(e) => setForm({ ...form, folioNo: e.target.value })} />
@@ -94,14 +94,14 @@ function ShareholdersTab({ rows, post, busy, reload }: any) {
         </button>
       </div>
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-slate-400 border-b border-slate-800"><th className="py-2 pr-3">Name</th><th className="py-2 pr-3">Email</th><th className="py-2">Folio</th></tr></thead>
+        <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border"><th className="py-2 pr-3">Name</th><th className="py-2 pr-3">Email</th><th className="py-2">Folio</th></tr></thead>
         <tbody>
           {rows.map((s: any) => (
-            <tr key={s.id} className="border-b border-slate-800/60">
+            <tr key={s.id} className="border-b border-theme-border/60">
               <td className="py-2 pr-3">{s.name}</td><td className="py-2 pr-3">{s.email ?? "—"}</td><td className="py-2">{s.folio_no ?? "—"}</td>
             </tr>
           ))}
-          {!rows.length && <tr><td colSpan={3} className="py-6 text-center text-slate-500">No shareholders</td></tr>}
+          {!rows.length && <tr><td colSpan={3} className="py-6 text-center text-theme-text-tertiary">No shareholders</td></tr>}
         </tbody>
       </table>
     </div>
@@ -112,7 +112,7 @@ function TypesTab({ rows, post, busy, reload }: any) {
   const [form, setForm] = useState({ name: "", faceValue: "", premium: "" });
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2 items-end rounded border border-slate-800 p-4">
+      <div className="flex flex-wrap gap-2 items-end rounded border border-theme-border p-4">
         <input className={`${inputCls} w-48`} placeholder="Type name (e.g. Ordinary)" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <input className={`${inputCls} w-32`} placeholder="Face value" value={form.faceValue} onChange={(e) => setForm({ ...form, faceValue: e.target.value })} />
         <input className={`${inputCls} w-32`} placeholder="Premium" value={form.premium} onChange={(e) => setForm({ ...form, premium: e.target.value })} />
@@ -122,16 +122,16 @@ function TypesTab({ rows, post, busy, reload }: any) {
         </button>
       </div>
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-slate-400 border-b border-slate-800"><th className="py-2 pr-3">Name</th><th className="py-2 pr-3 text-right">Face Value</th><th className="py-2 text-right">Premium</th></tr></thead>
+        <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border"><th className="py-2 pr-3">Name</th><th className="py-2 pr-3 text-right">Face Value</th><th className="py-2 text-right">Premium</th></tr></thead>
         <tbody>
           {rows.map((t: any) => (
-            <tr key={t.id} className="border-b border-slate-800/60">
+            <tr key={t.id} className="border-b border-theme-border/60">
               <td className="py-2 pr-3">{t.name}</td>
               <td className="py-2 pr-3 text-right font-mono">{fmt(t.face_value)}</td>
               <td className="py-2 text-right font-mono">{fmt(t.premium)}</td>
             </tr>
           ))}
-          {!rows.length && <tr><td colSpan={3} className="py-6 text-center text-slate-500">No share types</td></tr>}
+          {!rows.length && <tr><td colSpan={3} className="py-6 text-center text-theme-text-tertiary">No share types</td></tr>}
         </tbody>
       </table>
     </div>
@@ -142,7 +142,7 @@ function TransferTab({ shareholders, types, post, busy, reload }: any) {
   const [form, setForm] = useState({ transferType: "issue", shareTypeId: "", fromShareholderId: "", toShareholderId: "", qty: "", rate: "", postingDate: "" });
   return (
     <div className="space-y-4 max-w-3xl">
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-theme-text-secondary">
         <b>Issue</b>: company → shareholder (Dr Bank / Cr Capital+Premium).{" "}
         <b>Purchase</b>: buy-back (Dr Capital / Cr Bank).{" "}
         <b>Transfer</b>: shareholder → shareholder (equity reclass).
@@ -189,13 +189,13 @@ function TransferTab({ shareholders, types, post, busy, reload }: any) {
 function LedgerTab({ rows }: any) {
   return (
     <table className="w-full text-sm">
-      <thead><tr className="text-left text-slate-400 border-b border-slate-800">
+      <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border">
         <th className="py-2 pr-3">Date</th><th className="py-2 pr-3">Type</th><th className="py-2 pr-3">Share Type</th>
         <th className="py-2 pr-3">Shareholder</th><th className="py-2 pr-3 text-right">Qty</th><th className="py-2 text-right">Amount</th>
       </tr></thead>
       <tbody>
         {rows.map((r: any) => (
-          <tr key={r.id} className="border-b border-slate-800/60">
+          <tr key={r.id} className="border-b border-theme-border/60">
             <td className="py-2 pr-3">{r.date}</td>
             <td className="py-2 pr-3 capitalize">{r.transferType}</td>
             <td className="py-2 pr-3">{r.shareType}</td>
@@ -204,7 +204,7 @@ function LedgerTab({ rows }: any) {
             <td className="py-2 text-right font-mono">{fmt(r.amount)}</td>
           </tr>
         ))}
-        {!rows.length && <tr><td colSpan={6} className="py-6 text-center text-slate-500">No share movements</td></tr>}
+        {!rows.length && <tr><td colSpan={6} className="py-6 text-center text-theme-text-tertiary">No share movements</td></tr>}
       </tbody>
     </table>
   );
@@ -215,20 +215,20 @@ function BalanceTab({ rows }: any) {
   return (
     <div className="space-y-3">
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-slate-400 border-b border-slate-800">
+        <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border">
           <th className="py-2 pr-3">Shareholder</th><th className="py-2 pr-3">Share Type</th>
           <th className="py-2 pr-3 text-right">Shares</th><th className="py-2 text-right">Capital Value</th>
         </tr></thead>
         <tbody>
           {rows.map((r: any, i: number) => (
-            <tr key={i} className="border-b border-slate-800/60">
+            <tr key={i} className="border-b border-theme-border/60">
               <td className="py-2 pr-3">{r.shareholder}</td>
               <td className="py-2 pr-3">{r.shareType}</td>
               <td className="py-2 pr-3 text-right font-mono">{r.shares.toLocaleString()}</td>
               <td className="py-2 text-right font-mono">{fmt(r.capitalValue)}</td>
             </tr>
           ))}
-          {!rows.length && <tr><td colSpan={4} className="py-6 text-center text-slate-500">No shareholdings</td></tr>}
+          {!rows.length && <tr><td colSpan={4} className="py-6 text-center text-theme-text-tertiary">No shareholdings</td></tr>}
           {rows.length > 0 && (
             <tr className="font-semibold"><td className="py-2" colSpan={3}>Total share capital</td><td className="py-2 text-right font-mono">{fmt(total)}</td></tr>
           )}

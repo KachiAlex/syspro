@@ -34,14 +34,14 @@ export function CheckboxInput({
           className={`h-4 w-4 rounded border transition-colors ${
             hasError
               ? "border-rose-300 bg-rose-50 accent-rose-600"
-              : "border-slate-300 bg-white accent-slate-900"
+              : "border-theme-border bg-theme-surface accent-slate-900"
           } ${className}`}
         />
-        {label && <label className="text-sm font-medium text-slate-900">{label}</label>}
+        {label && <label className="text-sm font-medium text-theme-text-primary">{label}</label>}
       </div>
       {error && <p className="text-xs font-medium text-rose-600">{error}</p>}
-      {hint && !error && <p className="text-xs text-slate-500">{hint}</p>}
-      {helperText && !error && <p className="text-xs text-slate-500">{helperText}</p>}
+      {hint && !error && <p className="text-xs text-theme-text-tertiary">{hint}</p>}
+      {helperText && !error && <p className="text-xs text-theme-text-tertiary">{helperText}</p>}
     </div>
   );
 }

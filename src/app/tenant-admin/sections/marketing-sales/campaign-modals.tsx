@@ -65,16 +65,16 @@ export function CreateCampaignModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-md w-full mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Create Campaign</h2>
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
+          <h2 className="text-xl font-bold text-theme-text-primary">Create Campaign</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-lg transition"
+            className="p-1 hover:bg-theme-muted rounded-lg transition"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-theme-text-secondary" />
           </button>
         </div>
 
@@ -88,14 +88,14 @@ export function CreateCampaignModal({
 
           {/* Campaign Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Campaign Name *
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-transparent text-theme-text-primary bg-theme-surface"
               placeholder="e.g., Q1 Enterprise Push"
               disabled={isLoading}
             />
@@ -103,13 +103,13 @@ export function CreateCampaignModal({
 
           {/* Channel */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Channel
             </label>
             <select
               value={formData.channel}
               onChange={(e) => setFormData({ ...formData, channel: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-transparent text-theme-text-primary bg-theme-surface"
               disabled={isLoading}
             >
               <option value="email">Email</option>
@@ -123,13 +123,13 @@ export function CreateCampaignModal({
 
           {/* Status */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Initial Status
             </label>
             <select
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-transparent text-theme-text-primary bg-theme-surface"
               disabled={isLoading}
             >
               <option value="planning">Planning</option>
@@ -140,14 +140,14 @@ export function CreateCampaignModal({
 
           {/* Budget */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Budget ($) *
             </label>
             <input
               type="number"
               value={formData.budget}
               onChange={(e) => setFormData({ ...formData, budget: +e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-transparent text-theme-text-primary bg-theme-surface"
               placeholder="10000"
               min="1"
               disabled={isLoading}
@@ -156,28 +156,28 @@ export function CreateCampaignModal({
 
           {/* Start Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Start Date
             </label>
             <input
               type="date"
               value={formData.startDate}
               onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-transparent text-theme-text-primary bg-theme-surface"
               disabled={isLoading}
             />
           </div>
 
           {/* End Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               End Date (Optional)
             </label>
             <input
               type="date"
               value={formData.endDate || ""}
               onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-transparent text-theme-text-primary bg-theme-surface"
               disabled={isLoading}
             />
           </div>
@@ -187,14 +187,14 @@ export function CreateCampaignModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+              className="flex-1 px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition"
               disabled={isLoading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg font-medium hover:bg-theme-accent-hover transition disabled:opacity-50"
               disabled={isLoading}
             >
               {isLoading ? "Creating..." : "Create Campaign"}
@@ -269,16 +269,16 @@ export function EditCampaignModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-md w-full mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Edit Campaign</h2>
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
+          <h2 className="text-xl font-bold text-theme-text-primary">Edit Campaign</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-lg transition"
+            className="p-1 hover:bg-theme-muted rounded-lg transition"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-theme-text-secondary" />
           </button>
         </div>
 
@@ -292,27 +292,27 @@ export function EditCampaignModal({
 
           {/* Campaign Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Campaign Name *
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-transparent text-theme-text-primary bg-theme-surface"
               disabled={isLoading}
             />
           </div>
 
           {/* Channel */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Channel
             </label>
             <select
               value={formData.channel}
               onChange={(e) => setFormData({ ...formData, channel: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-transparent text-theme-text-primary bg-theme-surface"
               disabled={isLoading}
             >
               <option value="email">Email</option>
@@ -326,13 +326,13 @@ export function EditCampaignModal({
 
           {/* Status */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Status
             </label>
             <select
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-transparent text-theme-text-primary bg-theme-surface"
               disabled={isLoading}
             >
               <option value="planning">Planning</option>
@@ -344,14 +344,14 @@ export function EditCampaignModal({
 
           {/* Budget */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Budget ($) *
             </label>
             <input
               type="number"
               value={formData.budget}
               onChange={(e) => setFormData({ ...formData, budget: +e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-transparent text-theme-text-primary bg-theme-surface"
               min="1"
               disabled={isLoading}
             />
@@ -359,28 +359,28 @@ export function EditCampaignModal({
 
           {/* Start Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Start Date
             </label>
             <input
               type="date"
               value={formData.startDate}
               onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-transparent text-theme-text-primary bg-theme-surface"
               disabled={isLoading}
             />
           </div>
 
           {/* End Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               End Date (Optional)
             </label>
             <input
               type="date"
               value={formData.endDate || ""}
               onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-transparent text-theme-text-primary bg-theme-surface"
               disabled={isLoading}
             />
           </div>
@@ -390,14 +390,14 @@ export function EditCampaignModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+              className="flex-1 px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition"
               disabled={isLoading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg font-medium hover:bg-theme-accent-hover transition disabled:opacity-50"
               disabled={isLoading}
             >
               {isLoading ? "Saving..." : "Save Changes"}
@@ -422,16 +422,16 @@ export function ViewCampaignModal({
   if (!isOpen || !campaign) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-md w-full mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Campaign Details</h2>
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
+          <h2 className="text-xl font-bold text-theme-text-primary">Campaign Details</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-lg transition"
+            className="p-1 hover:bg-theme-muted rounded-lg transition"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-theme-text-secondary" />
           </button>
         </div>
 
@@ -439,18 +439,18 @@ export function ViewCampaignModal({
         <div className="p-6 space-y-4">
           {/* Campaign Name */}
           <div>
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Campaign Name</p>
-            <p className="text-lg font-semibold text-gray-900 mt-1">{campaign.name}</p>
+            <p className="text-xs font-semibold text-theme-text-secondary uppercase tracking-wide">Campaign Name</p>
+            <p className="text-lg font-semibold text-theme-text-primary mt-1">{campaign.name}</p>
           </div>
 
           {/* Channel & Status */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Channel</p>
-              <p className="text-sm text-gray-900 mt-1 capitalize">{campaign.channel?.replace("_", " ")}</p>
+              <p className="text-xs font-semibold text-theme-text-secondary uppercase tracking-wide">Channel</p>
+              <p className="text-sm text-theme-text-primary mt-1 capitalize">{campaign.channel?.replace("_", " ")}</p>
             </div>
             <div>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Status</p>
+              <p className="text-xs font-semibold text-theme-text-secondary uppercase tracking-wide">Status</p>
               <p className="mt-1">
                 <span
                   className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
@@ -458,7 +458,7 @@ export function ViewCampaignModal({
                       ? "bg-green-100 text-green-800"
                       : campaign.status === "planning"
                       ? "bg-yellow-100 text-yellow-800"
-                      : "bg-gray-100 text-gray-900"
+                      : "bg-theme-muted text-theme-text-primary"
                   }`}
                 >
                   {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
@@ -470,14 +470,14 @@ export function ViewCampaignModal({
           {/* Budget & Spend */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Budget</p>
-              <p className="text-sm font-semibold text-gray-900 mt-1">
+              <p className="text-xs font-semibold text-theme-text-secondary uppercase tracking-wide">Budget</p>
+              <p className="text-sm font-semibold text-theme-text-primary mt-1">
                 ${(campaign.budget / 1000).toFixed(0)}K
               </p>
             </div>
             <div>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Spent</p>
-              <p className="text-sm font-semibold text-gray-900 mt-1">
+              <p className="text-xs font-semibold text-theme-text-secondary uppercase tracking-wide">Spent</p>
+              <p className="text-sm font-semibold text-theme-text-primary mt-1">
                 ${(campaign.actualSpend / 1000).toFixed(0)}K
               </p>
             </div>
@@ -486,13 +486,13 @@ export function ViewCampaignModal({
           {/* Revenue & ROI */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Revenue</p>
+              <p className="text-xs font-semibold text-theme-text-secondary uppercase tracking-wide">Revenue</p>
               <p className="text-sm font-semibold text-green-600 mt-1">
                 ${(campaign.revenue / 1000).toFixed(0)}K
               </p>
             </div>
             <div>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">ROI</p>
+              <p className="text-xs font-semibold text-theme-text-secondary uppercase tracking-wide">ROI</p>
               <p className="text-sm font-semibold text-green-600 mt-1">{campaign.roi.toFixed(2)}x</p>
             </div>
           </div>
@@ -500,12 +500,12 @@ export function ViewCampaignModal({
           {/* Dates */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Start Date</p>
-              <p className="text-sm text-gray-900 mt-1">{new Date(campaign.startDate).toLocaleDateString()}</p>
+              <p className="text-xs font-semibold text-theme-text-secondary uppercase tracking-wide">Start Date</p>
+              <p className="text-sm text-theme-text-primary mt-1">{new Date(campaign.startDate).toLocaleDateString()}</p>
             </div>
             <div>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">End Date</p>
-              <p className="text-sm text-gray-900 mt-1">
+              <p className="text-xs font-semibold text-theme-text-secondary uppercase tracking-wide">End Date</p>
+              <p className="text-sm text-theme-text-primary mt-1">
                 {campaign.endDate ? new Date(campaign.endDate).toLocaleDateString() : "—"}
               </p>
             </div>
@@ -513,10 +513,10 @@ export function ViewCampaignModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+        <div className="px-6 py-4 border-t border-theme-border flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+            className="px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition"
           >
             Close
           </button>
@@ -552,33 +552,33 @@ export function DeleteConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-sm w-full mx-4">
         {/* Header */}
-        <div className="flex items-center gap-3 p-6 border-b border-gray-200">
+        <div className="flex items-center gap-3 p-6 border-b border-theme-border">
           <AlertTriangle className="w-6 h-6 text-red-600" />
-          <h2 className="text-lg font-bold text-gray-900">Delete Campaign?</h2>
+          <h2 className="text-lg font-bold text-theme-text-primary">Delete Campaign?</h2>
         </div>
 
         {/* Content */}
         <div className="p-6">
-          <p className="text-gray-600">
+          <p className="text-theme-text-secondary">
             Are you sure you want to delete <span className="font-semibold">&quot;{campaignName}&quot;</span>? This action cannot be undone.
           </p>
         </div>
 
         {/* Buttons */}
-        <div className="px-6 py-4 border-t border-gray-200 flex gap-3">
+        <div className="px-6 py-4 border-t border-theme-border flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+            className="flex-1 px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition"
             disabled={isLoading}
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
-            className="flex-1 px-4 py-2 bg-red-600 text-black rounded-lg font-medium hover:bg-red-700 transition disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-red-600 text-theme-text-primary rounded-lg font-medium hover:bg-red-700 transition disabled:opacity-50"
             disabled={isLoading}
           >
             {isLoading ? "Deleting..." : "Delete"}

@@ -101,11 +101,11 @@ export default function ProjectsBudget({ projects, tenantSlug }: ProjectsBudgetP
 
       <div className="flex gap-4 items-end">
         <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-900 mb-2">Select Project</label>
+          <label className="block text-sm font-medium text-theme-text-primary mb-2">Select Project</label>
           <select
             value={selectedProjectId}
             onChange={(e) => setSelectedProjectId(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+            className="w-full rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-theme-text-primary focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 transition"
           >
             {projects.map(p => (
               <option key={p.id} value={p.id}>{p.name}</option>
@@ -119,17 +119,17 @@ export default function ProjectsBudget({ projects, tenantSlug }: ProjectsBudgetP
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-blue-600 mb-1">Total Budget</p>
-                <p className="text-2xl font-bold text-gray-900">${selectedProject.budgetApproved.toFixed(2)}</p>
+                <p className="text-sm text-theme-accent mb-1">Total Budget</p>
+                <p className="text-2xl font-bold text-theme-text-primary">${selectedProject.budgetApproved.toFixed(2)}</p>
               </div>
-              <DollarSign className="w-8 h-8 text-blue-600" />
+              <DollarSign className="w-8 h-8 text-theme-accent" />
             </div>
           </div>
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-amber-600 mb-1">Spent</p>
-                <p className="text-2xl font-bold text-gray-900">${selectedProject.budgetSpent.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-theme-text-primary">${selectedProject.budgetSpent.toFixed(2)}</p>
               </div>
               <TrendingUp className="w-8 h-8 text-amber-600" />
             </div>
@@ -138,7 +138,7 @@ export default function ProjectsBudget({ projects, tenantSlug }: ProjectsBudgetP
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-emerald-600 mb-1">Remaining</p>
-                <p className="text-2xl font-bold text-gray-900">${(selectedProject.budgetApproved - selectedProject.budgetSpent).toFixed(2)}</p>
+                <p className="text-2xl font-bold text-theme-text-primary">${(selectedProject.budgetApproved - selectedProject.budgetSpent).toFixed(2)}</p>
               </div>
               <AlertCircle className="w-8 h-8 text-emerald-600" />
             </div>
@@ -146,15 +146,15 @@ export default function ProjectsBudget({ projects, tenantSlug }: ProjectsBudgetP
         </div>
       )}
 
-      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Budget Utilization</h3>
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Budget Utilization</h3>
         {selectedProject && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Overall Budget Usage</span>
-              <span className="text-sm font-semibold text-gray-900">{budgetUtilization}%</span>
+              <span className="text-sm text-theme-text-secondary">Overall Budget Usage</span>
+              <span className="text-sm font-semibold text-theme-text-primary">{budgetUtilization}%</span>
             </div>
-            <div className="h-3 w-full rounded-full bg-gray-200 overflow-hidden">
+            <div className="h-3 w-full rounded-full bg-theme-muted overflow-hidden">
               <div
                 className={`h-full transition-all ${
                   budgetUtilization > 90 ? 'bg-red-500' :
@@ -168,26 +168,26 @@ export default function ProjectsBudget({ projects, tenantSlug }: ProjectsBudgetP
         )}
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Budget Category</h3>
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Add Budget Category</h3>
         <div className="flex gap-2 flex-col md:flex-row">
           <input
             type="text"
             placeholder="Category name..."
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value)}
-            className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+            className="flex-1 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-theme-text-primary placeholder-theme-text-tertiary focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 transition"
           />
           <input
             type="number"
             placeholder="Amount..."
             value={newAmount}
             onChange={(e) => setNewAmount(e.target.value)}
-            className="w-32 rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+            className="w-32 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-theme-text-primary placeholder-theme-text-tertiary focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 transition"
           />
           <button
             onClick={handleAddAllocation}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-2 rounded-lg bg-theme-accent px-4 py-2 text-sm font-semibold text-white hover:bg-theme-accent-hover transition-colors whitespace-nowrap"
           >
             Add Category
           </button>
@@ -195,38 +195,38 @@ export default function ProjectsBudget({ projects, tenantSlug }: ProjectsBudgetP
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-gray-500">Loading budget allocations...</div>
+        <div className="text-center py-8 text-theme-text-secondary">Loading budget allocations...</div>
       ) : budgetAllocations.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-12 text-center">
           <DollarSign className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No budget categories yet</h3>
-          <p className="text-gray-600">Add budget categories to track spending</p>
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-2">No budget categories yet</h3>
+          <p className="text-theme-text-secondary">Add budget categories to track spending</p>
         </div>
       ) : (
-        <div className="rounded-lg border border-gray-200 bg-theme-muted overflow-hidden">
+        <div className="rounded-lg border border-theme-border bg-theme-muted overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-theme-muted border-b border-theme-border">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Category</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Allocated</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Spent</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Remaining</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Usage</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-theme-text-primary">Category</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-theme-text-primary">Allocated</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-theme-text-primary">Spent</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-theme-text-primary">Remaining</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-theme-text-primary">Usage</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-theme-text-primary">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-theme-border">
               {budgetAllocations.map(allocation => {
                 const usage = allocation.allocated > 0 ? Math.round((allocation.spent / allocation.allocated) * 100) : 0;
                 return (
-                  <tr key={allocation.id} className="hover:bg-gray-50 transition">
-                    <td className="px-6 py-4 text-sm text-gray-900 font-medium">{allocation.category}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">${allocation.allocated.toFixed(2)}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">${allocation.spent.toFixed(2)}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">${(allocation.allocated - allocation.spent).toFixed(2)}</td>
+                  <tr key={allocation.id} className="hover:bg-theme-muted transition">
+                    <td className="px-6 py-4 text-sm text-theme-text-primary font-medium">{allocation.category}</td>
+                    <td className="px-6 py-4 text-sm text-theme-text-secondary">${allocation.allocated.toFixed(2)}</td>
+                    <td className="px-6 py-4 text-sm text-theme-text-secondary">${allocation.spent.toFixed(2)}</td>
+                    <td className="px-6 py-4 text-sm text-theme-text-secondary">${(allocation.allocated - allocation.spent).toFixed(2)}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <div className="h-2 w-16 rounded-full bg-gray-200 overflow-hidden">
+                        <div className="h-2 w-16 rounded-full bg-theme-muted overflow-hidden">
                           <div
                             className={`h-full transition-all ${
                               usage > 90 ? 'bg-red-500' :
@@ -236,7 +236,7 @@ export default function ProjectsBudget({ projects, tenantSlug }: ProjectsBudgetP
                             style={{ width: `${Math.min(usage, 100)}%` }}
                           />
                         </div>
-                        <span className="text-xs font-semibold text-gray-900">{usage}%</span>
+                        <span className="text-xs font-semibold text-theme-text-primary">{usage}%</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">

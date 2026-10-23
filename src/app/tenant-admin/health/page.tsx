@@ -235,8 +235,8 @@ export default function HealthPage() {
       case 'healthy': return 'text-green-600 bg-green-100';
       case 'warning': return 'text-amber-600 bg-amber-100';
       case 'critical': return 'text-red-600 bg-red-100';
-      case 'offline': return 'text-gray-600 bg-gray-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'offline': return 'text-theme-text-secondary bg-theme-muted';
+      default: return 'text-theme-text-secondary bg-theme-muted';
     }
   };
 
@@ -255,8 +255,8 @@ export default function HealthPage() {
       case 'running': return 'text-green-600 bg-green-100';
       case 'stopped': return 'text-red-600 bg-red-100';
       case 'error': return 'text-red-600 bg-red-100';
-      case 'maintenance': return 'text-blue-600 bg-blue-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'maintenance': return 'text-theme-accent bg-blue-100';
+      default: return 'text-theme-text-secondary bg-theme-muted';
     }
   };
 
@@ -266,7 +266,7 @@ export default function HealthPage() {
       case 'medium': return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'critical': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-900 border-gray-200';
+      default: return 'bg-theme-muted text-theme-text-primary border-theme-border';
     }
   };
 
@@ -274,8 +274,8 @@ export default function HealthPage() {
     switch (trend) {
       case 'up': return <TrendingUp className="w-3 h-3 text-red-500" />;
       case 'down': return <TrendingDown className="w-3 h-3 text-green-500" />;
-      case 'stable': return <Activity className="w-3 h-3 text-blue-500" />;
-      default: return <Activity className="w-3 h-3 text-gray-500" />;
+      case 'stable': return <Activity className="w-3 h-3 text-theme-accent" />;
+      default: return <Activity className="w-3 h-3 text-theme-text-secondary" />;
     }
   };
 
@@ -305,8 +305,8 @@ export default function HealthPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#F8FAFC]">System Health</h1>
-          <p className="text-sm text-gray-600 mt-1">System monitoring and diagnostics</p>
+          <h1 className="text-2xl font-bold text-theme-text-primary">System Health</h1>
+          <p className="text-sm text-theme-text-secondary mt-1">System monitoring and diagnostics</p>
         </div>
       </div>
 
@@ -315,7 +315,7 @@ export default function HealthPage() {
           <select
             value={selectedTimeRange}
             onChange={(e) => setSelectedTimeRange(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
           >
             <option value="5m">Last 5 minutes</option>
             <option value="15m">Last 15 minutes</option>
@@ -323,24 +323,24 @@ export default function HealthPage() {
             <option value="6h">Last 6 hours</option>
             <option value="24h">Last 24 hours</option>
           </select>
-          <label className="flex items-center gap-2 text-sm text-gray-600">
+          <label className="flex items-center gap-2 text-sm text-theme-text-secondary">
             <input
               type="checkbox"
               checked={autoRefresh}
               onChange={(e) => setAutoRefresh(e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded border-theme-border text-theme-accent focus:ring-theme-accent"
             />
             Auto-refresh
           </label>
         </div>
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+          <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted">
             <RefreshCw className="w-4 h-4" />
             Refresh
           </button>
           <button
             onClick={exportHealthReport}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
           >
             <Download className="w-4 h-4" />
             Export Report
@@ -349,40 +349,40 @@ export default function HealthPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">System Status</p>
+              <p className="text-sm font-medium text-theme-text-secondary">System Status</p>
               <p className="text-3xl font-bold text-green-600 mt-2">Healthy</p>
               <p className="text-xs text-green-600 mt-2">All systems operational</p>
             </div>
             <Heart className="w-12 h-12 text-green-100" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Services</p>
-              <p className="text-3xl font-bold text-blue-600 mt-2">{healthyServices}/{services.length}</p>
-              <p className="text-xs text-blue-600 mt-2">{((healthyServices / services.length) * 100).toFixed(1)}% uptime</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Active Services</p>
+              <p className="text-3xl font-bold text-theme-accent mt-2">{healthyServices}/{services.length}</p>
+              <p className="text-xs text-theme-accent mt-2">{((healthyServices / services.length) * 100).toFixed(1)}% uptime</p>
             </div>
             <Server className="w-12 h-12 text-blue-100" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Alerts</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Active Alerts</p>
               <p className="text-3xl font-bold text-amber-600 mt-2">{totalAlerts}</p>
               <p className="text-xs text-amber-600 mt-2">{criticalAlerts} critical</p>
             </div>
             <AlertTriangle className="w-12 h-12 text-amber-100" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Avg Uptime</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Avg Uptime</p>
               <p className="text-3xl font-bold text-purple-600 mt-2">{avgUptime.toFixed(2)}%</p>
               <p className="text-xs text-purple-600 mt-2">Last 30 days</p>
             </div>
@@ -392,8 +392,8 @@ export default function HealthPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">System Metrics</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">System Metrics</h3>
           <div className="space-y-4">
             {systemMetrics.map((metric) => (
               <div key={metric.id} className="flex items-center justify-between">
@@ -403,21 +403,21 @@ export default function HealthPage() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-gray-900">{metric.name}</p>
+                      <p className="text-sm font-medium text-theme-text-primary">{metric.name}</p>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-gray-900">
+                        <span className="text-sm font-bold text-theme-text-primary">
                           {metric.value}{metric.unit}
                         </span>
                         {getTrendIcon(metric.trend)}
                       </div>
                     </div>
                     <div className="mt-2">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-theme-muted rounded-full h-2">
                         <div
                           className={`h-2 rounded-full ${
                             metric.status === 'healthy' ? 'bg-green-500' :
                             metric.status === 'warning' ? 'bg-amber-500' :
-                            metric.status === 'critical' ? 'bg-red-500' : 'bg-gray-500'
+                            metric.status === 'critical' ? 'bg-red-500' : 'bg-theme-muted'
                           }`}
                           style={{ 
                             width: `${Math.min((metric.value / metric.threshold.critical) * 100, 100)}%` 
@@ -425,7 +425,7 @@ export default function HealthPage() {
                         />
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-theme-text-secondary mt-1">
                       Warning: {metric.threshold.warning}{metric.unit} | Critical: {metric.threshold.critical}{metric.unit}
                     </p>
                   </div>
@@ -435,19 +435,19 @@ export default function HealthPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Service Status</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Service Status</h3>
           <div className="space-y-4">
             {services.map((service) => (
-              <div key={service.id} className="border border-gray-200 rounded-lg p-4">
+              <div key={service.id} className="border border-theme-border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg ${getServiceStatusColor(service.status)}`}>
                       <Server className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{service.name}</p>
-                      <p className="text-xs text-gray-500">Uptime: {service.uptime}%</p>
+                      <p className="text-sm font-medium text-theme-text-primary">{service.name}</p>
+                      <p className="text-xs text-theme-text-secondary">Uptime: {service.uptime}%</p>
                     </div>
                   </div>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getServiceStatusColor(service.status)}`}>
@@ -456,22 +456,22 @@ export default function HealthPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                   <div className="flex items-center gap-2">
-                    <Cpu className="w-4 h-4 text-gray-400" />
-                    <span className="text-xs text-gray-600">CPU: {service.cpu}%</span>
+                    <Cpu className="w-4 h-4 text-theme-text-tertiary" />
+                    <span className="text-xs text-theme-text-secondary">CPU: {service.cpu}%</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Database className="w-4 h-4 text-gray-400" />
-                    <span className="text-xs text-gray-600">Memory: {service.memory}%</span>
+                    <Database className="w-4 h-4 text-theme-text-tertiary" />
+                    <span className="text-xs text-theme-text-secondary">Memory: {service.memory}%</span>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-gray-900">Health Checks:</p>
+                  <p className="text-xs font-medium text-theme-text-primary">Health Checks:</p>
                   <div className="space-y-1">
                     {service.healthChecks.map((check, index) => (
                       <div key={index} className="flex items-center justify-between">
-                        <span className="text-xs text-gray-600">{check.name}</span>
+                        <span className="text-xs text-theme-text-secondary">{check.name}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500">{check.responseTime}ms</span>
+                          <span className="text-xs text-theme-text-secondary">{check.responseTime}ms</span>
                           <div className={`w-2 h-2 rounded-full ${
                             check.status === 'pass' ? 'bg-green-500' : 'bg-red-500'
                           }`} />
@@ -486,9 +486,9 @@ export default function HealthPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200">
+      <div className="bg-theme-surface rounded-lg border border-theme-border">
         <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Alerts</h3>
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Recent Alerts</h3>
           <div className="space-y-3">
             {alerts.filter(alert => !alert.resolved).map((alert) => (
               <div key={alert.id} className={`border rounded-lg p-4 ${getAlertSeverityColor(alert.severity)}`}>
@@ -501,8 +501,8 @@ export default function HealthPage() {
                         {alert.severity.charAt(0).toUpperCase() + alert.severity.slice(1)}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{alert.description}</p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <p className="text-sm text-theme-text-secondary mb-2">{alert.description}</p>
+                    <div className="flex items-center gap-4 text-xs text-theme-text-secondary">
                       <span>Service: {alert.service}</span>
                       <span>{alert.timestamp}</span>
                     </div>

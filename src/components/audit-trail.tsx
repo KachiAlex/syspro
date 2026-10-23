@@ -76,9 +76,9 @@ function getStatusColor(action: string): string {
     case "created":
     case "submitted":
     case "updated":
-      return "text-blue-600 bg-blue-50";
+      return "text-theme-accent bg-blue-50";
     default:
-      return "text-slate-600 bg-slate-50";
+      return "text-theme-text-secondary bg-theme-muted";
   }
 }
 
@@ -159,18 +159,18 @@ export default function AuditTrail({
     return (
       <div className="flex items-center justify-center py-8">
         <div className="animate-spin">
-          <Clock className="h-6 w-6 text-blue-600" />
+          <Clock className="h-6 w-6 text-theme-accent" />
         </div>
-        <p className="ml-2 text-slate-600">Loading audit trail...</p>
+        <p className="ml-2 text-theme-text-secondary">Loading audit trail...</p>
       </div>
     );
   }
 
   if (sortedEntries.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center">
-        <Clock className="mx-auto h-8 w-8 text-slate-400" />
-        <p className="mt-2 text-sm text-slate-600">{emptyMessage}</p>
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-6 text-center">
+        <Clock className="mx-auto h-8 w-8 text-theme-text-secondary" />
+        <p className="mt-2 text-sm text-theme-text-secondary">{emptyMessage}</p>
       </div>
     );
   }
@@ -194,32 +194,32 @@ export default function AuditTrail({
                     <IconComponent className="h-4 w-4" />
                   </div>
                   {index < sortedEntries.length - 1 && (
-                    <div className="absolute top-10 h-12 w-0.5 bg-slate-200" />
+                    <div className="absolute top-10 h-12 w-0.5 bg-theme-muted" />
                   )}
                 </div>
 
                 {/* Timeline content */}
                 <div className="flex-1 pb-8">
-                  <div className="rounded-lg border border-slate-200 bg-white p-4">
+                  <div className="rounded-lg border border-theme-border bg-theme-surface p-4">
                     {/* Action and timestamp */}
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="font-semibold text-slate-900">
+                        <p className="font-semibold text-theme-text-primary">
                           {getActionLabel(entry.action)}
                         </p>
-                        <p className="text-sm text-slate-600">
+                        <p className="text-sm text-theme-text-secondary">
                           by {entry.user || "System"}
                         </p>
                       </div>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-theme-text-tertiary">
                         {formatTimestamp(entry.timestamp)}
                       </p>
                     </div>
 
                     {/* Details if available */}
                     {Object.keys(entry.details).length > 0 && (
-                      <div className="mt-3 rounded bg-slate-50 p-2">
-                        <p className="text-xs text-slate-700">
+                      <div className="mt-3 rounded bg-theme-muted p-2">
+                        <p className="text-xs text-theme-text-primary">
                           {formatDetails(entry.details)}
                         </p>
                       </div>
@@ -245,18 +245,18 @@ export function CompactAuditTrail({ entries }: { entries: AuditEntry[] }) {
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">
+      <p className="text-xs font-semibold uppercase tracking-wider text-theme-text-secondary">
         Recent Activity
       </p>
       {latestEntries.map((entry) => {
         const IconComponent = getActionIcon(entry.action);
         return (
           <div key={entry.id} className="flex items-center gap-2">
-            <IconComponent className="h-3 w-3 text-slate-500" />
-            <span className="text-xs text-slate-600">
+            <IconComponent className="h-3 w-3 text-theme-text-tertiary" />
+            <span className="text-xs text-theme-text-secondary">
               {getActionLabel(entry.action)}
             </span>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-theme-text-secondary">
               {formatTimestamp(entry.timestamp)}
             </span>
           </div>

@@ -48,7 +48,7 @@ const STATUS_COLORS: Record<string, string> = {
   partially_received: 'bg-blue-100 text-blue-800',
   closed: 'bg-purple-100 text-purple-800',
   cancelled: 'bg-red-100 text-red-800',
-  draft: 'bg-gray-100 text-gray-800',
+  draft: 'bg-theme-muted text-theme-text-primary',
   matched: 'bg-green-100 text-green-800',
   disputed: 'bg-red-100 text-red-800',
 };
@@ -162,8 +162,8 @@ export default function ProcurementComponent({ tenantSlug }: { tenantSlug: strin
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Procurement Workspace</h2>
-        <p className="text-gray-600">Manage purchase requisitions, purchase orders, and goods receipts</p>
+        <h2 className="text-2xl font-bold text-theme-text-primary mb-2">Procurement Workspace</h2>
+        <p className="text-theme-text-secondary">Manage purchase requisitions, purchase orders, and goods receipts</p>
       </div>
 
       {error && (
@@ -179,38 +179,38 @@ export default function ProcurementComponent({ tenantSlug }: { tenantSlug: strin
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Requisitions</p>
-              <p className="text-xl font-bold text-gray-900">{requisitions.length}</p>
+              <p className="text-sm text-theme-text-secondary">Total Requisitions</p>
+              <p className="text-xl font-bold text-theme-text-primary">{requisitions.length}</p>
             </div>
-            <Package className="w-8 h-8 text-blue-600" />
+            <Package className="w-8 h-8 text-theme-accent" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Pending Approval</p>
-              <p className="text-xl font-bold text-gray-900">{pendingCount}</p>
+              <p className="text-sm text-theme-text-secondary">Pending Approval</p>
+              <p className="text-xl font-bold text-theme-text-primary">{pendingCount}</p>
             </div>
             <Building className="w-8 h-8 text-orange-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Requisition Value</p>
-              <p className="text-xl font-bold text-gray-900">₦{totalSpend.toLocaleString()}</p>
+              <p className="text-sm text-theme-text-secondary">Total Requisition Value</p>
+              <p className="text-xl font-bold text-theme-text-primary">₦{totalSpend.toLocaleString()}</p>
             </div>
             <TrendingUp className="w-8 h-8 text-green-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Approved</p>
-              <p className="text-xl font-bold text-gray-900">{approvedCount}</p>
+              <p className="text-sm text-theme-text-secondary">Approved</p>
+              <p className="text-xl font-bold text-theme-text-primary">{approvedCount}</p>
             </div>
             <CheckCircle className="w-8 h-8 text-purple-600" />
           </div>
@@ -218,15 +218,15 @@ export default function ProcurementComponent({ tenantSlug }: { tenantSlug: strin
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
+      <div className="flex gap-1 mb-6 border-b border-theme-border">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.key
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
+                ? 'border-theme-accent text-theme-accent'
+                : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
             }`}
           >
             {tab.label}
@@ -237,7 +237,7 @@ export default function ProcurementComponent({ tenantSlug }: { tenantSlug: strin
       {/* Actions */}
       <div className="flex justify-end gap-2 mb-4">
         {activeTab === 'requisitions' && (
-          <button onClick={() => setShowCreateReq(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm flex items-center gap-2">
+          <button onClick={() => setShowCreateReq(true)} className="px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover text-sm flex items-center gap-2">
             <Plus className="w-4 h-4" /> New Requisition
           </button>
         )}
@@ -253,7 +253,7 @@ export default function ProcurementComponent({ tenantSlug }: { tenantSlug: strin
         )}
         <button
           onClick={() => activeTab === 'requisitions' ? loadRequisitions() : activeTab === 'purchase-orders' ? loadPurchaseOrders() : loadGoodsReceipts()}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-1"
+          className="px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary hover:bg-theme-muted flex items-center gap-1"
         >
           <RefreshCw className="w-4 h-4" /> Refresh
         </button>
@@ -262,8 +262,8 @@ export default function ProcurementComponent({ tenantSlug }: { tenantSlug: strin
       {/* Tab Content */}
       {loading ? (
         <div className="text-center py-12">
-          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900"></div>
-          <p className="mt-2 text-sm text-gray-600">Loading...</p>
+          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-theme-border border-t-gray-900"></div>
+          <p className="mt-2 text-sm text-theme-text-secondary">Loading...</p>
         </div>
       ) : activeTab === 'requisitions' ? (
         <RequisitionTab requisitions={requisitions} onView={(r) => setShowReqDetail(r)} onAction={handleReqAction} />
@@ -285,11 +285,11 @@ export default function ProcurementComponent({ tenantSlug }: { tenantSlug: strin
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay" onClick={onClose}>
+      <div className="bg-theme-surface rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-4 border-b border-theme-border">
+          <h3 className="text-lg font-semibold text-theme-text-primary">{title}</h3>
+          <button onClick={onClose} className="text-theme-text-tertiary hover:text-theme-text-secondary"><X className="w-5 h-5" /></button>
         </div>
         <div className="p-4">{children}</div>
       </div>
@@ -299,37 +299,37 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 
 function RequisitionTab({ requisitions, onView, onAction }: { requisitions: Requisition[]; onView: (r: Requisition) => void; onAction: (id: string, action: string) => void }) {
   if (requisitions.length === 0) {
-    return <div className="p-8 text-center text-gray-500 border border-dashed border-gray-200 rounded-lg">No requisitions found. Create one to get started.</div>;
+    return <div className="p-8 text-center text-theme-text-secondary border border-dashed border-theme-border rounded-lg">No requisitions found. Create one to get started.</div>;
   }
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="bg-theme-surface rounded-lg border border-theme-border overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-theme-muted border-b">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Req Number</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Req Number</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Source</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Items</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Total</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Created</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {requisitions.map((req) => (
-              <tr key={req.id} className="hover:bg-gray-50">
+              <tr key={req.id} className="hover:bg-theme-muted">
                 <td className="px-4 py-3 font-medium">{req.requisitionNumber}</td>
                 <td className="px-4 py-3 capitalize">{req.source}</td>
                 <td className="px-4 py-3">{Array.isArray(req.items) ? req.items.length : 0}</td>
                 <td className="px-4 py-3 font-semibold">₦{Number(req.totalAmount || 0).toLocaleString()}</td>
                 <td className="px-4 py-3">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[req.status] || 'bg-gray-100 text-gray-800'}`}>{req.status}</span>
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[req.status] || 'bg-theme-muted text-theme-text-primary'}`}>{req.status}</span>
                 </td>
-                <td className="px-4 py-3 text-gray-600">{req.createdAt ? new Date(req.createdAt).toLocaleDateString() : '-'}</td>
+                <td className="px-4 py-3 text-theme-text-secondary">{req.createdAt ? new Date(req.createdAt).toLocaleDateString() : '-'}</td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
-                    <button onClick={() => onView(req)} className="text-blue-600 hover:text-blue-800"><Eye className="w-4 h-4" /></button>
+                    <button onClick={() => onView(req)} className="text-theme-accent hover:text-blue-800"><Eye className="w-4 h-4" /></button>
                     {req.status === 'pending' && (
                       <>
                         <button onClick={() => onAction(req.id, 'approve')} className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700">Approve</button>
@@ -349,38 +349,38 @@ function RequisitionTab({ requisitions, onView, onAction }: { requisitions: Requ
 
 function PurchaseOrderTab({ purchaseOrders, onMatch }: { purchaseOrders: PurchaseOrder[]; onMatch: (po: PurchaseOrder) => void }) {
   if (purchaseOrders.length === 0) {
-    return <div className="p-8 text-center text-gray-500 border border-dashed border-gray-200 rounded-lg">No purchase orders found. Create one to get started.</div>;
+    return <div className="p-8 text-center text-theme-text-secondary border border-dashed border-theme-border rounded-lg">No purchase orders found. Create one to get started.</div>;
   }
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="bg-theme-surface rounded-lg border border-theme-border overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-theme-muted border-b">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">PO Number</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vendor</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Delivery Date</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Match</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">PO Number</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Vendor</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Qty</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Amount</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Delivery Date</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Created</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Match</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {purchaseOrders.map((po) => (
-              <tr key={po.id} className="hover:bg-gray-50">
+              <tr key={po.id} className="hover:bg-theme-muted">
                 <td className="px-4 py-3 font-medium">{po.poNumber}</td>
                 <td className="px-4 py-3">{po.vendorId || '-'}</td>
                 <td className="px-4 py-3">{po.quantity}</td>
                 <td className="px-4 py-3 font-semibold">₦{Number(po.amount || 0).toLocaleString()}</td>
-                <td className="px-4 py-3 text-gray-600">{po.deliveryDate ? new Date(po.deliveryDate).toLocaleDateString() : '-'}</td>
+                <td className="px-4 py-3 text-theme-text-secondary">{po.deliveryDate ? new Date(po.deliveryDate).toLocaleDateString() : '-'}</td>
                 <td className="px-4 py-3">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[po.status] || 'bg-gray-100 text-gray-800'}`}>{po.status}</span>
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[po.status] || 'bg-theme-muted text-theme-text-primary'}`}>{po.status}</span>
                 </td>
-                <td className="px-4 py-3 text-gray-600">{po.createdAt ? new Date(po.createdAt).toLocaleDateString() : '-'}</td>
+                <td className="px-4 py-3 text-theme-text-secondary">{po.createdAt ? new Date(po.createdAt).toLocaleDateString() : '-'}</td>
                 <td className="px-4 py-3">
-                  <button onClick={() => onMatch(po)} className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded hover:bg-blue-100">3-Way Match</button>
+                  <button onClick={() => onMatch(po)} className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded hover:bg-theme-muted">3-Way Match</button>
                 </td>
               </tr>
             ))}
@@ -393,35 +393,35 @@ function PurchaseOrderTab({ purchaseOrders, onMatch }: { purchaseOrders: Purchas
 
 function GoodsReceiptTab({ goodsReceipts }: { goodsReceipts: GoodsReceipt[] }) {
   if (goodsReceipts.length === 0) {
-    return <div className="p-8 text-center text-gray-500 border border-dashed border-gray-200 rounded-lg">No goods receipts found. Create one to get started.</div>;
+    return <div className="p-8 text-center text-theme-text-secondary border border-dashed border-theme-border rounded-lg">No goods receipts found. Create one to get started.</div>;
   }
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="bg-theme-surface rounded-lg border border-theme-border overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-theme-muted border-b">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Receipt Number</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">PO Ref</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vendor</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Receipt Number</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">PO Ref</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Vendor</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Items</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Amount</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Created</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {goodsReceipts.map((gr) => (
-              <tr key={gr.id} className="hover:bg-gray-50">
+              <tr key={gr.id} className="hover:bg-theme-muted">
                 <td className="px-4 py-3 font-medium">{gr.receiptNumber}</td>
                 <td className="px-4 py-3">{gr.poId || '-'}</td>
                 <td className="px-4 py-3">{gr.vendorId || '-'}</td>
                 <td className="px-4 py-3">{Array.isArray(gr.items) ? gr.items.length : 0}</td>
                 <td className="px-4 py-3 font-semibold">₦{Number(gr.totalAmount || 0).toLocaleString()}</td>
                 <td className="px-4 py-3">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[gr.status] || 'bg-gray-100 text-gray-800'}`}>{gr.status}</span>
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[gr.status] || 'bg-theme-muted text-theme-text-primary'}`}>{gr.status}</span>
                 </td>
-                <td className="px-4 py-3 text-gray-600">{gr.createdAt ? new Date(gr.createdAt).toLocaleDateString() : '-'}</td>
+                <td className="px-4 py-3 text-theme-text-secondary">{gr.createdAt ? new Date(gr.createdAt).toLocaleDateString() : '-'}</td>
               </tr>
             ))}
           </tbody>
@@ -463,23 +463,23 @@ function CreateRequisitionModal({ tenantSlug, onClose, onCreated }: { tenantSlug
     <Modal title="New Purchase Requisition" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <div className="p-3 rounded-lg bg-red-50 text-red-800 text-sm">{error}</div>}
-        <p className="text-sm text-gray-600">Add line items for materials you need to procure.</p>
+        <p className="text-sm text-theme-text-secondary">Add line items for materials you need to procure.</p>
         {items.map((item, i) => (
           <div key={i} className="grid grid-cols-5 gap-2">
-            <input placeholder="SKU" value={item.componentSku} onChange={(e) => { const n = [...items]; n[i].componentSku = e.target.value; setItems(n); }} className="border border-gray-300 rounded px-2 py-1.5 text-sm" />
-            <input placeholder="Name" value={item.componentName} onChange={(e) => { const n = [...items]; n[i].componentName = e.target.value; setItems(n); }} className="border border-gray-300 rounded px-2 py-1.5 text-sm" />
-            <input type="number" placeholder="Qty" value={item.quantity} onChange={(e) => { const n = [...items]; n[i].quantity = e.target.value; setItems(n); }} className="border border-gray-300 rounded px-2 py-1.5 text-sm" />
-            <input type="number" placeholder="Unit Cost" value={item.unitCost} onChange={(e) => { const n = [...items]; n[i].unitCost = e.target.value; setItems(n); }} className="border border-gray-300 rounded px-2 py-1.5 text-sm" />
+            <input placeholder="SKU" value={item.componentSku} onChange={(e) => { const n = [...items]; n[i].componentSku = e.target.value; setItems(n); }} className="border border-theme-border rounded px-2 py-1.5 text-sm" />
+            <input placeholder="Name" value={item.componentName} onChange={(e) => { const n = [...items]; n[i].componentName = e.target.value; setItems(n); }} className="border border-theme-border rounded px-2 py-1.5 text-sm" />
+            <input type="number" placeholder="Qty" value={item.quantity} onChange={(e) => { const n = [...items]; n[i].quantity = e.target.value; setItems(n); }} className="border border-theme-border rounded px-2 py-1.5 text-sm" />
+            <input type="number" placeholder="Unit Cost" value={item.unitCost} onChange={(e) => { const n = [...items]; n[i].unitCost = e.target.value; setItems(n); }} className="border border-theme-border rounded px-2 py-1.5 text-sm" />
             <button type="button" onClick={() => setItems(items.filter((_, idx) => idx !== i))} className="text-red-500 hover:text-red-700 text-sm">Remove</button>
           </div>
         ))}
-        <button type="button" onClick={() => setItems([...items, { componentSku: '', componentName: '', quantity: '1', unit: 'pcs', unitCost: '0' }])} className="text-blue-600 text-sm flex items-center gap-1">
+        <button type="button" onClick={() => setItems([...items, { componentSku: '', componentName: '', quantity: '1', unit: 'pcs', unitCost: '0' }])} className="text-theme-accent text-sm flex items-center gap-1">
           <Plus className="w-3 h-3" /> Add Item
         </button>
-        <textarea placeholder="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" rows={2} />
+        <textarea placeholder="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm" rows={2} />
         <div className="flex justify-end gap-2 pt-4">
-          <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
-          <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50">
+          <button type="button" onClick={onClose} className="px-4 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary hover:bg-theme-muted">Cancel</button>
+          <button type="submit" disabled={loading} className="px-4 py-2 bg-theme-accent text-white rounded-lg text-sm hover:bg-theme-accent-hover disabled:opacity-50">
             {loading ? 'Creating...' : 'Create Requisition'}
           </button>
         </div>
@@ -526,29 +526,29 @@ function CreatePurchaseOrderModal({ tenantSlug, onClose, onCreated }: { tenantSl
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <div className="p-3 rounded-lg bg-red-50 text-red-800 text-sm">{error}</div>}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Vendor ID</label>
-          <input value={vendorId} onChange={(e) => setVendorId(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="Vendor ID" />
+          <label className="block text-sm font-medium text-theme-text-primary mb-1">Vendor ID</label>
+          <input value={vendorId} onChange={(e) => setVendorId(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm" placeholder="Vendor ID" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-            <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Quantity</label>
+            <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Amount</label>
+            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm" />
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Date</label>
-          <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+          <label className="block text-sm font-medium text-theme-text-primary mb-1">Delivery Date</label>
+          <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Items (JSON)</label>
-          <textarea value={items} onChange={(e) => setItems(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm font-mono" rows={3} placeholder='[{"sku":"RAW-001","name":"Steel","qty":10}]' />
+          <label className="block text-sm font-medium text-theme-text-primary mb-1">Items (JSON)</label>
+          <textarea value={items} onChange={(e) => setItems(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm font-mono" rows={3} placeholder='[{"sku":"RAW-001","name":"Steel","qty":10}]' />
         </div>
         <div className="flex justify-end gap-2 pt-4">
-          <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+          <button type="button" onClick={onClose} className="px-4 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary hover:bg-theme-muted">Cancel</button>
           <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 disabled:opacity-50">
             {loading ? 'Creating...' : 'Create PO'}
           </button>
@@ -594,20 +594,20 @@ function CreateGoodsReceiptModal({ tenantSlug, onClose, onCreated }: { tenantSlu
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <div className="p-3 rounded-lg bg-red-50 text-red-800 text-sm">{error}</div>}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">PO Reference (optional)</label>
-          <input value={poId} onChange={(e) => setPoId(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="Purchase Order ID" />
+          <label className="block text-sm font-medium text-theme-text-primary mb-1">PO Reference (optional)</label>
+          <input value={poId} onChange={(e) => setPoId(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm" placeholder="Purchase Order ID" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Vendor ID</label>
-          <input value={vendorId} onChange={(e) => setVendorId(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="Vendor ID" />
+          <label className="block text-sm font-medium text-theme-text-primary mb-1">Vendor ID</label>
+          <input value={vendorId} onChange={(e) => setVendorId(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm" placeholder="Vendor ID" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Items (JSON)</label>
-          <textarea value={items} onChange={(e) => setItems(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm font-mono" rows={4} placeholder='[{"sku":"RAW-001","name":"Steel","quantity":10,"unitCost":5.50}]' />
+          <label className="block text-sm font-medium text-theme-text-primary mb-1">Items (JSON)</label>
+          <textarea value={items} onChange={(e) => setItems(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm font-mono" rows={4} placeholder='[{"sku":"RAW-001","name":"Steel","quantity":10,"unitCost":5.50}]' />
         </div>
-        <textarea placeholder="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" rows={2} />
+        <textarea placeholder="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm" rows={2} />
         <div className="flex justify-end gap-2 pt-4">
-          <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+          <button type="button" onClick={onClose} className="px-4 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary hover:bg-theme-muted">Cancel</button>
           <button type="submit" disabled={loading} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 disabled:opacity-50">
             {loading ? 'Creating...' : 'Create Receipt'}
           </button>
@@ -622,22 +622,22 @@ function RequisitionDetailModal({ req, onClose }: { req: Requisition; onClose: (
     <Modal title={`Requisition ${req.requisitionNumber}`} onClose={onClose}>
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4 text-sm">
-          <div><span className="font-medium text-gray-700">Status:</span> <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${STATUS_COLORS[req.status] || 'bg-gray-100 text-gray-800'}`}>{req.status}</span></div>
-          <div><span className="font-medium text-gray-700">Source:</span> <span className="capitalize">{req.source}</span></div>
-          <div><span className="font-medium text-gray-700">Requested By:</span> {req.requestedBy || '-'}</div>
-          <div><span className="font-medium text-gray-700">Created:</span> {req.createdAt ? new Date(req.createdAt).toLocaleString() : '-'}</div>
+          <div><span className="font-medium text-theme-text-primary">Status:</span> <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${STATUS_COLORS[req.status] || 'bg-theme-muted text-theme-text-primary'}`}>{req.status}</span></div>
+          <div><span className="font-medium text-theme-text-primary">Source:</span> <span className="capitalize">{req.source}</span></div>
+          <div><span className="font-medium text-theme-text-primary">Requested By:</span> {req.requestedBy || '-'}</div>
+          <div><span className="font-medium text-theme-text-primary">Created:</span> {req.createdAt ? new Date(req.createdAt).toLocaleString() : '-'}</div>
         </div>
-        {req.notes && <div className="text-sm"><span className="font-medium text-gray-700">Notes:</span> {req.notes}</div>}
+        {req.notes && <div className="text-sm"><span className="font-medium text-theme-text-primary">Notes:</span> {req.notes}</div>}
         <div>
-          <h4 className="text-sm font-semibold text-gray-900 mb-2">Line Items</h4>
-          <table className="w-full text-sm border border-gray-200 rounded">
-            <thead className="bg-gray-50">
+          <h4 className="text-sm font-semibold text-theme-text-primary mb-2">Line Items</h4>
+          <table className="w-full text-sm border border-theme-border rounded">
+            <thead className="bg-theme-muted">
               <tr>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">SKU</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Name</th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Qty</th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Unit Cost</th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Total</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-theme-text-secondary">SKU</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-theme-text-secondary">Name</th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-theme-text-secondary">Qty</th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-theme-text-secondary">Unit Cost</th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-theme-text-secondary">Total</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -664,21 +664,21 @@ function MatchModal({ po, match, loading, onClose }: { po: PurchaseOrder; match:
   return (
     <Modal title={`3-Way Match — ${po.poNumber || po.id}`} onClose={onClose}>
       {loading ? (
-        <div className="py-10 text-center text-sm text-gray-600">Running match...</div>
+        <div className="py-10 text-center text-sm text-theme-text-secondary">Running match...</div>
       ) : !match ? (
-        <div className="py-10 text-center text-sm text-gray-600">No match data.</div>
+        <div className="py-10 text-center text-sm text-theme-text-secondary">No match data.</div>
       ) : (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">Verdict</span>
-            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[match.summary?.status] || 'bg-gray-100 text-gray-800'}`}>
+            <span className="text-sm font-medium text-theme-text-primary">Verdict</span>
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[match.summary?.status] || 'bg-theme-muted text-theme-text-primary'}`}>
               {match.summary?.allMatched ? 'matched' : 'disputed'} ({match.summary?.discrepancyCount ?? 0} discrepancies)
             </span>
           </div>
           <div className="grid grid-cols-3 gap-3 text-sm">
-            <div className="border border-gray-200 rounded p-2"><div className="text-xs text-gray-500">PO Amount</div><div className="font-semibold">{money(match.summary?.poAmount)}</div></div>
-            <div className="border border-gray-200 rounded p-2"><div className="text-xs text-gray-500">Received</div><div className="font-semibold">{money(match.summary?.receiptAmount)}</div></div>
-            <div className="border border-gray-200 rounded p-2"><div className="text-xs text-gray-500">Billed</div><div className="font-semibold">{money(match.summary?.billAmount ?? match.summary?.invoiceAmount)}</div></div>
+            <div className="border border-theme-border rounded p-2"><div className="text-xs text-theme-text-secondary">PO Amount</div><div className="font-semibold">{money(match.summary?.poAmount)}</div></div>
+            <div className="border border-theme-border rounded p-2"><div className="text-xs text-theme-text-secondary">Received</div><div className="font-semibold">{money(match.summary?.receiptAmount)}</div></div>
+            <div className="border border-theme-border rounded p-2"><div className="text-xs text-theme-text-secondary">Billed</div><div className="font-semibold">{money(match.summary?.billAmount ?? match.summary?.invoiceAmount)}</div></div>
           </div>
           <div className="grid grid-cols-3 gap-3 text-xs">
             <div>Vendor: <span className={match.summary?.vendorMatched ? 'text-green-700 font-medium' : 'text-red-700 font-medium'}>{match.summary?.vendorMatched ? 'OK' : 'mismatch'}</span></div>
@@ -687,15 +687,15 @@ function MatchModal({ po, match, loading, onClose }: { po: PurchaseOrder; match:
           </div>
           {Array.isArray(match.lineMatches) && match.lineMatches.length > 0 && (
             <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-2">Line Comparison</h4>
-              <table className="w-full text-xs border border-gray-200 rounded">
-                <thead className="bg-gray-50">
+              <h4 className="text-sm font-semibold text-theme-text-primary mb-2">Line Comparison</h4>
+              <table className="w-full text-xs border border-theme-border rounded">
+                <thead className="bg-theme-muted">
                   <tr>
-                    <th className="px-2 py-1.5 text-left font-medium text-gray-500">Item</th>
-                    <th className="px-2 py-1.5 text-right font-medium text-gray-500">PO</th>
-                    <th className="px-2 py-1.5 text-right font-medium text-gray-500">Received</th>
-                    <th className="px-2 py-1.5 text-right font-medium text-gray-500">Billed</th>
-                    <th className="px-2 py-1.5 text-center font-medium text-gray-500">Match</th>
+                    <th className="px-2 py-1.5 text-left font-medium text-theme-text-secondary">Item</th>
+                    <th className="px-2 py-1.5 text-right font-medium text-theme-text-secondary">PO</th>
+                    <th className="px-2 py-1.5 text-right font-medium text-theme-text-secondary">Received</th>
+                    <th className="px-2 py-1.5 text-right font-medium text-theme-text-secondary">Billed</th>
+                    <th className="px-2 py-1.5 text-center font-medium text-theme-text-secondary">Match</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -714,7 +714,7 @@ function MatchModal({ po, match, loading, onClose }: { po: PurchaseOrder; match:
           )}
           {Array.isArray(match.discrepancies) && match.discrepancies.length > 0 && (
             <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-2">Discrepancies</h4>
+              <h4 className="text-sm font-semibold text-theme-text-primary mb-2">Discrepancies</h4>
               <ul className="space-y-1 text-xs text-red-700">
                 {match.discrepancies.map((d: any, i: number) => <li key={i}>• {d.message}</li>)}
               </ul>

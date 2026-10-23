@@ -363,31 +363,31 @@ export const RecruitmentDashboard: React.FC = () => {
   const statusBadge = (status: string) => {
     const classes: Record<string, string> = {
       active: 'bg-green-500/10 text-green-400 border-green-500/20',
-      filled: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-      closed: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
+      filled: 'bg-blue-500/10 text-blue-400 border-theme-accent/20',
+      closed: 'bg-theme-muted/10 text-theme-text-tertiary border-theme-border/20',
       cancelled: 'bg-red-500/10 text-red-400 border-red-500/20',
       pending: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
       approved: 'bg-green-500/10 text-green-400 border-green-500/20',
       rejected: 'bg-red-500/10 text-red-400 border-red-500/20',
       accepted: 'bg-green-500/10 text-green-400 border-green-500/20',
       declined: 'bg-red-500/10 text-red-400 border-red-500/20',
-      revoked: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-      new: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+      revoked: 'bg-theme-muted/10 text-theme-text-tertiary border-theme-border/20',
+      new: 'bg-blue-500/10 text-blue-400 border-theme-accent/20',
       shortlisted: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
       shortlist: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
       interviewing: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
       offered: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
       hired: 'bg-green-500/10 text-green-400 border-green-500/20',
       completed: 'bg-green-500/10 text-green-400 border-green-500/20',
-      scheduled: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+      scheduled: 'bg-blue-500/10 text-blue-400 border-theme-accent/20',
       'in-progress': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
       passed: 'bg-green-500/10 text-green-400 border-green-500/20',
       failed: 'bg-red-500/10 text-red-400 border-red-500/20',
       screened: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
       under_review: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-      applied: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+      applied: 'bg-blue-500/10 text-blue-400 border-theme-accent/20',
     };
-    return classes[status?.toLowerCase()] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+    return classes[status?.toLowerCase()] || 'bg-theme-muted/10 text-theme-text-tertiary border-theme-border/20';
   };
 
   const subTabs: { id: RecruitmentSubTab; label: string; icon: React.ElementType }[] = [
@@ -406,7 +406,7 @@ export const RecruitmentDashboard: React.FC = () => {
         <h3 className="text-lg font-semibold text-theme-text-primary">Job Requisitions</h3>
         <button
           onClick={() => setShowReqModal(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
         >
           <Plus className="w-4 h-4" /> New Requisition
         </button>
@@ -450,7 +450,7 @@ export const RecruitmentDashboard: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleCopyLink(r.id)}
-                      className="p-1.5 rounded-md hover:bg-blue-500/10 text-theme-text-tertiary hover:text-blue-400"
+                      className="p-1.5 rounded-md hover:bg-theme-accent-hover/10 text-theme-text-tertiary hover:text-blue-400"
                       title="Copy application link"
                     >
                       {copiedId === r.id ? <Check className="w-4 h-4 text-green-500" /> : <Link2 className="w-4 h-4" />}
@@ -481,7 +481,7 @@ export const RecruitmentDashboard: React.FC = () => {
         <h3 className="text-lg font-semibold text-theme-text-primary">Candidates</h3>
         <button
           onClick={() => setShowCandModal(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
         >
           <Plus className="w-4 h-4" /> Add Candidate
         </button>
@@ -536,7 +536,7 @@ export const RecruitmentDashboard: React.FC = () => {
         <h3 className="text-lg font-semibold text-theme-text-primary">Applications</h3>
         <button
           onClick={() => setShowAppModal(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
         >
           <Plus className="w-4 h-4" /> New Application
         </button>
@@ -571,7 +571,7 @@ export const RecruitmentDashboard: React.FC = () => {
                   </td>
                   <td className="px-4 py-3">
                     {a.shortlistedBy ? (
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border ${a.shortlistedBy === 'ai' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border ${a.shortlistedBy === 'ai' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-blue-500/10 text-blue-400 border-theme-accent/20'}`}>
                         <Bot className="w-3 h-3" /> {a.shortlistedBy === 'ai' ? 'AI' : 'HR'}
                       </span>
                     ) : (
@@ -606,7 +606,7 @@ export const RecruitmentDashboard: React.FC = () => {
         <h3 className="text-lg font-semibold text-theme-text-primary">Interviews</h3>
         <button
           onClick={() => setShowIntModal(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
         >
           <Plus className="w-4 h-4" /> Schedule Interview
         </button>
@@ -665,7 +665,7 @@ export const RecruitmentDashboard: React.FC = () => {
         <h3 className="text-lg font-semibold text-theme-text-primary">Offers</h3>
         <button
           onClick={() => setShowOffModal(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
         >
           <Plus className="w-4 h-4" /> Create Offer
         </button>
@@ -734,7 +734,7 @@ export const RecruitmentDashboard: React.FC = () => {
         <h3 className="text-lg font-semibold text-theme-text-primary">Onboarding Tasks</h3>
         <button
           onClick={() => setShowTaskModal(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
         >
           <Plus className="w-4 h-4" /> Add Task
         </button>
@@ -827,7 +827,7 @@ export const RecruitmentDashboard: React.FC = () => {
                 <p className="text-xs font-medium text-theme-text-secondary">{s.label}</p>
                 <p className="text-2xl font-bold text-theme-text-primary mt-1">{s.value}</p>
               </div>
-              <s.icon className="w-8 h-8 text-blue-500" />
+              <s.icon className="w-8 h-8 text-theme-accent" />
             </div>
           </div>
         ))}
@@ -842,7 +842,7 @@ export const RecruitmentDashboard: React.FC = () => {
               onClick={() => setActiveSubTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeSubTab === tab.id
-                  ? 'border-blue-600 text-theme-accent'
+                  ? 'border-theme-accent text-theme-accent'
                   : 'border-transparent text-theme-text-tertiary hover:text-theme-text-secondary'
               }`}
             >
@@ -896,7 +896,7 @@ export const RecruitmentDashboard: React.FC = () => {
       />
       {/* AI Screening Config Modal */}
       {showScreeningConfig && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
           <div className="w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-theme-card border border-theme-border rounded-xl p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-theme-text-primary flex items-center gap-2">
@@ -1100,7 +1100,7 @@ export const RecruitmentDashboard: React.FC = () => {
                   onClick={() => setScreeningTalentPool(!screeningTalentPool)}
                   className={`relative w-11 h-6 rounded-full transition-colors ${screeningTalentPool ? 'bg-green-500' : 'bg-theme-border'}`}
                 >
-                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${screeningTalentPool ? 'translate-x-5' : ''}`} />
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-theme-surface rounded-full transition-transform ${screeningTalentPool ? 'translate-x-5' : ''}`} />
                 </button>
                 <label className="text-sm text-theme-text-secondary">
                   Auto-route rejected candidates to talent pool
@@ -1119,7 +1119,7 @@ export const RecruitmentDashboard: React.FC = () => {
               <button
                 onClick={handleRunBatchScreening}
                 disabled={screeningLoading}
-                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <Sparkles className="w-4 h-4" />
                 {screeningLoading ? 'Running...' : 'Run AI Screening'}
@@ -1131,7 +1131,7 @@ export const RecruitmentDashboard: React.FC = () => {
 
       {/* AI Screening Results Modal */}
       {showScreeningResults && screeningResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
           <div className="w-full max-w-4xl max-h-[85vh] overflow-y-auto bg-theme-card border border-theme-border rounded-xl p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-theme-text-primary flex items-center gap-2">

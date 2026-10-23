@@ -85,8 +85,8 @@ export default function ForecastingTab({
   if (loading) {
     return (
       <div className="p-8 text-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
-        <p className="mt-4 text-gray-600">Loading forecast...</p>
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-theme-border border-t-blue-600"></div>
+        <p className="mt-4 text-theme-text-secondary">Loading forecast...</p>
       </div>
     );
   }
@@ -95,7 +95,7 @@ export default function ForecastingTab({
     return (
       <div className="p-8 text-center">
         <AlertCircle className="mx-auto h-12 w-12 text-theme-text-tertiary" />
-        <p className="mt-4 text-gray-600">No forecast data available</p>
+        <p className="mt-4 text-theme-text-secondary">No forecast data available</p>
       </div>
     );
   }
@@ -106,15 +106,15 @@ export default function ForecastingTab({
       <div className="rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <p className="text-sm font-medium text-gray-600">Forecasted Revenue ({data.summary?.period})</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900">
+            <p className="text-sm font-medium text-theme-text-secondary">Forecasted Revenue ({data.summary?.period})</p>
+            <p className="mt-2 text-3xl font-bold text-theme-text-primary">
               ₦{(data.summary?.forecastedRevenue || 0).toLocaleString()}
             </p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600">Forecast Confidence</p>
+            <p className="text-sm font-medium text-theme-text-secondary">Forecast Confidence</p>
             <div className="mt-2 flex items-center gap-2">
-              <div className="flex-1 h-2 bg-gray-300 rounded-full overflow-hidden">
+              <div className="flex-1 h-2 bg-theme-muted rounded-full overflow-hidden">
                 <div
                   className="h-full bg-green-500"
                   style={{ width: `${data.summary?.confidence || 0}%` }}
@@ -124,34 +124,34 @@ export default function ForecastingTab({
             </div>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600">Last Updated</p>
-            <p className="mt-2 text-lg font-medium text-gray-900">{data.summary?.lastUpdated}</p>
+            <p className="text-sm font-medium text-theme-text-secondary">Last Updated</p>
+            <p className="mt-2 text-lg font-medium text-theme-text-primary">{data.summary?.lastUpdated}</p>
           </div>
         </div>
       </div>
 
       {/* Monthly Forecast */}
       {data.monthlyForecast && data.monthlyForecast.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
-          <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-6">
+          <h3 className="flex items-center gap-2 text-lg font-semibold text-theme-text-primary mb-4">
             <Calendar className="w-5 h-5" />
             Monthly Forecast
           </h3>
           <div className="space-y-4">
             {data.monthlyForecast.map((month, idx) => (
-              <div key={idx} className="pb-4 border-b border-gray-100 last:border-0">
-                <p className="font-medium text-gray-900">{month.month}</p>
+              <div key={idx} className="pb-4 border-b border-theme-border last:border-0">
+                <p className="font-medium text-theme-text-primary">{month.month}</p>
                 <div className="mt-3 grid grid-cols-3 gap-4">
                   <div>
-                    <p className="text-xs text-gray-600">Conservative</p>
-                    <p className="text-sm font-medium text-gray-900">₦{month.conservative.toLocaleString()}</p>
+                    <p className="text-xs text-theme-text-secondary">Conservative</p>
+                    <p className="text-sm font-medium text-theme-text-primary">₦{month.conservative.toLocaleString()}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-600">Expected</p>
-                    <p className="text-sm font-bold text-blue-600">₦{month.expected.toLocaleString()}</p>
+                    <p className="text-xs text-theme-text-secondary">Expected</p>
+                    <p className="text-sm font-bold text-theme-accent">₦{month.expected.toLocaleString()}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-600">Optimistic</p>
+                    <p className="text-xs text-theme-text-secondary">Optimistic</p>
                     <p className="text-sm font-medium text-green-600">₦{month.optimistic.toLocaleString()}</p>
                   </div>
                 </div>
@@ -163,8 +163,8 @@ export default function ForecastingTab({
 
       {/* Scenarios */}
       {data.scenarios && data.scenarios.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
-          <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-6">
+          <h3 className="flex items-center gap-2 text-lg font-semibold text-theme-text-primary mb-4">
             <TrendingUp className="w-5 h-5" />
             Revenue Scenarios
           </h3>
@@ -172,12 +172,12 @@ export default function ForecastingTab({
             {data.scenarios.map((scenario, idx) => {
               const colors = ["bg-orange-50 border-orange-200", "bg-blue-50 border-blue-200", "bg-green-50 border-green-200"];
               return (
-                <div key={idx} className={`rounded-lg border p-4 ${colors[idx] || "bg-gray-50"}`}>
-                  <p className="font-medium text-gray-900">{scenario.name}</p>
-                  <p className="mt-2 text-2xl font-bold text-gray-900">
+                <div key={idx} className={`rounded-lg border p-4 ${colors[idx] || "bg-theme-muted"}`}>
+                  <p className="font-medium text-theme-text-primary">{scenario.name}</p>
+                  <p className="mt-2 text-2xl font-bold text-theme-text-primary">
                     ₦{scenario.revenue.toLocaleString()}
                   </p>
-                  <p className="mt-2 text-sm text-gray-600">Probability: {scenario.probability}%</p>
+                  <p className="mt-2 text-sm text-theme-text-secondary">Probability: {scenario.probability}%</p>
                 </div>
               );
             })}

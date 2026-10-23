@@ -74,7 +74,7 @@ export function ReportsTab() {
             {dueReports.map((dr, i) => (
               <div key={i} className={`flex items-center gap-2 text-xs ${dr.urgent ? 'text-red-700' : 'text-amber-700'}`}>
                 <span className={`w-2 h-2 rounded-full ${dr.urgent ? 'bg-red-500' : 'bg-amber-500'}`} />{dr.label}
-                <button onClick={() => { setCarryForwardData(null); setShowForm(true); }} className="ml-auto text-blue-600 font-medium hover:text-blue-700">Submit now →</button>
+                <button onClick={() => { setCarryForwardData(null); setShowForm(true); }} className="ml-auto text-theme-accent font-medium hover:text-blue-700">Submit now →</button>
               </div>
             ))}
           </div>
@@ -83,28 +83,28 @@ export function ReportsTab() {
 
       {/* KPI cards with progress */}
       {kpis.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-2"><Target className="w-5 h-5 text-purple-600" /><h3 className="text-sm font-semibold text-gray-900">My KPIs</h3></div>
+        <div className="bg-theme-surface rounded-2xl border border-theme-border overflow-hidden">
+          <div className="px-6 py-4 border-b border-theme-border flex items-center gap-2"><Target className="w-5 h-5 text-purple-600" /><h3 className="text-sm font-semibold text-theme-text-primary">My KPIs</h3></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
             {kpis.map((k) => {
               const progress = k.status === 'completed' ? 100 : k.status === 'in_progress' ? 50 : k.status === 'overdue' ? 30 : 0;
               return (
-                <div key={k.id} className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                <div key={k.id} className="p-4 rounded-xl bg-theme-muted border border-theme-border">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{k.title}</p>
+                      <p className="text-sm font-medium text-theme-text-primary truncate">{k.title}</p>
                       {k.frequency && <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 capitalize mt-1 inline-block">{k.frequency}</span>}
                     </div>
-                    <span className={`text-xs font-medium capitalize px-2 py-0.5 rounded-full flex-shrink-0 ml-2 ${k.status==='completed'?'bg-green-100 text-green-700':k.status==='in_progress'?'bg-blue-100 text-blue-700':k.status==='overdue'?'bg-red-100 text-red-700':'bg-gray-100 text-gray-600'}`}>{k.status?.replace('_',' ')}</span>
+                    <span className={`text-xs font-medium capitalize px-2 py-0.5 rounded-full flex-shrink-0 ml-2 ${k.status==='completed'?'bg-green-100 text-green-700':k.status==='in_progress'?'bg-blue-100 text-blue-700':k.status==='overdue'?'bg-red-100 text-red-700':'bg-theme-muted text-theme-text-secondary'}`}>{k.status?.replace('_',' ')}</span>
                   </div>
-                  {k.description && <p className="text-xs text-gray-500 mb-2">{k.description}</p>}
+                  {k.description && <p className="text-xs text-theme-text-secondary mb-2">{k.description}</p>}
                   {k.expected_outcome && <p className="text-xs text-purple-600 mb-2">Expected: {k.expected_outcome}</p>}
                   {/* Progress bar */}
                   <div className="mt-2">
-                    <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-gray-400">Progress</span><span className="text-[10px] font-medium text-gray-600">{progress}%</span></div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden"><div className={`h-full rounded-full transition-all ${progress===100?'bg-green-500':progress>=50?'bg-blue-500':progress>0?'bg-amber-500':'bg-gray-300'}`} style={{ width: `${progress}%` }} /></div>
+                    <div className="flex items-center justify-between mb-1"><span className="text-[10px] text-theme-text-tertiary">Progress</span><span className="text-[10px] font-medium text-theme-text-secondary">{progress}%</span></div>
+                    <div className="h-2 bg-theme-muted rounded-full overflow-hidden"><div className={`h-full rounded-full transition-all ${progress===100?'bg-green-500':progress>=50?'bg-blue-500':progress>0?'bg-amber-500':'bg-theme-muted'}`} style={{ width: `${progress}%` }} /></div>
                   </div>
-                  {k.due_date && <p className="text-[10px] text-gray-400 mt-2">Due: {fmtDate(k.due_date)}</p>}
+                  {k.due_date && <p className="text-[10px] text-theme-text-tertiary mt-2">Due: {fmtDate(k.due_date)}</p>}
                 </div>
               );
             })}
@@ -115,20 +115,20 @@ export function ReportsTab() {
       {/* Reports section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <h3 className="text-sm font-semibold text-gray-900">My Reports</h3>
+          <h3 className="text-sm font-semibold text-theme-text-primary">My Reports</h3>
           <div className="flex items-center gap-2">
             {/* View toggle */}
-            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-0.5">
+            <div className="flex items-center gap-1 bg-theme-surface border border-theme-border rounded-lg p-0.5">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-theme-accent text-white' : 'text-theme-text-secondary hover:bg-theme-muted'}`}
                 title="Grid view"
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-theme-accent text-white' : 'text-theme-text-secondary hover:bg-theme-muted'}`}
                 title="List view"
               >
                 <List className="w-4 h-4" />
@@ -137,40 +137,40 @@ export function ReportsTab() {
             <button onClick={() => setShowAIForm(true)} className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all">
               <Sparkles className="w-4 h-4" />Generate with AI
             </button>
-            <button onClick={() => { setCarryForwardData(null); setShowForm(true); }} className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"><Plus className="w-4 h-4" />Submit Report</button>
+            <button onClick={() => { setCarryForwardData(null); setShowForm(true); }} className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover transition-colors"><Plus className="w-4 h-4" />Submit Report</button>
           </div>
         </div>
-        <div className="flex gap-1 flex-wrap">{reportTypes.map((rt) => (<button key={rt.value} onClick={() => setFilterType(rt.value)} className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${filterType === rt.value ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>{rt.label}</button>))}</div>
+        <div className="flex gap-1 flex-wrap">{reportTypes.map((rt) => (<button key={rt.value} onClick={() => setFilterType(rt.value)} className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${filterType === rt.value ? 'bg-theme-accent text-white' : 'bg-theme-surface border border-theme-border text-theme-text-secondary hover:bg-theme-muted'}`}>{rt.label}</button>))}</div>
         {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"><AlertCircle className="w-4 h-4" />{error}</div>}
         {success && <div className="flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700"><CheckCircle className="w-4 h-4" />{success}</div>}
-        {loading ? <div className="p-8 text-center"><Loader2 className="w-6 h-6 text-blue-600 animate-spin mx-auto" /></div> : reports.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center"><FileText className="w-10 h-10 text-gray-300 mx-auto mb-3" /><p className="text-sm text-gray-400 mb-4">No reports submitted yet</p><button onClick={() => setShowForm(true)} className="text-sm text-blue-600 font-medium hover:text-blue-700">Submit your first report →</button></div>
+        {loading ? <div className="p-8 text-center"><Loader2 className="w-6 h-6 text-theme-accent animate-spin mx-auto" /></div> : reports.length === 0 ? (
+          <div className="bg-theme-surface rounded-2xl border border-theme-border p-8 text-center"><FileText className="w-10 h-10 text-theme-text-secondary mx-auto mb-3" /><p className="text-sm text-theme-text-tertiary mb-4">No reports submitted yet</p><button onClick={() => setShowForm(true)} className="text-sm text-theme-accent font-medium hover:text-blue-700">Submit your first report →</button></div>
         ) : viewMode === 'list' ? (
           /* List view */
-          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="bg-theme-surface rounded-2xl border border-theme-border overflow-hidden">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-theme-muted border-b border-theme-border">
                 <tr>
-                  <th className="text-left text-xs font-semibold text-gray-600 px-4 py-3">Title</th>
-                  <th className="text-left text-xs font-semibold text-gray-600 px-4 py-3 hidden md:table-cell">Type</th>
-                  <th className="text-left text-xs font-semibold text-gray-600 px-4 py-3 hidden md:table-cell">Date</th>
-                  <th className="text-left text-xs font-semibold text-gray-600 px-4 py-3">Status</th>
-                  <th className="text-left text-xs font-semibold text-gray-600 px-4 py-3 hidden lg:table-cell">Submitted</th>
-                  <th className="text-right text-xs font-semibold text-gray-600 px-4 py-3"></th>
+                  <th className="text-left text-xs font-semibold text-theme-text-secondary px-4 py-3">Title</th>
+                  <th className="text-left text-xs font-semibold text-theme-text-secondary px-4 py-3 hidden md:table-cell">Type</th>
+                  <th className="text-left text-xs font-semibold text-theme-text-secondary px-4 py-3 hidden md:table-cell">Date</th>
+                  <th className="text-left text-xs font-semibold text-theme-text-secondary px-4 py-3">Status</th>
+                  <th className="text-left text-xs font-semibold text-theme-text-secondary px-4 py-3 hidden lg:table-cell">Submitted</th>
+                  <th className="text-right text-xs font-semibold text-theme-text-secondary px-4 py-3"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-theme-border">
                 {reports.map((r) => (
-                  <tr key={r.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={r.id} className="hover:bg-theme-muted transition-colors">
                     <td className="px-4 py-3">
-                      <p className="text-sm font-medium text-gray-900 truncate max-w-[200px]">{r.title || `${r.report_type} report`}</p>
-                      <p className="text-xs text-gray-400 truncate max-w-[200px] md:hidden">{r.report_type} · {fmtDate(r.report_date)}</p>
+                      <p className="text-sm font-medium text-theme-text-primary truncate max-w-[200px]">{r.title || `${r.report_type} report`}</p>
+                      <p className="text-xs text-theme-text-tertiary truncate max-w-[200px] md:hidden">{r.report_type} · {fmtDate(r.report_date)}</p>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell"><span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 capitalize">{r.report_type}</span></td>
-                    <td className="px-4 py-3 hidden md:table-cell"><span className="text-xs text-gray-600">{fmtDate(r.report_date)}</span></td>
-                    <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${r.status==='approved'?'bg-green-100 text-green-800':r.status==='under_review'?'bg-blue-100 text-blue-800':r.status==='needs_edit'?'bg-amber-100 text-amber-800':'bg-gray-100 text-gray-600'}`}>{r.status?.replace('_',' ')}</span></td>
-                    <td className="px-4 py-3 hidden lg:table-cell"><span className="text-xs text-gray-400">{fmtDate(r.submitted_at)}</span></td>
-                    <td className="px-4 py-3 text-right"><button onClick={() => handleCarryForward(r)} className="text-xs text-blue-600 font-medium hover:text-blue-700 inline-flex items-center gap-1"><Copy className="w-3 h-3" /></button></td>
+                    <td className="px-4 py-3 hidden md:table-cell"><span className="text-xs text-theme-text-secondary">{fmtDate(r.report_date)}</span></td>
+                    <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${r.status==='approved'?'bg-green-100 text-green-800':r.status==='under_review'?'bg-blue-100 text-blue-800':r.status==='needs_edit'?'bg-amber-100 text-amber-800':'bg-theme-muted text-theme-text-secondary'}`}>{r.status?.replace('_',' ')}</span></td>
+                    <td className="px-4 py-3 hidden lg:table-cell"><span className="text-xs text-theme-text-tertiary">{fmtDate(r.submitted_at)}</span></td>
+                    <td className="px-4 py-3 text-right"><button onClick={() => handleCarryForward(r)} className="text-xs text-theme-accent font-medium hover:text-blue-700 inline-flex items-center gap-1"><Copy className="w-3 h-3" /></button></td>
                   </tr>
                 ))}
               </tbody>
@@ -179,12 +179,12 @@ export function ReportsTab() {
         ) : (
           /* Grid view (default) */
           <div className="space-y-3">{reports.map((r) => (
-            <div key={r.id} className="bg-white rounded-2xl border border-gray-200 p-4">
+            <div key={r.id} className="bg-theme-surface rounded-2xl border border-theme-border p-4">
               <div className="flex items-start justify-between mb-2">
-                <div><div className="flex items-center gap-2"><span className="text-sm font-medium text-gray-900">{r.title || `${r.report_type} report`}</span><span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 capitalize">{r.report_type}</span><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${r.status==='approved'?'bg-green-100 text-green-800':r.status==='under_review'?'bg-blue-100 text-blue-800':r.status==='needs_edit'?'bg-amber-100 text-amber-800':'bg-gray-100 text-gray-600'}`}>{r.status?.replace('_',' ')}</span></div><p className="text-xs text-gray-400 mt-0.5">For: {r.report_date} &middot; Submitted: {fmtDate(r.submitted_at)}</p></div>
-                <button onClick={() => handleCarryForward(r)} className="text-xs text-blue-600 font-medium hover:text-blue-700 inline-flex items-center gap-1"><Copy className="w-3 h-3" />Carry forward</button>
+                <div><div className="flex items-center gap-2"><span className="text-sm font-medium text-theme-text-primary">{r.title || `${r.report_type} report`}</span><span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 capitalize">{r.report_type}</span><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${r.status==='approved'?'bg-green-100 text-green-800':r.status==='under_review'?'bg-blue-100 text-blue-800':r.status==='needs_edit'?'bg-amber-100 text-amber-800':'bg-theme-muted text-theme-text-secondary'}`}>{r.status?.replace('_',' ')}</span></div><p className="text-xs text-theme-text-tertiary mt-0.5">For: {r.report_date} &middot; Submitted: {fmtDate(r.submitted_at)}</p></div>
+                <button onClick={() => handleCarryForward(r)} className="text-xs text-theme-accent font-medium hover:text-blue-700 inline-flex items-center gap-1"><Copy className="w-3 h-3" />Carry forward</button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3"><div><p className="text-xs font-semibold text-gray-700">Objectives</p><p className="text-xs text-gray-600 mt-0.5">{r.objectives}</p></div><div><p className="text-xs font-semibold text-gray-700">Achievements</p><p className="text-xs text-gray-600 mt-0.5">{r.achievements}</p></div>{r.challenges && <div><p className="text-xs font-semibold text-gray-700">Challenges</p><p className="text-xs text-gray-600 mt-0.5">{r.challenges}</p></div>}{r.next_steps && <div><p className="text-xs font-semibold text-gray-700">Next Steps</p><p className="text-xs text-gray-600 mt-0.5">{r.next_steps}</p></div>}</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3"><div><p className="text-xs font-semibold text-theme-text-primary">Objectives</p><p className="text-xs text-theme-text-secondary mt-0.5">{r.objectives}</p></div><div><p className="text-xs font-semibold text-theme-text-primary">Achievements</p><p className="text-xs text-theme-text-secondary mt-0.5">{r.achievements}</p></div>{r.challenges && <div><p className="text-xs font-semibold text-theme-text-primary">Challenges</p><p className="text-xs text-theme-text-secondary mt-0.5">{r.challenges}</p></div>}{r.next_steps && <div><p className="text-xs font-semibold text-theme-text-primary">Next Steps</p><p className="text-xs text-theme-text-secondary mt-0.5">{r.next_steps}</p></div>}</div>
               {r.hod_comment && <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2"><p className="text-xs font-semibold text-amber-700">Reviewer Feedback:</p><p className="text-xs text-amber-600 mt-0.5">{r.hod_comment}</p></div>}
             </div>
           ))}</div>
@@ -299,60 +299,60 @@ function ReportFormModal({ kpis, carryForward, onClose, onSuccess }: { kpis: Kpi
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
-      <div className="bg-white rounded-2xl max-w-2xl w-full my-8 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
-          <h3 className="text-sm font-semibold text-gray-900">Submit KPI Report</h3>
+    <div className="fixed inset-0 bg-theme-overlay z-40 flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
+      <div className="bg-theme-surface rounded-2xl max-w-2xl w-full my-8 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="sticky top-0 bg-theme-surface border-b border-theme-border px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+          <h3 className="text-sm font-semibold text-theme-text-primary">Submit KPI Report</h3>
           <div className="flex items-center gap-3">
-            {draftSaved && <span className="text-xs text-gray-400 flex items-center gap-1"><Save className="w-3 h-3" />Draft saved at {draftSaved}</span>}
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="w-4 h-4" /></button>
+            {draftSaved && <span className="text-xs text-theme-text-tertiary flex items-center gap-1"><Save className="w-3 h-3" />Draft saved at {draftSaved}</span>}
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-theme-muted"><X className="w-4 h-4" /></button>
           </div>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"><AlertCircle className="w-4 h-4" />{error}</div>}
           {carryForward && <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700"><Copy className="w-3.5 h-3.5" />Objectives carried forward from previous report</div>}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><label className="block text-xs font-semibold text-gray-700 mb-1">Report Type *</label><select value={reportType} onChange={(e) => setReportType(e.target.value as ReportType)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="annual">Annual</option></select></div>
-            <div><label className="block text-xs font-semibold text-gray-700 mb-1">Report Date *</label><input type="date" value={reportDate} onChange={(e) => setReportDate(e.target.value)} required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" /></div>
+            <div><label className="block text-xs font-semibold text-theme-text-primary mb-1">Report Type *</label><select value={reportType} onChange={(e) => setReportType(e.target.value as ReportType)} className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="annual">Annual</option></select></div>
+            <div><label className="block text-xs font-semibold text-theme-text-primary mb-1">Report Date *</label><input type="date" value={reportDate} onChange={(e) => setReportDate(e.target.value)} required className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent" /></div>
           </div>
-          <div><label className="block text-xs font-semibold text-gray-700 mb-1">Title (optional)</label><input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Week 30 Summary Report" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" /></div>
-          <div><label className="block text-xs font-semibold text-gray-700 mb-1">Objectives *</label><textarea value={objectives} onChange={(e) => setObjectives(e.target.value)} required rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" placeholder="What were your objectives for this period?" /></div>
-          <div><label className="block text-xs font-semibold text-gray-700 mb-1">Achievements *</label><textarea value={achievements} onChange={(e) => setAchievements(e.target.value)} required rows={3} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" placeholder="What did you achieve during this period?" /></div>
+          <div><label className="block text-xs font-semibold text-theme-text-primary mb-1">Title (optional)</label><input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Week 30 Summary Report" className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent" /></div>
+          <div><label className="block text-xs font-semibold text-theme-text-primary mb-1">Objectives *</label><textarea value={objectives} onChange={(e) => setObjectives(e.target.value)} required rows={2} className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent" placeholder="What were your objectives for this period?" /></div>
+          <div><label className="block text-xs font-semibold text-theme-text-primary mb-1">Achievements *</label><textarea value={achievements} onChange={(e) => setAchievements(e.target.value)} required rows={3} className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent" placeholder="What did you achieve during this period?" /></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><label className="block text-xs font-semibold text-gray-700 mb-1">Challenges</label><textarea value={challenges} onChange={(e) => setChallenges(e.target.value)} rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" placeholder="Any challenges faced?" /></div>
-            <div><label className="block text-xs font-semibold text-gray-700 mb-1">Next Steps</label><textarea value={nextSteps} onChange={(e) => setNextSteps(e.target.value)} rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" placeholder="What are your next steps?" /></div>
+            <div><label className="block text-xs font-semibold text-theme-text-primary mb-1">Challenges</label><textarea value={challenges} onChange={(e) => setChallenges(e.target.value)} rows={2} className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent" placeholder="Any challenges faced?" /></div>
+            <div><label className="block text-xs font-semibold text-theme-text-primary mb-1">Next Steps</label><textarea value={nextSteps} onChange={(e) => setNextSteps(e.target.value)} rows={2} className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent" placeholder="What are your next steps?" /></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div><label className="block text-xs font-semibold text-gray-700 mb-1">Meetings</label><textarea value={meetings} onChange={(e) => setMeetings(e.target.value)} rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" placeholder="Meetings attended?" /></div>
-            <div><label className="block text-xs font-semibold text-gray-700 mb-1">Blockers</label><textarea value={blockers} onChange={(e) => setBlockers(e.target.value)} rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" placeholder="Any blockers?" /></div>
-            <div><label className="block text-xs font-semibold text-gray-700 mb-1">Activities</label><textarea value={activities} onChange={(e) => setActivities(e.target.value)} rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" placeholder="Key activities?" /></div>
+            <div><label className="block text-xs font-semibold text-theme-text-primary mb-1">Meetings</label><textarea value={meetings} onChange={(e) => setMeetings(e.target.value)} rows={2} className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent" placeholder="Meetings attended?" /></div>
+            <div><label className="block text-xs font-semibold text-theme-text-primary mb-1">Blockers</label><textarea value={blockers} onChange={(e) => setBlockers(e.target.value)} rows={2} className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent" placeholder="Any blockers?" /></div>
+            <div><label className="block text-xs font-semibold text-theme-text-primary mb-1">Activities</label><textarea value={activities} onChange={(e) => setActivities(e.target.value)} rows={2} className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent" placeholder="Key activities?" /></div>
           </div>
           {/* KPI Metrics with progress bars */}
-          <div className="border-t border-gray-200 pt-4">
-            <div className="flex items-center justify-between mb-3"><div className="flex items-center gap-2"><TrendingUp className="w-4 h-4 text-purple-600" /><label className="text-xs font-semibold text-gray-700">KPI Metrics</label></div><button type="button" onClick={addKpiMetric} className="text-xs text-blue-600 font-medium hover:text-blue-700">+ Add metric</button></div>
-            {kpiMetrics.length === 0 ? <p className="text-xs text-gray-400">No KPI metrics. Click &quot;Add metric&quot; to track progress against your KPIs.</p> : (
+          <div className="border-t border-theme-border pt-4">
+            <div className="flex items-center justify-between mb-3"><div className="flex items-center gap-2"><TrendingUp className="w-4 h-4 text-purple-600" /><label className="text-xs font-semibold text-theme-text-primary">KPI Metrics</label></div><button type="button" onClick={addKpiMetric} className="text-xs text-theme-accent font-medium hover:text-blue-700">+ Add metric</button></div>
+            {kpiMetrics.length === 0 ? <p className="text-xs text-theme-text-tertiary">No KPI metrics. Click &quot;Add metric&quot; to track progress against your KPIs.</p> : (
               <div className="space-y-3">{kpiMetrics.map((m, idx) => {
                 const progress = m.status === 'ahead' ? 100 : m.status === 'on_track' ? 60 : m.status === 'behind' ? 30 : 0;
                 return (
-                  <div key={idx} className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                  <div key={idx} className="p-3 rounded-xl bg-theme-muted border border-theme-border">
                     <div className="grid grid-cols-12 gap-2 items-start mb-2">
-                      <input type="text" value={m.name} onChange={(e) => updateKpiMetric(idx, 'name', e.target.value)} placeholder="KPI name" className="col-span-4 border border-gray-300 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-blue-500" />
-                      <input type="text" value={m.target} onChange={(e) => updateKpiMetric(idx, 'target', e.target.value)} placeholder="Target" className="col-span-3 border border-gray-300 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-blue-500" />
-                      <input type="text" value={m.actual} onChange={(e) => updateKpiMetric(idx, 'actual', e.target.value)} placeholder="Actual" className="col-span-3 border border-gray-300 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-blue-500" />
-                      <select value={m.status} onChange={(e) => updateKpiMetric(idx, 'status', e.target.value)} className="col-span-1 border border-gray-300 rounded-lg px-1 py-1.5 text-xs outline-none"><option value="not_started">—</option><option value="on_track">On Track</option><option value="ahead">Ahead</option><option value="behind">Behind</option></select>
-                      <button type="button" onClick={() => removeKpiMetric(idx)} className="col-span-1 p-1.5 text-gray-400 hover:text-red-600"><X className="w-3.5 h-3.5" /></button>
+                      <input type="text" value={m.name} onChange={(e) => updateKpiMetric(idx, 'name', e.target.value)} placeholder="KPI name" className="col-span-4 border border-theme-border rounded-lg px-2 py-1.5 text-xs outline-none focus:border-theme-accent" />
+                      <input type="text" value={m.target} onChange={(e) => updateKpiMetric(idx, 'target', e.target.value)} placeholder="Target" className="col-span-3 border border-theme-border rounded-lg px-2 py-1.5 text-xs outline-none focus:border-theme-accent" />
+                      <input type="text" value={m.actual} onChange={(e) => updateKpiMetric(idx, 'actual', e.target.value)} placeholder="Actual" className="col-span-3 border border-theme-border rounded-lg px-2 py-1.5 text-xs outline-none focus:border-theme-accent" />
+                      <select value={m.status} onChange={(e) => updateKpiMetric(idx, 'status', e.target.value)} className="col-span-1 border border-theme-border rounded-lg px-1 py-1.5 text-xs outline-none"><option value="not_started">—</option><option value="on_track">On Track</option><option value="ahead">Ahead</option><option value="behind">Behind</option></select>
+                      <button type="button" onClick={() => removeKpiMetric(idx)} className="col-span-1 p-1.5 text-theme-text-tertiary hover:text-red-600"><X className="w-3.5 h-3.5" /></button>
                     </div>
                     {/* Mini progress bar */}
-                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden"><div className={`h-full rounded-full transition-all ${progress===100?'bg-green-500':progress>=60?'bg-blue-500':progress>0?'bg-amber-500':'bg-gray-300'}`} style={{ width: `${progress}%` }} /></div>
+                    <div className="h-1.5 bg-theme-muted rounded-full overflow-hidden"><div className={`h-full rounded-full transition-all ${progress===100?'bg-green-500':progress>=60?'bg-blue-500':progress>0?'bg-amber-500':'bg-theme-muted'}`} style={{ width: `${progress}%` }} /></div>
                   </div>
                 );
               })}</div>
             )}
           </div>
-          <div><label className="block text-xs font-semibold text-gray-700 mb-1">Additional Notes</label><textarea value={additionalNotes} onChange={(e) => setAdditionalNotes(e.target.value)} rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" placeholder="Any additional notes..." /></div>
-          <div className="flex items-center gap-3 pt-2 border-t border-gray-200">
-            <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">{submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}Submit Report</button>
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
+          <div><label className="block text-xs font-semibold text-theme-text-primary mb-1">Additional Notes</label><textarea value={additionalNotes} onChange={(e) => setAdditionalNotes(e.target.value)} rows={2} className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent" placeholder="Any additional notes..." /></div>
+          <div className="flex items-center gap-3 pt-2 border-t border-theme-border">
+            <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50">{submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}Submit Report</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-theme-text-secondary bg-theme-muted rounded-lg hover:bg-theme-muted transition-colors">Cancel</button>
           </div>
         </form>
       </div>

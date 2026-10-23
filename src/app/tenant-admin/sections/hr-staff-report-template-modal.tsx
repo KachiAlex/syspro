@@ -216,7 +216,7 @@ export const StaffReportTemplateModal: React.FC<StaffReportTemplateModalProps> =
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay p-4">
       <div className="bg-theme-bg w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-xl border border-theme-border shadow-xl">
         <div className="flex items-center justify-between p-6 border-b border-theme-border">
           <div>
@@ -256,7 +256,7 @@ export const StaffReportTemplateModal: React.FC<StaffReportTemplateModalProps> =
                       key={t.id}
                       className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                         editingId === t.id
-                          ? 'border-blue-500 bg-blue-500/5'
+                          ? 'border-theme-accent bg-blue-500/5'
                           : 'border-theme-border bg-theme-muted hover:bg-theme-sidebar-hover'
                       }`}
                     >
@@ -296,7 +296,7 @@ export const StaffReportTemplateModal: React.FC<StaffReportTemplateModalProps> =
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Engineering Weekly"
-                    className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
                   />
                 </div>
                 <div>
@@ -304,7 +304,7 @@ export const StaffReportTemplateModal: React.FC<StaffReportTemplateModalProps> =
                   <select
                     value={reportType}
                     onChange={(e) => setReportType(e.target.value)}
-                    className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
                   >
                     {REPORT_TYPES.map((t) => (
                       <option key={t.value} value={t.value}>{t.label}</option>
@@ -345,7 +345,7 @@ export const StaffReportTemplateModal: React.FC<StaffReportTemplateModalProps> =
                             type="text"
                             value={section.label}
                             onChange={(e) => updateSection(index, 'label', e.target.value)}
-                            className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
                           />
                         </div>
                         <div>
@@ -353,7 +353,7 @@ export const StaffReportTemplateModal: React.FC<StaffReportTemplateModalProps> =
                           <select
                             value={section.inputType}
                             onChange={(e) => updateSection(index, 'inputType', e.target.value)}
-                            className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
                           >
                             <option value="textarea">Textarea</option>
                             <option value="bullets">Bullets</option>
@@ -392,7 +392,7 @@ export const StaffReportTemplateModal: React.FC<StaffReportTemplateModalProps> =
                         value={section.prompt}
                         onChange={(e) => updateSection(index, 'prompt', e.target.value)}
                         placeholder="Question or instruction shown to the staff member"
-                        className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
                       />
                     </div>
                     <div>
@@ -404,7 +404,7 @@ export const StaffReportTemplateModal: React.FC<StaffReportTemplateModalProps> =
                         value={(section.keywords || []).join(', ')}
                         onChange={(e) => updateKeywords(index, e.target.value)}
                         placeholder="e.g. meeting, call, sync"
-                        className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
                       />
                     </div>
                     <label className="flex items-center gap-2 text-sm text-theme-text-primary">
@@ -430,7 +430,7 @@ export const StaffReportTemplateModal: React.FC<StaffReportTemplateModalProps> =
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                   {editingId ? 'Update Template' : 'Create Template'}

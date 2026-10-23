@@ -98,14 +98,14 @@ export default function AdminRestrictions({ tenantSlug }: { tenantSlug?: string 
   ].sort();
 
   return (
-    <div className="rounded-3xl border border-slate-100 bg-theme-muted p-8 shadow-sm">
+    <div className="rounded-3xl border border-theme-border bg-theme-muted p-8 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">
+          <h2 className="text-2xl font-semibold text-theme-text-primary">
             Module Access Restrictions
           </h2>
-          <p className="text-sm text-slate-500 mt-2">
+          <p className="text-sm text-theme-text-tertiary mt-2">
             Restrict modules from all users. Restricted modules will not appear
             in navigation or be accessible.
           </p>
@@ -149,7 +149,7 @@ export default function AdminRestrictions({ tenantSlug }: { tenantSlug?: string 
       <div className="space-y-8">
         {categories.map((category) => (
           <div key={category}>
-            <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-4">
+            <h3 className="text-sm font-semibold text-theme-text-primary uppercase tracking-wider mb-4">
               {category}
             </h3>
 
@@ -165,26 +165,26 @@ export default function AdminRestrictions({ tenantSlug }: { tenantSlug?: string 
                       className={`flex items-center justify-between rounded-2xl border-2 p-4 transition ${
                         isRestricted
                           ? "border-rose-200 bg-rose-50"
-                          : "border-slate-100 bg-theme-muted hover:border-slate-200"
+                          : "border-theme-border bg-theme-muted hover:border-theme-border"
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         {isRestricted ? (
                           <Lock className="h-5 w-5 text-rose-600" />
                         ) : (
-                          <Unlock className="h-5 w-5 text-slate-400" />
+                          <Unlock className="h-5 w-5 text-theme-text-secondary" />
                         )}
                         <div className="text-left">
                           <p
                             className={`font-medium ${
                               isRestricted
                                 ? "text-rose-900"
-                                : "text-gray-900"
+                                : "text-theme-text-primary"
                             }`}
                           >
                             {module.label}
                           </p>
-                          <p className="text-xs text-slate-500 mt-0.5">
+                          <p className="text-xs text-theme-text-tertiary mt-0.5">
                             {isRestricted ? "Restricted" : "Available"}
                           </p>
                         </div>
@@ -194,7 +194,7 @@ export default function AdminRestrictions({ tenantSlug }: { tenantSlug?: string 
                         className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${
                           isRestricted
                             ? "bg-rose-100 text-rose-600"
-                            : "bg-slate-100 text-slate-600"
+                            : "bg-theme-muted text-theme-text-secondary"
                         }`}
                       >
                         {isRestricted ? (
@@ -219,14 +219,14 @@ export default function AdminRestrictions({ tenantSlug }: { tenantSlug?: string 
       </div>
 
       {/* Actions */}
-      <div className="mt-8 flex flex-wrap gap-3 pt-8 border-t border-slate-100">
+      <div className="mt-8 flex flex-wrap gap-3 pt-8 border-t border-theme-border">
         <button
           onClick={() => {
             loadRestrictions();
             setHasChanges(false);
           }}
           disabled={!hasChanges || loading}
-          className="rounded-full border border-slate-200 px-6 py-2 font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-full border border-theme-border px-6 py-2 font-medium text-theme-text-secondary hover:bg-theme-muted disabled:cursor-not-allowed disabled:opacity-50"
         >
           Discard Changes
         </button>
@@ -234,13 +234,13 @@ export default function AdminRestrictions({ tenantSlug }: { tenantSlug?: string 
         <button
           onClick={saveRestrictions}
           disabled={!hasChanges || loading}
-          className="rounded-full bg-blue-600 text-white px-6 py-2 font-medium hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-full bg-theme-accent text-white px-6 py-2 font-medium hover:bg-theme-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? "Saving..." : "Save Restrictions"}
         </button>
 
         {AVAILABLE_MODULES.length > 0 && (
-          <div className="ml-auto text-sm text-slate-500">
+          <div className="ml-auto text-sm text-theme-text-tertiary">
             {restrictions.length} of {AVAILABLE_MODULES.length} modules restricted
           </div>
         )}

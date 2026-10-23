@@ -262,11 +262,11 @@ export default function EnhancedWorkflowForm({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Description (Optional)
               </label>
               <textarea
-                className="bg-white w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
+                className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent resize-vertical"
                 rows={3}
                 placeholder="Describe the purpose and scope of this workflow..."
                 value={form.values.description || ""}
@@ -279,7 +279,7 @@ export default function EnhancedWorkflowForm({
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 mb-2">Workflow Type Information</h4>
+              <h4 className="font-medium text-theme-text-primary mb-2">Workflow Type Information</h4>
               <div className="text-sm text-blue-800">
                 {WORKFLOW_TYPES.find(type => type.value === form.values.type)?.description}
               </div>
@@ -292,11 +292,11 @@ export default function EnhancedWorkflowForm({
           <div className="space-y-6">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Workflow Steps</h3>
+                <h3 className="text-lg font-semibold text-theme-text-primary">Workflow Steps</h3>
                 <button
                   type="button"
                   onClick={addStep}
-                  className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Add Step
@@ -306,9 +306,9 @@ export default function EnhancedWorkflowForm({
               <div className="space-y-4">
                 {steps.map((step, index) => (
                   <InlineErrorBoundary key={index}>
-                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                    <div className="bg-theme-muted border border-theme-border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-medium text-gray-900">Step {index + 1}</h4>
+                        <h4 className="font-medium text-theme-text-primary">Step {index + 1}</h4>
                         {steps.length > 1 && (
                           <button
                             type="button"
@@ -322,7 +322,7 @@ export default function EnhancedWorkflowForm({
 
                       <div className="grid gap-4 md:grid-cols-3">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1">
+                          <label className="block text-sm font-medium text-theme-text-primary mb-1">
                             Step Title *
                           </label>
                           <input
@@ -330,7 +330,7 @@ export default function EnhancedWorkflowForm({
                             value={step.title}
                             onChange={(e) => updateStep(index, "title", e.target.value)}
                             placeholder="e.g., Setup user account"
-                            className="bg-white w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent"
                           />
                           {!step.title.trim() && (
                             <p className="mt-1 text-xs text-red-600">Title is required</p>
@@ -338,7 +338,7 @@ export default function EnhancedWorkflowForm({
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1">
+                          <label className="block text-sm font-medium text-theme-text-primary mb-1">
                             Assignee
                           </label>
                           <input
@@ -346,12 +346,12 @@ export default function EnhancedWorkflowForm({
                             value={step.assignee}
                             onChange={(e) => updateStep(index, "assignee", e.target.value)}
                             placeholder="e.g., HR Manager"
-                            className="bg-white w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1">
+                          <label className="block text-sm font-medium text-theme-text-primary mb-1">
                             Days After Start
                           </label>
                           <input
@@ -359,7 +359,7 @@ export default function EnhancedWorkflowForm({
                             min="0"
                             value={step.daysAfter}
                             onChange={(e) => updateStep(index, "daysAfter", parseInt(e.target.value) || 0)}
-                            className="bg-white w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent"
                           />
                         </div>
                       </div>
@@ -374,12 +374,12 @@ export default function EnhancedWorkflowForm({
       case 2:
         return (
           <div className="space-y-6">
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Review Workflow Configuration</h3>
+            <div className="bg-theme-muted border border-theme-border rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Review Workflow Configuration</h3>
               
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-medium text-slate-700">Basic Information</h4>
+                  <h4 className="font-medium text-theme-text-primary">Basic Information</h4>
                   <div className="mt-2 space-y-2 text-sm">
                     <div><span className="font-medium">Name:</span> {form.values.name}</div>
                     <div><span className="font-medium">Type:</span> {WORKFLOW_TYPES.find(t => t.value === form.values.type)?.label}</div>
@@ -390,18 +390,18 @@ export default function EnhancedWorkflowForm({
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-slate-700">Workflow Steps ({steps.length})</h4>
+                  <h4 className="font-medium text-theme-text-primary">Workflow Steps ({steps.length})</h4>
                   <div className="mt-2 space-y-2">
                     {steps.map((step, index) => (
                       <div key={index} className="flex items-center gap-4 text-sm bg-theme-muted p-2 rounded border">
-                        <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-medium">
+                        <div className="w-6 h-6 bg-blue-100 text-theme-accent rounded-full flex items-center justify-center text-xs font-medium">
                           {index + 1}
                         </div>
                         <div className="flex-1">
                           <div className="font-medium">{step.title || "Untitled Step"}</div>
-                          {step.assignee && <div className="text-slate-500">Assignee: {step.assignee}</div>}
+                          {step.assignee && <div className="text-theme-text-tertiary">Assignee: {step.assignee}</div>}
                         </div>
-                        <div className="text-slate-500">Day {step.daysAfter}</div>
+                        <div className="text-theme-text-tertiary">Day {step.daysAfter}</div>
                       </div>
                     ))}
                   </div>
@@ -490,13 +490,13 @@ export default function EnhancedWorkflowForm({
           <>
             {renderStepContent()}
 
-            <div className="flex justify-between pt-6 border-t border-slate-200">
+            <div className="flex justify-between pt-6 border-t border-theme-border">
               <div>
                 {currentStep > 0 && (
                   <button
                     type="button"
                     onClick={prevStep}
-                    className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                    className="px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors"
                   >
                     Previous
                   </button>
@@ -508,7 +508,7 @@ export default function EnhancedWorkflowForm({
                   <button
                     type="button"
                     onClick={onCancel}
-                    className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                    className="px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors"
                   >
                     Cancel
                   </button>
@@ -518,7 +518,7 @@ export default function EnhancedWorkflowForm({
                   <button
                     type="button"
                     onClick={nextStep}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover transition-colors"
                   >
                     Next
                   </button>

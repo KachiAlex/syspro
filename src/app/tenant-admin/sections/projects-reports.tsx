@@ -64,13 +64,13 @@ export default function ProjectsReports({ projects, tenantSlug }: ProjectsReport
     <div className="space-y-6">
       {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 text-sm">{error}</div>}
 
-      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Report Generator</h3>
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Report Generator</h3>
         <div className="flex gap-4 flex-col md:flex-row">
           <select
             value={reportType}
             onChange={(e) => setReportType(e.target.value as any)}
-            className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+            className="flex-1 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-theme-text-primary focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 transition"
           >
             <option value="summary">Summary Report</option>
             <option value="budget">Budget Analysis</option>
@@ -80,7 +80,7 @@ export default function ProjectsReports({ projects, tenantSlug }: ProjectsReport
           <button
             onClick={generateReport}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            className="inline-flex items-center gap-2 rounded-lg bg-theme-accent px-4 py-2 text-sm font-semibold text-white hover:bg-theme-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
           >
             <BarChart3 className="w-4 h-4" />
             Generate Report
@@ -101,17 +101,17 @@ export default function ProjectsReports({ projects, tenantSlug }: ProjectsReport
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-blue-600 mb-1">Total Projects</p>
-              <p className="text-3xl font-bold text-gray-900">{projects.length}</p>
+              <p className="text-sm text-theme-accent mb-1">Total Projects</p>
+              <p className="text-3xl font-bold text-theme-text-primary">{projects.length}</p>
             </div>
-            <BarChart3 className="w-8 h-8 text-blue-600" />
+            <BarChart3 className="w-8 h-8 text-theme-accent" />
           </div>
         </div>
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-emerald-600 mb-1">Active Projects</p>
-              <p className="text-3xl font-bold text-gray-900">{activeProjects}</p>
+              <p className="text-3xl font-bold text-theme-text-primary">{activeProjects}</p>
             </div>
             <TrendingUp className="w-8 h-8 text-emerald-600" />
           </div>
@@ -120,7 +120,7 @@ export default function ProjectsReports({ projects, tenantSlug }: ProjectsReport
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-violet-600 mb-1">Completed</p>
-              <p className="text-3xl font-bold text-gray-900">{completedProjects}</p>
+              <p className="text-3xl font-bold text-theme-text-primary">{completedProjects}</p>
             </div>
             <Calendar className="w-8 h-8 text-violet-600" />
           </div>
@@ -129,7 +129,7 @@ export default function ProjectsReports({ projects, tenantSlug }: ProjectsReport
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-amber-600 mb-1">Budget Utilization</p>
-              <p className="text-3xl font-bold text-gray-900">{budgetUtilization}%</p>
+              <p className="text-3xl font-bold text-theme-text-primary">{budgetUtilization}%</p>
             </div>
             <DollarSign className="w-8 h-8 text-amber-600" />
           </div>
@@ -137,33 +137,33 @@ export default function ProjectsReports({ projects, tenantSlug }: ProjectsReport
       </div>
 
       {/* Budget Analysis */}
-      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Budget Analysis</h3>
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Budget Analysis</h3>
         <div className="space-y-4">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-900">Total Budget Allocated</span>
-              <span className="text-sm font-semibold text-gray-900">${totalBudget.toFixed(2)}</span>
+              <span className="text-sm font-medium text-theme-text-primary">Total Budget Allocated</span>
+              <span className="text-sm font-semibold text-theme-text-primary">${totalBudget.toFixed(2)}</span>
             </div>
           </div>
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-900">Total Budget Spent</span>
-              <span className="text-sm font-semibold text-gray-900">${totalSpent.toFixed(2)}</span>
+              <span className="text-sm font-medium text-theme-text-primary">Total Budget Spent</span>
+              <span className="text-sm font-semibold text-theme-text-primary">${totalSpent.toFixed(2)}</span>
             </div>
           </div>
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-900">Budget Remaining</span>
-              <span className="text-sm font-semibold text-gray-900">${(totalBudget - totalSpent).toFixed(2)}</span>
+              <span className="text-sm font-medium text-theme-text-primary">Budget Remaining</span>
+              <span className="text-sm font-semibold text-theme-text-primary">${(totalBudget - totalSpent).toFixed(2)}</span>
             </div>
           </div>
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-900">Budget Utilization</span>
-              <span className="text-sm font-semibold text-gray-900">{budgetUtilization}%</span>
+              <span className="text-sm font-medium text-theme-text-primary">Budget Utilization</span>
+              <span className="text-sm font-semibold text-theme-text-primary">{budgetUtilization}%</span>
             </div>
-            <div className="h-3 w-full rounded-full bg-gray-200 overflow-hidden">
+            <div className="h-3 w-full rounded-full bg-theme-muted overflow-hidden">
               <div
                 className={`h-full transition-all ${
                   budgetUtilization > 90 ? 'bg-red-500' :
@@ -178,8 +178,8 @@ export default function ProjectsReports({ projects, tenantSlug }: ProjectsReport
       </div>
 
       {/* Project Status Distribution */}
-      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Status Distribution</h3>
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Project Status Distribution</h3>
         <div className="space-y-3">
           {['Active', 'Planned', 'On Hold', 'Completed'].map(status => {
             const count = projects.filter(p => p.status === status).length;
@@ -187,16 +187,16 @@ export default function ProjectsReports({ projects, tenantSlug }: ProjectsReport
             return (
               <div key={status}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-900">{status}</span>
-                  <span className="text-sm font-semibold text-gray-900">{count} ({percentage}%)</span>
+                  <span className="text-sm font-medium text-theme-text-primary">{status}</span>
+                  <span className="text-sm font-semibold text-theme-text-primary">{count} ({percentage}%)</span>
                 </div>
-                <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+                <div className="h-2 w-full rounded-full bg-theme-muted overflow-hidden">
                   <div
                     className={`h-full transition-all ${
                       status === 'Active' ? 'bg-blue-500' :
                       status === 'Completed' ? 'bg-emerald-500' :
                       status === 'On Hold' ? 'bg-amber-500' :
-                      'bg-slate-500'
+                      'bg-theme-muted'
                     }`}
                     style={{ width: `${percentage}%` }}
                   />

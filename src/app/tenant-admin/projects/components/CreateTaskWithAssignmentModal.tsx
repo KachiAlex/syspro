@@ -141,11 +141,11 @@ export const CreateTaskWithAssignmentModal: React.FC<CreateTaskWithAssignmentMod
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Create Task & Assign</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-theme-surface border-b border-theme-border p-6 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-theme-text-primary">Create Task & Assign</h2>
+          <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-primary transition-colors">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -160,16 +160,16 @@ export const CreateTaskWithAssignmentModal: React.FC<CreateTaskWithAssignmentMod
 
           {/* Project selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">Project *</label>
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">Project *</label>
             {loading ? (
-              <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="flex items-center gap-2 text-sm text-theme-text-secondary">
                 <Loader2 className="w-4 h-4 animate-spin" /> Loading projects...
               </div>
             ) : (
               <select
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary bg-theme-surface focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 required
               >
                 <option value="">Select a project</option>
@@ -183,34 +183,34 @@ export const CreateTaskWithAssignmentModal: React.FC<CreateTaskWithAssignmentMod
           {/* Task details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-900 mb-2">Task Title *</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Task Title *</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary bg-theme-surface focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 placeholder="Enter task title"
                 required
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-900 mb-2">Description</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Description</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary bg-theme-surface focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 placeholder="Task description"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Priority</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Priority</label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as any)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary bg-theme-surface focus:outline-none focus:ring-2 focus:ring-theme-accent"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -219,24 +219,24 @@ export const CreateTaskWithAssignmentModal: React.FC<CreateTaskWithAssignmentMod
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Due Date *</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Due Date *</label>
               <input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary bg-theme-surface focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Estimated Hours *</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Estimated Hours *</label>
               <input
                 type="number"
                 min="0"
                 value={estimatedHours}
                 onChange={(e) => setEstimatedHours(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary bg-theme-surface focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 placeholder="e.g. 20"
                 required
               />
@@ -244,18 +244,18 @@ export const CreateTaskWithAssignmentModal: React.FC<CreateTaskWithAssignmentMod
           </div>
 
           {/* Employee assignment */}
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">
+          <div className="border-t border-theme-border pt-6">
+            <h3 className="text-sm font-semibold text-theme-text-primary mb-3">
               Assign Employees — Any Department
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Department</label>
+                <label className="block text-xs font-medium text-theme-text-primary mb-1">Department</label>
                 <select
                   value={departmentFilter}
                   onChange={(e) => setDepartmentFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary bg-theme-surface focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 >
                   <option value="">All Departments</option>
                   {departments.map((d) => (
@@ -264,43 +264,43 @@ export const CreateTaskWithAssignmentModal: React.FC<CreateTaskWithAssignmentMod
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Search by name</label>
+                <label className="block text-xs font-medium text-theme-text-primary mb-1">Search by name</label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-theme-text-tertiary" />
                   <input
                     type="text"
                     value={nameSearch}
                     onChange={(e) => setNameSearch(e.target.value)}
                     placeholder="Employee name..."
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-10 pr-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary bg-theme-surface focus:outline-none focus:ring-2 focus:ring-theme-accent"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
+            <div className="border border-theme-border rounded-lg max-h-48 overflow-y-auto">
               {loading ? (
                 <div className="flex items-center justify-center py-6">
-                  <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                  <Loader2 className="w-5 h-5 animate-spin text-theme-text-tertiary" />
                 </div>
               ) : filteredEmployees.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-6">No matching employees found</p>
+                <p className="text-sm text-theme-text-secondary text-center py-6">No matching employees found</p>
               ) : (
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-theme-border">
                   {filteredEmployees.map((emp) => (
                     <label
                       key={emp.id}
-                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer"
+                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-theme-muted cursor-pointer"
                     >
                       <input
                         type="checkbox"
                         checked={selectedIds.has(emp.id)}
                         onChange={() => toggleSelect(emp.id)}
-                        className="w-4 h-4 text-blue-600 rounded"
+                        className="w-4 h-4 text-theme-accent rounded"
                       />
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{emp.name}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm font-medium text-theme-text-primary">{emp.name}</p>
+                        <p className="text-xs text-theme-text-secondary">
                           {emp.jobTitle} · {departmentNameById.get(emp.departmentId) || 'No department'}
                         </p>
                       </div>
@@ -311,17 +311,17 @@ export const CreateTaskWithAssignmentModal: React.FC<CreateTaskWithAssignmentMod
             </div>
 
             {selectedIds.size > 0 && (
-              <p className="text-xs text-blue-600 mt-2">
+              <p className="text-xs text-theme-accent mt-2">
                 {selectedIds.size} employee(s) selected — HODs will be automatically notified.
               </p>
             )}
           </div>
 
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
+          <div className="flex gap-3 pt-4 border-t border-theme-border">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
               disabled={creating}
             >
               Cancel
@@ -329,7 +329,7 @@ export const CreateTaskWithAssignmentModal: React.FC<CreateTaskWithAssignmentMod
             <button
               type="submit"
               disabled={creating}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
             >
               <UserPlus className="w-4 h-4" />
               {creating ? 'Creating...' : 'Create & Assign'}

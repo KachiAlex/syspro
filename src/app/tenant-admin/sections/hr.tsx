@@ -434,7 +434,7 @@ const HRComponent: React.FC = () => {
               <p className="text-sm font-medium text-theme-text-secondary">Total Employees</p>
               <p className="text-3xl font-bold text-theme-text-primary mt-2">{employees.length}</p>
             </div>
-            <Users className="w-12 h-12 text-blue-500" />
+            <Users className="w-12 h-12 text-theme-accent" />
           </div>
           <p className="text-xs text-theme-text-tertiary mt-4">Active workforce</p>
         </div>
@@ -467,7 +467,7 @@ const HRComponent: React.FC = () => {
               <p className="text-sm font-medium text-theme-text-secondary">Departments</p>
               <p className="text-3xl font-bold text-theme-accent mt-2">{new Set(employees.map(e => e.department)).size}</p>
             </div>
-            <Briefcase className="w-12 h-12 text-blue-500" />
+            <Briefcase className="w-12 h-12 text-theme-accent" />
           </div>
           <p className="text-xs text-theme-text-tertiary mt-4">Organizational units</p>
         </div>
@@ -582,7 +582,7 @@ const HRComponent: React.FC = () => {
                 <span className="text-sm text-theme-text-secondary">{dept}</span>
                 <div className="flex items-center gap-2">
                   <div className="w-32 bg-theme-border rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${(count / employees.length) * 100}%` }} />
+                    <div className="bg-theme-accent h-2 rounded-full" style={{ width: `${(count / employees.length) * 100}%` }} />
                   </div>
                   <span className="text-sm font-medium text-theme-text-primary w-8 text-right">{count}</span>
                 </div>
@@ -624,7 +624,7 @@ const HRComponent: React.FC = () => {
             </button>
             <button
               onClick={() => setShowStaffReportModal(true)}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
             >
               <FileText className="w-4 h-4" />
               Submit Report
@@ -659,7 +659,7 @@ const HRComponent: React.FC = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-blue-600 text-theme-accent'
+                  ? 'border-theme-accent text-theme-accent'
                   : 'border-transparent text-theme-text-tertiary hover:text-theme-text-secondary'
               }`}
             >

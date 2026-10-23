@@ -7,7 +7,7 @@ import { AlertCircle, CheckCircle2, Loader2, Play, Plus, RefreshCw } from "lucid
 const fmt = (n: number) =>
   `₦${Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
 
-const inputCls = "rounded bg-slate-800 px-3 py-2 text-sm w-full";
+const inputCls = "rounded bg-theme-muted px-3 py-2 text-sm w-full";
 const btnCls = "flex items-center gap-1.5 rounded bg-sky-600 px-3 py-1.5 text-sm hover:bg-sky-500 disabled:opacity-50";
 
 type Tab = "subscriptions" | "guarantees" | "discounting" | "recon-rules" | "rates";
@@ -68,7 +68,7 @@ export default function TreasuryPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Treasury</h1>
-          <p className="text-sm text-slate-400">Subscriptions, bank guarantees, invoice discounting, bank-recon rules, and FX rates.</p>
+          <p className="text-sm text-theme-text-secondary">Subscriptions, bank guarantees, invoice discounting, bank-recon rules, and FX rates.</p>
         </div>
         <div className="flex items-center gap-2">
           <button className={btnCls} onClick={load} disabled={loading}>
@@ -77,10 +77,10 @@ export default function TreasuryPage() {
         </div>
       </div>
 
-      <div className="flex gap-1 border-b border-slate-800 overflow-x-auto">
+      <div className="flex gap-1 border-b border-theme-border overflow-x-auto">
         {(["subscriptions", "guarantees", "discounting", "recon-rules", "rates"] as Tab[]).map((t) => (
           <button key={t} onClick={() => { setTab(t); setError(null); setMsg(null); }}
-            className={`px-3 py-2 text-sm whitespace-nowrap ${tab === t ? "border-b-2 border-sky-500 text-sky-400" : "text-slate-400 hover:text-slate-200"}`}>
+            className={`px-3 py-2 text-sm whitespace-nowrap ${tab === t ? "border-b-2 border-sky-500 text-sky-400" : "text-theme-text-secondary hover:text-theme-text-primary"}`}>
             {{ "subscriptions": "Subscriptions", "guarantees": "Bank Guarantees", "discounting": "Invoice Discounting", "recon-rules": "Recon Rules", "rates": "FX Rates" }[t]}
           </button>
         ))}
@@ -105,15 +105,15 @@ function SubscriptionsTab({ plans, subs, post, busy, reload }: any) {
   return (
     <div className="space-y-5">
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded border border-slate-800 p-4 space-y-3">
+        <div className="rounded border border-theme-border p-4 space-y-3">
           <div className="font-medium text-sm">Plans</div>
           {plans.map((p: any) => (
-            <div key={p.id} className="flex justify-between text-sm border-b border-slate-800/60 py-1.5">
-              <span>{p.name} <span className="text-slate-400">({p.item} · {p.interval})</span></span>
+            <div key={p.id} className="flex justify-between text-sm border-b border-theme-border/60 py-1.5">
+              <span>{p.name} <span className="text-theme-text-secondary">({p.item} · {p.interval})</span></span>
               <span className="font-mono">{fmt(p.unit_price)}</span>
             </div>
           ))}
-          {!plans.length && <div className="text-sm text-slate-500">No plans yet</div>}
+          {!plans.length && <div className="text-sm text-theme-text-tertiary">No plans yet</div>}
           <div className="grid gap-2 sm:grid-cols-2 pt-2">
             <input className={inputCls} placeholder="Plan name" value={planForm.name} onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })} />
             <input className={inputCls} placeholder="Item" value={planForm.item} onChange={(e) => setPlanForm({ ...planForm, item: e.target.value })} />
@@ -132,7 +132,7 @@ function SubscriptionsTab({ plans, subs, post, busy, reload }: any) {
           </button>
         </div>
 
-        <div className="rounded border border-slate-800 p-4 space-y-3">
+        <div className="rounded border border-theme-border p-4 space-y-3">
           <div className="font-medium text-sm">New Subscription</div>
           <div className="grid gap-2 sm:grid-cols-2">
             <input className={inputCls} placeholder="Customer ID" value={subForm.customerId} onChange={(e) => setSubForm({ ...subForm, customerId: e.target.value })} />
@@ -140,8 +140,8 @@ function SubscriptionsTab({ plans, subs, post, busy, reload }: any) {
               <option value="">Select plan…</option>
               {plans.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
-            <label className="block"><span className="block text-xs text-slate-400">Start</span><input className={inputCls} type="date" value={subForm.startDate} onChange={(e) => setSubForm({ ...subForm, startDate: e.target.value })} /></label>
-            <label className="block"><span className="block text-xs text-slate-400">End (optional)</span><input className={inputCls} type="date" value={subForm.endDate} onChange={(e) => setSubForm({ ...subForm, endDate: e.target.value })} /></label>
+            <label className="block"><span className="block text-xs text-theme-text-secondary">Start</span><input className={inputCls} type="date" value={subForm.startDate} onChange={(e) => setSubForm({ ...subForm, startDate: e.target.value })} /></label>
+            <label className="block"><span className="block text-xs text-theme-text-secondary">End (optional)</span><input className={inputCls} type="date" value={subForm.endDate} onChange={(e) => setSubForm({ ...subForm, endDate: e.target.value })} /></label>
           </div>
           <button className={btnCls} disabled={busy || !subForm.customerId || !subForm.planId || !subForm.startDate}
             onClick={async () => {
@@ -158,13 +158,13 @@ function SubscriptionsTab({ plans, subs, post, busy, reload }: any) {
       </div>
 
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-slate-400 border-b border-slate-800">
+        <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border">
           <th className="py-2 pr-3">Customer</th><th className="py-2 pr-3">Plan</th><th className="py-2 pr-3">Start</th>
           <th className="py-2 pr-3">Next Invoice</th><th className="py-2">Status</th>
         </tr></thead>
         <tbody>
           {subs.map((s: any) => (
-            <tr key={s.id} className="border-b border-slate-800/60">
+            <tr key={s.id} className="border-b border-theme-border/60">
               <td className="py-2 pr-3 font-mono text-xs">{s.customer_id}</td>
               <td className="py-2 pr-3">{planName(s.plan_id)}</td>
               <td className="py-2 pr-3">{String(s.start_date).slice(0, 10)}</td>
@@ -172,7 +172,7 @@ function SubscriptionsTab({ plans, subs, post, busy, reload }: any) {
               <td className="py-2">{s.status}</td>
             </tr>
           ))}
-          {!subs.length && <tr><td colSpan={5} className="py-6 text-center text-slate-500">No subscriptions</td></tr>}
+          {!subs.length && <tr><td colSpan={5} className="py-6 text-center text-theme-text-tertiary">No subscriptions</td></tr>}
         </tbody>
       </table>
     </div>
@@ -184,7 +184,7 @@ function GuaranteesTab({ rows, post, busy, reload }: any) {
   const statuses = ["open", "claimed", "released", "expired"];
   return (
     <div className="space-y-4">
-      <div className="rounded border border-slate-800 p-4 space-y-3">
+      <div className="rounded border border-theme-border p-4 space-y-3">
         <div className="font-medium text-sm">Issue Bank Guarantee</div>
         <div className="grid gap-2 sm:grid-cols-4">
           <select className={inputCls} value={form.direction} onChange={(e) => setForm({ ...form, direction: e.target.value })}>
@@ -207,27 +207,27 @@ function GuaranteesTab({ rows, post, busy, reload }: any) {
         </button>
       </div>
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-slate-400 border-b border-slate-800">
+        <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border">
           <th className="py-2 pr-3">Direction</th><th className="py-2 pr-3">Beneficiary</th><th className="py-2 pr-3">Bank</th>
           <th className="py-2 pr-3 text-right">Amount</th><th className="py-2 pr-3">Validity</th><th className="py-2">Status</th>
         </tr></thead>
         <tbody>
           {rows.map((g: any) => (
-            <tr key={g.id} className="border-b border-slate-800/60">
+            <tr key={g.id} className="border-b border-theme-border/60">
               <td className="py-2 pr-3 capitalize">{g.direction}</td>
               <td className="py-2 pr-3">{g.beneficiary}</td>
               <td className="py-2 pr-3">{g.bank}</td>
               <td className="py-2 pr-3 text-right font-mono">{g.currency} {Number(g.amount).toLocaleString()}</td>
               <td className="py-2 pr-3 text-xs">{String(g.start_date).slice(0, 10)} → {String(g.end_date).slice(0, 10)}</td>
               <td className="py-2">
-                <select className="rounded bg-slate-800 px-2 py-1 text-xs" value={g.status}
+                <select className="rounded bg-theme-muted px-2 py-1 text-xs" value={g.status}
                   onChange={(e) => post({ action: "update-guarantee", id: g.id, status: e.target.value }).then((r: any) => r && reload())}>
                   {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               </td>
             </tr>
           ))}
-          {!rows.length && <tr><td colSpan={6} className="py-6 text-center text-slate-500">No guarantees</td></tr>}
+          {!rows.length && <tr><td colSpan={6} className="py-6 text-center text-theme-text-tertiary">No guarantees</td></tr>}
         </tbody>
       </table>
     </div>
@@ -238,7 +238,7 @@ function DiscountingTab({ rows, post, busy, reload }: any) {
   const [form, setForm] = useState({ invoiceId: "", bank: "", loanAmount: "", disbursementDate: "", periodDays: "90" });
   return (
     <div className="space-y-4">
-      <div className="rounded border border-slate-800 p-4 space-y-3">
+      <div className="rounded border border-theme-border p-4 space-y-3">
         <div className="font-medium text-sm">Sanction Invoice Discounting</div>
         <div className="grid gap-2 sm:grid-cols-5">
           <input className={inputCls} placeholder="Invoice ID" value={form.invoiceId} onChange={(e) => setForm({ ...form, invoiceId: e.target.value })} />
@@ -256,13 +256,13 @@ function DiscountingTab({ rows, post, busy, reload }: any) {
         </button>
       </div>
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-slate-400 border-b border-slate-800">
+        <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border">
           <th className="py-2 pr-3">Invoice</th><th className="py-2 pr-3">Bank</th><th className="py-2 pr-3 text-right">Loan</th>
           <th className="py-2 pr-3">Disbursed</th><th className="py-2 pr-3">Status</th><th className="py-2" />
         </tr></thead>
         <tbody>
           {rows.map((d: any) => (
-            <tr key={d.id} className="border-b border-slate-800/60">
+            <tr key={d.id} className="border-b border-theme-border/60">
               <td className="py-2 pr-3 font-mono text-xs">{String(d.invoice_id).slice(0, 12)}</td>
               <td className="py-2 pr-3">{d.bank}</td>
               <td className="py-2 pr-3 text-right font-mono">{fmt(d.loan_amount)}</td>
@@ -278,7 +278,7 @@ function DiscountingTab({ rows, post, busy, reload }: any) {
               </td>
             </tr>
           ))}
-          {!rows.length && <tr><td colSpan={6} className="py-6 text-center text-slate-500">No discountings</td></tr>}
+          {!rows.length && <tr><td colSpan={6} className="py-6 text-center text-theme-text-tertiary">No discountings</td></tr>}
         </tbody>
       </table>
     </div>
@@ -289,8 +289,8 @@ function ReconTab({ rules, suggestions, post, busy, reload }: any) {
   const [form, setForm] = useState({ name: "", priority: "0", matchField: "description", pattern: "", accountCode: "", partyType: "", partyId: "", amountTolerance: "" });
   return (
     <div className="space-y-5">
-      <div className="rounded border border-slate-800 p-4 space-y-3">
-        <div className="font-medium text-sm">New Matching Rule <span className="text-slate-400 font-normal">(regex on imported bank lines)</span></div>
+      <div className="rounded border border-theme-border p-4 space-y-3">
+        <div className="font-medium text-sm">New Matching Rule <span className="text-theme-text-secondary font-normal">(regex on imported bank lines)</span></div>
         <div className="grid gap-2 sm:grid-cols-4">
           <input className={inputCls} placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <input className={inputCls} placeholder="Priority" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} />
@@ -318,32 +318,32 @@ function ReconTab({ rules, suggestions, post, busy, reload }: any) {
         <div>
           <div className="font-medium text-sm mb-2">Rules</div>
           <table className="w-full text-sm">
-            <thead><tr className="text-left text-slate-400 border-b border-slate-800"><th className="py-2 pr-3">Name</th><th className="py-2 pr-3">Pattern</th><th className="py-2">Account</th></tr></thead>
+            <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border"><th className="py-2 pr-3">Name</th><th className="py-2 pr-3">Pattern</th><th className="py-2">Account</th></tr></thead>
             <tbody>
               {rules.map((r: any) => (
-                <tr key={r.id} className="border-b border-slate-800/60">
-                  <td className="py-2 pr-3">{r.name} <span className="text-xs text-slate-500">p{r.priority}</span></td>
+                <tr key={r.id} className="border-b border-theme-border/60">
+                  <td className="py-2 pr-3">{r.name} <span className="text-xs text-theme-text-tertiary">p{r.priority}</span></td>
                   <td className="py-2 pr-3 font-mono text-xs">{r.match_field}:{r.pattern}</td>
                   <td className="py-2 font-mono text-xs">{r.account_code ?? "—"}</td>
                 </tr>
               ))}
-              {!rules.length && <tr><td colSpan={3} className="py-4 text-center text-slate-500">No rules</td></tr>}
+              {!rules.length && <tr><td colSpan={3} className="py-4 text-center text-theme-text-tertiary">No rules</td></tr>}
             </tbody>
           </table>
         </div>
         <div>
-          <div className="font-medium text-sm mb-2">Match Suggestions <span className="text-slate-500 font-normal">(unmatched statement lines)</span></div>
+          <div className="font-medium text-sm mb-2">Match Suggestions <span className="text-theme-text-tertiary font-normal">(unmatched statement lines)</span></div>
           <table className="w-full text-sm">
-            <thead><tr className="text-left text-slate-400 border-b border-slate-800"><th className="py-2 pr-3">Line</th><th className="py-2 pr-3 text-right">Amount</th><th className="py-2">Suggested</th></tr></thead>
+            <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border"><th className="py-2 pr-3">Line</th><th className="py-2 pr-3 text-right">Amount</th><th className="py-2">Suggested</th></tr></thead>
             <tbody>
               {suggestions.map((s: any, i: number) => (
-                <tr key={s.lineId ?? s.line_id ?? i} className="border-b border-slate-800/60">
+                <tr key={s.lineId ?? s.line_id ?? i} className="border-b border-theme-border/60">
                   <td className="py-2 pr-3 text-xs">{s.description ?? s.narration ?? String(s.lineId ?? s.line_id ?? "").slice(0, 10)}</td>
                   <td className="py-2 pr-3 text-right font-mono">{fmt(s.amount)}</td>
                   <td className="py-2 text-xs">{s.ruleName ?? s.rule_name ?? s.suggestion ?? "—"}</td>
                 </tr>
               ))}
-              {!suggestions.length && <tr><td colSpan={3} className="py-4 text-center text-slate-500">No unmatched lines</td></tr>}
+              {!suggestions.length && <tr><td colSpan={3} className="py-4 text-center text-theme-text-tertiary">No unmatched lines</td></tr>}
             </tbody>
           </table>
         </div>
@@ -357,7 +357,7 @@ function RatesTab({ post, busy }: any) {
   const [result, setResult] = useState<any>(null);
   return (
     <div className="space-y-4 max-w-xl">
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-theme-text-secondary">
         Fetch current rates from a free FX provider and store them in <code className="font-mono">exchange_rates</code> (marked <code className="font-mono">source=&apos;auto&apos;</code>). Rates are foreign units per 1 NGN… per base unit.
       </p>
       <div className="flex gap-2">
@@ -370,7 +370,7 @@ function RatesTab({ post, busy }: any) {
           <RefreshCw className="h-3.5 w-3.5" /> Fetch Rates
         </button>
       </div>
-      {result && <pre className="rounded bg-slate-800 p-3 text-xs overflow-auto">{JSON.stringify(result, null, 2)}</pre>}
+      {result && <pre className="rounded bg-theme-muted p-3 text-xs overflow-auto">{JSON.stringify(result, null, 2)}</pre>}
     </div>
   );
 }

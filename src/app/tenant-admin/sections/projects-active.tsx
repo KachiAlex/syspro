@@ -131,7 +131,7 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
       case 'high': return 'bg-orange-100 text-orange-800 border border-orange-200';
       case 'medium': return 'bg-blue-100 text-blue-800 border border-blue-200';
       case 'low': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
-      default: return 'bg-slate-100 text-slate-800 border border-slate-200';
+      default: return 'bg-theme-muted text-theme-text-primary border border-theme-border';
     }
   };
 
@@ -153,7 +153,7 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
         <button
           onClick={fetchActiveProjects}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm border border-gray-200 rounded-lg text-theme-text-primary hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm border border-theme-border rounded-lg text-theme-text-primary hover:bg-theme-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -162,14 +162,14 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
 
       {/* Bulk Actions */}
       {activeProjects.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-theme-muted p-4">
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-4">
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={selectedProjects.size === activeProjects.length && activeProjects.length > 0}
                 onChange={handleSelectAll}
-                className="bg-white w-4 h-4 rounded border-gray-300 text-black"
+                className="bg-theme-surface w-4 h-4 rounded border-theme-border text-theme-text-primary"
               />
               <span className="text-sm font-medium text-theme-text-primary">
                 Select All ({selectedProjects.size}/{activeProjects.length})
@@ -191,7 +191,7 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
       {loading ? (
         <div className="text-center py-8 text-theme-text-tertiary">Loading active projects...</div>
       ) : activeProjects.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-12 text-center">
           <Zap className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-theme-text-primary mb-2">No active projects</h3>
           <p className="text-theme-text-secondary">All projects are either planned, on hold, or completed</p>
@@ -203,14 +203,14 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
             const daysRemaining = getDaysRemaining(project.endDate);
             
             return (
-              <div key={project.id} className="rounded-lg border border-gray-200 bg-theme-muted p-6 hover:shadow-md transition">
+              <div key={project.id} className="rounded-lg border border-theme-border bg-theme-muted p-6 hover:shadow-md transition">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-3 flex-1">
                     <input
                       type="checkbox"
                       checked={selectedProjects.has(project.id)}
                       onChange={() => handleSelectProject(project.id)}
-                      className="bg-white w-4 h-4 rounded border-gray-300 mt-1 text-black"
+                      className="bg-theme-surface w-4 h-4 rounded border-theme-border mt-1 text-theme-text-primary"
                     />
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-theme-text-primary mb-1">{project.name}</h3>
@@ -244,7 +244,7 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
                 </div>
 
                 {/* Budget Utilization */}
-                <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <div className="mb-4 rounded-lg border border-theme-border bg-theme-muted p-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 text-sm text-theme-text-secondary">
                       <DollarSign className="w-4 h-4" />
@@ -252,7 +252,7 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
                     </div>
                     <span className="text-xs font-semibold text-theme-text-primary">{budgetUtilization}%</span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+                  <div className="h-2 w-full rounded-full bg-theme-muted overflow-hidden">
                     <div
                       className={`h-full transition-all ${
                         budgetUtilization > 90 ? 'bg-red-500' :
@@ -268,7 +268,7 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
                 <div className="flex gap-2">
                   <button
                     onClick={() => {}}
-                    className="flex-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100 flex items-center justify-center gap-1"
+                    className="flex-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-theme-muted flex items-center justify-center gap-1"
                     title="View project details"
                   >
                     <Eye className="w-4 h-4" />
@@ -283,7 +283,7 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
                   </button>
                   <button
                     onClick={() => {}}
-                    className="rounded-lg border border-gray-200 bg-theme-muted px-3 py-2 text-theme-text-primary transition hover:bg-gray-100 flex items-center justify-center"
+                    className="rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-theme-text-primary transition hover:bg-theme-muted flex items-center justify-center"
                     title="Duplicate project"
                   >
                     <Copy className="w-4 h-4" />

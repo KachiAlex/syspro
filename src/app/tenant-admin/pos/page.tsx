@@ -470,43 +470,43 @@ export default function PosPage() {
   /* ---------- Render ---------- */
 
   if (shiftLoading) {
-    return <div className="min-h-[60vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>;
+    return <div className="min-h-[60vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-theme-text-secondary" /></div>;
   }
 
   if (!shift) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-6">
-        <div className="w-full max-w-md bg-slate-800 rounded-xl border border-slate-700 p-8 text-center">
+        <div className="w-full max-w-md bg-theme-muted rounded-xl border border-theme-border p-8 text-center">
           {lastClose ? (
             <>
-              <p className="text-sm text-slate-400 mb-2">Shift closed</p>
-              <p className="text-lg font-bold text-[#F8FAFC]">
+              <p className="text-sm text-theme-text-secondary mb-2">Shift closed</p>
+              <p className="text-lg font-bold text-theme-text-primary">
                 Variance: <span className={Math.abs(lastClose.variance ?? 0) > 0.01 ? "text-amber-400" : "text-emerald-400"}>{fmt(lastClose.variance)}</span>
               </p>
               {lastClose.flagged && <p className="text-xs text-amber-400 mt-1">Flagged — variance exceeded tolerance</p>}
-              <button onClick={() => setLastClose(null)} className="text-xs text-slate-500 mt-3 underline">dismiss</button>
-              <hr className="my-4 border-slate-700" />
+              <button onClick={() => setLastClose(null)} className="text-xs text-theme-text-tertiary mt-3 underline">dismiss</button>
+              <hr className="my-4 border-theme-border" />
             </>
           ) : null}
-          <Clock className="w-10 h-10 text-slate-400 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-[#F8FAFC] mb-2">No open shift</h1>
-          <p className="text-sm text-slate-400 mb-6">Open a shift to start selling. Sales are locked to the active shift for cash control.</p>
+          <Clock className="w-10 h-10 text-theme-text-secondary mx-auto mb-4" />
+          <h1 className="text-xl font-bold text-theme-text-primary mb-2">No open shift</h1>
+          <p className="text-sm text-theme-text-secondary mb-6">Open a shift to start selling. Sales are locked to the active shift for cash control.</p>
           {registers.length > 0 && (
             <>
-              <label className="block text-left text-xs font-medium text-slate-400 mb-1">Register</label>
+              <label className="block text-left text-xs font-medium text-theme-text-secondary mb-1">Register</label>
               <select
                 value={registerId} onChange={(e) => setRegisterId(e.target.value)}
-                className="w-full mb-4 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-[#F8FAFC]"
+                className="w-full mb-4 px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-theme-text-primary"
               >
                 {registers.map((r) => <option key={r.id} value={r.id}>{r.code} — {r.name}</option>)}
               </select>
             </>
           )}
-          <label className="block text-left text-xs font-medium text-slate-400 mb-1">Opening float (₦)</label>
+          <label className="block text-left text-xs font-medium text-theme-text-secondary mb-1">Opening float (₦)</label>
           <input
             type="number" min={0} value={openingFloat}
             onChange={(e) => setOpeningFloat(e.target.value)}
-            className="w-full mb-4 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-[#F8FAFC]"
+            className="w-full mb-4 px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-theme-text-primary"
           />
           {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
           <button
@@ -524,12 +524,12 @@ export default function PosPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#F8FAFC]">Point of Sale</h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-theme-text-primary">Point of Sale</h1>
+          <p className="text-sm text-theme-text-secondary mt-1">
             {registers.length > 0 && (
               <select
                 value={registerId} onChange={(e) => switchRegister(e.target.value)}
-                className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-xs text-[#F8FAFC] mr-2"
+                className="bg-theme-muted border border-theme-border rounded px-2 py-0.5 text-xs text-theme-text-primary mr-2"
               >
                 {registers.map((r) => <option key={r.id} value={r.id}>{r.code}</option>)}
               </select>
@@ -537,7 +537,7 @@ export default function PosPage() {
             {priceLists.length > 0 && (
               <select
                 value={priceListId} onChange={(e) => setPriceListId(e.target.value)}
-                className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-xs text-[#F8FAFC] mr-2"
+                className="bg-theme-muted border border-theme-border rounded px-2 py-0.5 text-xs text-theme-text-primary mr-2"
               >
                 <option value="">Standard pricing</option>
                 {priceLists.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -558,7 +558,7 @@ export default function PosPage() {
           {(["sell", "shift", "today", "settings"] as const).map((t) => (
             <button
               key={t} onClick={() => setTab(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize ${tab === t ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize ${tab === t ? "bg-emerald-600 text-white" : "bg-theme-muted text-theme-text-primary hover:bg-theme-elevated"}`}
             >
               {t === "today" ? "Today's sales" : t}
             </button>
@@ -579,100 +579,100 @@ export default function PosPage() {
           <div className="lg:col-span-2">
             <div className="flex gap-2 mb-4">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+                <Search className="w-4 h-4 absolute left-3 top-3 text-theme-text-tertiary" />
                 <input
                   value={search} onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search name or SKU…"
-                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-[#F8FAFC]"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-theme-muted border border-theme-border text-sm text-theme-text-primary"
                 />
               </div>
               <div className="relative w-56">
-                <ScanBarcode className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+                <ScanBarcode className="w-4 h-4 absolute left-3 top-3 text-theme-text-tertiary" />
                 <input
                   value={scanInput} onChange={(e) => setScanInput(e.target.value)} onKeyDown={onScanEnter}
                   placeholder="Scan / type SKU + Enter"
-                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-[#F8FAFC]"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-theme-muted border border-theme-border text-sm text-theme-text-primary"
                 />
               </div>
             </div>
             <div className="flex gap-2 mb-4 flex-wrap">
               <button onClick={() => setCategory(null)}
-                className={`px-3 py-1 rounded-full text-xs ${!category ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-300"}`}>All</button>
+                className={`px-3 py-1 rounded-full text-xs ${!category ? "bg-emerald-600 text-white" : "bg-theme-muted text-theme-text-primary"}`}>All</button>
               {categories.map((c) => (
                 <button key={c} onClick={() => setCategory(c)}
-                  className={`px-3 py-1 rounded-full text-xs capitalize ${category === c ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-300"}`}>{c}</button>
+                  className={`px-3 py-1 rounded-full text-xs capitalize ${category === c ? "bg-emerald-600 text-white" : "bg-theme-muted text-theme-text-primary"}`}>{c}</button>
               ))}
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
               {visible.map((p) => (
                 <button
                   key={p.sku} onClick={() => addToCart(p)} disabled={p.quantity <= 0}
-                  className="text-left bg-slate-800 hover:bg-slate-700 disabled:opacity-40 border border-slate-700 rounded-xl p-4 transition"
+                  className="text-left bg-theme-muted hover:bg-theme-elevated disabled:opacity-40 border border-theme-border rounded-xl p-4 transition"
                 >
-                  <p className="text-sm font-medium text-[#F8FAFC] truncate">{p.name}</p>
-                  <p className="text-xs text-slate-500">{p.sku}</p>
+                  <p className="text-sm font-medium text-theme-text-primary truncate">{p.name}</p>
+                  <p className="text-xs text-theme-text-tertiary">{p.sku}</p>
                   <div className="mt-3 flex items-center justify-between">
                     <span className="text-sm font-semibold text-emerald-400">{fmt(p.unitPrice)}</span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${p.quantity <= 0 ? "bg-red-500/20 text-red-400" : p.status === "Low Stock" ? "bg-amber-500/20 text-amber-400" : "bg-slate-700 text-slate-400"}`}>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${p.quantity <= 0 ? "bg-red-500/20 text-red-400" : p.status === "Low Stock" ? "bg-amber-500/20 text-amber-400" : "bg-theme-elevated text-theme-text-secondary"}`}>
                       {p.quantity <= 0 ? "Out" : `${p.quantity} left`}
                     </span>
                   </div>
                 </button>
               ))}
               {!visible.length && (
-                <p className="col-span-full text-sm text-slate-500 py-10 text-center">No products match.</p>
+                <p className="col-span-full text-sm text-theme-text-tertiary py-10 text-center">No products match.</p>
               )}
             </div>
           </div>
 
           {/* Cart */}
-          <div className="bg-slate-800 rounded-xl border border-slate-700 flex flex-col max-h-[80vh]">
-            <div className="px-4 py-3 border-b border-slate-700 flex items-center gap-2">
-              <ShoppingCart className="w-4 h-4 text-slate-400" />
-              <span className="text-sm font-semibold text-[#F8FAFC]">Cart ({cart.length})</span>
+          <div className="bg-theme-muted rounded-xl border border-theme-border flex flex-col max-h-[80vh]">
+            <div className="px-4 py-3 border-b border-theme-border flex items-center gap-2">
+              <ShoppingCart className="w-4 h-4 text-theme-text-secondary" />
+              <span className="text-sm font-semibold text-theme-text-primary">Cart ({cart.length})</span>
               <div className="ml-auto flex gap-1">
                 {heldList.length > 0 && (
-                  <button onClick={() => setHeldOpen(true)} className="p-1.5 rounded bg-slate-700 text-slate-300 hover:bg-slate-600" title="Resume held sale">
+                  <button onClick={() => setHeldOpen(true)} className="p-1.5 rounded bg-theme-elevated text-theme-text-primary hover:bg-theme-elevated" title="Resume held sale">
                     <Play className="w-3.5 h-3.5" />
                   </button>
                 )}
                 {cart.length > 0 && (
-                  <button onClick={parkSale} className="p-1.5 rounded bg-slate-700 text-slate-300 hover:bg-slate-600" title="Park sale">
+                  <button onClick={parkSale} className="p-1.5 rounded bg-theme-elevated text-theme-text-primary hover:bg-theme-elevated" title="Park sale">
                     <Pause className="w-3.5 h-3.5" />
                   </button>
                 )}
-                <button onClick={() => setReturnOpen(true)} className="p-1.5 rounded bg-slate-700 text-slate-300 hover:bg-slate-600" title="Return items">
+                <button onClick={() => setReturnOpen(true)} className="p-1.5 rounded bg-theme-elevated text-theme-text-primary hover:bg-theme-elevated" title="Return items">
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto divide-y divide-slate-700/50">
+            <div className="flex-1 overflow-y-auto divide-y divide-theme-border/50">
               {cart.map((l) => (
                 <div key={l.product.sku} className="px-4 py-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-sm text-[#F8FAFC] truncate">{l.product.name}</p>
-                      <p className="text-xs text-slate-500">{l.product.sku} · {l.product.quantity} in stock</p>
+                      <p className="text-sm text-theme-text-primary truncate">{l.product.name}</p>
+                      <p className="text-xs text-theme-text-tertiary">{l.product.sku} · {l.product.quantity} in stock</p>
                     </div>
-                    <button onClick={() => removeLine(l.product.sku)} className="text-slate-500 hover:text-red-400">
+                    <button onClick={() => removeLine(l.product.sku)} className="text-theme-text-tertiary hover:text-red-400">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                   <div className="mt-2 flex items-center gap-2">
-                    <button onClick={() => setQty(l.product.sku, -1)} className="p-1 rounded bg-slate-700 text-slate-300"><Minus className="w-3 h-3" /></button>
-                    <span className="text-sm text-[#F8FAFC] w-6 text-center">{l.quantity}</span>
-                    <button onClick={() => setQty(l.product.sku, 1)} className="p-1 rounded bg-slate-700 text-slate-300"><Plus className="w-3 h-3" /></button>
+                    <button onClick={() => setQty(l.product.sku, -1)} className="p-1 rounded bg-theme-elevated text-theme-text-primary"><Minus className="w-3 h-3" /></button>
+                    <span className="text-sm text-theme-text-primary w-6 text-center">{l.quantity}</span>
+                    <button onClick={() => setQty(l.product.sku, 1)} className="p-1 rounded bg-theme-elevated text-theme-text-primary"><Plus className="w-3 h-3" /></button>
                     <input
                       type="number" min={0} value={l.unitPrice}
                       onChange={(e) => setLine(l.product.sku, { unitPrice: Number(e.target.value) || 0 })}
                       title={l.unitPrice !== l.product.unitPrice ? "Price override — audited" : "Unit price"}
-                      className={`ml-auto w-24 px-2 py-1 rounded bg-slate-900 border text-sm text-right ${l.unitPrice !== l.product.unitPrice ? "border-amber-500 text-amber-300" : "border-slate-700 text-[#F8FAFC]"}`}
+                      className={`ml-auto w-24 px-2 py-1 rounded bg-theme-surface border text-sm text-right ${l.unitPrice !== l.product.unitPrice ? "border-amber-500 text-amber-300" : "border-theme-border text-theme-text-primary"}`}
                     />
                     <input
                       type="number" min={0} max={100} value={l.discountPct || ""} placeholder="Disc%"
                       onChange={(e) => setLine(l.product.sku, { discountPct: Math.min(100, Math.max(0, Number(e.target.value) || 0)) })}
                       title="Line discount %"
-                      className="w-16 px-2 py-1 rounded bg-slate-900 border border-slate-700 text-sm text-right text-[#F8FAFC]"
+                      className="w-16 px-2 py-1 rounded bg-theme-surface border border-theme-border text-sm text-right text-theme-text-primary"
                     />
                   </div>
                   {l.product.tracking === "serial" && (
@@ -680,7 +680,7 @@ export default function PosPage() {
                       value={l.serialNos}
                       onChange={(e) => setLine(l.product.sku, { serialNos: e.target.value })}
                       placeholder={`${l.quantity} serial no(s), comma-separated`}
-                      className="mt-2 w-full px-2 py-1 rounded bg-slate-900 border border-slate-700 text-xs text-[#F8FAFC]"
+                      className="mt-2 w-full px-2 py-1 rounded bg-theme-surface border border-theme-border text-xs text-theme-text-primary"
                     />
                   )}
                   {l.product.tracking === "batch" && (
@@ -688,21 +688,21 @@ export default function PosPage() {
                       value={l.lotNo}
                       onChange={(e) => setLine(l.product.sku, { lotNo: e.target.value })}
                       placeholder="Lot / batch number"
-                      className="mt-2 w-full px-2 py-1 rounded bg-slate-900 border border-slate-700 text-xs text-[#F8FAFC]"
+                      className="mt-2 w-full px-2 py-1 rounded bg-theme-surface border border-theme-border text-xs text-theme-text-primary"
                     />
                   )}
                 </div>
               ))}
-              {!cart.length && <p className="text-sm text-slate-500 text-center py-10">Cart is empty</p>}
+              {!cart.length && <p className="text-sm text-theme-text-tertiary text-center py-10">Cart is empty</p>}
             </div>
-            <div className="border-t border-slate-700 p-4 space-y-3">
+            <div className="border-t border-theme-border p-4 space-y-3">
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <Users className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
+                  <Users className="w-4 h-4 absolute left-3 top-2.5 text-theme-text-tertiary" />
                   <select
                     value={customerCode}
                     onChange={(e) => { setCustomerCode(e.target.value); setRedeemPoints(0); }}
-                    className="w-full pl-9 pr-2 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC]"
+                    className="w-full pl-9 pr-2 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-theme-text-primary"
                   >
                     <option value="">Walk-in customer</option>
                     {customers.map((c) => <option key={c.customerCode} value={c.customerCode}>{c.name} ({c.customerCode})</option>)}
@@ -712,36 +712,36 @@ export default function PosPage() {
                   <input
                     value={customerName} onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Name (optional)"
-                    className="w-32 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC]"
+                    className="w-32 px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-theme-text-primary"
                   />
                 )}
               </div>
               {config?.loyalty.enabled && loyalty && loyalty.points > 0 && (
-                <label className="flex items-center justify-between text-xs text-slate-400">
+                <label className="flex items-center justify-between text-xs text-theme-text-secondary">
                   <span className="flex items-center gap-1"><Wallet className="w-3 h-3" /> {loyalty.points} pts (≈{fmt(loyalty.redeemValue)})</span>
                   <input
                     type="number" min={0} max={loyalty.points} value={redeemPoints || ""} placeholder="Redeem pts"
                     onChange={(e) => setRedeemPoints(Math.min(loyalty.points, Math.max(0, Number(e.target.value) || 0)))}
-                    className="w-24 px-2 py-1 rounded bg-slate-900 border border-slate-700 text-right text-[#F8FAFC]"
+                    className="w-24 px-2 py-1 rounded bg-theme-surface border border-theme-border text-right text-theme-text-primary"
                   />
                 </label>
               )}
               <div className="flex gap-2">
-                <button onClick={() => setDiscountOpen(true)} className="flex-1 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-slate-300 hover:bg-slate-600">
+                <button onClick={() => setDiscountOpen(true)} className="flex-1 py-1.5 rounded-lg text-xs font-medium bg-theme-elevated text-theme-text-primary hover:bg-theme-elevated">
                   {orderDiscount ? `Discount: ${orderDiscount.pct ? `${orderDiscount.pct}%` : fmt(orderDiscount.amount ?? 0)}` : "Order discount"}
                 </button>
-                {vatRate > 0 && <span className="py-1.5 px-2 rounded-lg text-xs bg-slate-700 text-slate-400">VAT {vatRate}%</span>}
+                {vatRate > 0 && <span className="py-1.5 px-2 rounded-lg text-xs bg-theme-elevated text-theme-text-secondary">VAT {vatRate}%</span>}
               </div>
               <div className="space-y-1 text-sm">
-                <div className="flex justify-between text-slate-400"><span>Subtotal</span><span>{fmt(linesNet)}</span></div>
+                <div className="flex justify-between text-theme-text-secondary"><span>Subtotal</span><span>{fmt(linesNet)}</span></div>
                 {(orderDisc + loyaltyDisc) > 0 && (
                   <div className="flex justify-between text-amber-400"><span>Discounts</span><span>−{fmt(orderDisc + loyaltyDisc)}</span></div>
                 )}
-                <div className="flex justify-between text-slate-400"><span>VAT</span><span>{fmt(estTax)}</span></div>
+                <div className="flex justify-between text-theme-text-secondary"><span>VAT</span><span>{fmt(estTax)}</span></div>
                 {Math.abs(estRounding) > 0.001 && (
-                  <div className="flex justify-between text-slate-400"><span>Rounding</span><span>{fmt(estRounding)}</span></div>
+                  <div className="flex justify-between text-theme-text-secondary"><span>Rounding</span><span>{fmt(estRounding)}</span></div>
                 )}
-                <div className="flex justify-between text-lg font-bold text-[#F8FAFC]"><span>Total</span><span>{fmt(total)}</span></div>
+                <div className="flex justify-between text-lg font-bold text-theme-text-primary"><span>Total</span><span>{fmt(total)}</span></div>
               </div>
               <button
                 onClick={() => { setTenders([{ method: "cash", amount: total }]); setTenderOpen(true); }}
@@ -757,33 +757,33 @@ export default function PosPage() {
 
       {tab === "shift" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
-            <h2 className="text-lg font-semibold text-[#F8FAFC] mb-4">Current shift</h2>
+          <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
+            <h2 className="text-lg font-semibold text-theme-text-primary mb-4">Current shift</h2>
             <dl className="space-y-2 text-sm">
-              <div className="flex justify-between"><dt className="text-slate-400">Register</dt><dd className="text-[#F8FAFC]">{registers.find((r) => r.id === shift.registerId)?.code ?? "—"}</dd></div>
-              <div className="flex justify-between"><dt className="text-slate-400">Opened by</dt><dd className="text-[#F8FAFC]">{shift.openedBy ?? "—"}</dd></div>
-              <div className="flex justify-between"><dt className="text-slate-400">Opened at</dt><dd className="text-[#F8FAFC]">{new Date(shift.openedAt).toLocaleString()}</dd></div>
-              <div className="flex justify-between"><dt className="text-slate-400">Opening float</dt><dd className="text-[#F8FAFC]">{fmt(shift.openingFloat)}</dd></div>
+              <div className="flex justify-between"><dt className="text-theme-text-secondary">Register</dt><dd className="text-theme-text-primary">{registers.find((r) => r.id === shift.registerId)?.code ?? "—"}</dd></div>
+              <div className="flex justify-between"><dt className="text-theme-text-secondary">Opened by</dt><dd className="text-theme-text-primary">{shift.openedBy ?? "—"}</dd></div>
+              <div className="flex justify-between"><dt className="text-theme-text-secondary">Opened at</dt><dd className="text-theme-text-primary">{new Date(shift.openedAt).toLocaleString()}</dd></div>
+              <div className="flex justify-between"><dt className="text-theme-text-secondary">Opening float</dt><dd className="text-theme-text-primary">{fmt(shift.openingFloat)}</dd></div>
               {shiftSummary && (
                 <>
-                  <div className="flex justify-between"><dt className="text-slate-400">Sales</dt><dd className="text-[#F8FAFC]">{shiftSummary.sales} ({fmt(shiftSummary.total)})</dd></div>
+                  <div className="flex justify-between"><dt className="text-theme-text-secondary">Sales</dt><dd className="text-theme-text-primary">{shiftSummary.sales} ({fmt(shiftSummary.total)})</dd></div>
                   {shiftSummary.byMethod.map((m: any) => (
-                    <div key={m.method} className="flex justify-between"><dt className="text-slate-400 capitalize">· {methodLabel(m.method)}</dt><dd className="text-[#F8FAFC]">{fmt(m.total)}</dd></div>
+                    <div key={m.method} className="flex justify-between"><dt className="text-theme-text-secondary capitalize">· {methodLabel(m.method)}</dt><dd className="text-theme-text-primary">{fmt(m.total)}</dd></div>
                   ))}
                   {shiftSummary.cashRefunds > 0 && (
-                    <div className="flex justify-between"><dt className="text-slate-400">Cash refunds</dt><dd className="text-red-400">−{fmt(shiftSummary.cashRefunds)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-theme-text-secondary">Cash refunds</dt><dd className="text-red-400">−{fmt(shiftSummary.cashRefunds)}</dd></div>
                   )}
                   {shiftSummary.cashMovements && (shiftSummary.cashMovements.payIn + shiftSummary.cashMovements.payOut + shiftSummary.cashMovements.drop) > 0 && (
-                    <div className="flex justify-between"><dt className="text-slate-400">Cash in / out / drop</dt><dd className="text-[#F8FAFC]">
+                    <div className="flex justify-between"><dt className="text-theme-text-secondary">Cash in / out / drop</dt><dd className="text-theme-text-primary">
                       {fmt(shiftSummary.cashMovements.payIn)} / −{fmt(shiftSummary.cashMovements.payOut)} / −{fmt(shiftSummary.cashMovements.drop)}
                     </dd></div>
                   )}
                   {/* Blind count: expected cash stays hidden unless a manager reveals it */}
-                  <div className="flex justify-between border-t border-slate-700 pt-2 mt-2">
-                    <dt className="text-slate-400">Expected cash in drawer</dt>
+                  <div className="flex justify-between border-t border-theme-border pt-2 mt-2">
+                    <dt className="text-theme-text-secondary">Expected cash in drawer</dt>
                     <dd className="text-emerald-400 font-semibold">
                       {revealExpected ? fmt(shiftSummary.expectedCash) : (
-                        <button onClick={() => setRevealExpected(true)} className="text-xs underline text-slate-500">Reveal (manager)</button>
+                        <button onClick={() => setRevealExpected(true)} className="text-xs underline text-theme-text-tertiary">Reveal (manager)</button>
                       )}
                     </dd>
                   </div>
@@ -793,22 +793,22 @@ export default function PosPage() {
             <div className="mt-4 flex gap-2">
               {(["pay_in", "pay_out", "drop"] as const).map((t) => (
                 <button key={t} onClick={() => setCashMove({ type: t, amount: "", reason: "" })}
-                  className="flex-1 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-slate-300 hover:bg-slate-600 capitalize">
+                  className="flex-1 py-1.5 rounded-lg text-xs font-medium bg-theme-elevated text-theme-text-primary hover:bg-theme-elevated capitalize">
                   {t.replace("_", " ")}
                 </button>
               ))}
             </div>
-            <div className="mt-6 pt-4 border-t border-slate-700">
-              <label className="block text-xs font-medium text-slate-400 mb-1">Counted cash in drawer (₦)</label>
+            <div className="mt-6 pt-4 border-t border-theme-border">
+              <label className="block text-xs font-medium text-theme-text-secondary mb-1">Counted cash in drawer (₦)</label>
               <input
                 type="number" min={0} value={closingCounted}
                 onChange={(e) => setClosingCounted(e.target.value)}
-                className="w-full mb-3 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-[#F8FAFC]"
+                className="w-full mb-3 px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-theme-text-primary"
               />
               <input
                 value={varianceReason} onChange={(e) => setVarianceReason(e.target.value)}
                 placeholder="Variance reason (required if over tolerance)"
-                className="w-full mb-3 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC]"
+                className="w-full mb-3 px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-theme-text-primary"
               />
               <button
                 onClick={closeShiftNow} disabled={busy || closingCounted === ""}
@@ -818,28 +818,28 @@ export default function PosPage() {
               </button>
             </div>
           </div>
-          <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
-            <h2 className="text-lg font-semibold text-[#F8FAFC] mb-4">Shift history</h2>
+          <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
+            <h2 className="text-lg font-semibold text-theme-text-primary mb-4">Shift history</h2>
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-slate-500 border-b border-slate-700">
+                <tr className="text-left text-xs text-theme-text-tertiary border-b border-theme-border">
                   <th className="pb-2">Opened</th><th className="pb-2">Register</th><th className="pb-2">Float</th><th className="pb-2">Counted</th><th className="pb-2">Variance</th><th className="pb-2">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700/50">
+              <tbody className="divide-y divide-theme-border/50">
                 {shiftHistory.map((s) => (
                   <tr key={s.id}>
-                    <td className="py-2 text-slate-300">{new Date(s.openedAt).toLocaleDateString()}</td>
-                    <td className="py-2 text-slate-300">{registers.find((r) => r.id === s.registerId)?.code ?? "—"}</td>
-                    <td className="py-2 text-slate-300">{fmt(s.openingFloat)}</td>
-                    <td className="py-2 text-slate-300">{s.closingCounted != null ? fmt(s.closingCounted) : "—"}</td>
-                    <td className={`py-2 ${s.variance != null && Math.abs(s.variance) > 0.01 ? "text-amber-400" : "text-slate-300"}`}>
+                    <td className="py-2 text-theme-text-primary">{new Date(s.openedAt).toLocaleDateString()}</td>
+                    <td className="py-2 text-theme-text-primary">{registers.find((r) => r.id === s.registerId)?.code ?? "—"}</td>
+                    <td className="py-2 text-theme-text-primary">{fmt(s.openingFloat)}</td>
+                    <td className="py-2 text-theme-text-primary">{s.closingCounted != null ? fmt(s.closingCounted) : "—"}</td>
+                    <td className={`py-2 ${s.variance != null && Math.abs(s.variance) > 0.01 ? "text-amber-400" : "text-theme-text-primary"}`}>
                       {s.variance != null ? fmt(s.variance) : "—"}{s.flagged ? " ⚑" : ""}
                     </td>
-                    <td className="py-2"><span className={`text-xs px-2 py-0.5 rounded-full ${s.status === "open" ? "bg-emerald-500/20 text-emerald-400" : "bg-slate-700 text-slate-400"}`}>{s.status}</span></td>
+                    <td className="py-2"><span className={`text-xs px-2 py-0.5 rounded-full ${s.status === "open" ? "bg-emerald-500/20 text-emerald-400" : "bg-theme-elevated text-theme-text-secondary"}`}>{s.status}</span></td>
                   </tr>
                 ))}
-                {!shiftHistory.length && <tr><td colSpan={6} className="py-8 text-center text-slate-500">No shifts yet</td></tr>}
+                {!shiftHistory.length && <tr><td colSpan={6} className="py-8 text-center text-theme-text-tertiary">No shifts yet</td></tr>}
               </tbody>
             </table>
           </div>
@@ -850,61 +850,61 @@ export default function PosPage() {
         <div className="space-y-6">
           {today && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
-                <p className="text-xs text-slate-400">Total sales</p>
-                <p className="text-xl font-bold text-[#F8FAFC] mt-1">{fmt(today.total)}</p>
+              <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
+                <p className="text-xs text-theme-text-secondary">Total sales</p>
+                <p className="text-xl font-bold text-theme-text-primary mt-1">{fmt(today.total)}</p>
               </div>
-              <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
-                <p className="text-xs text-slate-400">Transactions</p>
-                <p className="text-xl font-bold text-[#F8FAFC] mt-1">{today.sales}</p>
+              <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
+                <p className="text-xs text-theme-text-secondary">Transactions</p>
+                <p className="text-xl font-bold text-theme-text-primary mt-1">{today.sales}</p>
               </div>
               {today.discounts > 0 && (
-                <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
-                  <p className="text-xs text-slate-400">Discounts</p>
+                <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
+                  <p className="text-xs text-theme-text-secondary">Discounts</p>
                   <p className="text-lg font-semibold text-amber-400 mt-1">{fmt(today.discounts)}</p>
                 </div>
               )}
               {today.cardFees > 0 && (
-                <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
-                  <p className="text-xs text-slate-400">Card fees</p>
+                <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
+                  <p className="text-xs text-theme-text-secondary">Card fees</p>
                   <p className="text-lg font-semibold text-red-400 mt-1">{fmt(today.cardFees)}</p>
                 </div>
               )}
               {today.byMethod?.map((m: any) => (
-                <div key={m.paymentMethod} className="bg-slate-800 rounded-xl border border-slate-700 p-4">
-                  <p className="text-xs text-slate-400 capitalize">{methodLabel(m.paymentMethod)}</p>
+                <div key={m.paymentMethod} className="bg-theme-muted rounded-xl border border-theme-border p-4">
+                  <p className="text-xs text-theme-text-secondary capitalize">{methodLabel(m.paymentMethod)}</p>
                   <p className="text-lg font-semibold text-emerald-400 mt-1">{fmt(m.total)}</p>
-                  <p className="text-xs text-slate-500">{m.sales} tender(s)</p>
+                  <p className="text-xs text-theme-text-tertiary">{m.sales} tender(s)</p>
                 </div>
               ))}
             </div>
           )}
-          <div className="bg-slate-800 rounded-xl border border-slate-700">
+          <div className="bg-theme-muted rounded-xl border border-theme-border">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-slate-500 border-b border-slate-700">
+                <tr className="text-left text-xs text-theme-text-tertiary border-b border-theme-border">
                   <th className="px-4 py-3">Time</th><th className="px-4 py-3">Receipt</th><th className="px-4 py-3">Customer</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Items</th><th className="px-4 py-3 text-right">Total</th><th className="px-4 py-3"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700/50">
+              <tbody className="divide-y divide-theme-border/50">
                 {recent.map((s) => (
                   <tr key={s.id}>
-                    <td className="px-4 py-3 text-slate-300">{new Date(s.createdAt).toLocaleTimeString()}</td>
-                    <td className="px-4 py-3 text-slate-400 font-mono text-xs">{s.receiptNo ?? "—"}</td>
-                    <td className="px-4 py-3 text-slate-300">{s.customerName ?? "Walk-in"}</td>
+                    <td className="px-4 py-3 text-theme-text-primary">{new Date(s.createdAt).toLocaleTimeString()}</td>
+                    <td className="px-4 py-3 text-theme-text-secondary font-mono text-xs">{s.receiptNo ?? "—"}</td>
+                    <td className="px-4 py-3 text-theme-text-primary">{s.customerName ?? "Walk-in"}</td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === "completed" ? "bg-emerald-500/20 text-emerald-400" : s.status === "pending" ? "bg-amber-500/20 text-amber-400" : "bg-slate-700 text-slate-400"}`}>{s.status}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${s.status === "completed" ? "bg-emerald-500/20 text-emerald-400" : s.status === "pending" ? "bg-amber-500/20 text-amber-400" : "bg-theme-elevated text-theme-text-secondary"}`}>{s.status}</span>
                     </td>
-                    <td className="px-4 py-3 text-slate-500">{Array.isArray(s.items) ? s.items.length : "—"}</td>
-                    <td className="px-4 py-3 text-right text-[#F8FAFC]">{fmt(s.totalAmount)}</td>
+                    <td className="px-4 py-3 text-theme-text-tertiary">{Array.isArray(s.items) ? s.items.length : "—"}</td>
+                    <td className="px-4 py-3 text-right text-theme-text-primary">{fmt(s.totalAmount)}</td>
                     <td className="px-4 py-3 text-right">
-                      <button onClick={() => reprint(s.id)} className="text-slate-400 hover:text-emerald-400" title="Reprint receipt">
+                      <button onClick={() => reprint(s.id)} className="text-theme-text-secondary hover:text-emerald-400" title="Reprint receipt">
                         <Printer className="w-4 h-4" />
                       </button>
                     </td>
                   </tr>
                 ))}
-                {!recent.length && <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-500">No sales today</td></tr>}
+                {!recent.length && <tr><td colSpan={7} className="px-4 py-10 text-center text-theme-text-tertiary">No sales today</td></tr>}
               </tbody>
             </table>
           </div>
@@ -926,33 +926,33 @@ export default function PosPage() {
 
       {/* Tender modal */}
       {tenderOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setTenderOpen(false)}>
-          <div className="bg-slate-800 rounded-xl w-full max-w-md p-6 border border-slate-700" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-[#F8FAFC] mb-4">Take payment — {fmt(total)}</h3>
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50 p-4" onClick={() => setTenderOpen(false)}>
+          <div className="bg-theme-muted rounded-xl w-full max-w-md p-6 border border-theme-border" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Take payment — {fmt(total)}</h3>
             <div className="space-y-3">
               {tenders.map((t, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <select
                     value={t.method}
                     onChange={(e) => setTenders(tenders.map((x, j) => j === i ? { ...x, method: e.target.value } : x))}
-                    className="w-32 px-2 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC]"
+                    className="w-32 px-2 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-theme-text-primary"
                   >
                     {METHODS.map((m) => <option key={m} value={m}>{methodLabel(m)}</option>)}
                   </select>
                   <input
                     type="number" min={0} value={t.amount || ""} placeholder="Applied"
                     onChange={(e) => setTenders(tenders.map((x, j) => j === i ? { ...x, amount: Number(e.target.value) || 0 } : x))}
-                    className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-right text-[#F8FAFC]"
+                    className="flex-1 px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-right text-theme-text-primary"
                   />
                   {t.method === "cash" && (
                     <input
                       type="number" min={0} value={t.tendered ?? ""} placeholder="Tendered"
                       onChange={(e) => setTenders(tenders.map((x, j) => j === i ? { ...x, tendered: Number(e.target.value) || undefined } : x))}
-                      className="w-28 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-right text-[#F8FAFC]"
+                      className="w-28 px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-right text-theme-text-primary"
                     />
                   )}
                   {tenders.length > 1 && (
-                    <button onClick={() => setTenders(tenders.filter((_, j) => j !== i))} className="text-slate-500 hover:text-red-400"><X className="w-4 h-4" /></button>
+                    <button onClick={() => setTenders(tenders.filter((_, j) => j !== i))} className="text-theme-text-tertiary hover:text-red-400"><X className="w-4 h-4" /></button>
                   )}
                 </div>
               ))}
@@ -962,8 +962,8 @@ export default function PosPage() {
               >
                 + Split tender
               </button>
-              <div className="pt-3 border-t border-slate-700 space-y-1 text-sm">
-                <div className="flex justify-between text-slate-400">
+              <div className="pt-3 border-t border-theme-border space-y-1 text-sm">
+                <div className="flex justify-between text-theme-text-secondary">
                   <span>Applied</span>
                   <span className={Math.abs(tenders.reduce((s, t) => s + t.amount, 0) - total) > 0.01 ? "text-amber-400" : "text-emerald-400"}>
                     {fmt(tenders.reduce((s, t) => s + t.amount, 0))} / {fmt(total)}
@@ -976,7 +976,7 @@ export default function PosPage() {
                   </div>
                 )}
                 {(config?.cardFeePct ?? 0) > 0 && tenders.some((t) => t.method === "pos") && (
-                  <div className="flex justify-between text-xs text-slate-500">
+                  <div className="flex justify-between text-xs text-theme-text-tertiary">
                     <span>Card fee est. ({config!.cardFeePct}%)</span>
                     <span>{fmt(tenders.filter((t) => t.method === "pos").reduce((s, t) => s + t.amount * config!.cardFeePct / 100, 0))}</span>
                   </div>
@@ -996,9 +996,9 @@ export default function PosPage() {
 
       {/* Order discount modal */}
       {discountOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setDiscountOpen(false)}>
-          <div className="bg-slate-800 rounded-xl w-full max-w-sm p-6 border border-slate-700" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-[#F8FAFC] mb-4">Order discount</h3>
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50 p-4" onClick={() => setDiscountOpen(false)}>
+          <div className="bg-theme-muted rounded-xl w-full max-w-sm p-6 border border-theme-border" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Order discount</h3>
             <DiscountForm
               initial={orderDiscount}
               onSave={(d) => { setOrderDiscount(d); setDiscountOpen(false); }}
@@ -1010,20 +1010,20 @@ export default function PosPage() {
 
       {/* Held sales modal */}
       {heldOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setHeldOpen(false)}>
-          <div className="bg-slate-800 rounded-xl w-full max-w-md p-6 border border-slate-700" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-[#F8FAFC] mb-4">Held sales</h3>
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50 p-4" onClick={() => setHeldOpen(false)}>
+          <div className="bg-theme-muted rounded-xl w-full max-w-md p-6 border border-theme-border" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Held sales</h3>
             <div className="space-y-2">
               {heldList.map((h) => (
-                <div key={h.id} className="flex items-center justify-between bg-slate-900 rounded-lg px-4 py-3">
+                <div key={h.id} className="flex items-center justify-between bg-theme-surface rounded-lg px-4 py-3">
                   <div>
-                    <p className="text-sm text-[#F8FAFC]">{h.label ?? "Held sale"}</p>
-                    <p className="text-xs text-slate-500">{Array.isArray(h.cart) ? h.cart.length : 0} item(s) · {new Date(h.createdAt).toLocaleTimeString()}</p>
+                    <p className="text-sm text-theme-text-primary">{h.label ?? "Held sale"}</p>
+                    <p className="text-xs text-theme-text-tertiary">{Array.isArray(h.cart) ? h.cart.length : 0} item(s) · {new Date(h.createdAt).toLocaleTimeString()}</p>
                   </div>
                   <button onClick={() => resumeSale(h)} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium">Resume</button>
                 </div>
               ))}
-              {!heldList.length && <p className="text-sm text-slate-500 text-center py-6">No held sales</p>}
+              {!heldList.length && <p className="text-sm text-theme-text-tertiary text-center py-6">No held sales</p>}
             </div>
           </div>
         </div>
@@ -1031,20 +1031,20 @@ export default function PosPage() {
 
       {/* Cash movement modal */}
       {cashMove && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setCashMove(null)}>
-          <div className="bg-slate-800 rounded-xl w-full max-w-sm p-6 border border-slate-700" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-[#F8FAFC] mb-4 capitalize">{cashMove.type.replace("_", " ")}</h3>
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50 p-4" onClick={() => setCashMove(null)}>
+          <div className="bg-theme-muted rounded-xl w-full max-w-sm p-6 border border-theme-border" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-theme-text-primary mb-4 capitalize">{cashMove.type.replace("_", " ")}</h3>
             <input
               type="number" min={0} value={cashMove.amount}
               onChange={(e) => setCashMove({ ...cashMove, amount: e.target.value })}
               placeholder="Amount (₦)"
-              className="w-full mb-3 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-[#F8FAFC]"
+              className="w-full mb-3 px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-theme-text-primary"
             />
             <input
               value={cashMove.reason}
               onChange={(e) => setCashMove({ ...cashMove, reason: e.target.value })}
               placeholder="Reason (e.g. bank drop, petty cash)"
-              className="w-full mb-4 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC]"
+              className="w-full mb-4 px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-theme-text-primary"
             />
             <button
               onClick={submitCashMove} disabled={busy || !(Number(cashMove.amount) > 0)}
@@ -1058,44 +1058,44 @@ export default function PosPage() {
 
       {/* Return modal */}
       {returnOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => { setReturnOpen(false); setReturnSale(null); }}>
-          <div className="bg-slate-800 rounded-xl w-full max-w-lg p-6 border border-slate-700" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-[#F8FAFC] mb-4">Return items</h3>
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50 p-4" onClick={() => { setReturnOpen(false); setReturnSale(null); }}>
+          <div className="bg-theme-muted rounded-xl w-full max-w-lg p-6 border border-theme-border" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Return items</h3>
             <div className="flex gap-2 mb-4">
               <input
                 value={returnReceiptNo} onChange={(e) => setReturnReceiptNo(e.target.value)}
                 placeholder="Receipt number (e.g. POS-MAIN-000012)"
-                className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC] font-mono"
+                className="flex-1 px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-theme-text-primary font-mono"
               />
-              <button onClick={lookupReturn} className="px-4 py-2 rounded-lg bg-slate-700 text-white text-sm">Find</button>
+              <button onClick={lookupReturn} className="px-4 py-2 rounded-lg bg-theme-elevated text-theme-text-primary text-sm">Find</button>
             </div>
             {returnSale && (
               <>
                 <div className="space-y-2 max-h-56 overflow-y-auto mb-4">
                   {(returnSale.items ?? []).map((l: any) => (
-                    <div key={l.sku} className="flex items-center justify-between bg-slate-900 rounded-lg px-3 py-2">
+                    <div key={l.sku} className="flex items-center justify-between bg-theme-surface rounded-lg px-3 py-2">
                       <div>
-                        <p className="text-sm text-[#F8FAFC]">{l.name}</p>
-                        <p className="text-xs text-slate-500">{l.sku} · sold {l.qty}</p>
+                        <p className="text-sm text-theme-text-primary">{l.name}</p>
+                        <p className="text-xs text-theme-text-tertiary">{l.sku} · sold {l.qty}</p>
                       </div>
                       <input
                         type="number" min={0} max={l.qty} value={returnQty[l.sku] ?? ""}
                         onChange={(e) => setReturnQty({ ...returnQty, [l.sku]: Math.min(l.qty, Math.max(0, Number(e.target.value) || 0)) })}
                         placeholder="Qty"
-                        className="w-20 px-2 py-1 rounded bg-slate-800 border border-slate-700 text-sm text-right text-[#F8FAFC]"
+                        className="w-20 px-2 py-1 rounded bg-theme-muted border border-theme-border text-sm text-right text-theme-text-primary"
                       />
                     </div>
                   ))}
                 </div>
                 <div className="flex gap-2 mb-3">
                   <select value={returnMethod} onChange={(e) => setReturnMethod(e.target.value)}
-                    className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC]">
+                    className="px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-theme-text-primary">
                     {METHODS.map((m) => <option key={m} value={m}>Refund via {methodLabel(m)}</option>)}
                   </select>
                   <input
                     value={returnReason} onChange={(e) => setReturnReason(e.target.value)}
                     placeholder="Reason"
-                    className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC]"
+                    className="flex-1 px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-theme-text-primary"
                   />
                 </div>
                 <button
@@ -1112,13 +1112,13 @@ export default function PosPage() {
 
       {/* Receipt modal */}
       {receipt && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setReceipt(null)}>
-          <div className="bg-white rounded-xl w-full max-w-sm p-6 text-gray-900 print:shadow-none" onClick={(e) => e.stopPropagation()}>
-            <div className="text-center border-b border-dashed border-gray-300 pb-3 mb-3">
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50 p-4" onClick={() => setReceipt(null)}>
+          <div className="bg-theme-surface rounded-xl w-full max-w-sm p-6 text-theme-text-primary print:shadow-none" onClick={(e) => e.stopPropagation()}>
+            <div className="text-center border-b border-dashed border-theme-border pb-3 mb-3">
               <p className="font-bold">Receipt</p>
-              <p className="text-xs text-gray-500">{receipt.receiptNo}{receipt.invoiceNumber ? ` · ${receipt.invoiceNumber}` : ""}</p>
-              <p className="text-xs text-gray-500">{new Date().toLocaleString()}</p>
-              {receipt.customer && <p className="text-xs text-gray-500">{receipt.customer}</p>}
+              <p className="text-xs text-theme-text-secondary">{receipt.receiptNo}{receipt.invoiceNumber ? ` · ${receipt.invoiceNumber}` : ""}</p>
+              <p className="text-xs text-theme-text-secondary">{new Date().toLocaleString()}</p>
+              {receipt.customer && <p className="text-xs text-theme-text-secondary">{receipt.customer}</p>}
             </div>
             <div className="space-y-1 text-sm">
               {receipt.lines.map((l, i) => (
@@ -1128,22 +1128,22 @@ export default function PosPage() {
                 </div>
               ))}
             </div>
-            <div className="mt-3 pt-3 border-t border-dashed border-gray-300 text-sm space-y-1">
-              <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>{fmt(receipt.net)}</span></div>
-              {receipt.discount > 0 && <div className="flex justify-between text-gray-600"><span>Discounts</span><span>−{fmt(receipt.discount)}</span></div>}
-              <div className="flex justify-between text-gray-600"><span>VAT</span><span>{fmt(receipt.tax)}</span></div>
-              {Math.abs(receipt.rounding) > 0.001 && <div className="flex justify-between text-gray-600"><span>Rounding</span><span>{fmt(receipt.rounding)}</span></div>}
+            <div className="mt-3 pt-3 border-t border-dashed border-theme-border text-sm space-y-1">
+              <div className="flex justify-between text-theme-text-secondary"><span>Subtotal</span><span>{fmt(receipt.net)}</span></div>
+              {receipt.discount > 0 && <div className="flex justify-between text-theme-text-secondary"><span>Discounts</span><span>−{fmt(receipt.discount)}</span></div>}
+              <div className="flex justify-between text-theme-text-secondary"><span>VAT</span><span>{fmt(receipt.tax)}</span></div>
+              {Math.abs(receipt.rounding) > 0.001 && <div className="flex justify-between text-theme-text-secondary"><span>Rounding</span><span>{fmt(receipt.rounding)}</span></div>}
               <div className="flex justify-between font-bold text-base"><span>Total</span><span>{fmt(receipt.total)}</span></div>
               {receipt.tenders.map((t, i) => (
-                <div key={i} className="flex justify-between text-gray-600"><span className="capitalize">{methodLabel(t.method)}</span><span>{fmt(t.tendered ?? t.amount)}</span></div>
+                <div key={i} className="flex justify-between text-theme-text-secondary"><span className="capitalize">{methodLabel(t.method)}</span><span>{fmt(t.tendered ?? t.amount)}</span></div>
               ))}
-              {receipt.change > 0 && <div className="flex justify-between text-gray-600"><span>Change</span><span>{fmt(receipt.change)}</span></div>}
+              {receipt.change > 0 && <div className="flex justify-between text-theme-text-secondary"><span>Change</span><span>{fmt(receipt.change)}</span></div>}
             </div>
             <div className="mt-5 flex gap-2 print:hidden">
-              <button onClick={() => window.print()} className="flex-1 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium flex items-center justify-center gap-2">
+              <button onClick={() => window.print()} className="flex-1 py-2 rounded-lg bg-theme-accent text-white text-sm font-medium flex items-center justify-center gap-2">
                 <Printer className="w-4 h-4" /> Print
               </button>
-              <button onClick={() => setReceipt(null)} className="flex-1 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-medium">
+              <button onClick={() => setReceipt(null)} className="flex-1 py-2 rounded-lg bg-theme-muted text-theme-text-primary text-sm font-medium">
                 New sale
               </button>
             </div>
@@ -1151,7 +1151,7 @@ export default function PosPage() {
               <input
                 type="email" value={eReceiptEmail} onChange={(e) => setEReceiptEmail(e.target.value)}
                 placeholder="Email receipt to…"
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs"
+                className="flex-1 rounded-lg border border-theme-border px-3 py-1.5 text-xs"
               />
               <button
                 disabled={!eReceiptEmail || eReceiptBusy}
@@ -1182,7 +1182,7 @@ export default function PosPage() {
                   a.download = `${receipt.receiptNo}.escpos`;
                   a.click();
                 }}
-                className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-white">
+                className="rounded-lg bg-theme-muted px-3 py-1.5 text-xs font-medium text-theme-text-primary">
                 .escpos
               </button>
             </div>
@@ -1208,7 +1208,7 @@ function DiscountForm({
       <div className="flex gap-2">
         {(["pct", "amount"] as const).map((m) => (
           <button key={m} onClick={() => setMode(m)}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-medium ${mode === m ? "bg-emerald-600 text-white" : "bg-slate-700 text-slate-300"}`}>
+            className={`flex-1 py-1.5 rounded-lg text-xs font-medium ${mode === m ? "bg-emerald-600 text-white" : "bg-theme-elevated text-theme-text-primary"}`}>
             {m === "pct" ? "Percent %" : "Amount ₦"}
           </button>
         ))}
@@ -1216,18 +1216,18 @@ function DiscountForm({
       <input
         type="number" min={0} value={value} onChange={(e) => setValue(e.target.value)}
         placeholder={mode === "pct" ? "Discount %" : "Discount amount"}
-        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-[#F8FAFC]"
+        className="w-full px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-theme-text-primary"
       />
       <input
         value={reason} onChange={(e) => setReason(e.target.value)}
         placeholder="Reason (required — audited)"
-        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC]"
+        className="w-full px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-theme-text-primary"
       />
       <div className="flex gap-2">
         {initial && (
-          <button onClick={() => onSave(null)} className="flex-1 py-2 rounded-lg bg-slate-700 text-slate-300 text-sm">Remove</button>
+          <button onClick={() => onSave(null)} className="flex-1 py-2 rounded-lg bg-theme-elevated text-theme-text-primary text-sm">Remove</button>
         )}
-        <button onClick={onCancel} className="flex-1 py-2 rounded-lg bg-slate-700 text-slate-300 text-sm">Cancel</button>
+        <button onClick={onCancel} className="flex-1 py-2 rounded-lg bg-theme-elevated text-theme-text-primary text-sm">Cancel</button>
         <button
           onClick={() => reason.trim() && onSave({ [mode === "pct" ? "pct" : "amount"]: Number(value) || 0, reason: reason.trim() } as any)}
           disabled={!reason.trim() || !(Number(value) > 0)}
@@ -1253,26 +1253,26 @@ function PosSettingsPanel({ config, onSave }: { config: PosConfig; onSave: (patc
 
   const field = (label: string, value: string, set: (v: string) => void, hint?: string) => (
     <div>
-      <label className="block text-xs font-medium text-slate-400 mb-1">{label}</label>
+      <label className="block text-xs font-medium text-theme-text-secondary mb-1">{label}</label>
       <input
         type="number" min={0} step="any" value={value} onChange={(e) => set(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC]"
+        className="w-full px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-theme-text-primary"
       />
-      {hint && <p className="text-xs text-slate-500 mt-1">{hint}</p>}
+      {hint && <p className="text-xs text-theme-text-tertiary mt-1">{hint}</p>}
     </div>
   );
 
   return (
-    <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 max-w-2xl">
-      <h3 className="text-lg font-semibold text-[#F8FAFC] mb-4">POS Settings</h3>
+    <div className="bg-theme-muted rounded-xl border border-theme-border p-6 max-w-2xl">
+      <h3 className="text-lg font-semibold text-theme-text-primary mb-4">POS Settings</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {field("Output VAT rate (%)", vatRate, setVatRate, "0 = resolve from tax configuration")}
         {field("Cash rounding step (₦)", cashRoundingStep, setCashRoundingStep, "e.g. 5 rounds cash totals to ₦5; 0 = off")}
         {field("Card processor fee (%)", cardFeePct, setCardFeePct)}
         {field("Shift variance tolerance (₦)", varianceTolerance, setVarianceTolerance, "Closes above this need a reason")}
       </div>
-      <div className="mt-6 border-t border-slate-700 pt-4">
-        <label className="flex items-center gap-2 text-sm text-[#F8FAFC] mb-4">
+      <div className="mt-6 border-t border-theme-border pt-4">
+        <label className="flex items-center gap-2 text-sm text-theme-text-primary mb-4">
           <input type="checkbox" checked={loyaltyEnabled} onChange={(e) => setLoyaltyEnabled(e.target.checked)} className="rounded" />
           Enable loyalty points
         </label>

@@ -21,12 +21,12 @@ interface Bill {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: "bg-slate-100 text-gray-900",
-  open: "bg-blue-100 text-gray-900",
+  draft: "bg-theme-muted text-theme-text-primary",
+  open: "bg-blue-100 text-theme-text-primary",
   partially_paid: "bg-amber-100 text-amber-900",
   paid: "bg-green-100 text-green-900",
   overdue: "bg-rose-100 text-rose-900",
-  cancelled: "bg-slate-100 text-gray-900"
+  cancelled: "bg-theme-muted text-theme-text-primary"
 };
 
 const STATUS_ICONS: Record<string, string> = {
@@ -107,9 +107,9 @@ export default function BillsWorkspace() {
   if (loading) {
     return (
       <div className="p-6">
-        <div className="rounded-lg bg-slate-50 p-8 text-center">
-          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900"></div>
-          <p className="mt-3 text-slate-600">Loading bills…</p>
+        <div className="rounded-lg bg-theme-muted p-8 text-center">
+          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-theme-border border-t-slate-900"></div>
+          <p className="mt-3 text-theme-text-secondary">Loading bills…</p>
         </div>
       </div>
     );
@@ -122,27 +122,27 @@ export default function BillsWorkspace() {
 
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Financial Management</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Financial Management</p>
           <h1 className="text-2xl font-semibold text-theme-text-primary">Bills & Payables</h1>
-          <p className="mt-1 text-sm text-slate-600">Track and manage all vendor bills and payment schedules</p>
+          <p className="mt-1 text-sm text-theme-text-secondary">Track and manage all vendor bills and payment schedules</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
           disabled={loading}
-          className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+          className="whitespace-nowrap rounded-full bg-theme-accent px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-theme-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent disabled:cursor-not-allowed disabled:opacity-50"
         >
           + New Bill
         </button>
       </div>
 
       {/* Filters */}
-      <div className="rounded-2xl border border-slate-100 bg-white p-6">
-        <p className="mb-4 text-sm font-semibold text-gray-900">Filters</p>
+      <div className="rounded-2xl border border-theme-border bg-theme-surface p-6">
+        <p className="mb-4 text-sm font-semibold text-theme-text-primary">Filters</p>
         <div className="grid grid-cols-3 gap-4">
           <select
             value={filters.status}
             onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
+            className="rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
           >
             <option value="">All Status</option>
             <option value="draft">Draft</option>
@@ -157,79 +157,79 @@ export default function BillsWorkspace() {
             placeholder="Search vendor…"
             value={filters.vendorId}
             onChange={(e) => setFilters({ ...filters, vendorId: e.target.value })}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
+            className="rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
           />
           
-          <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2">
+          <label className="flex items-center gap-2 rounded-lg border border-theme-border px-3 py-2">
             <input
               type="checkbox"
               checked={filters.overdueOnly}
               onChange={(e) => setFilters({ ...filters, overdueOnly: e.target.checked })}
               className="h-4 w-4"
             />
-            <span className="text-sm font-medium text-slate-700">Overdue Only</span>
+            <span className="text-sm font-medium text-theme-text-primary">Overdue Only</span>
           </label>
         </div>
       </div>
 
       {/* Bills Table */}
-      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+      <div className="rounded-2xl border border-theme-border bg-theme-surface shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="border-b border-slate-100 bg-slate-50">
+            <thead className="border-b border-theme-border bg-theme-muted">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">
                   Bill Number
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">
                   Vendor
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">
                   Bill Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">
                   Due Date
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">
                   Total
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">
                   Balance Due
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-theme-border">
               {bills.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center">
                     <div className="rounded-lg bg-blue-50 p-4 text-sm">
-                      <p className="font-medium text-gray-900">No bills yet</p>
+                      <p className="font-medium text-theme-text-primary">No bills yet</p>
                       <p className="mt-1 text-blue-700">Create your first bill to get started</p>
                     </div>
                   </td>
                 </tr>
               ) : (
                 bills.map((bill) => (
-                  <tr key={bill.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 text-sm font-semibold text-gray-900">
+                  <tr key={bill.id} className="hover:bg-theme-muted">
+                    <td className="px-6 py-4 text-sm font-semibold text-theme-text-primary">
                       {bill.billNumber}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-6 py-4 text-sm text-theme-text-secondary">
                       {bill.vendorName || bill.vendorId}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-6 py-4 text-sm text-theme-text-secondary">
                       {format(new Date(bill.billDate), "MMM dd, yyyy")}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-6 py-4 text-sm text-theme-text-secondary">
                       {bill.dueDate ? format(new Date(bill.dueDate), "MMM dd, yyyy") : "-"}
                     </td>
-                    <td className="px-6 py-4 text-right text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 text-right text-sm font-medium text-theme-text-primary">
                       {bill.currency} {bill.total.toLocaleString()}
                     </td>
                     <td className={`px-6 py-4 text-right text-sm font-medium ${bill.balanceDue > 0 ? "text-amber-600" : "text-green-600"}`}>
@@ -244,7 +244,7 @@ export default function BillsWorkspace() {
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => setViewBill(bill)}
-                          className="text-blue-600 hover:text-gray-700"
+                          className="text-theme-accent hover:text-theme-text-primary"
                         >
                           View
                         </button>
@@ -304,22 +304,22 @@ export default function BillsWorkspace() {
 
       {/* View Bill Modal */}
       {viewBill && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={(e) => { if (e.target === e.currentTarget) setViewBill(null); }}>
-          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">Bill Details</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay" onClick={(e) => { if (e.target === e.currentTarget) setViewBill(null); }}>
+          <div className="w-full max-w-lg rounded-xl bg-theme-surface p-6 shadow-xl">
+            <h3 className="mb-4 text-lg font-semibold text-theme-text-primary">Bill Details</h3>
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between"><span className="text-slate-500">Bill Number:</span><span className="font-medium">{viewBill.billNumber}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Vendor:</span><span className="font-medium">{viewBill.vendorName || viewBill.vendorId}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Bill Date:</span><span className="font-medium">{format(new Date(viewBill.billDate), "MMM dd, yyyy")}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Due Date:</span><span className="font-medium">{viewBill.dueDate ? format(new Date(viewBill.dueDate), "MMM dd, yyyy") : "-"}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Total:</span><span className="font-medium">{viewBill.currency} {viewBill.total.toLocaleString()}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Balance Due:</span><span className="font-medium">{viewBill.currency} {viewBill.balanceDue.toLocaleString()}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Status:</span><span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(viewBill.status)}`}>{getStatusIcon(viewBill.status)} {viewBill.status?.replace("_", " ")}</span></div>
+              <div className="flex justify-between"><span className="text-theme-text-tertiary">Bill Number:</span><span className="font-medium">{viewBill.billNumber}</span></div>
+              <div className="flex justify-between"><span className="text-theme-text-tertiary">Vendor:</span><span className="font-medium">{viewBill.vendorName || viewBill.vendorId}</span></div>
+              <div className="flex justify-between"><span className="text-theme-text-tertiary">Bill Date:</span><span className="font-medium">{format(new Date(viewBill.billDate), "MMM dd, yyyy")}</span></div>
+              <div className="flex justify-between"><span className="text-theme-text-tertiary">Due Date:</span><span className="font-medium">{viewBill.dueDate ? format(new Date(viewBill.dueDate), "MMM dd, yyyy") : "-"}</span></div>
+              <div className="flex justify-between"><span className="text-theme-text-tertiary">Total:</span><span className="font-medium">{viewBill.currency} {viewBill.total.toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-theme-text-tertiary">Balance Due:</span><span className="font-medium">{viewBill.currency} {viewBill.balanceDue.toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-theme-text-tertiary">Status:</span><span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(viewBill.status)}`}>{getStatusIcon(viewBill.status)} {viewBill.status?.replace("_", " ")}</span></div>
             </div>
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setViewBill(null)}
-                className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-full border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted"
               >
                 Close
               </button>

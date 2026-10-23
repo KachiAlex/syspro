@@ -33,26 +33,26 @@ export default function InventoryEdgePage() {
     setError(""); load(); return d;
   };
 
-  const input = "rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm";
+  const input = "rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm";
   const btn = "rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium hover:bg-emerald-500";
-  const btnSm = "rounded bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700";
+  const btnSm = "rounded bg-theme-muted px-2 py-1 text-xs hover:bg-theme-elevated";
   const th = "p-3";
 
   if (!tenantSlug) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 text-slate-100">
+    <div className="min-h-screen bg-theme-bg p-6 text-theme-text-primary">
       <div className="mx-auto max-w-5xl">
         <h1 className="mb-1 text-2xl font-bold">Inventory Edge</h1>
-        <p className="mb-4 text-sm text-slate-400">Packing slips, putaway rules, party item codes</p>
-        <div className="mb-4 flex gap-1 rounded-lg bg-slate-900 p-1">
+        <p className="mb-4 text-sm text-theme-text-secondary">Packing slips, putaway rules, party item codes</p>
+        <div className="mb-4 flex gap-1 rounded-lg bg-theme-surface p-1">
           {TABS.map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`rounded-md px-3 py-1.5 text-sm capitalize ${tab === t ? "bg-slate-700" : "text-slate-400 hover:text-white"}`}>{t.replace("-", " ")}</button>
+              className={`rounded-md px-3 py-1.5 text-sm capitalize ${tab === t ? "bg-theme-elevated" : "text-theme-text-secondary hover:text-theme-text-primary"}`}>{t.replace("-", " ")}</button>
           ))}
         </div>
         {error && <div className="mb-4 rounded-lg bg-red-900/40 p-3 text-sm text-red-300">{error}<button onClick={() => setError("")} className="ml-2 underline">dismiss</button></div>}
-        {msg && <div className="mb-4 rounded-lg bg-slate-800 p-3 text-sm">{msg}<button onClick={() => setMsg("")} className="ml-2 underline">dismiss</button></div>}
+        {msg && <div className="mb-4 rounded-lg bg-theme-muted p-3 text-sm">{msg}<button onClick={() => setMsg("")} className="ml-2 underline">dismiss</button></div>}
 
         {tab === "packing-slips" && (
           <div className="space-y-4">
@@ -63,18 +63,18 @@ export default function InventoryEdgePage() {
               <input placeholder='Items JSON [{"sku":"X","qty":5}]' value={f.psItems ?? ""} onChange={(e) => setF({ ...f, psItems: e.target.value })} className={`${input} flex-1 font-mono`} />
               <button className={btn} onClick={() => post({ action: "create-slip", salesOrderId: f.psSo, fromCaseNo: Number(f.psFrom), toCaseNo: f.psTo ? Number(f.psTo) : undefined, items: JSON.parse(f.psItems || "[]") })}>Create Slip</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Slip</th><th className={th}>Cases</th><th className={th}>Items</th><th className={th}>Status</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Slip</th><th className={th}>Cases</th><th className={th}>Items</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.slips?.map((s: any) => (
-                  <tr key={s.id} className="border-t border-slate-800/50">
+                  <tr key={s.id} className="border-t border-theme-border">
                     <td className={`${th} font-mono`}>{s.slip_number}</td>
                     <td className={th}>{s.from_case_no}{s.to_case_no ? `–${s.to_case_no}` : ""}</td>
                     <td className={th}>{(s.items ?? []).length}</td><td className={th}>{s.status}</td>
                     <td className={th}>{s.status === "draft" && <button className={btnSm} onClick={() => post({ action: "slip-status", id: s.id, status: "submitted" })}>Submit</button>}</td>
                   </tr>
                 ))}
-                {!data.slips?.length && <tr><td colSpan={5} className="p-6 text-center text-slate-500">No packing slips</td></tr>}
+                {!data.slips?.length && <tr><td colSpan={5} className="p-6 text-center text-theme-text-tertiary">No packing slips</td></tr>}
               </tbody>
             </table>
           </div>
@@ -98,17 +98,17 @@ export default function InventoryEdgePage() {
                 setMsg(d.suggestions?.length ? `Suggest: ${d.suggestions.map((s: any) => s.warehouse_name ?? s.warehouse_id).join(", ")}` : "No matching putaway rule");
               }}>Suggest Warehouse</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>SKU</th><th className={th}>Warehouse</th><th className={th}>Bin</th><th className={th}>Capacity</th><th className={th}>Priority</th><th className={th}>Active</th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>SKU</th><th className={th}>Warehouse</th><th className={th}>Bin</th><th className={th}>Capacity</th><th className={th}>Priority</th><th className={th}>Active</th></tr></thead>
               <tbody>
                 {data.rules?.map((r: any) => (
-                  <tr key={r.id} className="border-t border-slate-800/50">
+                  <tr key={r.id} className="border-t border-theme-border">
                     <td className={`${th} font-mono`}>{r.product_sku}</td><td className={th}>{r.warehouse_name ?? r.warehouse_id}</td>
                     <td className={th}>{r.bin ?? "—"}</td><td className={th}>{r.capacity}</td>
                     <td className={th}>{r.priority}</td><td className={th}>{r.is_active ? "✓" : "—"}</td>
                   </tr>
                 ))}
-                {!data.rules?.length && <tr><td colSpan={6} className="p-6 text-center text-slate-500">No putaway rules</td></tr>}
+                {!data.rules?.length && <tr><td colSpan={6} className="p-6 text-center text-theme-text-tertiary">No putaway rules</td></tr>}
               </tbody>
             </table>
           </div>
@@ -125,16 +125,16 @@ export default function InventoryEdgePage() {
               <input placeholder="Party name" value={f.pcName ?? ""} onChange={(e) => setF({ ...f, pcName: e.target.value })} className={input} />
               <button className={btn} onClick={() => post({ action: "upsert-party-code", productSku: f.pcSku, partyType: f.pcType, partyCode: f.pcCode, partyName: f.pcName })}>Map</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Our SKU</th><th className={th}>Party Type</th><th className={th}>Their Code</th><th className={th}>Party</th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Our SKU</th><th className={th}>Party Type</th><th className={th}>Their Code</th><th className={th}>Party</th></tr></thead>
               <tbody>
                 {data.codes?.map((c: any) => (
-                  <tr key={c.id} className="border-t border-slate-800/50">
+                  <tr key={c.id} className="border-t border-theme-border">
                     <td className={`${th} font-mono`}>{c.product_sku}</td><td className={th}>{c.party_type}</td>
                     <td className={`${th} font-mono`}>{c.party_code}</td><td className={th}>{c.party_name ?? "—"}</td>
                   </tr>
                 ))}
-                {!data.codes?.length && <tr><td colSpan={4} className="p-6 text-center text-slate-500">No party item codes</td></tr>}
+                {!data.codes?.length && <tr><td colSpan={4} className="p-6 text-center text-theme-text-tertiary">No party item codes</td></tr>}
               </tbody>
             </table>
           </div>

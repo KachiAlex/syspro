@@ -116,31 +116,31 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
       {success && <FormAlert type="success" message={success} onClose={() => setSuccess(null)} />}
 
       {/* Connectors */}
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="mb-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Integrations</p>
-          <h2 className="text-lg font-semibold text-gray-900">Connected Services</h2>
-          <p className="mt-1 text-sm text-slate-600">Enable or disable third-party service integrations</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Integrations</p>
+          <h2 className="text-lg font-semibold text-theme-text-primary">Connected Services</h2>
+          <p className="mt-1 text-sm text-theme-text-secondary">Enable or disable third-party service integrations</p>
         </div>
 
         {loading ? (
-          <div className="rounded-lg bg-slate-50 p-4 text-center text-sm text-slate-600">
-            <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900"></div>
+          <div className="rounded-lg bg-theme-muted p-4 text-center text-sm text-theme-text-secondary">
+            <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-theme-border border-t-slate-900"></div>
             <p className="mt-2">Loading integrations…</p>
           </div>
         ) : (connectors ?? []).length === 0 ? (
           <div className="rounded-lg bg-blue-50 p-4 text-center text-sm">
-            <p className="font-medium text-gray-900">No connectors available</p>
+            <p className="font-medium text-theme-text-primary">No connectors available</p>
             <p className="mt-1 text-blue-700">Contact support to enable integrations</p>
           </div>
         ) : (
           <div className="space-y-3">
             {connectors.map((c) => (
-              <div key={c.id} className="rounded-lg border border-slate-200 p-4">
+              <div key={c.id} className="rounded-lg border border-theme-border p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{c.name}</h3>
-                    <p className="mt-1 text-sm text-slate-600">
+                    <h3 className="font-semibold text-theme-text-primary">{c.name}</h3>
+                    <p className="mt-1 text-sm text-theme-text-secondary">
                       {CONNECTOR_DESCRIPTIONS[c.name.toLowerCase()] || c.description || "No description"}
                     </p>
                   </div>
@@ -149,7 +149,7 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
                     className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all ${
                       c.enabled
                         ? "bg-green-100 text-green-900 hover:bg-green-200"
-                        : "border border-slate-200 text-slate-700 hover:bg-slate-50"
+                        : "border border-theme-border text-theme-text-primary hover:bg-theme-muted"
                     }`}
                   >
                     {c.enabled ? "✓ Enabled" : "Enable"}
@@ -162,19 +162,19 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
       </div>
 
       {/* API Keys */}
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">API Access</p>
-            <h2 className="text-lg font-semibold text-gray-900">API Keys</h2>
-            <p className="mt-1 text-sm text-slate-600">Create and manage API keys for programmatic access</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">API Access</p>
+            <h2 className="text-lg font-semibold text-theme-text-primary">API Keys</h2>
+            <p className="mt-1 text-sm text-theme-text-secondary">Create and manage API keys for programmatic access</p>
           </div>
           <button
             onClick={() => {
               setShowNewKey(!showNewKey);
               setNewKeyName("");
             }}
-            className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="whitespace-nowrap rounded-full bg-theme-accent px-4 py-2 text-sm font-medium text-white hover:bg-theme-accent-hover"
           >
             {showNewKey ? "Cancel" : "+ New API Key"}
           </button>
@@ -183,15 +183,15 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
         {showNewKey && (
           <div className="mt-4 space-y-3 border-t pt-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Key Name</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Key Name</label>
               <input
                 type="text"
                 value={newKeyName}
                 onChange={(e) => setNewKeyName(e.target.value)}
                 placeholder="e.g., Development Integration"
-                className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm"
               />
-              <p className="mt-1 text-xs text-slate-500">Choose a descriptive name to remember what this key is used for</p>
+              <p className="mt-1 text-xs text-theme-text-tertiary">Choose a descriptive name to remember what this key is used for</p>
             </div>
             <div className="flex gap-2">
               <button
@@ -205,7 +205,7 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
                   setShowNewKey(false);
                   setNewKeyName("");
                 }}
-                className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-full border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted"
               >
                 Cancel
               </button>
@@ -216,7 +216,7 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
         <div className="mt-4">
           {(apiKeys ?? []).length === 0 ? (
             <div className="rounded-lg bg-blue-50 p-4 text-center text-sm">
-              <p className="font-medium text-gray-900">No API keys created</p>
+              <p className="font-medium text-theme-text-primary">No API keys created</p>
               <p className="mt-1 text-blue-700">Create one to enable programmatic access to your system</p>
             </div>
           ) : (
@@ -224,23 +224,23 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
               {apiKeys.map((k) => (
                 <div
                   key={k.id}
-                  className={`rounded-lg border p-4 ${k.revoked ? "border-slate-200 bg-slate-50" : "border-slate-200"}`}
+                  className={`rounded-lg border p-4 ${k.revoked ? "border-theme-border bg-theme-muted" : "border-theme-border"}`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-gray-900">{k.label}</h3>
+                        <h3 className="font-semibold text-theme-text-primary">{k.label}</h3>
                         {k.revoked && (
-                          <span className="inline-block rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-700">
+                          <span className="inline-block rounded-full bg-theme-muted px-2 py-0.5 text-xs font-medium text-theme-text-primary">
                             Revoked
                           </span>
                         )}
                       </div>
-                      <p className="mt-2 font-mono text-xs text-slate-500 break-all">
+                      <p className="mt-2 font-mono text-xs text-theme-text-tertiary break-all">
                         {k.revoked ? "••••••••" : k.key}
                       </p>
                       {k.createdAt && (
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-xs text-theme-text-tertiary">
                           Created {new Date(k.createdAt).toLocaleDateString()}
                         </p>
                       )}
@@ -249,7 +249,7 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
                       {!k.revoked && (
                         <button
                           onClick={() => copyToClipboard(k.key)}
-                          className="rounded-full border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50"
+                          className="rounded-full border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-theme-muted"
                         >
                           Copy
                         </button>

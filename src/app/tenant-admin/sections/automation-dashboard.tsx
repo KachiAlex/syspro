@@ -42,18 +42,18 @@ export default function AutomationDashboard({ tenantSlug }: { tenantSlug?: strin
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Automation</p>
-            <h2 className="text-xl font-semibold text-gray-900">Dashboard</h2>
-            <p className="mt-1 text-sm text-slate-500">Live snapshot of rules, queue health, and audit outcomes.</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Automation</p>
+            <h2 className="text-xl font-semibold text-theme-text-primary">Dashboard</h2>
+            <p className="mt-1 text-sm text-theme-text-tertiary">Live snapshot of rules, queue health, and audit outcomes.</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${healthBadge.tone === "emerald" ? "bg-emerald-50 text-emerald-700" : healthBadge.tone === "amber" ? "bg-amber-50 text-amber-700" : healthBadge.tone === "rose" ? "bg-rose-50 text-rose-700" : "bg-slate-100 text-slate-600"}`}>
+            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${healthBadge.tone === "emerald" ? "bg-emerald-50 text-emerald-700" : healthBadge.tone === "amber" ? "bg-amber-50 text-amber-700" : healthBadge.tone === "rose" ? "bg-rose-50 text-rose-700" : "bg-theme-muted text-theme-text-secondary"}`}>
               <Activity className="h-3 w-3" /> {healthBadge.label}
             </span>
-            <button onClick={load} disabled={loading} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+            <button onClick={load} disabled={loading} className="inline-flex items-center gap-2 rounded-full border border-theme-border px-3 py-2 text-sm text-theme-text-primary hover:bg-theme-muted">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />} Refresh
             </button>
           </div>
@@ -66,29 +66,29 @@ export default function AutomationDashboard({ tenantSlug }: { tenantSlug?: strin
           title="Rules"
           value={summary?.rules.total ?? 0}
           sub={`${summary?.rules.enabled ?? 0} live • ${summary?.rules.simulationOnly ?? 0} sim-only`}
-          icon={<Bot className="h-5 w-5 text-slate-500" />}
+          icon={<Bot className="h-5 w-5 text-theme-text-tertiary" />}
         />
         <StatCard
           title="Queue"
           value={summary ? summary.queue.pending + summary.queue.processing : 0}
           sub={`Pending ${summary?.queue.pending ?? 0} • Processing ${summary?.queue.processing ?? 0}`}
           tone={summary && summary.queue.failed > 0 ? "rose" : summary && summary.queue.pending > 10 ? "amber" : "emerald"}
-          icon={<Play className="h-5 w-5 text-slate-500" />}
+          icon={<Play className="h-5 w-5 text-theme-text-tertiary" />}
         />
         <StatCard
           title="Audits"
           value={summary?.audits.total ?? 0}
           sub={`Matched ${summary?.audits.matched ?? 0} • Skipped ${summary?.audits.unmatched ?? 0}`}
-          icon={<CheckCircle2 className="h-5 w-5 text-slate-500" />}
+          icon={<CheckCircle2 className="h-5 w-5 text-theme-text-tertiary" />}
         />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-        <div className="rounded-2xl border border-slate-100 bg-theme-muted p-5 shadow-sm">
+        <div className="rounded-2xl border border-theme-border bg-theme-muted p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Queue Health</p>
-              <h3 className="text-lg font-semibold text-gray-900">Action pipeline</h3>
+              <p className="text-xs uppercase tracking-[0.2em] text-theme-text-secondary">Queue Health</p>
+              <h3 className="text-lg font-semibold text-theme-text-primary">Action pipeline</h3>
             </div>
             {summary?.queue.failed ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
@@ -104,32 +104,32 @@ export default function AutomationDashboard({ tenantSlug }: { tenantSlug?: strin
             <MiniMetric label="Max attempts" value={summary?.queue.maxAttempt ?? 0} tone="slate" />
             <MiniMetric label="Next scheduled" value={summary?.queue.nextScheduled ? new Date(summary.queue.nextScheduled).toLocaleString() : "–"} tone="slate" />
           </div>
-          <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+          <div className="mt-4 rounded-xl border border-theme-border bg-theme-muted px-4 py-3 text-xs text-theme-text-secondary">
             <div className="flex items-center justify-between">
               <span>Oldest pending</span>
-              <span className="font-semibold text-gray-900">{summary?.queue.oldestPending ? new Date(summary.queue.oldestPending).toLocaleString() : "–"}</span>
+              <span className="font-semibold text-theme-text-primary">{summary?.queue.oldestPending ? new Date(summary.queue.oldestPending).toLocaleString() : "–"}</span>
             </div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-100 bg-theme-muted p-5 shadow-sm">
+        <div className="rounded-2xl border border-theme-border bg-theme-muted p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Recent Activity</p>
-              <h3 className="text-lg font-semibold text-gray-900">Audit trail</h3>
+              <p className="text-xs uppercase tracking-[0.2em] text-theme-text-secondary">Recent Activity</p>
+              <h3 className="text-lg font-semibold text-theme-text-primary">Audit trail</h3>
             </div>
           </div>
           {summary?.audits.total ? (
             <div className="mt-4 space-y-3">
-              <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-800">
-                <div className="flex items-center justify-between text-xs text-slate-500">
+              <div className="rounded-xl border border-theme-border bg-theme-muted px-4 py-3 text-sm text-theme-text-primary">
+                <div className="flex items-center justify-between text-xs text-theme-text-tertiary">
                   <span>{summary.audits.lastCreatedAt ? new Date(summary.audits.lastCreatedAt).toLocaleString() : "–"}</span>
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${summary.audits.lastOutcome === "matched" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${summary.audits.lastOutcome === "matched" ? "bg-emerald-50 text-emerald-700" : "bg-theme-muted text-theme-text-secondary"}`}>
                     {summary.audits.lastOutcome || "unknown"}
                   </span>
                 </div>
-                <div className="mt-1 text-sm font-semibold text-gray-900">{summary.audits.lastRule || "Unattributed"}</div>
-                <div className="mt-1 text-xs text-slate-600 break-words">{summary.audits.lastEvent || "No payload captured"}</div>
+                <div className="mt-1 text-sm font-semibold text-theme-text-primary">{summary.audits.lastRule || "Unattributed"}</div>
+                <div className="mt-1 text-xs text-theme-text-secondary break-words">{summary.audits.lastEvent || "No payload captured"}</div>
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
                 <MiniMetric label="Matched" value={summary.audits.matched} tone="emerald" />
@@ -137,7 +137,7 @@ export default function AutomationDashboard({ tenantSlug }: { tenantSlug?: strin
               </div>
             </div>
           ) : (
-            <div className="mt-4 text-sm text-slate-500">No audits yet. Run a simulation or let a trigger fire.</div>
+            <div className="mt-4 text-sm text-theme-text-tertiary">No audits yet. Run a simulation or let a trigger fire.</div>
           )}
         </div>
       </div>
@@ -146,15 +146,15 @@ export default function AutomationDashboard({ tenantSlug }: { tenantSlug?: strin
 }
 
 function StatCard({ title, value, sub, icon, tone = "slate" }: { title: string; value: number; sub: string; icon: React.ReactNode; tone?: "slate" | "emerald" | "amber" | "rose" }) {
-  const toneClasses = tone === "emerald" ? "bg-emerald-50 text-emerald-700" : tone === "amber" ? "bg-amber-50 text-amber-700" : tone === "rose" ? "bg-rose-50 text-rose-700" : "bg-slate-50 text-slate-700";
+  const toneClasses = tone === "emerald" ? "bg-emerald-50 text-emerald-700" : tone === "amber" ? "bg-amber-50 text-amber-700" : tone === "rose" ? "bg-rose-50 text-rose-700" : "bg-theme-muted text-theme-text-primary";
   return (
-    <div className="rounded-2xl border border-slate-100 bg-theme-muted p-5 shadow-sm">
+    <div className="rounded-2xl border border-theme-border bg-theme-muted p-5 shadow-sm">
       <div className="flex items-center justify-between">
-        <div className="rounded-full bg-slate-50 p-2 text-slate-600">{icon}</div>
+        <div className="rounded-full bg-theme-muted p-2 text-theme-text-secondary">{icon}</div>
         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${toneClasses}`}>{title}</span>
       </div>
-      <div className="mt-3 text-2xl font-semibold text-gray-900">{value}</div>
-      <div className="text-sm text-slate-500">{sub}</div>
+      <div className="mt-3 text-2xl font-semibold text-theme-text-primary">{value}</div>
+      <div className="text-sm text-theme-text-tertiary">{sub}</div>
     </div>
   );
 }
@@ -165,11 +165,11 @@ function MiniMetric({ label, value, tone }: { label: string; value: number | str
     amber: "bg-amber-50 text-amber-700",
     rose: "bg-rose-50 text-rose-700",
     sky: "bg-sky-50 text-sky-700",
-    slate: "bg-slate-50 text-slate-700",
+    slate: "bg-theme-muted text-theme-text-primary",
   };
   return (
-    <div className="rounded-xl border border-slate-100 bg-theme-muted px-4 py-3 shadow-sm">
-      <div className="text-xs uppercase tracking-[0.2em] text-slate-500">{label}</div>
+    <div className="rounded-xl border border-theme-border bg-theme-muted px-4 py-3 shadow-sm">
+      <div className="text-xs uppercase tracking-[0.2em] text-theme-text-tertiary">{label}</div>
       <div className="mt-1 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold">
         <span className={`rounded-full px-2 py-1 text-xs font-semibold ${toneMap[tone]}`}>{value}</span>
       </div>

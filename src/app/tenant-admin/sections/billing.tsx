@@ -46,7 +46,7 @@ const STATUS_COLORS: Record<string, string> = {
   paid: "bg-green-100 text-green-900",
   unpaid: "bg-red-100 text-red-900",
   overdue: "bg-rose-100 text-rose-900",
-  cancelled: "bg-slate-100 text-gray-900",
+  cancelled: "bg-theme-muted text-theme-text-primary",
 };
 
 const STATUS_ICONS: Record<string, string> = {
@@ -273,9 +273,9 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
       {/* Header with Refresh Button */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Billing & Subscriptions</h2>
+          <h2 className="text-2xl font-bold text-theme-text-primary">Billing & Subscriptions</h2>
           {lastRefreshed && (
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-theme-text-tertiary mt-1">
               Last updated: {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </p>
           )}
@@ -283,7 +283,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
         <button
           onClick={load}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-theme-border rounded-lg text-theme-text-primary hover:bg-theme-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -291,26 +291,26 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
       </div>
 
       {/* Subscriptions */}
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="mb-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Billing</p>
-          <h2 className="text-lg font-semibold text-gray-900">Active Subscriptions</h2>
-          <p className="mt-1 text-sm text-slate-600">Manage your organization&apos;s subscriptions and plans</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Billing</p>
+          <h2 className="text-lg font-semibold text-theme-text-primary">Active Subscriptions</h2>
+          <p className="mt-1 text-sm text-theme-text-secondary">Manage your organization&apos;s subscriptions and plans</p>
         </div>
 
         {loading ? (
           <div className="space-y-3">
             {[...Array(2)].map((_, i) => (
-              <div key={i} className="rounded-lg border border-slate-200 p-4 animate-pulse">
+              <div key={i} className="rounded-lg border border-theme-border p-4 animate-pulse">
                 <div className="space-y-3">
-                  <div className="h-5 bg-slate-200 rounded w-32"></div>
+                  <div className="h-5 bg-theme-muted rounded w-32"></div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="h-4 bg-slate-200 rounded"></div>
-                    <div className="h-4 bg-slate-200 rounded"></div>
+                    <div className="h-4 bg-theme-muted rounded"></div>
+                    <div className="h-4 bg-theme-muted rounded"></div>
                   </div>
                   <div className="flex gap-2">
-                    <div className="h-8 bg-slate-200 rounded w-20"></div>
-                    <div className="h-8 bg-slate-200 rounded w-20"></div>
+                    <div className="h-8 bg-theme-muted rounded w-20"></div>
+                    <div className="h-8 bg-theme-muted rounded w-20"></div>
                   </div>
                 </div>
               </div>
@@ -319,32 +319,32 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
         ) : (subscriptions ?? []).length === 0 ? (
           <div className="rounded-lg bg-blue-50 p-6 text-center">
             <CreditCard className="w-10 h-10 text-blue-300 mx-auto mb-3" />
-            <p className="font-medium text-gray-900">No active subscriptions</p>
+            <p className="font-medium text-theme-text-primary">No active subscriptions</p>
             <p className="mt-1 text-sm text-blue-700">Contact sales to get started with a subscription plan</p>
           </div>
         ) : (
           <div className="space-y-3">
             {subscriptions.map((s) => (
-              <div key={s.id} className="rounded-lg border border-slate-200 p-4">
+              <div key={s.id} className="rounded-lg border border-theme-border p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-gray-900">{s.plan}</h3>
+                      <h3 className="font-semibold text-theme-text-primary">{s.plan}</h3>
                       <span
                         className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                          STATUS_COLORS[s.status.toLowerCase()] || "bg-gray-100 text-gray-900"
+                          STATUS_COLORS[s.status.toLowerCase()] || "bg-theme-muted text-theme-text-primary"
                         }`}
                       >
                         {STATUS_ICONS[s.status.toLowerCase()]} {s.status}
                       </span>
                     </div>
-                    <div className="mt-2 grid grid-cols-2 gap-3 text-sm text-slate-600">
+                    <div className="mt-2 grid grid-cols-2 gap-3 text-sm text-theme-text-secondary">
                       <div>
-                        <p className="text-xs font-medium text-slate-500">Next Billing</p>
+                        <p className="text-xs font-medium text-theme-text-tertiary">Next Billing</p>
                         <p>{s.nextBillingDate ? new Date(s.nextBillingDate).toLocaleDateString() : "—"}</p>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-slate-500">Seats</p>
+                        <p className="text-xs font-medium text-theme-text-tertiary">Seats</p>
                         <p>{s.seats ?? 1}</p>
                       </div>
                     </div>
@@ -352,14 +352,14 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleViewSubscription(s)}
-                      className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                      className="rounded-full border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted flex items-center gap-2"
                     >
                       <Eye className="w-4 h-4" />
                       View
                     </button>
                     <button
                       onClick={() => handleOpenUpgradeModal(s)}
-                      className="rounded-full border border-blue-200 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 flex items-center gap-2"
+                      className="rounded-full border border-blue-200 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-theme-muted flex items-center gap-2"
                     >
                       <TrendingUp className="w-4 h-4" />
                       Upgrade
@@ -379,46 +379,46 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
       </div>
 
       {/* Usage & Metering */}
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="mb-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Usage</p>
-          <h2 className="text-lg font-semibold text-gray-900">Usage &amp; Metering</h2>
-          <p className="mt-1 text-sm text-slate-600">Seats, API activity, AI quota, and module records</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Usage</p>
+          <h2 className="text-lg font-semibold text-theme-text-primary">Usage &amp; Metering</h2>
+          <p className="mt-1 text-sm text-theme-text-secondary">Seats, API activity, AI quota, and module records</p>
         </div>
         {!usage ? (
-          <p className="text-sm text-slate-500">{loading ? "Loading usage…" : "Usage data unavailable"}</p>
+          <p className="text-sm text-theme-text-tertiary">{loading ? "Loading usage…" : "Usage data unavailable"}</p>
         ) : (
           <div className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="rounded-lg border border-slate-200 p-3">
-                <p className="text-xs font-medium text-slate-500">Seats</p>
-                <p className="text-xl font-bold text-gray-900">
+              <div className="rounded-lg border border-theme-border p-3">
+                <p className="text-xs font-medium text-theme-text-tertiary">Seats</p>
+                <p className="text-xl font-bold text-theme-text-primary">
                   {usage.seats.used}
-                  {usage.seats.limit != null && <span className="text-sm font-normal text-slate-500"> / {usage.seats.limit}</span>}
+                  {usage.seats.limit != null && <span className="text-sm font-normal text-theme-text-tertiary"> / {usage.seats.limit}</span>}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-200 p-3">
-                <p className="text-xs font-medium text-slate-500">API calls (24h)</p>
-                <p className="text-xl font-bold text-gray-900">{usage.apiCalls.last24h.toLocaleString()}</p>
+              <div className="rounded-lg border border-theme-border p-3">
+                <p className="text-xs font-medium text-theme-text-tertiary">API calls (24h)</p>
+                <p className="text-xl font-bold text-theme-text-primary">{usage.apiCalls.last24h.toLocaleString()}</p>
               </div>
-              <div className="rounded-lg border border-slate-200 p-3">
-                <p className="text-xs font-medium text-slate-500">API calls (30d)</p>
-                <p className="text-xl font-bold text-gray-900">{usage.apiCalls.last30d.toLocaleString()}</p>
+              <div className="rounded-lg border border-theme-border p-3">
+                <p className="text-xs font-medium text-theme-text-tertiary">API calls (30d)</p>
+                <p className="text-xl font-bold text-theme-text-primary">{usage.apiCalls.last30d.toLocaleString()}</p>
               </div>
-              <div className="rounded-lg border border-slate-200 p-3">
-                <p className="text-xs font-medium text-slate-500">AI calls today</p>
-                <p className={`text-xl font-bold ${usage.ai.quota.exceeded ? "text-rose-600" : "text-gray-900"}`}>
+              <div className="rounded-lg border border-theme-border p-3">
+                <p className="text-xs font-medium text-theme-text-tertiary">AI calls today</p>
+                <p className={`text-xl font-bold ${usage.ai.quota.exceeded ? "text-rose-600" : "text-theme-text-primary"}`}>
                   {usage.ai.quota.dailyUsed}
-                  {usage.ai.quota.dailyLimit > 0 && <span className="text-sm font-normal text-slate-500"> / {usage.ai.quota.dailyLimit}</span>}
+                  {usage.ai.quota.dailyLimit > 0 && <span className="text-sm font-normal text-theme-text-tertiary"> / {usage.ai.quota.dailyLimit}</span>}
                 </p>
               </div>
             </div>
             {Object.keys(usage.apiCalls.byModule).length > 0 && (
               <div>
-                <p className="text-xs font-medium text-slate-500 mb-2">API calls by module (30d)</p>
+                <p className="text-xs font-medium text-theme-text-tertiary mb-2">API calls by module (30d)</p>
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(usage.apiCalls.byModule).map(([mod, cnt]) => (
-                    <span key={mod} className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">
+                    <span key={mod} className="rounded-full bg-theme-muted px-3 py-1 text-xs text-theme-text-primary">
                       {mod}: {cnt.toLocaleString()}
                     </span>
                   ))}
@@ -426,12 +426,12 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
               </div>
             )}
             <div>
-              <p className="text-xs font-medium text-slate-500 mb-2">Records by module</p>
+              <p className="text-xs font-medium text-theme-text-tertiary mb-2">Records by module</p>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
                 {Object.entries(usage.records).map(([key, cnt]) => (
-                  <div key={key} className="rounded-lg border border-slate-200 px-3 py-2">
-                    <p className="text-xs text-slate-500 capitalize">{key.replace(/_/g, " ")}</p>
-                    <p className="text-sm font-semibold text-gray-900">{cnt.toLocaleString()}</p>
+                  <div key={key} className="rounded-lg border border-theme-border px-3 py-2">
+                    <p className="text-xs text-theme-text-tertiary capitalize">{key.replace(/_/g, " ")}</p>
+                    <p className="text-sm font-semibold text-theme-text-primary">{cnt.toLocaleString()}</p>
                   </div>
                 ))}
               </div>
@@ -444,11 +444,11 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
       </div>
 
       {/* Invoices */}
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="mb-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Invoices</p>
-          <h2 className="text-lg font-semibold text-gray-900">Recent Invoices</h2>
-          <p className="mt-1 text-sm text-slate-600">View and manage your invoices</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Invoices</p>
+          <h2 className="text-lg font-semibold text-theme-text-primary">Recent Invoices</h2>
+          <p className="mt-1 text-sm text-theme-text-secondary">View and manage your invoices</p>
         </div>
         <div className="flex justify-end gap-3 mb-3">
           <button
@@ -459,7 +459,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
           </button>
           <button
             onClick={() => setShowCreateInvoice(true)}
-            className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="whitespace-nowrap rounded-full bg-theme-accent px-4 py-2 text-sm font-medium text-white hover:bg-theme-accent-hover"
           >
             + Create Invoice
           </button>
@@ -468,17 +468,17 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
         {loading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="rounded-lg border border-slate-200 p-4 animate-pulse">
+              <div key={i} className="rounded-lg border border-theme-border p-4 animate-pulse">
                 <div className="space-y-3">
-                  <div className="h-5 bg-slate-200 rounded w-24"></div>
+                  <div className="h-5 bg-theme-muted rounded w-24"></div>
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="h-4 bg-slate-200 rounded"></div>
-                    <div className="h-4 bg-slate-200 rounded"></div>
-                    <div className="h-4 bg-slate-200 rounded"></div>
+                    <div className="h-4 bg-theme-muted rounded"></div>
+                    <div className="h-4 bg-theme-muted rounded"></div>
+                    <div className="h-4 bg-theme-muted rounded"></div>
                   </div>
                   <div className="flex gap-2">
-                    <div className="h-8 bg-slate-200 rounded w-20"></div>
-                    <div className="h-8 bg-slate-200 rounded w-20"></div>
+                    <div className="h-8 bg-theme-muted rounded w-20"></div>
+                    <div className="h-8 bg-theme-muted rounded w-20"></div>
                   </div>
                 </div>
               </div>
@@ -487,32 +487,32 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
         ) : (invoices ?? []).length === 0 ? (
           <div className="rounded-lg bg-blue-50 p-6 text-center">
             <CreditCard className="w-10 h-10 text-blue-300 mx-auto mb-3" />
-            <p className="font-medium text-gray-900">No invoices yet</p>
+            <p className="font-medium text-theme-text-primary">No invoices yet</p>
             <p className="mt-1 text-sm text-blue-700">Invoices will appear here once generated</p>
           </div>
         ) : (
           <div className="space-y-3">
             {invoices.map((inv) => (
-              <div key={inv.id} className="rounded-lg border border-slate-200 p-4">
+              <div key={inv.id} className="rounded-lg border border-theme-border p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-gray-900">{inv.id}</h3>
+                      <h3 className="font-semibold text-theme-text-primary">{inv.id}</h3>
                       <span
                         className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                          STATUS_COLORS[inv.status.toLowerCase()] || "bg-gray-100 text-gray-900"
+                          STATUS_COLORS[inv.status.toLowerCase()] || "bg-theme-muted text-theme-text-primary"
                         }`}
                       >
                         {STATUS_ICONS[inv.status.toLowerCase()]} {inv.status}
                       </span>
                     </div>
-                    <div className="mt-2 grid grid-cols-3 gap-3 text-sm text-slate-600">
+                    <div className="mt-2 grid grid-cols-3 gap-3 text-sm text-theme-text-secondary">
                       <div>
-                        <p className="text-xs font-medium text-slate-500">Amount</p>
-                        <p className="font-semibold text-gray-900">₦{parseFloat(inv.amount).toLocaleString()}</p>
+                        <p className="text-xs font-medium text-theme-text-tertiary">Amount</p>
+                        <p className="font-semibold text-theme-text-primary">₦{parseFloat(inv.amount).toLocaleString()}</p>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-slate-500">Due Date</p>
+                        <p className="text-xs font-medium text-theme-text-tertiary">Due Date</p>
                         <p>{new Date(inv.dueDate).toLocaleDateString()}</p>
                       </div>
                     </div>
@@ -520,7 +520,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleViewInvoice(inv)}
-                      className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                      className="rounded-full border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted flex items-center gap-2"
                     >
                       <Eye className="w-4 h-4" />
                       View
@@ -528,7 +528,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
                     <button
                       onClick={() => handleDownloadInvoice(inv.id)}
                       disabled={downloadingInvoice}
-                      className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 flex items-center gap-2"
+                      className="rounded-full border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted disabled:opacity-50 flex items-center gap-2"
                     >
                       <Download className="w-4 h-4" />
                       Download

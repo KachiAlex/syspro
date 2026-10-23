@@ -12,7 +12,7 @@ const EMPLOYEE_AI_CAPABILITIES = ['generate_report', 'summarize', 'appraise_perf
 
 const tabLoading = () => (
   <div className="flex items-center justify-center py-16">
-    <Loader2 className="animate-spin text-blue-600" size={28} />
+    <Loader2 className="animate-spin text-theme-accent" size={28} />
   </div>
 );
 
@@ -138,8 +138,8 @@ export default function EmployeeDashboardPage() {
     router.replace('/login');
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><Loader2 className="w-8 h-8 text-blue-600 animate-spin" /></div>;
-  if (error) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-center"><AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" /><p className="text-gray-700">{error}</p><button onClick={() => router.replace('/login')} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Back to login</button></div></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-theme-muted"><Loader2 className="w-8 h-8 text-theme-accent animate-spin" /></div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center bg-theme-muted"><div className="text-center"><AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" /><p className="text-theme-text-primary">{error}</p><button onClick={() => router.replace('/login')} className="mt-4 px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover">Back to login</button></div></div>;
   if (!profile) return null;
 
   const fmtRole = (r: string) => r ? r.charAt(0).toUpperCase() + r.slice(1) : 'Staff';
@@ -177,46 +177,46 @@ export default function EmployeeDashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-theme-muted flex">
       {/* Sidebar */}
-      <aside className={`fixed lg:sticky top-0 left-0 z-30 h-screen w-64 bg-slate-900 text-white flex flex-col transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="p-5 border-b border-slate-700">
+      <aside className={`fixed lg:sticky top-0 left-0 z-30 h-screen w-64 bg-theme-surface text-white flex flex-col transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <div className="p-5 border-b border-theme-border">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
               <User className="w-5 h-5 text-white" />
             </div>
             <div className="min-w-0">
               <h1 className="text-sm font-bold truncate">Employee Portal</h1>
-              <p className="text-xs text-slate-400 truncate">{profile.name}</p>
+              <p className="text-xs text-theme-text-secondary truncate">{profile.name}</p>
             </div>
           </div>
         </div>
 
         {/* Notification bell */}
-        <div className="px-3 py-2 border-b border-slate-800 relative">
+        <div className="px-3 py-2 border-b border-theme-border relative">
           <button
             onClick={() => setNotifOpen(!notifOpen)}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-theme-muted hover:bg-theme-muted transition-colors"
           >
             <div className="relative">
-              <Bell className="w-4 h-4 text-slate-400" />
+              <Bell className="w-4 h-4 text-theme-text-secondary" />
               {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full text-[8px] font-bold flex items-center justify-center text-white">{unreadCount}</span>}
             </div>
-            <span className="text-xs text-slate-400">{unreadCount > 0 ? `${unreadCount} new notification${unreadCount > 1 ? 's' : ''}` : 'All caught up'}</span>
+            <span className="text-xs text-theme-text-secondary">{unreadCount > 0 ? `${unreadCount} new notification${unreadCount > 1 ? 's' : ''}` : 'All caught up'}</span>
           </button>
           {notifOpen && (
-            <div className="absolute left-3 right-3 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
-              <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
-                <span className="text-xs font-semibold text-gray-900">Notifications</span>
+            <div className="absolute left-3 right-3 top-full mt-1 bg-theme-surface rounded-xl shadow-xl border border-theme-border z-50 max-h-96 overflow-y-auto">
+              <div className="px-3 py-2 border-b border-theme-border flex items-center justify-between">
+                <span className="text-xs font-semibold text-theme-text-primary">Notifications</span>
                 <div className="flex items-center gap-2">
-                  {unreadCount > 0 && <button onClick={handleMarkAllRead} className="text-[10px] text-blue-600 hover:text-blue-700 flex items-center gap-1"><CheckCheck className="w-3 h-3" />Mark all read</button>}
-                  <button onClick={() => setNotifOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>
+                  {unreadCount > 0 && <button onClick={handleMarkAllRead} className="text-[10px] text-theme-accent hover:text-blue-700 flex items-center gap-1"><CheckCheck className="w-3 h-3" />Mark all read</button>}
+                  <button onClick={() => setNotifOpen(false)} className="text-theme-text-tertiary hover:text-theme-text-secondary"><X className="w-3.5 h-3.5" /></button>
                 </div>
               </div>
               {notifications.length === 0 ? (
                 <div className="px-3 py-6 text-center">
                   <CheckSquare className="w-6 h-6 text-green-400 mx-auto mb-1" />
-                  <p className="text-xs text-gray-400">No notifications yet</p>
+                  <p className="text-xs text-theme-text-tertiary">No notifications yet</p>
                 </div>
               ) : (
                 <div className="py-1">
@@ -231,13 +231,13 @@ export default function EmployeeDashboardPage() {
                         }
                         setNotifOpen(false); setSidebarOpen(false);
                       }}
-                      className={`w-full flex items-start gap-2 px-3 py-2.5 text-left text-xs hover:bg-gray-50 transition-colors ${!n.is_read ? 'bg-blue-50/50' : ''}`}
+                      className={`w-full flex items-start gap-2 px-3 py-2.5 text-left text-xs hover:bg-theme-muted transition-colors ${!n.is_read ? 'bg-blue-50/50' : ''}`}
                     >
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${!n.is_read ? (n.type === 'success' ? 'bg-green-500' : n.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500') : 'bg-gray-300'}`} />
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${!n.is_read ? (n.type === 'success' ? 'bg-green-500' : n.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500') : 'bg-theme-muted'}`} />
                       <div className="flex-1 min-w-0">
-                        <p className={`font-medium ${!n.is_read ? 'text-gray-900' : 'text-gray-500'}`}>{n.title}</p>
-                        <p className="text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
-                        <p className="text-[10px] text-gray-400 mt-1">{new Date(n.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                        <p className={`font-medium ${!n.is_read ? 'text-theme-text-primary' : 'text-theme-text-secondary'}`}>{n.title}</p>
+                        <p className="text-theme-text-secondary mt-0.5 line-clamp-2">{n.message}</p>
+                        <p className="text-[10px] text-theme-text-tertiary mt-1">{new Date(n.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                     </button>
                   ))}
@@ -250,7 +250,7 @@ export default function EmployeeDashboardPage() {
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
             <button key={item.key} onClick={() => { setActiveTab(item.key); setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors relative ${activeTab === item.key ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors relative ${activeTab === item.key ? 'bg-theme-accent text-white' : 'text-theme-text-primary hover:bg-theme-muted hover:text-theme-text-primary'}`}>
               {activeTab === item.key && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-400 rounded-r-full" />}
               <span className="ml-1">{item.icon}</span>
               <span className="flex-1 text-left">{item.label}</span>
@@ -259,44 +259,44 @@ export default function EmployeeDashboardPage() {
           ))}
         </nav>
 
-        <div className="p-3 border-t border-slate-700">
+        <div className="p-3 border-t border-theme-border">
           <div className="px-3 py-2 mb-2">
-            <p className="text-xs text-slate-500">{profile.email}</p>
-            <p className="text-xs text-slate-400 mt-0.5">{profile.jobTitle} &middot; {fmtRole(profile.role)}</p>
+            <p className="text-xs text-theme-text-tertiary">{profile.email}</p>
+            <p className="text-xs text-theme-text-secondary mt-0.5">{profile.jobTitle} &middot; {fmtRole(profile.role)}</p>
           </div>
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-red-600 hover:text-white transition-colors">
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-theme-text-primary hover:bg-red-600 hover:text-theme-text-primary transition-colors">
             <LogOut className="w-5 h-5" />Sign out
           </button>
         </div>
       </aside>
 
       {/* Mobile overlay */}
-      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-20 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+      {sidebarOpen && <div className="fixed inset-0 bg-theme-overlay z-20 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
       {/* Main content */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Mobile header */}
-        <header className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
-          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-100"><Menu className="w-5 h-5" /></button>
-          <span className="text-sm font-semibold text-gray-900">Employee Portal</span>
+        <header className="lg:hidden bg-theme-surface border-b border-theme-border px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-theme-muted"><Menu className="w-5 h-5" /></button>
+          <span className="text-sm font-semibold text-theme-text-primary">Employee Portal</span>
           <div className="relative">
             <button onClick={() => setNotifOpen(!notifOpen)}>
-              <Bell className="w-5 h-5 text-gray-600" />
+              <Bell className="w-5 h-5 text-theme-text-secondary" />
               {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold flex items-center justify-center text-white">{unreadCount}</span>}
             </button>
             {notifOpen && (
-              <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-200 z-50 w-72 max-h-96 overflow-y-auto">
-                <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-900">Notifications</span>
+              <div className="absolute right-0 top-full mt-1 bg-theme-surface rounded-xl shadow-xl border border-theme-border z-50 w-72 max-h-96 overflow-y-auto">
+                <div className="px-3 py-2 border-b border-theme-border flex items-center justify-between">
+                  <span className="text-xs font-semibold text-theme-text-primary">Notifications</span>
                   <div className="flex items-center gap-2">
-                    {unreadCount > 0 && <button onClick={handleMarkAllRead} className="text-[10px] text-blue-600 hover:text-blue-700 flex items-center gap-1"><CheckCheck className="w-3 h-3" />Mark all</button>}
-                    <button onClick={() => setNotifOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>
+                    {unreadCount > 0 && <button onClick={handleMarkAllRead} className="text-[10px] text-theme-accent hover:text-blue-700 flex items-center gap-1"><CheckCheck className="w-3 h-3" />Mark all</button>}
+                    <button onClick={() => setNotifOpen(false)} className="text-theme-text-tertiary hover:text-theme-text-secondary"><X className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
                 {notifications.length === 0 ? (
                   <div className="px-3 py-6 text-center">
                     <CheckSquare className="w-6 h-6 text-green-400 mx-auto mb-1" />
-                    <p className="text-xs text-gray-400">No notifications yet</p>
+                    <p className="text-xs text-theme-text-tertiary">No notifications yet</p>
                   </div>
                 ) : (
                   <div className="py-1">
@@ -311,13 +311,13 @@ export default function EmployeeDashboardPage() {
                           }
                           setNotifOpen(false);
                         }}
-                        className={`w-full flex items-start gap-2 px-3 py-2.5 text-left text-xs hover:bg-gray-50 transition-colors ${!n.is_read ? 'bg-blue-50/50' : ''}`}
+                        className={`w-full flex items-start gap-2 px-3 py-2.5 text-left text-xs hover:bg-theme-muted transition-colors ${!n.is_read ? 'bg-blue-50/50' : ''}`}
                       >
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${!n.is_read ? (n.type === 'success' ? 'bg-green-500' : n.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500') : 'bg-gray-300'}`} />
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${!n.is_read ? (n.type === 'success' ? 'bg-green-500' : n.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500') : 'bg-theme-muted'}`} />
                         <div className="flex-1 min-w-0">
-                          <p className={`font-medium ${!n.is_read ? 'text-gray-900' : 'text-gray-500'}`}>{n.title}</p>
-                          <p className="text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
-                          <p className="text-[10px] text-gray-400 mt-1">{new Date(n.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                          <p className={`font-medium ${!n.is_read ? 'text-theme-text-primary' : 'text-theme-text-secondary'}`}>{n.title}</p>
+                          <p className="text-theme-text-secondary mt-0.5 line-clamp-2">{n.message}</p>
+                          <p className="text-[10px] text-theme-text-tertiary mt-1">{new Date(n.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                         </div>
                       </button>
                     ))}
@@ -343,13 +343,13 @@ export default function EmployeeDashboardPage() {
         </main>
 
         {/* Mobile bottom navigation */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-theme-surface border-t border-theme-border z-30" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <div className="flex items-center justify-around px-2 py-1.5">
             {navItems.filter(item => ['dashboard', 'tasks', 'attendance', 'crm'].includes(item.key)).map((item) => (
               <button
                 key={item.key}
                 onClick={() => setActiveTab(item.key)}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-colors relative ${activeTab === item.key ? 'text-blue-600' : 'text-gray-500'}`}
+                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-colors relative ${activeTab === item.key ? 'text-theme-accent' : 'text-theme-text-secondary'}`}
               >
                 {item.icon}
                 <span className="text-[10px] font-medium">{item.label.split(' ')[0]}</span>
@@ -358,7 +358,7 @@ export default function EmployeeDashboardPage() {
             ))}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-gray-500 hover:text-gray-700 transition-colors"
+              className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-theme-text-secondary hover:text-theme-text-primary transition-colors"
             >
               <Menu className="w-5 h-5" />
               <span className="text-[10px] font-medium">More</span>

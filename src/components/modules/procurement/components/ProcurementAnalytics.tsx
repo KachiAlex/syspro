@@ -30,11 +30,11 @@ export const ProcurementAnalytics: React.FC<ProcurementAnalyticsProps> = ({
 }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Pending Approvals</h3>
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Pending Approvals</h3>
         <div className="space-y-3">
           {pendingApprovals.map((a, i) => (
-            <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div key={i} className="flex items-center justify-between p-4 bg-theme-muted rounded-lg">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -42,7 +42,7 @@ export const ProcurementAnalytics: React.FC<ProcurementAnalyticsProps> = ({
                   }`}>{a.priority}</span>
                   <h4 className="font-medium">{a.id}</h4>
                 </div>
-                <p className="text-xs text-gray-500">{a.value} • Submitted: {a.submitted}</p>
+                <p className="text-xs text-theme-text-secondary">{a.value} • Submitted: {a.submitted}</p>
               </div>
               <div className="flex gap-2">
                 <button 
@@ -63,13 +63,13 @@ export const ProcurementAnalytics: React.FC<ProcurementAnalyticsProps> = ({
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Spending by Department</h3>
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Spending by Department</h3>
         <div className="space-y-3">
           {departmentSpends.map((d, i) => (
             <div key={i} className="flex items-center gap-3">
               <span className="text-sm font-medium w-24">{d.dept}</span>
-              <div className="flex-1 bg-gray-200 rounded-full h-2">
+              <div className="flex-1 bg-theme-muted rounded-full h-2">
                 <div className="h-2 rounded-full bg-blue-500" style={{ width: `${d.pct}%` }}></div>
               </div>
               <span className="text-sm font-semibold w-20 text-right">{d.spend}</span>

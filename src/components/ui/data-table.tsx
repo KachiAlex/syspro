@@ -230,7 +230,7 @@ export function DataTable<T extends Record<string, any>>({
         <div className="flex-1 max-w-md">
           {searchable && (
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-text-secondary w-4 h-4" />
               <input
                 type="text"
                 placeholder={searchPlaceholder}
@@ -239,7 +239,7 @@ export function DataTable<T extends Record<string, any>>({
                   setSearchTerm(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
               />
             </div>
           )}
@@ -249,28 +249,28 @@ export function DataTable<T extends Record<string, any>>({
           {filterable && (
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50"
+              className="flex items-center gap-2 px-3 py-2 border border-theme-border rounded-lg text-sm hover:bg-theme-muted"
             >
               <Filter className="w-4 h-4" />
               Filters
               {Object.values(filters).some(v => v) && (
-                <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                <span className="w-2 h-2 bg-theme-accent rounded-full"></span>
               )}
             </button>
           )}
           
           {exportable && (
             <div className="relative group">
-              <button className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50">
+              <button className="flex items-center gap-2 px-3 py-2 border border-theme-border rounded-lg text-sm hover:bg-theme-muted">
                 <Download className="w-4 h-4" />
                 Export
               </button>
-              <div className="absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+              <div className="absolute right-0 mt-1 w-48 bg-theme-surface border border-theme-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
                 {exportFormats.map(format => (
                   <button
                     key={format}
                     onClick={() => handleExport(format)}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 first:rounded-t-lg last:rounded-b-lg"
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-theme-muted first:rounded-t-lg last:rounded-b-lg"
                   >
                     Export as {format.toUpperCase()}
                   </button>
@@ -283,11 +283,11 @@ export function DataTable<T extends Record<string, any>>({
 
       {/* Filters */}
       {showFilters && filterable && (
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+        <div className="bg-theme-muted border border-theme-border rounded-lg p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {columns.filter(col => col.filterable).map(column => (
               <div key={column.key as string}>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-medium text-theme-text-primary mb-1">
                   {column.title}
                 </label>
                 <input
@@ -295,7 +295,7 @@ export function DataTable<T extends Record<string, any>>({
                   placeholder={`Filter by ${column.title}`}
                   value={filters[column.key as string] || ""}
                   onChange={(e) => handleFilter(column.key, e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 />
               </div>
             ))}
@@ -304,21 +304,21 @@ export function DataTable<T extends Record<string, any>>({
       )}
 
       {/* Table */}
-      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div className="bg-theme-surface border border-theme-border rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-theme-muted border-b border-theme-border">
               <tr>
                 {columns.map(column => (
                   <th
                     key={column.key as string}
-                    className={`px-4 py-3 text-xs font-medium text-slate-700 uppercase tracking-wider ${getAlignmentClass(column.align)}`}
+                    className={`px-4 py-3 text-xs font-medium text-theme-text-primary uppercase tracking-wider ${getAlignmentClass(column.align)}`}
                     style={{ width: column.width }}
                   >
                     {column.sortable ? (
                       <button
                         onClick={() => handleSort(column.key)}
-                        className="flex items-center gap-1 hover:text-slate-900"
+                        className="flex items-center gap-1 hover:text-theme-text-primary"
                       >
                         {column.title}
                         {sortColumn === column.key && (
@@ -331,25 +331,25 @@ export function DataTable<T extends Record<string, any>>({
                   </th>
                 ))}
                 {actions.length > 0 && (
-                  <th className="px-4 py-3 text-xs font-medium text-slate-700 uppercase tracking-wider text-center">
+                  <th className="px-4 py-3 text-xs font-medium text-theme-text-primary uppercase tracking-wider text-center">
                     Actions
                   </th>
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-theme-border">
               {loading ? (
                 <tr>
                   <td colSpan={columns.length + (actions.length > 0 ? 1 : 0)} className="px-4 py-8 text-center">
-                    <div className="inline-flex items-center gap-2 text-slate-600">
-                      <div className="w-4 h-4 border-2 border-slate-300 border-t-blue-600 rounded-full animate-spin"></div>
+                    <div className="inline-flex items-center gap-2 text-theme-text-secondary">
+                      <div className="w-4 h-4 border-2 border-theme-border border-t-blue-600 rounded-full animate-spin"></div>
                       Loading...
                     </div>
                   </td>
                 </tr>
               ) : paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length + (actions.length > 0 ? 1 : 0)} className="px-4 py-8 text-center text-slate-600">
+                  <td colSpan={columns.length + (actions.length > 0 ? 1 : 0)} className="px-4 py-8 text-center text-theme-text-secondary">
                     {emptyMessage}
                   </td>
                 </tr>
@@ -357,13 +357,13 @@ export function DataTable<T extends Record<string, any>>({
                 paginatedData.map((row, index) => (
                   <tr
                     key={getRowId(row)}
-                    className={`hover:bg-slate-50 ${onRowClick ? "cursor-pointer" : ""}`}
+                    className={`hover:bg-theme-muted ${onRowClick ? "cursor-pointer" : ""}`}
                     onClick={() => onRowClick?.(row)}
                   >
                     {columns.map(column => (
                       <td
                         key={column.key as string}
-                        className={`px-4 py-3 text-sm text-slate-900 ${getAlignmentClass(column.align)}`}
+                        className={`px-4 py-3 text-sm text-theme-text-primary ${getAlignmentClass(column.align)}`}
                       >
                         {column.render ? column.render(row[column.key], row) : row[column.key]}
                       </td>
@@ -379,10 +379,10 @@ export function DataTable<T extends Record<string, any>>({
                                 action.onClick(row);
                               }}
                               disabled={action.disabled?.(row)}
-                              className={`p-1 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed ${
+                              className={`p-1 rounded hover:bg-theme-muted disabled:opacity-50 disabled:cursor-not-allowed ${
                                 action.variant === "danger" ? "text-red-600 hover:bg-red-50" :
-                                action.variant === "primary" ? "text-blue-600 hover:bg-blue-50" :
-                                "text-slate-600"
+                                action.variant === "primary" ? "text-theme-accent hover:bg-theme-muted" :
+                                "text-theme-text-secondary"
                               }`}
                               title={action.label}
                             >
@@ -403,14 +403,14 @@ export function DataTable<T extends Record<string, any>>({
       {/* Pagination */}
       {paginated && totalPages > 1 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-sm text-slate-600">
+          <div className="text-sm text-theme-text-secondary">
             Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, processedData.length)} of {processedData.length} results
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 border border-theme-border rounded-lg hover:bg-theme-muted disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -434,8 +434,8 @@ export function DataTable<T extends Record<string, any>>({
                     onClick={() => setCurrentPage(pageNum)}
                     className={`w-8 h-8 rounded-lg border ${
                       currentPage === pageNum
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "border-slate-200 hover:bg-slate-50"
+                        ? "bg-theme-accent text-white border-theme-accent"
+                        : "border-theme-border hover:bg-theme-muted"
                     }`}
                   >
                     {pageNum}
@@ -447,7 +447,7 @@ export function DataTable<T extends Record<string, any>>({
             <button
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 border border-theme-border rounded-lg hover:bg-theme-muted disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

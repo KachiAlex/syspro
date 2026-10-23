@@ -351,7 +351,7 @@ export default function TenantAdminDashboard() {
       leave: { icon: <Calendar className="w-4 h-4 text-white" />, bg: "bg-amber-500" },
       project: { icon: <FolderKanban className="w-4 h-4 text-white" />, bg: "bg-cyan-500" },
     };
-    return map[type] || { icon: <Activity className="w-4 h-4 text-white" />, bg: "bg-gray-500" };
+    return map[type] || { icon: <Activity className="w-4 h-4 text-white" />, bg: "bg-theme-muted" };
   };
 
   const formatTime = (time: string) => {
@@ -672,7 +672,7 @@ export default function TenantAdminDashboard() {
                   </thead>
                   <tbody className="divide-y divide-theme-border">
                     {transactions.map((tx) => (
-                      <tr key={tx.id} className="hover:bg-white/5 transition-colors">
+                      <tr key={tx.id} className="hover:bg-theme-surface/5 transition-colors">
                         <td className="py-3 px-2 text-sm text-theme-text-primary">{tx.description}</td>
                         <td className="py-3 px-2">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${tx.type === "income" ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>
@@ -717,7 +717,7 @@ export default function TenantAdminDashboard() {
                   </thead>
                   <tbody className="divide-y divide-theme-border">
                     {recentLeads.map((lead) => (
-                      <tr key={lead.id} className="hover:bg-white/5 transition-colors">
+                      <tr key={lead.id} className="hover:bg-theme-surface/5 transition-colors">
                         <td className="py-3 px-2 text-sm font-medium text-theme-text-primary">{lead.companyName}</td>
                         <td className="py-3 px-2 text-sm text-theme-text-secondary">{lead.contactName}</td>
                         <td className="py-3 px-2">

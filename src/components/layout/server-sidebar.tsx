@@ -81,13 +81,13 @@ export function ServerSidebar({ className }: { className?: string }) {
     <nav className={"space-y-2 " + (className || "")} aria-label="Tenant navigation">
       {items.map((it) => (
         <div key={it.href}>
-          <Link href={it.href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          <Link href={it.href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted">
             {it.title}
           </Link>
           {it.children && (
             <div className="ml-6 mt-1 space-y-1">
               {it.children.map((c) => (
-                <Link key={c.href} href={c.href} className="block px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 rounded-lg">
+                <Link key={c.href} href={c.href} className="block px-3 py-1.5 text-sm text-theme-text-secondary hover:bg-theme-muted rounded-lg">
                   {c.title}
                 </Link>
               ))}

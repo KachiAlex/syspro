@@ -73,11 +73,11 @@ export const AttendanceModal: React.FC<AttendanceModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Mark Attendance</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-theme-surface border-b border-theme-border p-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-theme-text-primary">Mark Attendance</h2>
+          <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-primary">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -93,7 +93,7 @@ export const AttendanceModal: React.FC<AttendanceModalProps> = ({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               <Calendar className="w-4 h-4 inline mr-1" />
               Date
             </label>
@@ -101,35 +101,35 @@ export const AttendanceModal: React.FC<AttendanceModalProps> = ({
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+              className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
               disabled={loading}
             />
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="bg-theme-surface rounded-lg border border-theme-border overflow-hidden">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-theme-muted border-b border-theme-border">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Employee</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Check In</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Check Out</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Notes</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary">Employee</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary">Check In</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary">Check Out</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary">Notes</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-theme-border">
                 {attendanceRecords.map((record) => (
-                  <tr key={record.employeeId} className="hover:bg-gray-50">
+                  <tr key={record.employeeId} className="hover:bg-theme-muted">
                     <td className="px-4 py-3">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{record.employeeName}</p>
+                        <p className="text-sm font-medium text-theme-text-primary">{record.employeeName}</p>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <select
                         value={record.status}
                         onChange={(e) => updateAttendance(record.employeeId, 'status', e.target.value)}
-                        className="bg-white w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="bg-theme-surface w-full px-2 py-1 border border-theme-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
                         disabled={loading}
                       >
                         <option value="present">Present</option>
@@ -143,7 +143,7 @@ export const AttendanceModal: React.FC<AttendanceModalProps> = ({
                         type="time"
                         value={record.checkIn}
                         onChange={(e) => updateAttendance(record.employeeId, 'checkIn', e.target.value)}
-                        className="bg-white w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="bg-theme-surface w-full px-2 py-1 border border-theme-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
                         disabled={loading || record.status === 'absent'}
                       />
                     </td>
@@ -152,7 +152,7 @@ export const AttendanceModal: React.FC<AttendanceModalProps> = ({
                         type="time"
                         value={record.checkOut}
                         onChange={(e) => updateAttendance(record.employeeId, 'checkOut', e.target.value)}
-                        className="bg-white w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="bg-theme-surface w-full px-2 py-1 border border-theme-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
                         disabled={loading || record.status === 'absent'}
                       />
                     </td>
@@ -162,7 +162,7 @@ export const AttendanceModal: React.FC<AttendanceModalProps> = ({
                         value={record.notes || ''}
                         onChange={(e) => updateAttendance(record.employeeId, 'notes', e.target.value)}
                         placeholder="Add notes..."
-                        className="bg-white w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="bg-theme-surface w-full px-2 py-1 border border-theme-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
                         disabled={loading}
                       />
                     </td>
@@ -176,14 +176,14 @@ export const AttendanceModal: React.FC<AttendanceModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Saving...' : 'Save Attendance'}
@@ -296,11 +296,11 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Request Leave</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-theme-surface border-b border-theme-border p-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-theme-text-primary">Request Leave</h2>
+          <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-primary">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -316,14 +316,14 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               <Users className="w-4 h-4 inline mr-1" />
               Employee *
             </label>
             <select
               value={formData.employeeId}
               onChange={(e) => setFormData(prev => ({ ...prev, employeeId: e.target.value }))}
-              className={`bg-white w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${ errors.employeeId ? 'border-red-500' : 'border-gray-300' } text-black`}
+              className={`bg-theme-surface w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent ${ errors.employeeId ? 'border-red-500' : 'border-theme-border' } text-theme-text-primary`}
               disabled={loading}
             >
               <option value="">Select an employee</option>
@@ -339,7 +339,7 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               Leave Type
             </label>
             <select
@@ -348,7 +348,7 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({
                 ...prev, 
                 leaveType: e.target.value as LeaveRequest['leaveType']
               }))}
-              className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+              className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
               disabled={loading}
             >
               <option value="annual">Annual Leave</option>
@@ -360,7 +360,7 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 <Calendar className="w-4 h-4 inline mr-1" />
                 Start Date *
               </label>
@@ -368,7 +368,7 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({
                 type="date"
                 value={formData.startDate}
                 onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                className={`bg-white w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${ errors.startDate ? 'border-red-500' : 'border-gray-300' } text-black`}
+                className={`bg-theme-surface w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent ${ errors.startDate ? 'border-red-500' : 'border-theme-border' } text-theme-text-primary`}
                 disabled={loading}
               />
               {errors.startDate && (
@@ -377,7 +377,7 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 <Calendar className="w-4 h-4 inline mr-1" />
                 End Date *
               </label>
@@ -385,7 +385,7 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({
                 type="date"
                 value={formData.endDate}
                 onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
-                className={`bg-white w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${ errors.endDate ? 'border-red-500' : 'border-gray-300' } text-black`}
+                className={`bg-theme-surface w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent ${ errors.endDate ? 'border-red-500' : 'border-theme-border' } text-theme-text-primary`}
                 min={formData.startDate}
                 disabled={loading}
               />
@@ -396,14 +396,14 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               Reason *
             </label>
             <textarea
               value={formData.reason}
               onChange={(e) => setFormData(prev => ({ ...prev, reason: e.target.value }))}
               rows={4}
-              className={`bg-white w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${ errors.reason ? 'border-red-500' : 'border-gray-300' } text-black`}
+              className={`bg-theme-surface w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent ${ errors.reason ? 'border-red-500' : 'border-theme-border' } text-theme-text-primary`}
               placeholder="Provide reason for leave request..."
               disabled={loading}
             />
@@ -416,14 +416,14 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Submitting...' : 'Submit Request'}

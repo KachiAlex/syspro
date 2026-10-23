@@ -25,12 +25,12 @@ export const VendorsFilters: React.FC<VendorsFiltersProps> = ({
   onSearchChange
 }) => {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+    <div className="bg-theme-surface rounded-lg border border-theme-border p-4 mb-6">
       <div className="flex flex-col md:flex-row gap-4">
         <select 
           value={statusFilter}
           onChange={(e) => onStatusChange(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg"
+          className="px-3 py-2 border border-theme-border rounded-lg"
         >
           {STATUSES.map(status => (
             <option key={status} value={status === 'All Status' ? 'All' : status}>{status}</option>
@@ -39,7 +39,7 @@ export const VendorsFilters: React.FC<VendorsFiltersProps> = ({
         <select 
           value={categoryFilter}
           onChange={(e) => onCategoryChange(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg"
+          className="px-3 py-2 border border-theme-border rounded-lg"
         >
           <option value="All">All Categories</option>
           {categories.map(cat => (
@@ -51,9 +51,9 @@ export const VendorsFilters: React.FC<VendorsFiltersProps> = ({
           placeholder="Search vendors..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg flex-1"
+          className="px-3 py-2 border border-theme-border rounded-lg flex-1"
         />
-        <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+        <button className="px-4 py-2 bg-theme-muted text-theme-text-primary rounded-lg hover:bg-theme-muted">
           <Filter className="w-4 h-4 mr-2 inline" />
           Filters
         </button>

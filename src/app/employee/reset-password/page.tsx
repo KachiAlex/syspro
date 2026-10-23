@@ -65,17 +65,17 @@ export default function ResetPasswordPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 px-4">
         <div className="max-w-md w-full">
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
+          <div className="bg-theme-surface rounded-2xl shadow-xl border border-theme-border p-8 text-center">
             <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-7 h-7 text-green-600" />
             </div>
-            <h1 className="text-xl font-bold text-gray-900 mb-2">Password Reset!</h1>
-            <p className="text-sm text-gray-600 mb-4">
+            <h1 className="text-xl font-bold text-theme-text-primary mb-2">Password Reset!</h1>
+            <p className="text-sm text-theme-text-secondary mb-4">
               Your password has been successfully changed. Redirecting to login...
             </p>
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+              className="inline-flex items-center gap-2 text-sm font-medium text-theme-accent hover:text-blue-700"
             >
               Go to login now
             </Link>
@@ -88,13 +88,13 @@ export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 px-4">
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+        <div className="bg-theme-surface rounded-2xl shadow-xl border border-theme-border p-8">
           <div className="flex flex-col items-center mb-6">
-            <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center mb-4">
+            <div className="w-14 h-14 bg-theme-accent rounded-xl flex items-center justify-center mb-4">
               <Lock className="w-7 h-7 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Reset Password</h1>
-            <p className="text-sm text-gray-500 mt-1">Choose a new password for your account</p>
+            <h1 className="text-2xl font-bold text-theme-text-primary">Reset Password</h1>
+            <p className="text-sm text-theme-text-secondary mt-1">Choose a new password for your account</p>
           </div>
 
           {error && (
@@ -107,7 +107,7 @@ export default function ResetPasswordPage() {
           {token && tenantSlug && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">New Password</label>
+                <label className="block text-sm font-medium text-theme-text-primary mb-1.5">New Password</label>
                 <input
                   type="password"
                   value={newPassword}
@@ -116,11 +116,11 @@ export default function ResetPasswordPage() {
                   required
                   disabled={loading}
                   minLength={8}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-theme-border rounded-lg text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm Password</label>
+                <label className="block text-sm font-medium text-theme-text-primary mb-1.5">Confirm Password</label>
                 <input
                   type="password"
                   value={confirmPassword}
@@ -129,13 +129,13 @@ export default function ResetPasswordPage() {
                   required
                   disabled={loading}
                   minLength={8}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-theme-border rounded-lg text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent"
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-2.5 bg-theme-accent text-white rounded-lg font-medium hover:bg-theme-accent-hover transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -152,7 +152,7 @@ export default function ResetPasswordPage() {
           <div className="mt-6 text-center">
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+              className="inline-flex items-center gap-2 text-sm font-medium text-theme-accent hover:text-blue-700"
             >
               Back to login
             </Link>

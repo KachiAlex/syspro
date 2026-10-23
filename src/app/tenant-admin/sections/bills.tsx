@@ -239,7 +239,7 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
       {/* Quick Actions */}
       <div className="bg-theme-muted rounded-xl border border-theme-border p-4 mb-6">
         <div className="flex flex-wrap gap-3">
-          <button onClick={() => setShowAddModal(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          <button onClick={() => setShowAddModal(true)} className="px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover">
             <Plus className="w-4 h-4 mr-2 inline" />
             Add Bill
           </button>
@@ -261,7 +261,7 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
       {/* Filters */}
       <div className="bg-theme-muted rounded-xl border border-theme-border p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg text-white">
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary">
             <option>All Status</option>
             <option>Draft</option>
             <option>Unpaid</option>
@@ -269,7 +269,7 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
             <option>Paid</option>
             <option>Overdue</option>
           </select>
-          <select value={vendorFilter} onChange={(e) => setVendorFilter(e.target.value)} className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg text-white">
+          <select value={vendorFilter} onChange={(e) => setVendorFilter(e.target.value)} className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary">
             <option value="All">All Vendors</option>
             {Object.entries(vendorsMap).map(([id, name]) => (
               <option key={id} value={name}>{name}</option>
@@ -280,7 +280,7 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
             placeholder="Search bills..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-white px-3 py-2 border border-theme-border rounded-lg text-black"
+            className="bg-theme-surface px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
           />
           <button className="px-4 py-2 bg-theme-border text-theme-text-primary rounded-lg hover:bg-theme-border">
             <Filter className="w-4 h-4 mr-2 inline" />
@@ -297,7 +297,7 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-theme-muted border-b">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-tertiary uppercase">Bill #</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-tertiary uppercase">Vendor</th>
@@ -340,7 +340,7 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
         <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Accounts Payable Aging</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {agingBuckets.map((bucket, idx) => (
-            <div key={idx} className="text-center p-4 bg-gray-50 rounded-lg">
+            <div key={idx} className="text-center p-4 bg-theme-muted rounded-lg">
               <p className={`text-2xl font-bold ${bucket.colorClass}`}>
                 {formatCurrency(bucket.amount)}
               </p>

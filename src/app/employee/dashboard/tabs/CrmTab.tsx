@@ -37,7 +37,7 @@ export function CrmTab({ profile }: { profile: EmployeeProfile }) {
   if (!tenantSlug) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-sm text-gray-500">Loading CRM...</div>
+        <div className="text-sm text-theme-text-secondary">Loading CRM...</div>
       </div>
     );
   }

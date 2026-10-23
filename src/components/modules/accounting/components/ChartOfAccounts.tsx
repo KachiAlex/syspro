@@ -32,8 +32,8 @@ export const ChartOfAccounts: React.FC<ChartOfAccountsProps> = ({
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Assets</h3>
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Assets</h3>
         <div className="space-y-2 text-sm">
           {assets.map((item, i) => (
             <div key={i} className="flex justify-between py-2 border-b">
@@ -44,8 +44,8 @@ export const ChartOfAccounts: React.FC<ChartOfAccountsProps> = ({
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Liabilities</h3>
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Liabilities</h3>
         <div className="space-y-2 text-sm">
           {liabilities.map((item, i) => (
             <div key={i} className="flex justify-between py-2 border-b">
@@ -56,8 +56,8 @@ export const ChartOfAccounts: React.FC<ChartOfAccountsProps> = ({
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Equity</h3>
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Equity</h3>
         <div className="space-y-2 text-sm">
           {equity.map((item, i) => (
             <div key={i} className="flex justify-between py-2 border-b">

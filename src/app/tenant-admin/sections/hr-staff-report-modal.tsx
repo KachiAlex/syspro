@@ -322,7 +322,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay p-4">
       <div className="bg-theme-bg w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl border border-theme-border shadow-xl">
         <div className="flex items-center justify-between p-6 border-b border-theme-border">
           <div>
@@ -345,7 +345,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
               <select
                 value={reportType}
                 onChange={(e) => setReportType(e.target.value)}
-                className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
               >
                 {REPORT_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>{t.label}</option>
@@ -358,7 +358,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
                 type="date"
                 value={reportDate}
                 onChange={(e) => setReportDate(e.target.value)}
-                className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
               />
             </div>
           </div>
@@ -377,7 +377,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
                 setTemplateSnapshot(selected);
                 setSectionValues({});
               }}
-              className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
             >
               {templates.map((t) => (
                 <option key={t.id} value={t.id}>{t.name}{t.isDefault ? ' (default)' : ''}</option>
@@ -398,7 +398,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
                   onClick={() => setInputMode(m.value as 'type' | 'voice')}
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
                     inputMode === m.value
-                      ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                      ? 'bg-blue-500/10 text-blue-400 border-theme-accent/30'
                       : 'bg-theme-muted text-theme-text-secondary border-theme-border hover:bg-theme-sidebar-hover'
                   }`}
                 >
@@ -413,7 +413,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
             <select
               value={submitterId}
               onChange={(e) => setSubmitterId(e.target.value)}
-              className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
             >
               <option value="">Select yourself</option>
               {employees.map((e) => (
@@ -439,7 +439,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isListening
                       ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-theme-accent text-white hover:bg-theme-accent-hover'
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -456,19 +456,19 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
             <div className="flex gap-4 border-b border-theme-border mb-3">
               <button
                 onClick={() => setActiveTab('transcript')}
-                className={`pb-2 text-sm font-medium ${activeTab === 'transcript' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-theme-text-secondary'}`}
+                className={`pb-2 text-sm font-medium ${activeTab === 'transcript' ? 'text-theme-accent border-b-2 border-theme-accent' : 'text-theme-text-secondary'}`}
               >
                 {inputMode === 'voice' ? 'Transcript' : 'Type Report'}
               </button>
               <button
                 onClick={() => setActiveTab('refined')}
-                className={`pb-2 text-sm font-medium ${activeTab === 'refined' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-theme-text-secondary'}`}
+                className={`pb-2 text-sm font-medium ${activeTab === 'refined' ? 'text-theme-accent border-b-2 border-theme-accent' : 'text-theme-text-secondary'}`}
               >
                 Refined Report
               </button>
               <button
                 onClick={() => setActiveTab('appraisal')}
-                className={`pb-2 text-sm font-medium ${activeTab === 'appraisal' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-theme-text-secondary'}`}
+                className={`pb-2 text-sm font-medium ${activeTab === 'appraisal' ? 'text-theme-accent border-b-2 border-theme-accent' : 'text-theme-text-secondary'}`}
               >
                 AI Appraisal
               </button>
@@ -482,7 +482,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
                     onChange={(e) => setTranscript(e.target.value)}
                     placeholder="Your exact dictated transcript appears here. Edit if needed, then click Refine with AI."
                     rows={6}
-                    className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
                   />
                 ) : (
                   <div className="space-y-4">
@@ -496,7 +496,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
                           value={sectionValues[section.key] || ''}
                           onChange={(e) => setSectionValues((prev) => ({ ...prev, [section.key]: e.target.value }))}
                           rows={section.inputType === 'bullets' ? 4 : 3}
-                          className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
                         />
                       </div>
                     ))}
@@ -521,7 +521,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
                     type="text"
                     value={refined.title}
                     onChange={(e) => setRefined({ ...refined, title: e.target.value })}
-                    className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
                   />
                 </div>
                 {(template?.sections || DEFAULT_TEMPLATE.sections).map((section: ReportTemplateSection) => (
@@ -531,7 +531,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
                       value={sectionValues[section.key] || (refined as any)[section.key] || ''}
                       onChange={(e) => setSectionValues((prev) => ({ ...prev, [section.key]: e.target.value }))}
                       rows={4}
-                      className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
                     />
                   </div>
                 ))}
@@ -623,7 +623,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
             <select
               value={hodId}
               onChange={(e) => setHodId(e.target.value)}
-              className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
             >
               <option value="">Select HOD</option>
               {hods.map((h) => (
@@ -671,7 +671,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover disabled:opacity-50"
             >
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               Submit Report

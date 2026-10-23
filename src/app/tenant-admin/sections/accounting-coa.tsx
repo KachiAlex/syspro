@@ -112,20 +112,20 @@ export default function ChartOfAccountsWorkspace({
   };
 
   return (
-    <div className="rounded-3xl border border-slate-100 bg-theme-muted p-8 shadow-sm">
+    <div className="rounded-3xl border border-theme-border bg-theme-muted p-8 shadow-sm">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">General Ledger</p>
-            <h2 className="text-2xl font-semibold text-gray-900">Chart of Accounts</h2>
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">General Ledger</p>
+            <h2 className="text-2xl font-semibold text-theme-text-primary">Chart of Accounts</h2>
           </div>
           <button
             onClick={() => {
               setFormData({ accountCode: "", accountName: "", accountType: "ASSET", description: "" });
               setShowForm(true);
             }}
-            className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+            className="inline-flex items-center gap-2 rounded-full bg-theme-accent px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-theme-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
           >
             <Plus className="h-4 w-4" />
             New Account
@@ -139,12 +139,12 @@ export default function ChartOfAccountsWorkspace({
             placeholder="Search by code or name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-black outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+            className="flex-1 rounded-lg border border-theme-border bg-theme-surface px-4 py-2 text-sm text-theme-text-primary outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
           />
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-black outline-none focus:border-blue-300"
+            className="rounded-lg border border-theme-border bg-theme-surface px-4 py-2 text-sm text-theme-text-primary outline-none focus:border-blue-300"
           >
             <option value="">All Types</option>
             <option value="ASSET">Assets</option>
@@ -169,8 +169,8 @@ export default function ChartOfAccountsWorkspace({
         {loading && (
           <div className="flex items-center justify-center py-12">
             <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-              <p className="text-sm text-slate-500">Loading chart of accounts...</p>
+              <Loader2 className="h-8 w-8 animate-spin text-theme-text-secondary" />
+              <p className="text-sm text-theme-text-tertiary">Loading chart of accounts...</p>
             </div>
           </div>
         )}
@@ -181,31 +181,31 @@ export default function ChartOfAccountsWorkspace({
             {Object.entries(accountsByType).map(([type, typeAccounts]) => (
               typeAccounts.length > 0 && (
                 <div key={type}>
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-600 mb-3">
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-theme-text-secondary mb-3">
                     {type}S
                   </h3>
                   <div className="space-y-2">
                     {typeAccounts.map((account) => (
                       <div
                         key={account.id}
-                        className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-4 hover:bg-slate-100 transition-colors"
+                        className="flex items-center justify-between rounded-lg border border-theme-border bg-theme-muted p-4 hover:bg-theme-muted transition-colors"
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3">
                             <div>
-                              <p className="font-mono text-sm font-semibold text-gray-900">
+                              <p className="font-mono text-sm font-semibold text-theme-text-primary">
                                 {account.accountCode}
                               </p>
-                              <p className="text-sm text-slate-600">{account.accountName}</p>
+                              <p className="text-sm text-theme-text-secondary">{account.accountName}</p>
                             </div>
                           </div>
                           {account.description && (
-                            <p className="text-xs text-slate-500 mt-1">{account.description}</p>
+                            <p className="text-xs text-theme-text-tertiary mt-1">{account.description}</p>
                           )}
                         </div>
                         <div className="flex items-center gap-2 ml-4">
                           {account.isSystemAccount && (
-                            <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-slate-200 text-slate-700">
+                            <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-theme-muted text-theme-text-primary">
                               System
                             </span>
                           )}
@@ -221,7 +221,7 @@ export default function ChartOfAccountsWorkspace({
                           )}
                           <button
                             onClick={() => setSelectedAccount(account)}
-                            className="text-slate-400 hover:text-slate-600"
+                            className="text-theme-text-secondary hover:text-theme-text-secondary"
                           >
                             <Eye className="h-4 w-4" />
                           </button>
@@ -239,16 +239,16 @@ export default function ChartOfAccountsWorkspace({
         {showForm && (
           <>
             <div
-              className="fixed inset-0 bg-black/40 z-40"
+              className="fixed inset-0 bg-theme-overlay z-40"
               onClick={() => setShowForm(false)}
             />
-            <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-xl z-50 overflow-y-auto rounded-l-3xl">
+            <div className="fixed right-0 top-0 h-full w-full max-w-md bg-theme-surface shadow-xl z-50 overflow-y-auto rounded-l-3xl">
               <div className="p-8 space-y-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-gray-900">New Account</h3>
+                  <h3 className="text-xl font-semibold text-theme-text-primary">New Account</h3>
                   <button
                     onClick={() => setShowForm(false)}
-                    className="text-slate-600 hover:text-gray-700"
+                    className="text-theme-text-secondary hover:text-theme-text-primary"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -257,7 +257,7 @@ export default function ChartOfAccountsWorkspace({
                 <div className="space-y-4">
                   {/* Account Code */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    <label className="block text-sm font-semibold text-theme-text-primary mb-2">
                       Account Code *
                     </label>
                     <input
@@ -266,14 +266,14 @@ export default function ChartOfAccountsWorkspace({
                       onChange={(e) =>
                         setFormData({ ...formData, accountCode: e.target.value })
                       }
-                      className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-300 text-black"
+                      className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm outline-none focus:border-blue-300 text-theme-text-primary"
                       placeholder="1000"
                     />
                   </div>
 
                   {/* Account Name */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    <label className="block text-sm font-semibold text-theme-text-primary mb-2">
                       Account Name *
                     </label>
                     <input
@@ -282,14 +282,14 @@ export default function ChartOfAccountsWorkspace({
                       onChange={(e) =>
                         setFormData({ ...formData, accountName: e.target.value })
                       }
-                      className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-300 text-black"
+                      className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm outline-none focus:border-blue-300 text-theme-text-primary"
                       placeholder="Cash"
                     />
                   </div>
 
                   {/* Account Type */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    <label className="block text-sm font-semibold text-theme-text-primary mb-2">
                       Type *
                     </label>
                     <select
@@ -297,7 +297,7 @@ export default function ChartOfAccountsWorkspace({
                       onChange={(e) =>
                         setFormData({ ...formData, accountType: e.target.value as any })
                       }
-                      className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
+                      className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
                     >
                       <option value="ASSET">Asset</option>
                       <option value="LIABILITY">Liability</option>
@@ -309,7 +309,7 @@ export default function ChartOfAccountsWorkspace({
 
                   {/* Description */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    <label className="block text-sm font-semibold text-theme-text-primary mb-2">
                       Description
                     </label>
                     <textarea
@@ -317,23 +317,23 @@ export default function ChartOfAccountsWorkspace({
                       onChange={(e) =>
                         setFormData({ ...formData, description: e.target.value })
                       }
-                      className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-300 text-black"
+                      className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm outline-none focus:border-blue-300 text-theme-text-primary"
                       rows={3}
                     />
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-3 pt-4 border-t border-slate-200">
+                <div className="flex gap-3 pt-4 border-t border-theme-border">
                   <button
                     onClick={() => setShowForm(false)}
-                    className="flex-1 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-slate-50"
+                    className="flex-1 rounded-lg border border-theme-border px-4 py-2 text-sm font-semibold text-theme-text-primary hover:bg-theme-muted"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSaveAccount}
-                    className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-black hover:bg-blue-700 flex items-center justify-center gap-2"
+                    className="flex-1 rounded-lg bg-theme-accent px-4 py-2 text-sm font-semibold text-theme-text-primary hover:bg-theme-accent-hover flex items-center justify-center gap-2"
                   >
                     <Check className="h-4 w-4" />
                     Create Account

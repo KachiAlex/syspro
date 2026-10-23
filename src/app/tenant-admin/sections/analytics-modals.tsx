@@ -30,12 +30,12 @@ export function ViewReportModal({
   if (!isOpen || !report) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+      <div className="w-full max-w-md rounded-xl bg-theme-surface shadow-xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 sticky top-0 bg-white">
-          <h2 className="text-lg font-semibold text-gray-900">{report.name}</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
+        <div className="flex items-center justify-between border-b border-theme-border px-6 py-4 sticky top-0 bg-theme-surface">
+          <h2 className="text-lg font-semibold text-theme-text-primary">{report.name}</h2>
+          <button onClick={onClose} className="text-theme-text-tertiary hover:text-theme-text-primary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -43,38 +43,38 @@ export function ViewReportModal({
         {/* Content */}
         <div className="space-y-6 px-6 py-6">
           <div>
-            <p className="text-xs font-medium text-slate-500">Report Type</p>
-            <p className="text-sm font-semibold text-gray-900 mt-1 capitalize">{report.type}</p>
+            <p className="text-xs font-medium text-theme-text-tertiary">Report Type</p>
+            <p className="text-sm font-semibold text-theme-text-primary mt-1 capitalize">{report.type}</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {report.createdAt && (
               <div>
-                <p className="text-xs font-medium text-slate-500">Created</p>
-                <p className="text-sm text-slate-600 mt-1">{new Date(report.createdAt).toLocaleDateString()}</p>
+                <p className="text-xs font-medium text-theme-text-tertiary">Created</p>
+                <p className="text-sm text-theme-text-secondary mt-1">{new Date(report.createdAt).toLocaleDateString()}</p>
               </div>
             )}
             {report.dataPoints && (
               <div>
-                <p className="text-xs font-medium text-slate-500">Data Points</p>
-                <p className="text-sm text-slate-600 mt-1">{report.dataPoints.toLocaleString()}</p>
+                <p className="text-xs font-medium text-theme-text-tertiary">Data Points</p>
+                <p className="text-sm text-theme-text-secondary mt-1">{report.dataPoints.toLocaleString()}</p>
               </div>
             )}
           </div>
 
           {report.rows && (
             <div className="rounded-lg bg-blue-50 p-3">
-              <p className="text-xs font-medium text-gray-900">Report includes {report.rows} rows of data</p>
+              <p className="text-xs font-medium text-theme-text-primary">Report includes {report.rows} rows of data</p>
             </div>
           )}
 
           {/* Download Section */}
           <div>
-            <p className="text-xs font-medium text-slate-500 mb-2">Download Report</p>
+            <p className="text-xs font-medium text-theme-text-tertiary mb-2">Download Report</p>
             <select
               value={downloadFormat}
               onChange={(e) => setDownloadFormat(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
             >
               <option value="pdf">PDF</option>
               <option value="excel">Excel</option>
@@ -83,7 +83,7 @@ export function ViewReportModal({
             </select>
             <button
               onClick={() => onDownload?.(downloadFormat)}
-              className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-blue-700 flex items-center justify-center gap-2"
+              className="w-full rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-accent-hover flex items-center justify-center gap-2"
             >
               <Download className="w-4 h-4" />
               Download as {downloadFormat.toUpperCase()}
@@ -92,18 +92,18 @@ export function ViewReportModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4 flex gap-3 sticky bottom-0 bg-white">
+        <div className="border-t border-theme-border px-6 py-4 flex gap-3 sticky bottom-0 bg-theme-surface">
           {onEdit && (
             <button
               onClick={onEdit}
-              className="flex-1 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-slate-200"
+              className="flex-1 rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-elevated"
             >
               Edit
             </button>
           )}
           <button
             onClick={onClose}
-            className={`${onEdit ? "flex-1" : "w-full"} rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-slate-200`}
+            className={`${onEdit ? "flex-1" : "w-full"} rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-elevated`}
           >
             Close
           </button>
@@ -153,12 +153,12 @@ export function EditReportModal({
   if (!isOpen || !report) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+      <div className="w-full max-w-md rounded-xl bg-theme-surface shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">Edit Report</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
+        <div className="flex items-center justify-between border-b border-theme-border px-6 py-4">
+          <h2 className="text-lg font-semibold text-theme-text-primary">Edit Report</h2>
+          <button onClick={onClose} className="text-theme-text-tertiary hover:text-theme-text-primary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -166,7 +166,7 @@ export function EditReportModal({
         {/* Content */}
         <div className="space-y-4 px-6 py-6">
           <div>
-            <label htmlFor="reportName" className="block text-sm font-medium text-gray-900 mb-2">
+            <label htmlFor="reportName" className="block text-sm font-medium text-theme-text-primary mb-2">
               Report Name
             </label>
             <input
@@ -175,43 +175,43 @@ export function EditReportModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Q4 Sales Analysis"
-              className={`bg-white w-full rounded-lg border px-3 py-2 text-sm ${ errors.name ? "border-rose-300 bg-rose-50" : "border-slate-200" }`}
+              className={`bg-theme-surface w-full rounded-lg border px-3 py-2 text-sm ${ errors.name ? "border-rose-300 bg-rose-50" : "border-theme-border" }`}
             />
             {errors.name && <p className="text-xs text-rose-600 mt-1">{errors.name}</p>}
           </div>
 
           <div>
-            <label htmlFor="schedule" className="block text-sm font-medium text-gray-900 mb-2">
+            <label htmlFor="schedule" className="block text-sm font-medium text-theme-text-primary mb-2">
               Auto-Generate Schedule
             </label>
             <select
               id="schedule"
               value={schedule}
               onChange={(e) => setSchedule(e.target.value)}
-              className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm"
             >
               <option value="never">Never</option>
               <option value="daily">Daily</option>
               <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
             </select>
-            <p className="text-xs text-slate-500 mt-1">Reports will be automatically regenerated on this schedule</p>
+            <p className="text-xs text-theme-text-tertiary mt-1">Reports will be automatically regenerated on this schedule</p>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4 flex gap-3">
+        <div className="border-t border-theme-border px-6 py-4 flex gap-3">
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-slate-200 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-elevated disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-accent-hover disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>
@@ -253,31 +253,31 @@ export function RunExportNowModal({
   if (!isOpen || !exportJob) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+      <div className="w-full max-w-md rounded-xl bg-theme-surface shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">Run Export Now</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
+        <div className="flex items-center justify-between border-b border-theme-border px-6 py-4">
+          <h2 className="text-lg font-semibold text-theme-text-primary">Run Export Now</h2>
+          <button onClick={onClose} className="text-theme-text-tertiary hover:text-theme-text-primary">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
         <div className="space-y-4 px-6 py-6">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-theme-text-secondary">
             Run the <strong>{exportJob.name}</strong> export now?
           </p>
 
           <div>
-            <label htmlFor="exportFormat" className="block text-sm font-medium text-gray-900 mb-2">
+            <label htmlFor="exportFormat" className="block text-sm font-medium text-theme-text-primary mb-2">
               Export Format
             </label>
             <select
               id="exportFormat"
               value={selectedFormat}
               onChange={(e) => setSelectedFormat(e.target.value)}
-              className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm"
             >
               <option value="csv">CSV</option>
               <option value="excel">Excel</option>
@@ -286,24 +286,24 @@ export function RunExportNowModal({
             </select>
           </div>
 
-          <div className="rounded-lg bg-blue-50 p-3 text-xs text-gray-900">
+          <div className="rounded-lg bg-blue-50 p-3 text-xs text-theme-text-primary">
             The export will be sent to your configured delivery channels (Email, Webhook, etc.)
           </div>
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4 flex gap-3">
+        <div className="border-t border-theme-border px-6 py-4 flex gap-3">
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-slate-200 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-elevated disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={() => onRun(selectedFormat)}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-accent-hover disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>
@@ -365,12 +365,12 @@ export function EditExportModal({
   if (!isOpen || !exportJob) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+      <div className="w-full max-w-md rounded-xl bg-theme-surface shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">Edit Export</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
+        <div className="flex items-center justify-between border-b border-theme-border px-6 py-4">
+          <h2 className="text-lg font-semibold text-theme-text-primary">Edit Export</h2>
+          <button onClick={onClose} className="text-theme-text-tertiary hover:text-theme-text-primary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -378,7 +378,7 @@ export function EditExportModal({
         {/* Content */}
         <div className="space-y-4 px-6 py-6">
           <div>
-            <label htmlFor="exportName" className="block text-sm font-medium text-gray-900 mb-2">
+            <label htmlFor="exportName" className="block text-sm font-medium text-theme-text-primary mb-2">
               Export Name
             </label>
             <input
@@ -387,21 +387,21 @@ export function EditExportModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Daily Sales Export"
-              className={`bg-white w-full rounded-lg border px-3 py-2 text-sm ${ errors.name ? "border-rose-300 bg-rose-50" : "border-slate-200" }`}
+              className={`bg-theme-surface w-full rounded-lg border px-3 py-2 text-sm ${ errors.name ? "border-rose-300 bg-rose-50" : "border-theme-border" }`}
             />
             {errors.name && <p className="text-xs text-rose-600 mt-1">{errors.name}</p>}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label htmlFor="frequency" className="block text-sm font-medium text-gray-900 mb-2">
+              <label htmlFor="frequency" className="block text-sm font-medium text-theme-text-primary mb-2">
                 Frequency
               </label>
               <select
                 id="frequency"
                 value={frequency}
                 onChange={(e) => setFrequency(e.target.value)}
-                className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
+                className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
               >
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
@@ -410,14 +410,14 @@ export function EditExportModal({
             </div>
 
             <div>
-              <label htmlFor="format" className="block text-sm font-medium text-gray-900 mb-2">
+              <label htmlFor="format" className="block text-sm font-medium text-theme-text-primary mb-2">
                 Format
               </label>
               <select
                 id="format"
                 value={format}
                 onChange={(e) => setFormat(e.target.value)}
-                className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
+                className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
               >
                 <option value="csv">CSV</option>
                 <option value="excel">Excel</option>
@@ -429,18 +429,18 @@ export function EditExportModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4 flex gap-3">
+        <div className="border-t border-theme-border px-6 py-4 flex gap-3">
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-slate-200 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-elevated disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-accent-hover disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>

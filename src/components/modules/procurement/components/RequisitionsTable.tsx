@@ -31,27 +31,27 @@ export const RequisitionsTable: React.FC<RequisitionsTableProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+    <div className="bg-theme-surface rounded-lg border border-theme-border p-6 mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Purchase Requisitions</h3>
-        <button className="text-blue-600 hover:text-blue-800 text-sm">View All</button>
+        <h3 className="text-lg font-semibold text-theme-text-primary">Purchase Requisitions</h3>
+        <button className="text-theme-accent hover:text-blue-800 text-sm">View All</button>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-theme-muted border-b">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Requisition ID</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Requester</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Requisition ID</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Requester</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Department</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Items</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Value</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {requisitions.map((req, i) => (
-              <tr key={i} className="hover:bg-gray-50">
+              <tr key={i} className="hover:bg-theme-muted">
                 <td className="px-4 py-3">{req.id}</td>
                 <td className="px-4 py-3">{req.requester}</td>
                 <td className="px-4 py-3">{req.department}</td>
@@ -66,7 +66,7 @@ export const RequisitionsTable: React.FC<RequisitionsTableProps> = ({
                   <div className="flex gap-2">
                     <button 
                       onClick={() => onView(req)}
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-theme-accent hover:text-blue-800"
                       title="View requisition"
                     >
                       <Eye className="w-4 h-4" />

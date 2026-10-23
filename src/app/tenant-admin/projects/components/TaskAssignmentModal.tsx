@@ -125,14 +125,14 @@ export const TaskAssignmentModal: React.FC<TaskAssignmentModalProps> = ({
   if (!isOpen || !task) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-theme-surface border-b border-theme-border p-6 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Assign Task</h2>
-            <p className="text-sm text-gray-600 mt-1">{task.title}</p>
+            <h2 className="text-xl font-bold text-theme-text-primary">Assign Task</h2>
+            <p className="text-sm text-theme-text-secondary mt-1">{task.title}</p>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors">
+          <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-primary transition-colors">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -146,11 +146,11 @@ export const TaskAssignmentModal: React.FC<TaskAssignmentModalProps> = ({
 
           {/* Currently assigned */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">
+            <h3 className="text-sm font-semibold text-theme-text-primary mb-3">
               Currently Assigned ({assigned.length})
             </h3>
             {assigned.length === 0 ? (
-              <p className="text-sm text-gray-500">No one is assigned to this task yet.</p>
+              <p className="text-sm text-theme-text-secondary">No one is assigned to this task yet.</p>
             ) : (
               <div className="space-y-2">
                 {assigned.map((a) => (
@@ -159,8 +159,8 @@ export const TaskAssignmentModal: React.FC<TaskAssignmentModalProps> = ({
                     className="flex items-center justify-between px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg"
                   >
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{a.name}</p>
-                      <p className="text-xs text-gray-600">{a.department || 'No department'}</p>
+                      <p className="text-sm font-medium text-theme-text-primary">{a.name}</p>
+                      <p className="text-xs text-theme-text-secondary">{a.department || 'No department'}</p>
                     </div>
                     <button
                       onClick={() => handleRemove(a.assignmentId)}
@@ -175,19 +175,19 @@ export const TaskAssignmentModal: React.FC<TaskAssignmentModalProps> = ({
             )}
           </div>
 
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">
+          <div className="border-t border-theme-border pt-6">
+            <h3 className="text-sm font-semibold text-theme-text-primary mb-3">
               Assign Staff — Any Department
             </h3>
 
             {/* Filters */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Department</label>
+                <label className="block text-xs font-medium text-theme-text-primary mb-1">Department</label>
                 <select
                   value={departmentFilter}
                   onChange={(e) => setDepartmentFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary bg-theme-surface focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 >
                   <option value="">All Departments</option>
                   {departments.map((d) => (
@@ -196,44 +196,44 @@ export const TaskAssignmentModal: React.FC<TaskAssignmentModalProps> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Search by name</label>
+                <label className="block text-xs font-medium text-theme-text-primary mb-1">Search by name</label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-theme-text-tertiary" />
                   <input
                     type="text"
                     value={nameSearch}
                     onChange={(e) => setNameSearch(e.target.value)}
                     placeholder="Employee name..."
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-10 pr-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary bg-theme-surface focus:outline-none focus:ring-2 focus:ring-theme-accent"
                   />
                 </div>
               </div>
             </div>
 
             {/* Employee list */}
-            <div className="border border-gray-200 rounded-lg max-h-64 overflow-y-auto">
+            <div className="border border-theme-border rounded-lg max-h-64 overflow-y-auto">
               {loading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                  <Loader2 className="w-5 h-5 animate-spin text-theme-text-tertiary" />
                 </div>
               ) : filteredEmployees.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-8">No matching employees found</p>
+                <p className="text-sm text-theme-text-secondary text-center py-8">No matching employees found</p>
               ) : (
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-theme-border">
                   {filteredEmployees.map((emp) => (
                     <label
                       key={emp.id}
-                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer"
+                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-theme-muted cursor-pointer"
                     >
                       <input
                         type="checkbox"
                         checked={selectedIds.has(emp.id)}
                         onChange={() => toggleSelect(emp.id)}
-                        className="w-4 h-4 text-blue-600 rounded"
+                        className="w-4 h-4 text-theme-accent rounded"
                       />
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{emp.name}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm font-medium text-theme-text-primary">{emp.name}</p>
+                        <p className="text-xs text-theme-text-secondary">
                           {emp.jobTitle} · {departmentNameById.get(emp.departmentId) || 'No department'}
                         </p>
                       </div>
@@ -244,13 +244,13 @@ export const TaskAssignmentModal: React.FC<TaskAssignmentModalProps> = ({
             </div>
 
             <div className="flex justify-end gap-3 mt-4">
-              <span className="text-sm text-gray-600 self-center">
+              <span className="text-sm text-theme-text-secondary self-center">
                 {selectedIds.size} selected
               </span>
               <button
                 onClick={handleAssign}
                 disabled={selectedIds.size === 0 || assigning}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
               >
                 <UserPlus className="w-4 h-4" />
                 {assigning ? 'Assigning...' : 'Assign Selected'}
@@ -258,10 +258,10 @@ export const TaskAssignmentModal: React.FC<TaskAssignmentModalProps> = ({
             </div>
           </div>
 
-          <div className="flex justify-end pt-2 border-t border-gray-200">
+          <div className="flex justify-end pt-2 border-t border-theme-border">
             <button
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors"
             >
               Close
             </button>

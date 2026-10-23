@@ -45,8 +45,8 @@ export default function ProjectsTimeline({ projects, tenantSlug }: ProjectsTimel
       case 'active': return 'bg-blue-100 text-blue-800 border border-blue-200';
       case 'completed': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
       case 'on hold': return 'bg-amber-100 text-amber-800 border border-amber-200';
-      case 'planned': return 'bg-slate-100 text-slate-800 border border-slate-200';
-      default: return 'bg-slate-100 text-slate-800 border border-slate-200';
+      case 'planned': return 'bg-theme-muted text-theme-text-primary border border-theme-border';
+      default: return 'bg-theme-muted text-theme-text-primary border border-theme-border';
     }
   };
 
@@ -62,11 +62,11 @@ export default function ProjectsTimeline({ projects, tenantSlug }: ProjectsTimel
     <div className="space-y-6">
       <div className="flex gap-4 items-end">
         <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-900 mb-2">Sort By</label>
+          <label className="block text-sm font-medium text-theme-text-primary mb-2">Sort By</label>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as 'startDate' | 'endDate')}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+            className="w-full rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-theme-text-primary focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 transition"
           >
             <option value="startDate">Start Date</option>
             <option value="endDate">End Date</option>
@@ -76,10 +76,10 @@ export default function ProjectsTimeline({ projects, tenantSlug }: ProjectsTimel
 
       <div className="space-y-4">
         {sortedProjects.length === 0 ? (
-          <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
+          <div className="rounded-lg border border-theme-border bg-theme-muted p-12 text-center">
             <Calendar className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No projects to display</h3>
-            <p className="text-gray-600">Create a project to see the timeline</p>
+            <h3 className="text-lg font-semibold text-theme-text-primary mb-2">No projects to display</h3>
+            <p className="text-theme-text-secondary">Create a project to see the timeline</p>
           </div>
         ) : (
           sortedProjects.map(project => {
@@ -87,11 +87,11 @@ export default function ProjectsTimeline({ projects, tenantSlug }: ProjectsTimel
             const progress = getProgressPercentage(project.startDate, project.endDate);
             
             return (
-              <div key={project.id} className="rounded-lg border border-gray-200 bg-theme-muted p-6 hover:shadow-md transition">
+              <div key={project.id} className="rounded-lg border border-theme-border bg-theme-muted p-6 hover:shadow-md transition">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{project.name}</h3>
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                    <h3 className="text-lg font-semibold text-theme-text-primary mb-2">{project.name}</h3>
+                    <div className="flex items-center gap-4 text-sm text-theme-text-secondary mb-3">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         <span>{new Date(project.startDate).toLocaleDateString()}</span>
@@ -111,10 +111,10 @@ export default function ProjectsTimeline({ projects, tenantSlug }: ProjectsTimel
                 <div className="space-y-3">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-900">Timeline Progress</span>
-                      <span className="text-sm font-semibold text-gray-900">{Math.round(progress)}%</span>
+                      <span className="text-sm font-medium text-theme-text-primary">Timeline Progress</span>
+                      <span className="text-sm font-semibold text-theme-text-primary">{Math.round(progress)}%</span>
                     </div>
-                    <div className="h-3 w-full rounded-full bg-gray-200 overflow-hidden">
+                    <div className="h-3 w-full rounded-full bg-theme-muted overflow-hidden">
                       <div
                         className="h-full bg-blue-500 transition-all"
                         style={{ width: `${progress}%` }}
@@ -144,7 +144,7 @@ export default function ProjectsTimeline({ projects, tenantSlug }: ProjectsTimel
       </div>
 
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-2 flex items-center gap-2">
           <AlertCircle className="w-5 h-5" />
           Timeline Legend
         </h3>

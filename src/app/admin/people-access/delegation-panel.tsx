@@ -114,7 +114,7 @@ export default function DelegationPanel({ tenantSlug }: { tenantSlug?: string | 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader className="w-5 h-5 animate-spin text-gray-400" />
+        <Loader className="w-5 h-5 animate-spin text-theme-text-tertiary" />
       </div>
     );
   }
@@ -123,7 +123,7 @@ export default function DelegationPanel({ tenantSlug }: { tenantSlug?: string | 
     <div className="space-y-6">
       <div className="border rounded-lg p-6">
         <h3 className="text-lg font-semibold mb-1">Delegate a Role</h3>
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-theme-text-secondary mb-4">
           Grants the role until the expiry date — used for acting/stand-in
           coverage. The assignment and reason are recorded in role history.
         </p>
@@ -137,7 +137,7 @@ export default function DelegationPanel({ tenantSlug }: { tenantSlug?: string | 
             <select
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
               disabled={submitting}
             >
               <option value="">Choose a user…</option>
@@ -153,7 +153,7 @@ export default function DelegationPanel({ tenantSlug }: { tenantSlug?: string | 
             <select
               value={roleId}
               onChange={(e) => setRoleId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
               disabled={submitting}
             >
               <option value="">Choose a role…</option>
@@ -169,7 +169,7 @@ export default function DelegationPanel({ tenantSlug }: { tenantSlug?: string | 
               value={expiresAt}
               min={new Date().toISOString().split("T")[0]}
               onChange={(e) => setExpiresAt(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
               disabled={submitting}
             />
           </div>
@@ -180,7 +180,7 @@ export default function DelegationPanel({ tenantSlug }: { tenantSlug?: string | 
               value={justification}
               onChange={(e) => setJustification(e.target.value)}
               placeholder="e.g. Covering while Jane is on leave"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
               disabled={submitting}
             />
           </div>
@@ -196,20 +196,20 @@ export default function DelegationPanel({ tenantSlug }: { tenantSlug?: string | 
       <div className="border rounded-lg p-6">
         <h3 className="text-lg font-semibold mb-4">Active & Expired Delegations</h3>
         {delegations.length === 0 ? (
-          <p className="text-sm text-gray-500">No delegations recorded.</p>
+          <p className="text-sm text-theme-text-secondary">No delegations recorded.</p>
         ) : (
           <div className="space-y-2">
             {delegations.map((d) => (
               <div
                 key={d.id}
-                className={`flex items-center justify-between p-3 border rounded-lg ${d.expired ? "opacity-50 bg-gray-50" : ""}`}
+                className={`flex items-center justify-between p-3 border rounded-lg ${d.expired ? "opacity-50 bg-theme-muted" : ""}`}
               >
                 <div>
                   <div className="font-medium text-sm">
                     {d.userName || d.userEmail || d.userId}
-                    <span className="text-gray-500 font-normal"> → {d.roleName}</span>
+                    <span className="text-theme-text-secondary font-normal"> → {d.roleName}</span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                  <div className="text-xs text-theme-text-secondary mt-0.5 flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     {d.expired ? "Expired" : "Expires"}{" "}
                     {d.expiresAt ? new Date(d.expiresAt).toLocaleDateString() : "—"}

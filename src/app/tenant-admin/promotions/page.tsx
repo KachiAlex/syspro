@@ -70,11 +70,11 @@ export default function PromotionsPage() {
           <BadgePercent className="h-6 w-6 text-sky-400" />
           <div>
             <h1 className="text-xl font-semibold">POS Promotions</h1>
-            <p className="text-sm text-slate-400">Time-boxed discounts the till applies automatically at checkout</p>
+            <p className="text-sm text-theme-text-secondary">Time-boxed discounts the till applies automatically at checkout</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-1.5 text-xs text-slate-400">
+          <label className="flex items-center gap-1.5 text-xs text-theme-text-secondary">
             <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} />
             include inactive
           </label>
@@ -87,11 +87,11 @@ export default function PromotionsPage() {
 
       {error && <div className="flex items-center gap-2 rounded bg-rose-500/10 px-4 py-3 text-rose-400"><AlertCircle className="h-4 w-4" />{error}</div>}
       {msg && <div className="rounded bg-emerald-500/10 px-4 py-3 text-emerald-400">{msg}</div>}
-      {loading && <Loader2 className="h-5 w-5 animate-spin text-slate-400" />}
+      {loading && <Loader2 className="h-5 w-5 animate-spin text-theme-text-secondary" />}
 
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-xs text-slate-400">
+          <tr className="text-left text-xs text-theme-text-secondary">
             {["Code", "Name", "Rule", "Window", "Status", ""].map((h) => (
               <th key={h} className="px-3 py-2">{h}</th>
             ))}
@@ -99,16 +99,16 @@ export default function PromotionsPage() {
         </thead>
         <tbody>
           {promos.map((p) => (
-            <tr key={p.id} className="border-t border-slate-800">
+            <tr key={p.id} className="border-t border-theme-border">
               <td className="px-3 py-2 font-mono text-xs">{p.code}</td>
               <td className="px-3 py-2">{p.name}</td>
-              <td className="px-3 py-2 text-slate-300">{describe(p)}</td>
-              <td className="px-3 py-2 text-slate-400">
+              <td className="px-3 py-2 text-theme-text-primary">{describe(p)}</td>
+              <td className="px-3 py-2 text-theme-text-secondary">
                 {String(p.active_from).slice(0, 10)} → {String(p.active_to).slice(0, 10)}
               </td>
               <td className="px-3 py-2">
                 <span className={`rounded px-2 py-0.5 text-xs ${
-                  live(p) ? "bg-emerald-500/15 text-emerald-400" : "bg-slate-500/15 text-slate-400"}`}>
+                  live(p) ? "bg-emerald-500/15 text-emerald-400" : "bg-theme-muted/15 text-theme-text-secondary"}`}>
                   {live(p) ? "live" : p.is_active ? "scheduled" : "inactive"}
                 </span>
               </td>
@@ -133,7 +133,7 @@ export default function PromotionsPage() {
             </tr>
           ))}
           {promos.length === 0 && !loading && (
-            <tr><td colSpan={6} className="px-3 py-6 text-center text-slate-500">
+            <tr><td colSpan={6} className="px-3 py-6 text-center text-theme-text-tertiary">
               No promotions — create a time-boxed discount for the till.
             </td></tr>
           )}
@@ -141,20 +141,20 @@ export default function PromotionsPage() {
       </table>
 
       {showNew && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-5 space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+          <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-lg border border-theme-border bg-theme-surface p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">New promotion</h2>
               <button onClick={() => setShowNew(false)}><X className="h-4 w-4" /></button>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <input className="rounded bg-slate-800 px-3 py-2 text-sm uppercase" placeholder="Code (e.g. EASTER10)"
+              <input className="rounded bg-theme-muted px-3 py-2 text-sm uppercase" placeholder="Code (e.g. EASTER10)"
                 value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} />
-              <input className="rounded bg-slate-800 px-3 py-2 text-sm" placeholder="Name"
+              <input className="rounded bg-theme-muted px-3 py-2 text-sm" placeholder="Name"
                 value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
-            <label className="block text-xs text-slate-400">Type
-              <select className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+            <label className="block text-xs text-theme-text-secondary">Type
+              <select className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                 value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
                 <option value="percent">Percent off</option>
                 <option value="amount">Fixed amount off</option>
@@ -163,51 +163,51 @@ export default function PromotionsPage() {
               </select>
             </label>
             {form.type === "percent" && (
-              <label className="block text-xs text-slate-400">Percent off
-                <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="block text-xs text-theme-text-secondary">Percent off
+                <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={form.percent} onChange={(e) => setForm({ ...form, percent: e.target.value })} />
               </label>
             )}
             {form.type === "amount" && (
-              <label className="block text-xs text-slate-400">Amount off
-                <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="block text-xs text-theme-text-secondary">Amount off
+                <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
               </label>
             )}
             {form.type === "bogo" && (
               <div className="grid grid-cols-2 gap-2">
-                <label className="text-xs text-slate-400">Buy qty
-                  <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+                <label className="text-xs text-theme-text-secondary">Buy qty
+                  <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                     value={form.buyQty} onChange={(e) => setForm({ ...form, buyQty: e.target.value })} />
                 </label>
-                <label className="text-xs text-slate-400">Get free qty
-                  <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+                <label className="text-xs text-theme-text-secondary">Get free qty
+                  <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                     value={form.getQty} onChange={(e) => setForm({ ...form, getQty: e.target.value })} />
                 </label>
               </div>
             )}
             {form.type === "bundle" && (
               <div className="grid grid-cols-2 gap-2">
-                <label className="text-xs text-slate-400">Min qty
-                  <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+                <label className="text-xs text-theme-text-secondary">Min qty
+                  <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                     value={form.minQty} onChange={(e) => setForm({ ...form, minQty: e.target.value })} />
                 </label>
-                <label className="text-xs text-slate-400">Bundle price each
-                  <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+                <label className="text-xs text-theme-text-secondary">Bundle price each
+                  <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                     value={form.bundlePrice} onChange={(e) => setForm({ ...form, bundlePrice: e.target.value })} />
                 </label>
               </div>
             )}
-            <input className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+            <input className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
               placeholder="Restrict to SKUs (comma-separated, blank = all)"
               value={form.skus} onChange={(e) => setForm({ ...form, skus: e.target.value })} />
             <div className="grid grid-cols-2 gap-2">
-              <label className="text-xs text-slate-400">Active from
-                <input type="date" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Active from
+                <input type="date" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={form.activeFrom} onChange={(e) => setForm({ ...form, activeFrom: e.target.value })} />
               </label>
-              <label className="text-xs text-slate-400">Active to
-                <input type="date" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Active to
+                <input type="date" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={form.activeTo} onChange={(e) => setForm({ ...form, activeTo: e.target.value })} />
               </label>
             </div>

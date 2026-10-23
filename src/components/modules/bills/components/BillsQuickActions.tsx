@@ -17,11 +17,11 @@ export const BillsQuickActions: React.FC<BillsQuickActionsProps> = ({
   onExport
 }) => {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+    <div className="bg-theme-surface rounded-lg border border-theme-border p-4 mb-6">
       <div className="flex flex-wrap gap-3">
         <button 
           onClick={onAddBill}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover"
         >
           <Plus className="w-4 h-4 mr-2 inline" />
           Add Bill
@@ -42,7 +42,7 @@ export const BillsQuickActions: React.FC<BillsQuickActionsProps> = ({
         </button>
         <button 
           onClick={onExport}
-          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+          className="px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted"
         >
           <Download className="w-4 h-4 mr-2 inline" />
           Export

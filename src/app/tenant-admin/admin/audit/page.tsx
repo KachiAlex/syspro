@@ -46,24 +46,24 @@ export default function AdminAuditPage() {
       {!loading && !error && logs.length === 0 && <p>No audit logs found.</p>}
       {!loading && logs.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+          <table className="min-w-full bg-theme-surface border border-theme-border rounded-lg">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Timestamp</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Action</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">User</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Resource</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Details</th>
+              <tr className="bg-theme-muted">
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Timestamp</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Action</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">User</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Resource</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Details</th>
               </tr>
             </thead>
             <tbody>
               {logs.map((log) => (
-                <tr key={log.id} className="border-t border-gray-100">
-                  <td className="px-4 py-2 text-sm text-gray-900">{new Date(log.timestamp).toLocaleString()}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{log.action}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{log.user}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{log.resource}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{log.details || "-"}</td>
+                <tr key={log.id} className="border-t border-theme-border">
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{new Date(log.timestamp).toLocaleString()}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{log.action}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{log.user}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{log.resource}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{log.details || "-"}</td>
                 </tr>
               ))}
             </tbody>

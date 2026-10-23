@@ -203,7 +203,7 @@ export function EmployeeDashboard() {
           </div>
 
           {/* Active sub-tab content */}
-          <div className="bg-white rounded-xl border border-gray-200">
+          <div className="bg-theme-surface rounded-xl border border-theme-border">
             {selfSub === 'attendance' && <AttendanceTab profile={profileData} />}
             {selfSub === 'tasks' && <TasksTab profile={profileData} />}
             {selfSub === 'expenses' && <ExpensesTab profile={profileData} />}

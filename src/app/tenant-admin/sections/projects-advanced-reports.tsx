@@ -130,15 +130,15 @@ export default function ProjectsAdvancedReports({ projects, tenantSlug }: Projec
       {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 text-sm">{error}</div>}
 
       {/* Report Generator */}
-      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Advanced Report Generator</h3>
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Advanced Report Generator</h3>
         <div className="flex gap-4 flex-col md:flex-row items-end">
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-900 mb-2">Report Type</label>
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">Report Type</label>
             <select
               value={reportType}
               onChange={(e) => setReportType(e.target.value as any)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+              className="w-full rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-theme-text-primary focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 transition"
             >
               <option value="performance">Performance Report</option>
               <option value="financial">Financial Report</option>
@@ -149,7 +149,7 @@ export default function ProjectsAdvancedReports({ projects, tenantSlug }: Projec
           <button
             onClick={generateReport}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            className="inline-flex items-center gap-2 rounded-lg bg-theme-accent px-4 py-2 text-sm font-semibold text-white hover:bg-theme-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
           >
             <BarChart3 className="w-4 h-4" />
             Generate Report
@@ -158,8 +158,8 @@ export default function ProjectsAdvancedReports({ projects, tenantSlug }: Projec
       </div>
 
       {/* Export Options */}
-      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Export Report</h3>
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Export Report</h3>
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => handleExportReport('pdf')}
@@ -177,7 +177,7 @@ export default function ProjectsAdvancedReports({ projects, tenantSlug }: Projec
           </button>
           <button
             onClick={() => handleExportReport('excel')}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-theme-accent px-4 py-2 text-sm font-semibold text-white hover:bg-theme-accent-hover transition-colors"
           >
             <Download className="w-4 h-4" />
             Export as Excel
@@ -186,57 +186,57 @@ export default function ProjectsAdvancedReports({ projects, tenantSlug }: Projec
       </div>
 
       {/* Performance Metrics */}
-      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5" />
           Performance Metrics
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-            <p className="text-sm text-blue-600 mb-1">Total Projects</p>
-            <p className="text-2xl font-bold text-gray-900">{performanceMetrics.totalProjects}</p>
+            <p className="text-sm text-theme-accent mb-1">Total Projects</p>
+            <p className="text-2xl font-bold text-theme-text-primary">{performanceMetrics.totalProjects}</p>
           </div>
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
             <p className="text-sm text-emerald-600 mb-1">Completed</p>
-            <p className="text-2xl font-bold text-gray-900">{performanceMetrics.completedProjects}</p>
+            <p className="text-2xl font-bold text-theme-text-primary">{performanceMetrics.completedProjects}</p>
           </div>
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
             <p className="text-sm text-amber-600 mb-1">Active</p>
-            <p className="text-2xl font-bold text-gray-900">{performanceMetrics.activeProjects}</p>
+            <p className="text-2xl font-bold text-theme-text-primary">{performanceMetrics.activeProjects}</p>
           </div>
           <div className="rounded-lg border border-violet-200 bg-violet-50 p-4">
             <p className="text-sm text-violet-600 mb-1">Completion Rate</p>
-            <p className="text-2xl font-bold text-gray-900">{performanceMetrics.completionRate}%</p>
+            <p className="text-2xl font-bold text-theme-text-primary">{performanceMetrics.completionRate}%</p>
           </div>
         </div>
       </div>
 
       {/* Financial Metrics */}
-      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4 flex items-center gap-2">
           <DollarSign className="w-5 h-5" />
           Financial Metrics
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-            <p className="text-sm text-blue-600 mb-1">Total Budget</p>
-            <p className="text-2xl font-bold text-gray-900">${(financialMetrics.totalBudget / 1000).toFixed(0)}K</p>
+            <p className="text-sm text-theme-accent mb-1">Total Budget</p>
+            <p className="text-2xl font-bold text-theme-text-primary">${(financialMetrics.totalBudget / 1000).toFixed(0)}K</p>
           </div>
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
             <p className="text-sm text-amber-600 mb-1">Total Spent</p>
-            <p className="text-2xl font-bold text-gray-900">${(financialMetrics.totalSpent / 1000).toFixed(0)}K</p>
+            <p className="text-2xl font-bold text-theme-text-primary">${(financialMetrics.totalSpent / 1000).toFixed(0)}K</p>
           </div>
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
             <p className="text-sm text-emerald-600 mb-1">Remaining</p>
-            <p className="text-2xl font-bold text-gray-900">${(financialMetrics.remaining / 1000).toFixed(0)}K</p>
+            <p className="text-2xl font-bold text-theme-text-primary">${(financialMetrics.remaining / 1000).toFixed(0)}K</p>
           </div>
         </div>
-        <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <div className="mt-4 rounded-lg border border-theme-border bg-theme-muted p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-900">Budget Utilization</span>
-            <span className="text-sm font-semibold text-gray-900">{financialMetrics.budgetUtilization}%</span>
+            <span className="text-sm font-medium text-theme-text-primary">Budget Utilization</span>
+            <span className="text-sm font-semibold text-theme-text-primary">{financialMetrics.budgetUtilization}%</span>
           </div>
-          <div className="h-3 w-full rounded-full bg-gray-200 overflow-hidden">
+          <div className="h-3 w-full rounded-full bg-theme-muted overflow-hidden">
             <div
               className={`h-full transition-all ${
                 financialMetrics.budgetUtilization > 90 ? 'bg-red-500' :
@@ -250,41 +250,41 @@ export default function ProjectsAdvancedReports({ projects, tenantSlug }: Projec
       </div>
 
       {/* Timeline Metrics */}
-      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4 flex items-center gap-2">
           <Calendar className="w-5 h-5" />
           Timeline Metrics
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
             <p className="text-sm text-emerald-600 mb-1">On Time Projects</p>
-            <p className="text-2xl font-bold text-gray-900">{timelineMetrics.onTimeProjects} ({timelineMetrics.onTimePercentage}%)</p>
+            <p className="text-2xl font-bold text-theme-text-primary">{timelineMetrics.onTimeProjects} ({timelineMetrics.onTimePercentage}%)</p>
           </div>
           <div className="rounded-lg border border-red-200 bg-red-50 p-4">
             <p className="text-sm text-red-600 mb-1">Overdue Projects</p>
-            <p className="text-2xl font-bold text-gray-900">{timelineMetrics.overdueProjects} ({timelineMetrics.overduePercentage}%)</p>
+            <p className="text-2xl font-bold text-theme-text-primary">{timelineMetrics.overdueProjects} ({timelineMetrics.overduePercentage}%)</p>
           </div>
         </div>
       </div>
 
       {/* Resource Metrics */}
-      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4 flex items-center gap-2">
           <Users className="w-5 h-5" />
           Resource Metrics
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-            <p className="text-sm text-blue-600 mb-1">Total Team Members</p>
-            <p className="text-2xl font-bold text-gray-900">{resourceMetrics.totalTeamMembers}</p>
+            <p className="text-sm text-theme-accent mb-1">Total Team Members</p>
+            <p className="text-2xl font-bold text-theme-text-primary">{resourceMetrics.totalTeamMembers}</p>
           </div>
           <div className="rounded-lg border border-violet-200 bg-violet-50 p-4">
             <p className="text-sm text-violet-600 mb-1">Avg Team Size</p>
-            <p className="text-2xl font-bold text-gray-900">{resourceMetrics.averageTeamSize}</p>
+            <p className="text-2xl font-bold text-theme-text-primary">{resourceMetrics.averageTeamSize}</p>
           </div>
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
             <p className="text-sm text-amber-600 mb-1">Resource Utilization</p>
-            <p className="text-2xl font-bold text-gray-900">{resourceMetrics.resourceUtilization}%</p>
+            <p className="text-2xl font-bold text-theme-text-primary">{resourceMetrics.resourceUtilization}%</p>
           </div>
         </div>
       </div>

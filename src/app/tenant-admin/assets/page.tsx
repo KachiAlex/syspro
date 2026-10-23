@@ -122,7 +122,7 @@ export default function AssetsPage() {
           <Building2 className="h-6 w-6 text-sky-400" />
           <div>
             <h1 className="text-xl font-semibold">Fixed Assets</h1>
-            <p className="text-sm text-slate-400">Register, depreciation schedule, disposal</p>
+            <p className="text-sm text-theme-text-secondary">Register, depreciation schedule, disposal</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -139,14 +139,14 @@ export default function AssetsPage() {
 
       {error && <div className="flex items-center gap-2 rounded bg-rose-500/10 px-4 py-3 text-rose-400"><AlertCircle className="h-4 w-4" />{error}</div>}
       {msg && <div className="rounded bg-emerald-500/10 px-4 py-3 text-emerald-400">{msg}</div>}
-      {loading && <Loader2 className="h-5 w-5 animate-spin text-slate-400" />}
+      {loading && <Loader2 className="h-5 w-5 animate-spin text-theme-text-secondary" />}
 
       <div className="grid grid-cols-3 gap-4">
         {[
           ["Total cost", totals.cost], ["Accum. depreciation", totals.accum], ["Net book value", totals.nbv],
         ].map(([label, v]) => (
-          <div key={label as string} className="rounded-lg border border-slate-700 bg-slate-900/60 px-4 py-3">
-            <div className="text-xs text-slate-400">{label}</div>
+          <div key={label as string} className="rounded-lg border border-theme-border bg-theme-surface/60 px-4 py-3">
+            <div className="text-xs text-theme-text-secondary">{label}</div>
             <div className="text-lg font-semibold">{fmt(v as number)}</div>
           </div>
         ))}
@@ -154,7 +154,7 @@ export default function AssetsPage() {
 
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-xs text-slate-400">
+          <tr className="text-left text-xs text-theme-text-secondary">
             {["Asset", "Category", "Acquired", "Cost", "Accum. dep.", "NBV", "Method", "Status", ""].map((h) => (
               <th key={h} className="px-3 py-2">{h}</th>
             ))}
@@ -162,22 +162,22 @@ export default function AssetsPage() {
         </thead>
         <tbody>
           {assets.map((a) => (
-            <tr key={a.id} className="border-t border-slate-800">
+            <tr key={a.id} className="border-t border-theme-border">
               <td className="px-3 py-2">
                 <button onClick={() => openSchedule(a)} className="text-sky-400 hover:underline">
                   {a.asset_no} {a.name}
                 </button>
               </td>
-              <td className="px-3 py-2 text-slate-400">{a.category ?? "—"}</td>
+              <td className="px-3 py-2 text-theme-text-secondary">{a.category ?? "—"}</td>
               <td className="px-3 py-2">{String(a.acquisition_date).slice(0, 10)}</td>
               <td className="px-3 py-2">{fmt(a.cost)}</td>
               <td className="px-3 py-2">{fmt(a.accumulated_depreciation)}</td>
               <td className="px-3 py-2">{fmt(a.net_book_value)}</td>
-              <td className="px-3 py-2 text-slate-400">{a.method === "straight_line" ? "SL" : "RB"}</td>
+              <td className="px-3 py-2 text-theme-text-secondary">{a.method === "straight_line" ? "SL" : "RB"}</td>
               <td className="px-3 py-2">
                 <span className={`rounded px-2 py-0.5 text-xs ${
                   a.status === "active" ? "bg-emerald-500/15 text-emerald-400"
-                  : a.status === "disposed" ? "bg-slate-500/15 text-slate-400"
+                  : a.status === "disposed" ? "bg-theme-muted/15 text-theme-text-secondary"
                   : "bg-sky-500/15 text-sky-400"}`}>{a.status}</span>
               </td>
               <td className="px-3 py-2">
@@ -190,41 +190,41 @@ export default function AssetsPage() {
             </tr>
           ))}
           {assets.length === 0 && !loading && (
-            <tr><td colSpan={9} className="px-3 py-6 text-center text-slate-500">No assets registered</td></tr>
+            <tr><td colSpan={9} className="px-3 py-6 text-center text-theme-text-tertiary">No assets registered</td></tr>
           )}
         </tbody>
       </table>
 
       {showNew && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-5 space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+          <div className="w-full max-w-md rounded-lg border border-theme-border bg-theme-surface p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">New asset</h2>
               <button onClick={() => setShowNew(false)}><X className="h-4 w-4" /></button>
             </div>
-            <input className="w-full rounded bg-slate-800 px-3 py-2 text-sm" placeholder="Asset name"
+            <input className="w-full rounded bg-theme-muted px-3 py-2 text-sm" placeholder="Asset name"
               value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <input className="w-full rounded bg-slate-800 px-3 py-2 text-sm" placeholder="Category (optional)"
+            <input className="w-full rounded bg-theme-muted px-3 py-2 text-sm" placeholder="Category (optional)"
               value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
             <div className="grid grid-cols-2 gap-2">
-              <label className="text-xs text-slate-400">Acquired
-                <input type="date" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Acquired
+                <input type="date" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={form.acquisitionDate} onChange={(e) => setForm({ ...form, acquisitionDate: e.target.value })} />
               </label>
-              <label className="text-xs text-slate-400">Cost
-                <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Cost
+                <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
               </label>
-              <label className="text-xs text-slate-400">Salvage value
-                <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Salvage value
+                <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={form.salvageValue} onChange={(e) => setForm({ ...form, salvageValue: e.target.value })} />
               </label>
-              <label className="text-xs text-slate-400">Useful life (months)
-                <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Useful life (months)
+                <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={form.usefulLifeMonths} onChange={(e) => setForm({ ...form, usefulLifeMonths: e.target.value })} />
               </label>
-              <label className="text-xs text-slate-400 col-span-2">Method
-                <select className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary col-span-2">Method
+                <select className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={form.method} onChange={(e) => setForm({ ...form, method: e.target.value })}>
                   <option value="straight_line">Straight line</option>
                   <option value="reducing_balance">Reducing balance (2×)</option>
@@ -240,22 +240,22 @@ export default function AssetsPage() {
       )}
 
       {schedule && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+          <div className="max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-lg border border-theme-border bg-theme-surface p-5">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">{schedule.asset.asset_no} — depreciation schedule</h2>
               <button onClick={() => setSchedule(null)}><X className="h-4 w-4" /></button>
             </div>
             <table className="mt-3 w-full text-sm">
-              <thead><tr className="text-left text-xs text-slate-400">
+              <thead><tr className="text-left text-xs text-theme-text-secondary">
                 <th className="py-1">Period</th><th className="text-right">Amount</th><th className="text-right">Status</th>
               </tr></thead>
               <tbody>
                 {schedule.rows.map((r) => (
-                  <tr key={r.id} className="border-t border-slate-800">
+                  <tr key={r.id} className="border-t border-theme-border">
                     <td className="py-1.5">{String(r.period_date).slice(0, 10)}</td>
                     <td className="text-right">{fmt(r.amount)}</td>
-                    <td className={`text-right ${r.status === "posted" ? "text-emerald-400" : "text-slate-400"}`}>{r.status}</td>
+                    <td className={`text-right ${r.status === "posted" ? "text-emerald-400" : "text-theme-text-secondary"}`}>{r.status}</td>
                   </tr>
                 ))}
               </tbody>
@@ -265,26 +265,26 @@ export default function AssetsPage() {
       )}
 
       {disposeFor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-sm rounded-lg border border-slate-700 bg-slate-900 p-5 space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+          <div className="w-full max-w-sm rounded-lg border border-theme-border bg-theme-surface p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">Dispose {disposeFor.asset_no}</h2>
               <button onClick={() => setDisposeFor(null)}><X className="h-4 w-4" /></button>
             </div>
-            <p className="text-sm text-slate-400">NBV {fmt(disposeFor.net_book_value)} — gain/loss posts to GL.</p>
-            <label className="block text-xs text-slate-400">Date
-              <input type="date" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+            <p className="text-sm text-theme-text-secondary">NBV {fmt(disposeFor.net_book_value)} — gain/loss posts to GL.</p>
+            <label className="block text-xs text-theme-text-secondary">Date
+              <input type="date" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                 value={disposeForm.disposalDate} onChange={(e) => setDisposeForm({ ...disposeForm, disposalDate: e.target.value })} />
             </label>
-            <label className="block text-xs text-slate-400">Method
-              <select className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+            <label className="block text-xs text-theme-text-secondary">Method
+              <select className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                 value={disposeForm.method} onChange={(e) => setDisposeForm({ ...disposeForm, method: e.target.value })}>
                 <option value="sale">Sale</option><option value="scrap">Scrap</option>
                 <option value="donation">Donation</option><option value="write_off">Write-off</option>
               </select>
             </label>
-            <label className="block text-xs text-slate-400">Proceeds
-              <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+            <label className="block text-xs text-theme-text-secondary">Proceeds
+              <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                 value={disposeForm.proceeds} onChange={(e) => setDisposeForm({ ...disposeForm, proceeds: e.target.value })} />
             </label>
             <button onClick={submitDispose} disabled={busy}

@@ -7,7 +7,7 @@ import { AlertCircle, CheckCircle2, Loader2, Play, Plus, Download } from "lucide
 const fmt = (n: number) =>
   `₦${Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
 
-const inputCls = "rounded bg-slate-800 px-3 py-2 text-sm w-full";
+const inputCls = "rounded bg-theme-muted px-3 py-2 text-sm w-full";
 const btnCls = "flex items-center gap-1.5 rounded bg-sky-600 px-3 py-1.5 text-sm hover:bg-sky-500 disabled:opacity-50";
 
 export default function DeferredAccountingPage() {
@@ -88,7 +88,7 @@ export default function DeferredAccountingPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Deferred Revenue &amp; Expense</h1>
-          <p className="text-sm text-slate-400">Spread income/costs across service periods — recognition posts to the GL monthly.</p>
+          <p className="text-sm text-theme-text-secondary">Spread income/costs across service periods — recognition posts to the GL monthly.</p>
         </div>
         <div className="flex gap-2">
           <a className={btnCls} href={`/api/finance/deferred?tenantSlug=${encodeURIComponent(tenantSlug)}&view=report&format=csv`}>
@@ -100,7 +100,7 @@ export default function DeferredAccountingPage() {
           <button className={btnCls} onClick={() => setShowNew(!showNew)}>
             <Plus className="h-3.5 w-3.5" /> New
           </button>
-          {loading && <Loader2 className="h-5 w-5 animate-spin text-slate-400" />}
+          {loading && <Loader2 className="h-5 w-5 animate-spin text-theme-text-secondary" />}
         </div>
       </div>
 
@@ -117,7 +117,7 @@ export default function DeferredAccountingPage() {
       </div>
 
       {showNew && (
-        <div className="rounded border border-slate-800 p-4 space-y-3">
+        <div className="rounded border border-theme-border p-4 space-y-3">
           <div className="font-medium text-sm">New Deferred Item</div>
           <div className="grid gap-2 sm:grid-cols-3">
             <select className={inputCls} value={form.direction} onChange={(e) => setForm({ ...form, direction: e.target.value })}>
@@ -130,8 +130,8 @@ export default function DeferredAccountingPage() {
             <input className={inputCls} placeholder="Party (optional)" value={form.party} onChange={(e) => setForm({ ...form, party: e.target.value })} />
             <input className={inputCls} placeholder="Item (optional)" value={form.item} onChange={(e) => setForm({ ...form, item: e.target.value })} />
             <input className={inputCls} placeholder="Total amount" value={form.totalAmount} onChange={(e) => setForm({ ...form, totalAmount: e.target.value })} />
-            <label className="block"><span className="block text-xs text-slate-400">Service start</span><input className={inputCls} type="date" value={form.serviceStartDate} onChange={(e) => setForm({ ...form, serviceStartDate: e.target.value })} /></label>
-            <label className="block"><span className="block text-xs text-slate-400">Service end</span><input className={inputCls} type="date" value={form.serviceEndDate} onChange={(e) => setForm({ ...form, serviceEndDate: e.target.value })} /></label>
+            <label className="block"><span className="block text-xs text-theme-text-secondary">Service start</span><input className={inputCls} type="date" value={form.serviceStartDate} onChange={(e) => setForm({ ...form, serviceStartDate: e.target.value })} /></label>
+            <label className="block"><span className="block text-xs text-theme-text-secondary">Service end</span><input className={inputCls} type="date" value={form.serviceEndDate} onChange={(e) => setForm({ ...form, serviceEndDate: e.target.value })} /></label>
             <input className={inputCls} placeholder="Recognition acct code" value={form.recognitionAccountCode} onChange={(e) => setForm({ ...form, recognitionAccountCode: e.target.value })} />
             <input className={inputCls} placeholder="Deferred acct (2400/1800 default)" value={form.deferredAccountCode} onChange={(e) => setForm({ ...form, deferredAccountCode: e.target.value })} />
           </div>
@@ -142,7 +142,7 @@ export default function DeferredAccountingPage() {
       )}
 
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-slate-400 border-b border-slate-800">
+        <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border">
           <th className="py-2 pr-3">Direction</th><th className="py-2 pr-3">Document</th><th className="py-2 pr-3">Party / Item</th>
           <th className="py-2 pr-3">Period</th><th className="py-2 pr-3 text-right">Total</th><th className="py-2 pr-3 text-right">Recognized</th>
           <th className="py-2 pr-3 text-right">Remaining</th><th className="py-2">Status</th>
@@ -151,7 +151,7 @@ export default function DeferredAccountingPage() {
           {items.map((d) => {
             const remaining = Number(d.total_amount) - Number(d.recognized_amount);
             return (
-              <tr key={d.id} className="border-b border-slate-800/60">
+              <tr key={d.id} className="border-b border-theme-border/60">
                 <td className="py-2 pr-3 capitalize">{d.direction}</td>
                 <td className="py-2 pr-3 font-mono text-xs">{d.document_type}:{String(d.document_id).slice(0, 8)}</td>
                 <td className="py-2 pr-3">{d.party ?? "—"}{d.item ? ` / ${d.item}` : ""}</td>
@@ -163,7 +163,7 @@ export default function DeferredAccountingPage() {
               </tr>
             );
           })}
-          {!items.length && !loading && <tr><td colSpan={8} className="py-6 text-center text-slate-500">No deferred items</td></tr>}
+          {!items.length && !loading && <tr><td colSpan={8} className="py-6 text-center text-theme-text-tertiary">No deferred items</td></tr>}
         </tbody>
       </table>
     </div>

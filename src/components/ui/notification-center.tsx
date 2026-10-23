@@ -113,9 +113,9 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
     switch (priority) {
       case 'urgent': return 'border-red-500 bg-red-50';
       case 'high': return 'border-orange-500 bg-orange-50';
-      case 'medium': return 'border-blue-500 bg-blue-50';
-      case 'low': return 'border-gray-500 bg-gray-50';
-      default: return 'border-gray-300 bg-white';
+      case 'medium': return 'border-theme-accent bg-blue-50';
+      case 'low': return 'border-theme-border bg-theme-muted';
+      default: return 'border-theme-border bg-theme-surface';
     }
   };
 
@@ -124,10 +124,10 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
       case 'success': return <Check className="w-4 h-4 text-green-600" />;
       case 'error': return <X className="w-4 h-4 text-red-600" />;
       case 'warning': return <Clock className="w-4 h-4 text-yellow-600" />;
-      case 'system': return <Settings className="w-4 h-4 text-gray-600" />;
-      case 'user': return <User className="w-4 h-4 text-blue-600" />;
+      case 'system': return <Settings className="w-4 h-4 text-theme-text-secondary" />;
+      case 'user': return <User className="w-4 h-4 text-theme-accent" />;
       case 'collaboration': return <Users className="w-4 h-4 text-purple-600" />;
-      default: return <Bell className="w-4 h-4 text-gray-600" />;
+      default: return <Bell className="w-4 h-4 text-theme-text-secondary" />;
     }
   };
 
@@ -148,8 +148,8 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
   const NotificationItem = ({ notification }: { notification: Notification }) => (
     <div
       className={`p-4 border-l-4 ${getPriorityColor(notification.priority)} ${
-        !notification.read ? 'bg-white' : 'bg-gray-50'
-      } hover:bg-gray-100 cursor-pointer transition-colors`}
+        !notification.read ? 'bg-theme-surface' : 'bg-theme-muted'
+      } hover:bg-theme-muted cursor-pointer transition-colors`}
       onClick={() => handleNotificationClick(notification)}
     >
       <div className="flex items-start gap-3">
@@ -160,22 +160,22 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <h4 className={`text-sm font-medium truncate ${
-              !notification.read ? 'text-gray-900' : 'text-gray-600'
+              !notification.read ? 'text-theme-text-primary' : 'text-theme-text-secondary'
             }`}>
               {notification.title}
             </h4>
             <div className="flex items-center gap-2">
               {getCategoryIcon(notification.category)}
-              <span className="text-xs text-gray-500">{formatTime(notification.timestamp)}</span>
+              <span className="text-xs text-theme-text-secondary">{formatTime(notification.timestamp)}</span>
             </div>
           </div>
           
-          <p className={`text-sm text-gray-600 mb-2 ${!notification.read ? 'font-medium' : ''}`}>
+          <p className={`text-sm text-theme-text-secondary mb-2 ${!notification.read ? 'font-medium' : ''}`}>
             {notification.message}
           </p>
           
           {notification.actionText && (
-            <button className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+            <button className="text-xs text-theme-accent hover:text-blue-800 font-medium">
               {notification.actionText}
             </button>
           )}
@@ -186,7 +186,7 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
                 notification.priority === 'urgent' ? 'bg-red-100 text-red-800' :
                 notification.priority === 'high' ? 'bg-orange-100 text-orange-800' :
                 notification.priority === 'medium' ? 'bg-blue-100 text-blue-800' :
-                'bg-gray-100 text-gray-800'
+                'bg-theme-muted text-theme-text-primary'
               }`}>
                 {notification.priority}
               </span>
@@ -199,7 +199,7 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
                     e.stopPropagation();
                     handleMarkAsRead(notification.id);
                   }}
-                  className="p-1 text-gray-400 hover:text-gray-600"
+                  className="p-1 text-theme-text-tertiary hover:text-theme-text-secondary"
                   title="Mark as read"
                 >
                   <Check className="w-4 h-4" />
@@ -210,7 +210,7 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
                   e.stopPropagation();
                   handleArchive(notification.id);
                 }}
-                className="p-1 text-gray-400 hover:text-gray-600"
+                className="p-1 text-theme-text-tertiary hover:text-theme-text-secondary"
                 title="Archive"
               >
                 <Archive className="w-4 h-4" />
@@ -220,7 +220,7 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
                   e.stopPropagation();
                   handleDelete(notification.id);
                 }}
-                className="p-1 text-gray-400 hover:text-red-600"
+                className="p-1 text-theme-text-tertiary hover:text-red-600"
                 title="Delete"
               >
                 <Trash2 className="w-4 h-4" />
@@ -237,7 +237,7 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
       {/* Notification Bell */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
+        className="relative p-2 text-theme-text-secondary hover:text-theme-text-primary transition-colors"
       >
         {unreadCount > 0 ? (
           <BellRing className="w-5 h-5" />
@@ -258,11 +258,11 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
 
       {/* Notification Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-96 bg-theme-surface border border-theme-border rounded-lg shadow-lg z-50 max-h-96 overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between p-4 border-b border-theme-border">
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+              <h3 className="text-lg font-semibold text-theme-text-primary">Notifications</h3>
               {unreadCount > 0 && (
                 <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                   {unreadCount} new
@@ -274,7 +274,7 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllAsRead}
-                  className="text-sm text-blue-600 hover:text-blue-800"
+                  className="text-sm text-theme-accent hover:text-blue-800"
                 >
                   Mark all read
                 </button>
@@ -282,14 +282,14 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
               
               <button
                 onClick={() => setShowSettings(!showSettings)}
-                className="p-1 text-gray-400 hover:text-gray-600"
+                className="p-1 text-theme-text-tertiary hover:text-theme-text-secondary"
               >
                 <Settings className="w-4 h-4" />
               </button>
               
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 text-gray-400 hover:text-gray-600"
+                className="p-1 text-theme-text-tertiary hover:text-theme-text-secondary"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -298,8 +298,8 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
 
           {/* Settings Panel */}
           {showSettings && preferences && (
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <h4 className="text-sm font-medium text-gray-900 mb-3">Notification Settings</h4>
+            <div className="p-4 border-b border-theme-border bg-theme-muted">
+              <h4 className="text-sm font-medium text-theme-text-primary mb-3">Notification Settings</h4>
               <div className="space-y-2">
                 <label className="flex items-center gap-2">
                   <input
@@ -310,9 +310,9 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
                       setPreferences(newPrefs);
                       notificationManager.updatePreferences(newPrefs);
                     }}
-                    className="rounded border-gray-300"
+                    className="rounded border-theme-border"
                   />
-                  <span className="text-sm text-gray-700">Email notifications</span>
+                  <span className="text-sm text-theme-text-primary">Email notifications</span>
                 </label>
                 
                 <label className="flex items-center gap-2">
@@ -324,9 +324,9 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
                       setPreferences(newPrefs);
                       notificationManager.updatePreferences(newPrefs);
                     }}
-                    className="rounded border-gray-300"
+                    className="rounded border-theme-border"
                   />
-                  <span className="text-sm text-gray-700">Push notifications</span>
+                  <span className="text-sm text-theme-text-primary">Push notifications</span>
                 </label>
                 
                 <label className="flex items-center gap-2">
@@ -338,24 +338,24 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
                       setPreferences(newPrefs);
                       notificationManager.updatePreferences(newPrefs);
                     }}
-                    className="rounded border-gray-300"
+                    className="rounded border-theme-border"
                   />
-                  <span className="text-sm text-gray-700">In-app notifications</span>
+                  <span className="text-sm text-theme-text-primary">In-app notifications</span>
                 </label>
               </div>
             </div>
           )}
 
           {/* Search and Filters */}
-          <div className="p-4 border-b border-gray-200">
+          <div className="p-4 border-b border-theme-border">
             <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-theme-text-tertiary" />
               <input
                 type="text"
                 placeholder="Search notifications..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
               />
             </div>
             
@@ -365,7 +365,7 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
                 className={`px-3 py-1 text-xs rounded-full ${
                   activeFilter === 'all' 
                     ? 'bg-blue-100 text-blue-800' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-theme-muted text-theme-text-secondary hover:bg-theme-muted'
                 }`}
               >
                 All
@@ -376,7 +376,7 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
                 className={`px-3 py-1 text-xs rounded-full ${
                   activeFilter === 'unread' 
                     ? 'bg-blue-100 text-blue-800' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-theme-muted text-theme-text-secondary hover:bg-theme-muted'
                 }`}
               >
                 Unread
@@ -387,7 +387,7 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
                 className={`px-3 py-1 text-xs rounded-full ${
                   activeFilter === 'priority' 
                     ? 'bg-blue-100 text-blue-800' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-theme-muted text-theme-text-secondary hover:bg-theme-muted'
                 }`}
               >
                 Priority
@@ -400,7 +400,7 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
                   className={`px-3 py-1 text-xs rounded-full capitalize ${
                     activeFilter === category 
                       ? 'bg-blue-100 text-blue-800' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-theme-muted text-theme-text-secondary hover:bg-theme-muted'
                   }`}
                 >
                   {category}
@@ -412,12 +412,12 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
           {/* Notifications List */}
           <div className="overflow-y-auto max-h-64">
             {filteredNotifications.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <Bell className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+              <div className="p-8 text-center text-theme-text-secondary">
+                <Bell className="w-8 h-8 mx-auto mb-2 text-theme-text-tertiary" />
                 <p className="text-sm">No notifications</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-200">
+              <div className="divide-y divide-theme-border">
                 {filteredNotifications.map((notification) => (
                   <NotificationItem key={notification.id} notification={notification} />
                 ))}
@@ -426,13 +426,13 @@ export function NotificationCenter({ className = "" }: NotificationCenterProps) 
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-4 border-t border-theme-border">
             <button
               onClick={() => {
                 setIsOpen(false);
                 window.location.href = '/notifications';
               }}
-              className="w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium"
+              className="w-full text-center text-sm text-theme-accent hover:text-blue-800 font-medium"
             >
               View all notifications
             </button>

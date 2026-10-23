@@ -22,7 +22,7 @@ const FormAlert: React.FC<FormAlertProps> = ({ type, message, onClose }) => {
   return (
     <div className={`${bgColor} border ${borderColor} rounded-lg p-4 mb-4 flex justify-between items-center`}>
       <p className={`text-sm font-medium ${textColor}`}>{message}</p>
-      <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+      <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-primary">
         <X className="w-4 h-4" />
       </button>
     </div>
@@ -78,18 +78,18 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Employee</h3>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Add Employee</h3>
         {alert && <FormAlert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input type="text" placeholder="First Name *" value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" required />
-          <input type="text" placeholder="Last Name" value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" />
-          <input type="email" placeholder="Email *" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" required />
+          <input type="text" placeholder="First Name *" value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" required />
+          <input type="text" placeholder="Last Name" value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" />
+          <input type="email" placeholder="Email *" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" required />
           <select
             value={formData.department}
             onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
             required
           >
             <option value="">Select Department *</option>
@@ -105,17 +105,17 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
               ))
             )}
           </select>
-          <input type="text" placeholder="Position" value={formData.position} onChange={(e) => setFormData({...formData, position: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" />
-          <input type="date" placeholder="Start Date" value={formData.startDate} onChange={(e) => setFormData({...formData, startDate: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" />
-          <input type="text" placeholder="Salary" value={formData.salary} onChange={(e) => setFormData({...formData, salary: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" />
-          <select value={formData.employmentType} onChange={(e) => setFormData({...formData, employmentType: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white">
+          <input type="text" placeholder="Position" value={formData.position} onChange={(e) => setFormData({...formData, position: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" />
+          <input type="date" placeholder="Start Date" value={formData.startDate} onChange={(e) => setFormData({...formData, startDate: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" />
+          <input type="text" placeholder="Salary" value={formData.salary} onChange={(e) => setFormData({...formData, salary: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" />
+          <select value={formData.employmentType} onChange={(e) => setFormData({...formData, employmentType: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface">
             <option value="Full-time">Full-time</option>
             <option value="Part-time">Part-time</option>
             <option value="Contract">Contract</option>
           </select>
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:opacity-50">{loading ? 'Adding...' : 'Add Employee'}</button>
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted">Cancel</button>
+            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover disabled:opacity-50">{loading ? 'Adding...' : 'Add Employee'}</button>
           </div>
         </form>
       </div>
@@ -191,18 +191,18 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, on
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Employee</h3>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Edit Employee</h3>
         {alert && <FormAlert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input type="text" placeholder="First Name *" value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" required />
-          <input type="text" placeholder="Last Name" value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" />
-          <input type="email" placeholder="Email *" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" required />
+          <input type="text" placeholder="First Name *" value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" required />
+          <input type="text" placeholder="Last Name" value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" />
+          <input type="email" placeholder="Email *" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" required />
           <select
             value={formData.department}
             onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
             required
           >
             <option value="">Select Department *</option>
@@ -218,10 +218,10 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, on
               ))
             )}
           </select>
-          <input type="text" placeholder="Position" value={formData.position} onChange={(e) => setFormData({...formData, position: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" />
-          <input type="date" placeholder="Start Date" value={formData.startDate} onChange={(e) => setFormData({...formData, startDate: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" />
-          <input type="text" placeholder="Salary" value={formData.salary} onChange={(e) => setFormData({...formData, salary: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" />
-          <select value={formData.employmentType} onChange={(e) => setFormData({...formData, employmentType: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white">
+          <input type="text" placeholder="Position" value={formData.position} onChange={(e) => setFormData({...formData, position: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" />
+          <input type="date" placeholder="Start Date" value={formData.startDate} onChange={(e) => setFormData({...formData, startDate: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" />
+          <input type="text" placeholder="Salary" value={formData.salary} onChange={(e) => setFormData({...formData, salary: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" />
+          <select value={formData.employmentType} onChange={(e) => setFormData({...formData, employmentType: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface">
             <option value="Full-time">Full-time</option>
             <option value="Part-time">Part-time</option>
             <option value="Contract">Contract</option>
@@ -229,7 +229,7 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, on
           <select
             value={formData.status}
             onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
           >
             {statuses.length === 0 ? (
               <option value="Active">Active</option>
@@ -242,8 +242,8 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, on
             )}
           </select>
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-black rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? 'Updating...' : 'Update Employee'}</button>
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted">Cancel</button>
+            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-theme-text-primary rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? 'Updating...' : 'Update Employee'}</button>
           </div>
         </form>
       </div>
@@ -293,30 +293,30 @@ export const RunPayrollModal: React.FC<RunPayrollModalProps> = ({ isOpen, onClos
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Run Payroll</h3>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Run Payroll</h3>
         {alert && <FormAlert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">Payroll Month *</label>
-            <input type="month" value={formData.payrollMonth} onChange={(e) => setFormData({...formData, payrollMonth: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" required />
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Payroll Month *</label>
+            <input type="month" value={formData.payrollMonth} onChange={(e) => setFormData({...formData, payrollMonth: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" required />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">Pay Date *</label>
-            <input type="date" value={formData.payDate} onChange={(e) => setFormData({...formData, payDate: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" required />
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Pay Date *</label>
+            <input type="date" value={formData.payDate} onChange={(e) => setFormData({...formData, payDate: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" required />
           </div>
           <label className="flex items-center gap-2">
-            <input type="checkbox" checked={formData.includeBonuses} onChange={(e) => setFormData({...formData, includeBonuses: e.target.checked})} className="bg-white rounded text-black" />
-            <span className="text-sm text-gray-900">Include Bonuses</span>
+            <input type="checkbox" checked={formData.includeBonuses} onChange={(e) => setFormData({...formData, includeBonuses: e.target.checked})} className="bg-theme-surface rounded text-theme-text-primary" />
+            <span className="text-sm text-theme-text-primary">Include Bonuses</span>
           </label>
           <label className="flex items-center gap-2">
-            <input type="checkbox" checked={formData.deductTaxes} onChange={(e) => setFormData({...formData, deductTaxes: e.target.checked})} className="bg-white rounded text-black" />
-            <span className="text-sm text-gray-900">Deduct Taxes</span>
+            <input type="checkbox" checked={formData.deductTaxes} onChange={(e) => setFormData({...formData, deductTaxes: e.target.checked})} className="bg-theme-surface rounded text-theme-text-primary" />
+            <span className="text-sm text-theme-text-primary">Deduct Taxes</span>
           </label>
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-black rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? 'Processing...' : 'Run Payroll'}</button>
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted">Cancel</button>
+            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-theme-text-primary rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? 'Processing...' : 'Run Payroll'}</button>
           </div>
         </form>
       </div>
@@ -370,16 +370,16 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Post Job Opening</h3>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Post Job Opening</h3>
         {alert && <FormAlert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input type="text" placeholder="Job Title *" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" required />
+          <input type="text" placeholder="Job Title *" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" required />
           <select
             value={formData.department}
             onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
             required
           >
             <option value="">Select Department *</option>
@@ -395,17 +395,17 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
               ))
             )}
           </select>
-          <textarea placeholder="Job Description *" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" rows={4} required />
-          <textarea placeholder="Requirements" value={formData.requirements} onChange={(e) => setFormData({...formData, requirements: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" rows={3} />
-          <input type="text" placeholder="Salary Range" value={formData.salaryRange} onChange={(e) => setFormData({...formData, salaryRange: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" />
-          <select value={formData.jobType} onChange={(e) => setFormData({...formData, jobType: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white">
+          <textarea placeholder="Job Description *" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" rows={4} required />
+          <textarea placeholder="Requirements" value={formData.requirements} onChange={(e) => setFormData({...formData, requirements: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" rows={3} />
+          <input type="text" placeholder="Salary Range" value={formData.salaryRange} onChange={(e) => setFormData({...formData, salaryRange: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" />
+          <select value={formData.jobType} onChange={(e) => setFormData({...formData, jobType: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface">
             <option value="Full-time">Full-time</option>
             <option value="Part-time">Part-time</option>
             <option value="Contract">Contract</option>
           </select>
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-purple-600 text-gray-900 rounded-lg hover:bg-purple-700 disabled:opacity-50">{loading ? 'Posting...' : 'Post Job'}</button>
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted">Cancel</button>
+            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-purple-600 text-theme-text-primary rounded-lg hover:bg-purple-700 disabled:opacity-50">{loading ? 'Posting...' : 'Post Job'}</button>
           </div>
         </form>
       </div>
@@ -450,41 +450,41 @@ export const ViewEmployeeModal: React.FC<ViewEmployeeModalProps> = ({ isOpen, on
   if (!isOpen || !employee) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{employee.name}</h3>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">{employee.name}</h3>
         <div className="space-y-3 mb-6">
           <div>
-            <p className="text-sm text-gray-600">Email</p>
-            <p className="text-sm font-medium text-gray-900">{employee.email}</p>
+            <p className="text-sm text-theme-text-secondary">Email</p>
+            <p className="text-sm font-medium text-theme-text-primary">{employee.email}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-600">Department</p>
-            <p className="text-sm font-medium text-gray-900">{employee.department}</p>
+            <p className="text-sm text-theme-text-secondary">Department</p>
+            <p className="text-sm font-medium text-theme-text-primary">{employee.department}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-600">Position</p>
-            <p className="text-sm font-medium text-gray-900">{employee.position}</p>
+            <p className="text-sm text-theme-text-secondary">Position</p>
+            <p className="text-sm font-medium text-theme-text-primary">{employee.position}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-600">Status</p>
+            <p className="text-sm text-theme-text-secondary">Status</p>
             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
               employee.status === 'Active' ? 'bg-green-100 text-green-800' :
               employee.status === 'On Leave' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
             }`}>{employee.status}</span>
           </div>
           <div>
-            <p className="text-sm text-gray-600">Performance</p>
+            <p className="text-sm text-theme-text-secondary">Performance</p>
             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
               employee.performance === 'Excellent' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
             }`}>{employee.performance}</span>
           </div>
         </div>
         <div className="flex flex-wrap gap-3">
-          <button onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Close</button>
-          <button onClick={handleEdit} disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-black rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? '...' : 'Edit'}</button>
-          <button onClick={handleAward} disabled={loading} className="flex-1 px-4 py-2 bg-purple-600 text-gray-900 rounded-lg hover:bg-purple-700 disabled:opacity-50">{loading ? '...' : 'Award'}</button>
-          <button onClick={handleDelete} disabled={loading} className="flex-1 px-4 py-2 bg-red-600 text-black rounded-lg hover:bg-red-700 disabled:opacity-50">Delete</button>
+          <button onClick={onClose} className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted">Close</button>
+          <button onClick={handleEdit} disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-theme-text-primary rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? '...' : 'Edit'}</button>
+          <button onClick={handleAward} disabled={loading} className="flex-1 px-4 py-2 bg-purple-600 text-theme-text-primary rounded-lg hover:bg-purple-700 disabled:opacity-50">{loading ? '...' : 'Award'}</button>
+          <button onClick={handleDelete} disabled={loading} className="flex-1 px-4 py-2 bg-red-600 text-theme-text-primary rounded-lg hover:bg-red-700 disabled:opacity-50">Delete</button>
         </div>
       </div>
     </div>
@@ -519,11 +519,11 @@ export const DeleteEmployeeModal: React.FC<DeleteEmployeeModalProps> = ({ isOpen
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">Remove Employee</h3>
-        <p className="text-sm text-gray-600 mb-4">
-          How should <span className="font-semibold text-gray-900">{employeeName}</span> be removed?
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-3">Remove Employee</h3>
+        <p className="text-sm text-theme-text-secondary mb-4">
+          How should <span className="font-semibold text-theme-text-primary">{employeeName}</span> be removed?
         </p>
         {onOffboard && (
           <div className="bg-blue-50 border border-blue-200 text-blue-800 text-xs rounded-lg px-4 py-3 mb-4">
@@ -538,14 +538,14 @@ export const DeleteEmployeeModal: React.FC<DeleteEmployeeModalProps> = ({ isOpen
           </div>
         )}
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">
+          <button onClick={onClose} className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted">
             Cancel
           </button>
           {onOffboard && (
             <button
               onClick={() => run(onOffboard, 'Failed to start offboarding')}
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover disabled:opacity-50"
             >
               {loading ? 'Working...' : 'Start Offboarding'}
             </button>
@@ -607,19 +607,19 @@ export const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, o
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Schedule Training</h3>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Schedule Training</h3>
         {alert && <FormAlert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input type="text" placeholder="Training Title *" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" required />
-          <input type="date" placeholder="Start Date *" value={formData.startDate} onChange={(e) => setFormData({...formData, startDate: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" required />
-          <input type="text" placeholder="Duration (e.g., 4 weeks) *" value={formData.duration} onChange={(e) => setFormData({...formData, duration: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" required />
-          <input type="number" placeholder="Max Participants" value={formData.maxParticipants} onChange={(e) => setFormData({...formData, maxParticipants: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" />
-          <input type="text" placeholder="Instructor" value={formData.instructor} onChange={(e) => setFormData({...formData, instructor: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" />
+          <input type="text" placeholder="Training Title *" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" required />
+          <input type="date" placeholder="Start Date *" value={formData.startDate} onChange={(e) => setFormData({...formData, startDate: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" required />
+          <input type="text" placeholder="Duration (e.g., 4 weeks) *" value={formData.duration} onChange={(e) => setFormData({...formData, duration: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" required />
+          <input type="number" placeholder="Max Participants" value={formData.maxParticipants} onChange={(e) => setFormData({...formData, maxParticipants: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" />
+          <input type="text" placeholder="Instructor" value={formData.instructor} onChange={(e) => setFormData({...formData, instructor: e.target.value})} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface" />
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:opacity-50">{loading ? 'Scheduling...' : 'Schedule'}</button>
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted">Cancel</button>
+            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover disabled:opacity-50">{loading ? 'Scheduling...' : 'Schedule'}</button>
           </div>
         </form>
       </div>

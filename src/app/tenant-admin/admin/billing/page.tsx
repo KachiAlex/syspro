@@ -41,25 +41,25 @@ export default function BillingPage() {
       {!loading && !error && !overview && <p>No billing data found.</p>}
       {!loading && overview && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600">Current Plan</p>
+          <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
+            <p className="text-sm text-theme-text-secondary">Current Plan</p>
             <p className="text-xl font-bold">{overview.currentPlan || "—"}</p>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600">Status</p>
+          <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
+            <p className="text-sm text-theme-text-secondary">Status</p>
             <p className="text-xl font-bold capitalize">{overview.subscriptionStatus}</p>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600">Total Due</p>
+          <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
+            <p className="text-sm text-theme-text-secondary">Total Due</p>
             <p className="text-xl font-bold">{overview.totalDue.toLocaleString()}</p>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600">Invoices</p>
+          <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
+            <p className="text-sm text-theme-text-secondary">Invoices</p>
             <p className="text-xl font-bold">{overview.invoiceCount}</p>
           </div>
           {overview.nextBillingDate && (
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <p className="text-sm text-gray-600">Next Billing</p>
+            <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
+              <p className="text-sm text-theme-text-secondary">Next Billing</p>
               <p className="text-xl font-bold">{new Date(overview.nextBillingDate).toLocaleDateString()}</p>
             </div>
           )}

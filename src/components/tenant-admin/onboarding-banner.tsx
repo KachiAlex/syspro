@@ -77,20 +77,20 @@ export default function OnboardingBanner() {
         )}
         <div className="mt-2 h-1.5 max-w-xs overflow-hidden rounded-full bg-blue-100">
           <div
-            className="h-full rounded-full bg-blue-600 transition-all"
+            className="h-full rounded-full bg-theme-accent transition-all"
             style={{ width: `${state.progress.percent}%` }}
           />
         </div>
       </div>
       <Link
         href="/tenant-admin/setup"
-        className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+        className="shrink-0 rounded-lg bg-theme-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-theme-accent-hover"
       >
         Continue setup
       </Link>
       <button
         onClick={dismiss}
-        className="shrink-0 rounded-lg p-1.5 text-blue-500 hover:bg-blue-100"
+        className="shrink-0 rounded-lg p-1.5 text-theme-accent hover:bg-theme-muted"
         title="Dismiss checklist"
         aria-label="Dismiss onboarding checklist"
       >

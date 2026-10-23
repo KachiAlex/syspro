@@ -49,23 +49,23 @@ function StatusIcon({ status }: { status: StepStatus }) {
     );
   if (status === "skipped")
     return (
-      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-theme-muted text-theme-text-tertiary">
         <Minus className="h-3.5 w-3.5" />
       </span>
     );
   return (
-    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 text-slate-400">
+    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-theme-border text-theme-text-secondary">
       <Circle className="h-3 w-3" />
     </span>
   );
 }
 
 const inputCls =
-  "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
+  "w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary focus:border-theme-accent focus:outline-none focus:ring-1 focus:ring-theme-accent";
 const btnPrimary =
-  "inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50";
+  "inline-flex items-center gap-2 rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-white hover:bg-theme-accent-hover disabled:opacity-50";
 const btnSecondary =
-  "inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50";
+  "inline-flex items-center gap-2 rounded-lg border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted disabled:opacity-50";
 
 export default function TenantSetupPage() {
   const { tenantSlug } = useTenantContext();
@@ -154,7 +154,7 @@ export default function TenantSetupPage() {
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-theme-accent" />
       </div>
     );
   }
@@ -172,8 +172,8 @@ export default function TenantSetupPage() {
     <div className="mx-auto max-w-6xl">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Setup &amp; Onboarding</h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <h1 className="text-2xl font-bold text-theme-text-primary">Setup &amp; Onboarding</h1>
+          <p className="mt-1 text-sm text-theme-text-secondary">
             {state.completedAt
               ? "Setup completed — you can revisit any step below."
               : "Get the ERP foundations in place. Everything here can also be done from the normal admin sections."}
@@ -201,19 +201,19 @@ export default function TenantSetupPage() {
       </div>
 
       {/* Progress */}
-      <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4">
+      <div className="mb-6 rounded-xl border border-theme-border bg-theme-surface p-4">
         <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="font-medium text-slate-900">
+          <span className="font-medium text-theme-text-primary">
             {state.progress.done} of {state.progress.total} steps
-            <span className="ml-2 text-slate-500">
+            <span className="ml-2 text-theme-text-tertiary">
               ({state.progress.requiredDone}/{state.progress.requiredTotal} required)
             </span>
           </span>
-          <span className="font-semibold text-blue-600">{pct}%</span>
+          <span className="font-semibold text-theme-accent">{pct}%</span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+        <div className="h-2 overflow-hidden rounded-full bg-theme-muted">
           <div
-            className="h-full rounded-full bg-blue-600 transition-all"
+            className="h-full rounded-full bg-theme-accent transition-all"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -250,20 +250,20 @@ export default function TenantSetupPage() {
                 className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
                   selected === s.id
                     ? "bg-blue-50 ring-1 ring-blue-200"
-                    : "hover:bg-slate-50"
+                    : "hover:bg-theme-muted"
                 }`}
               >
                 <StatusIcon status={s.status} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-slate-900">
+                  <span className="block truncate text-sm font-medium text-theme-text-primary">
                     {i + 1}. {s.title}
                   </span>
                   {s.required && s.status === "pending" && (
                     <span className="text-xs font-medium text-amber-600">Required</span>
                   )}
-                  {s.skipped && <span className="text-xs text-slate-400">Skipped</span>}
+                  {s.skipped && <span className="text-xs text-theme-text-secondary">Skipped</span>}
                 </span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-theme-text-primary" />
               </button>
             </li>
           ))}
@@ -308,27 +308,27 @@ function StepPanel({
   refresh: () => Promise<void>;
 }) {
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-6">
+    <section className="rounded-xl border border-theme-border bg-theme-surface p-6">
       <div className="mb-1 flex items-center gap-2">
-        <h2 className="text-lg font-semibold text-slate-900">{step.title}</h2>
+        <h2 className="text-lg font-semibold text-theme-text-primary">{step.title}</h2>
         {step.required ? (
           <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
             Required
           </span>
         ) : (
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+          <span className="rounded-full bg-theme-muted px-2 py-0.5 text-xs font-medium text-theme-text-secondary">
             Optional
           </span>
         )}
       </div>
-      <p className="mb-1 text-sm text-slate-600">{step.description}</p>
+      <p className="mb-1 text-sm text-theme-text-secondary">{step.description}</p>
       <p
         className={`mb-4 text-sm ${
           step.status === "complete"
             ? "text-emerald-700"
             : step.schemaPending || step.checkError
               ? "text-amber-700"
-              : "text-slate-500"
+              : "text-theme-text-tertiary"
         }`}
       >
         {step.detail}
@@ -348,36 +348,36 @@ function StepPanel({
         <LocalizationSeed busy={busy} tenantSlug={tenantSlug} refresh={refresh} />
       )}
       {step.id === "team" && (
-        <p className="mb-4 text-sm text-slate-600">
+        <p className="mb-4 text-sm text-theme-text-secondary">
           Manage users and module access under{" "}
-          <Link href="/tenant-admin/users" className="text-blue-600 hover:underline">
+          <Link href="/tenant-admin/users" className="text-theme-accent hover:underline">
             Users
           </Link>{" "}
           and{" "}
-          <Link href="/tenant-admin/admin" className="text-blue-600 hover:underline">
+          <Link href="/tenant-admin/admin" className="text-theme-accent hover:underline">
             Access control
           </Link>
           .
         </p>
       )}
       {step.id === "finance-policies" && (
-        <p className="mb-4 text-sm text-slate-600">
+        <p className="mb-4 text-sm text-theme-text-secondary">
           Configure payment terms, credit limits and dunning under{" "}
-          <Link href="/tenant-admin/finance" className="text-blue-600 hover:underline">
+          <Link href="/tenant-admin/finance" className="text-theme-accent hover:underline">
             Finance
           </Link>
           . This is optional — you can set policies at any time.
         </p>
       )}
       {step.id === "opening-data" && (
-        <p className="mb-4 text-sm text-slate-600">
+        <p className="mb-4 text-sm text-theme-text-secondary">
           Add customers, vendors and products through the normal Finance / Inventory
           sections, or post opening balances via journal entries.
         </p>
       )}
       {step.id === "go-live" && <GoLive state={state} busy={busy} post={post} />}
 
-      <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
+      <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-theme-border pt-4">
         {!step.required &&
           (step.skipped ? (
             <button
@@ -398,7 +398,7 @@ function StepPanel({
               </button>
             )
           ))}
-        <Link href={step.link} className="ml-auto text-sm text-blue-600 hover:underline">
+        <Link href={step.link} className="ml-auto text-sm text-theme-accent hover:underline">
           Open full settings →
         </Link>
       </div>
@@ -434,19 +434,19 @@ function ProfileForm({
       }}
     >
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-slate-700">Company name</span>
+        <span className="mb-1 block font-medium text-theme-text-primary">Company name</span>
         <input className={inputCls} value={form.name} onChange={set("name")} />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-slate-700">Industry</span>
+        <span className="mb-1 block font-medium text-theme-text-primary">Industry</span>
         <input className={inputCls} value={form.industry} onChange={set("industry")} />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-slate-700">Region</span>
+        <span className="mb-1 block font-medium text-theme-text-primary">Region</span>
         <input className={inputCls} value={form.region} onChange={set("region")} />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-slate-700">Base currency (e.g. NGN)</span>
+        <span className="mb-1 block font-medium text-theme-text-primary">Base currency (e.g. NGN)</span>
         <input
           className={inputCls}
           maxLength={5}
@@ -455,7 +455,7 @@ function ProfileForm({
         />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-slate-700">
+        <span className="mb-1 block font-medium text-theme-text-primary">
           Timezone (e.g. Africa/Lagos)
         </span>
         <input className={inputCls} value={form.timezone} onChange={set("timezone")} />
@@ -490,7 +490,7 @@ function BranchForm({
       }}
     >
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-slate-700">Branch name</span>
+        <span className="mb-1 block font-medium text-theme-text-primary">Branch name</span>
         <input
           className={inputCls}
           required
@@ -500,7 +500,7 @@ function BranchForm({
         />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-slate-700">Code (optional)</span>
+        <span className="mb-1 block font-medium text-theme-text-primary">Code (optional)</span>
         <input
           className={inputCls}
           value={form.code}
@@ -555,7 +555,7 @@ function FiscalYearForm({
       }}
     >
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-slate-700">Fiscal year</span>
+        <span className="mb-1 block font-medium text-theme-text-primary">Fiscal year</span>
         <input
           className={inputCls}
           type="number"
@@ -568,7 +568,7 @@ function FiscalYearForm({
       <button className={btnPrimary} disabled={busy || busyLocal} type="submit">
         Generate 12 monthly periods
       </button>
-      {msg && <p className="w-full text-sm text-slate-600">{msg}</p>}
+      {msg && <p className="w-full text-sm text-theme-text-secondary">{msg}</p>}
     </form>
   );
 }
@@ -611,7 +611,7 @@ function CoaSeed({
         {busyLocal && <Loader2 className="h-4 w-4 animate-spin" />}
         Seed standard chart of accounts
       </button>
-      {msg && <p className="mt-2 text-sm text-slate-600">{msg}</p>}
+      {msg && <p className="mt-2 text-sm text-theme-text-secondary">{msg}</p>}
     </div>
   );
 }
@@ -637,7 +637,7 @@ function WarehouseForm({
       }}
     >
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-slate-700">Warehouse name</span>
+        <span className="mb-1 block font-medium text-theme-text-primary">Warehouse name</span>
         <input
           className={inputCls}
           required
@@ -647,7 +647,7 @@ function WarehouseForm({
         />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-slate-700">Code (optional)</span>
+        <span className="mb-1 block font-medium text-theme-text-primary">Code (optional)</span>
         <input
           className={inputCls}
           value={form.code}
@@ -687,12 +687,12 @@ function CurrencyForm({
         }).then((r) => r && setForm((f) => ({ ...f, currency: "", rate: "" })));
       }}
     >
-      <p className="w-full text-sm text-slate-600">
+      <p className="w-full text-sm text-theme-text-secondary">
         Register a non-base currency rate. Rates are looked up by effective date when
         multi-currency settlements post realized gain/loss.
       </p>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-slate-700">Currency</span>
+        <span className="mb-1 block font-medium text-theme-text-primary">Currency</span>
         <input
           className={inputCls}
           required
@@ -703,7 +703,7 @@ function CurrencyForm({
         />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-slate-700">Effective date</span>
+        <span className="mb-1 block font-medium text-theme-text-primary">Effective date</span>
         <input
           className={inputCls}
           type="date"
@@ -712,7 +712,7 @@ function CurrencyForm({
         />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-slate-700">Rate per base unit</span>
+        <span className="mb-1 block font-medium text-theme-text-primary">Rate per base unit</span>
         <input
           className={inputCls}
           type="number"
@@ -776,7 +776,7 @@ function LocalizationSeed({
         {busyLocal && <Loader2 className="h-4 w-4 animate-spin" />}
         Apply Nigeria defaults
       </button>
-      {msg && <p className="mt-2 text-sm text-slate-600">{msg}</p>}
+      {msg && <p className="mt-2 text-sm text-theme-text-secondary">{msg}</p>}
     </div>
   );
 }
@@ -801,14 +801,14 @@ function GoLive({
   return (
     <div>
       {pending.length > 0 ? (
-        <p className="mb-4 text-sm text-slate-600">
+        <p className="mb-4 text-sm text-theme-text-secondary">
           Complete the remaining required steps first:{" "}
           <span className="font-medium text-amber-700">
             {pending.map((s) => s.title).join(", ")}
           </span>
         </p>
       ) : (
-        <p className="mb-4 text-sm text-slate-600">
+        <p className="mb-4 text-sm text-theme-text-secondary">
           All required foundations are in place. Completing setup hides the checklist
           banner — nothing else changes; the ERP already works.
         </p>

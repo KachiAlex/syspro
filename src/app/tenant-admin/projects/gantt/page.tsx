@@ -105,17 +105,17 @@ export default function GanttPage() {
   if (!tenantSlug) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 text-slate-100">
+    <div className="min-h-screen bg-theme-bg p-6 text-theme-text-primary">
       <div className="mx-auto max-w-7xl">
         <h1 className="mb-1 text-2xl font-bold">Project Gantt</h1>
-        <p className="mb-4 text-sm text-slate-400">Timeline view — planned dates, % complete, dependencies</p>
+        <p className="mb-4 text-sm text-theme-text-secondary">Timeline view — planned dates, % complete, dependencies</p>
         <div className="mb-4 flex items-center gap-3">
           <select value={projectId} onChange={(e) => setProjectId(e.target.value)}
-            className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm">
+            className="rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm">
             {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-          {loading && <span className="text-xs text-slate-500">Loading…</span>}
-          <span className="ml-auto flex gap-3 text-xs text-slate-400">
+          {loading && <span className="text-xs text-theme-text-tertiary">Loading…</span>}
+          <span className="ml-auto flex gap-3 text-xs text-theme-text-secondary">
             {Object.entries(STATUS_COLOR).slice(0, 4).map(([s, c]) => (
               <span key={s} className="flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: c }} />{s.replace("_", " ").toLowerCase()}</span>
             ))}
@@ -124,13 +124,13 @@ export default function GanttPage() {
         {error && <div className="mb-4 rounded-lg bg-red-900/40 p-3 text-sm text-red-300">{error}</div>}
 
         {!tasks.length && !loading && (
-          <p className="rounded-xl border border-slate-800 bg-slate-900 p-8 text-center text-sm text-slate-500">
+          <p className="rounded-xl border border-theme-border bg-theme-surface p-8 text-center text-sm text-theme-text-tertiary">
             No tasks with planned start/end dates in this project
           </p>
         )}
 
         {tasks.length > 0 && (
-          <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900">
+          <div className="overflow-x-auto rounded-xl border border-theme-border bg-theme-surface">
             <svg width={LABEL_W + totalDays * DAY_W + DAY_W} height={40 + bars.length * ROW_H + 10} className="block">
               {/* header ticks */}
               <g>

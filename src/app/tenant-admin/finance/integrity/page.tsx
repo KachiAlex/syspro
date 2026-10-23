@@ -7,7 +7,7 @@ import { AlertCircle, CheckCircle2, Loader2, RefreshCw, Search } from "lucide-re
 const fmt = (n: number) =>
   `₦${Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
 
-const inputCls = "rounded bg-slate-800 px-3 py-2 text-sm w-full";
+const inputCls = "rounded bg-theme-muted px-3 py-2 text-sm w-full";
 const btnCls = "flex items-center gap-1.5 rounded bg-sky-600 px-3 py-1.5 text-sm hover:bg-sky-500 disabled:opacity-50";
 
 export default function LedgerIntegrityPage() {
@@ -63,14 +63,14 @@ export default function LedgerIntegrityPage() {
   };
 
   const Row = ({ label, side }: { label: string; side: any }) => (
-    <tr className="border-b border-slate-800/60">
+    <tr className="border-b border-theme-border/60">
       <td className="py-2 pr-3 font-medium">{label}</td>
       <td className="py-2 pr-3 text-right font-mono">{fmt(side?.glBalance)}</td>
       <td className="py-2 pr-3 text-right font-mono">{fmt(side?.subledgerBalance)}</td>
       <td className={`py-2 pr-3 text-right font-mono ${Math.abs(side?.difference ?? 0) > 0.005 ? "text-rose-400" : "text-emerald-400"}`}>
         {fmt(side?.difference)}
       </td>
-      <td className="py-2 text-xs text-slate-400">
+      <td className="py-2 text-xs text-theme-text-secondary">
         {side?.components && Object.entries(side.components).map(([k, v]) => `${k}: ${fmt(v as number)}`).join(" · ")}
       </td>
     </tr>
@@ -81,7 +81,7 @@ export default function LedgerIntegrityPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Ledger Integrity</h1>
-          <p className="text-sm text-slate-400">GL ↔ subledger comparison, repost corrections, and transaction deletion audit.</p>
+          <p className="text-sm text-theme-text-secondary">GL ↔ subledger comparison, repost corrections, and transaction deletion audit.</p>
         </div>
         <button className={btnCls} onClick={load} disabled={loading}>
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
@@ -94,7 +94,7 @@ export default function LedgerIntegrityPage() {
       <section className="space-y-2">
         <h2 className="font-medium">GL vs Subledger</h2>
         <table className="w-full text-sm">
-          <thead><tr className="text-left text-slate-400 border-b border-slate-800">
+          <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border">
             <th className="py-2 pr-3">Control Account</th><th className="py-2 pr-3 text-right">GL Balance</th>
             <th className="py-2 pr-3 text-right">Subledger</th><th className="py-2 pr-3 text-right">Difference</th><th className="py-2">Components</th>
           </tr></thead>
@@ -105,7 +105,7 @@ export default function LedgerIntegrityPage() {
                 <Row label="Accounts Payable (2100)" side={comparison.payable} />
               </>
             ) : (
-              <tr><td colSpan={5} className="py-6 text-center text-slate-500">{loading ? "Loading…" : "No data"}</td></tr>
+              <tr><td colSpan={5} className="py-6 text-center text-theme-text-tertiary">{loading ? "Loading…" : "No data"}</td></tr>
             )}
           </tbody>
         </table>
@@ -113,7 +113,7 @@ export default function LedgerIntegrityPage() {
 
       <section className="space-y-3">
         <h2 className="font-medium">Repost Journal Entries</h2>
-        <p className="text-xs text-slate-400">Reverses selected posted entries and re-posts them. Optionally correct account codes via corrections.</p>
+        <p className="text-xs text-theme-text-secondary">Reverses selected posted entries and re-posts them. Optionally correct account codes via corrections.</p>
         <div className="flex flex-wrap gap-2 items-end">
           <input className={`${inputCls} w-96 font-mono`} placeholder="Entry IDs (comma-separated)" value={entryIds} onChange={(e) => setEntryIds(e.target.value)} />
           <input className={`${inputCls} w-56`} placeholder="Reason (optional)" value={reason} onChange={(e) => setReason(e.target.value)} />
@@ -121,14 +121,14 @@ export default function LedgerIntegrityPage() {
           {preview && <button className={btnCls} disabled={busy} onClick={doRepost}>Repost {preview.length} entries</button>}
         </div>
         {preview && (
-          <div className="rounded border border-slate-800 p-3 space-y-3">
+          <div className="rounded border border-theme-border p-3 space-y-3">
             {preview.map((e: any) => (
               <div key={e.entryId}>
-                <div className="text-xs text-slate-400 mb-1">{e.journalNumber} · {e.postingDate} · {e.description}</div>
+                <div className="text-xs text-theme-text-secondary mb-1">{e.journalNumber} · {e.postingDate} · {e.description}</div>
                 <table className="w-full text-xs font-mono">
                   <tbody>
                     {e.lines.map((l: any) => (
-                      <tr key={l.lineId} className="border-b border-slate-800/40">
+                      <tr key={l.lineId} className="border-b border-theme-border/40">
                         <td className="py-1 pr-3">{l.accountCode} {l.accountName}</td>
                         <td className="py-1 pr-3 text-right">{l.debitAmount ? fmt(l.debitAmount) : ""}</td>
                         <td className="py-1 text-right">{l.creditAmount ? fmt(l.creditAmount) : ""}</td>
@@ -144,28 +144,28 @@ export default function LedgerIntegrityPage() {
 
       <section className="space-y-3">
         <h2 className="font-medium">Merge Account</h2>
-        <p className="text-xs text-slate-400">Rewrite every GL line and subledger reference from one account to another, then retire the source. <b>Not easily reversible.</b></p>
+        <p className="text-xs text-theme-text-secondary">Rewrite every GL line and subledger reference from one account to another, then retire the source. <b>Not easily reversible.</b></p>
         <MergeForm tenantSlug={tenantSlug} onDone={() => { setMsg("Account merged"); load(); }} setError={setError} />
       </section>
 
       <section className="space-y-2">
         <h2 className="font-medium">Transaction Deletion Records</h2>
         <table className="w-full text-sm">
-          <thead><tr className="text-left text-slate-400 border-b border-slate-800">
+          <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border">
             <th className="py-2 pr-3">When</th><th className="py-2 pr-3">Doc Type</th><th className="py-2 pr-3">Doc ID</th>
             <th className="py-2 pr-3">Deleted By</th><th className="py-2">Reason</th>
           </tr></thead>
           <tbody>
             {deletions.map((d: any) => (
-              <tr key={d.id} className="border-b border-slate-800/60">
+              <tr key={d.id} className="border-b border-theme-border/60">
                 <td className="py-2 pr-3 text-xs">{String(d.created_at).slice(0, 16).replace("T", " ")}</td>
                 <td className="py-2 pr-3">{d.document_type}</td>
                 <td className="py-2 pr-3 font-mono text-xs">{String(d.document_id).slice(0, 12)}</td>
                 <td className="py-2 pr-3">{d.deleted_by ?? "—"}</td>
-                <td className="py-2 text-slate-400">{d.reason ?? "—"}</td>
+                <td className="py-2 text-theme-text-secondary">{d.reason ?? "—"}</td>
               </tr>
             ))}
-            {!deletions.length && <tr><td colSpan={5} className="py-6 text-center text-slate-500">No deletion records</td></tr>}
+            {!deletions.length && <tr><td colSpan={5} className="py-6 text-center text-theme-text-tertiary">No deletion records</td></tr>}
           </tbody>
         </table>
       </section>
@@ -194,15 +194,15 @@ function MergeForm({ tenantSlug, onDone, setError }: any) {
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2 items-center">
-        <input className="rounded bg-slate-800 px-3 py-2 text-sm w-36 font-mono" placeholder="From code" value={from} onChange={(e) => setFrom(e.target.value)} />
-        <span className="text-slate-400">→</span>
-        <input className="rounded bg-slate-800 px-3 py-2 text-sm w-36 font-mono" placeholder="To code" value={to} onChange={(e) => setTo(e.target.value)} />
+        <input className="rounded bg-theme-muted px-3 py-2 text-sm w-36 font-mono" placeholder="From code" value={from} onChange={(e) => setFrom(e.target.value)} />
+        <span className="text-theme-text-secondary">→</span>
+        <input className="rounded bg-theme-muted px-3 py-2 text-sm w-36 font-mono" placeholder="To code" value={to} onChange={(e) => setTo(e.target.value)} />
         <label className="flex items-center gap-2 text-xs text-rose-300">
           <input type="checkbox" checked={confirm} onChange={(e) => setConfirm(e.target.checked)} /> I understand this is irreversible
         </label>
         <button className={btnCls} disabled={busy || !from || !to || !confirm || from === to} onClick={run}>Merge</button>
       </div>
-      {result && <pre className="rounded bg-slate-800 p-3 text-xs overflow-auto">{JSON.stringify(result.stats, null, 2)}</pre>}
+      {result && <pre className="rounded bg-theme-muted p-3 text-xs overflow-auto">{JSON.stringify(result.stats, null, 2)}</pre>}
     </div>
   );
 }

@@ -139,15 +139,15 @@ export function CreateLeadModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
+          <h2 className="text-xl font-bold text-theme-text-primary">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-lg transition"
+            className="p-1 hover:bg-theme-muted rounded-lg transition"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-theme-text-secondary" />
           </button>
         </div>
 
@@ -159,56 +159,56 @@ export function CreateLeadModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Name *
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="John Smith"
               disabled={isLoading || isViewMode}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Email *
             </label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="john@example.com"
               disabled={isLoading || isViewMode}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Company
             </label>
             <input
               type="text"
               value={formData.company}
               onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="Tech Corp"
               disabled={isLoading || isViewMode}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Phone
             </label>
             <input
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="+1 (555) 000-0000"
               disabled={isLoading || isViewMode}
             />
@@ -216,13 +216,13 @@ export function CreateLeadModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">
                 Status
               </label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as (typeof LEAD_STAGE_OPTIONS)[number]["value"] })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={isLoading || isViewMode}
               >
                 {LEAD_STAGE_OPTIONS.map((option) => (
@@ -233,13 +233,13 @@ export function CreateLeadModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">
                 Source
               </label>
               <select
                 value={formData.source}
                 onChange={(e) => setFormData({ ...formData, source: e.target.value as (typeof LEAD_SOURCE_OPTIONS)[number]["value"] })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={isLoading || isViewMode}
               >
                 {LEAD_SOURCE_OPTIONS.map((option) => (
@@ -252,7 +252,7 @@ export function CreateLeadModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Lead Score: {formData.score}
             </label>
             <input
@@ -261,10 +261,10 @@ export function CreateLeadModal({
               max="100"
               value={formData.score}
               onChange={(e) => setFormData({ ...formData, score: +e.target.value })}
-              className="bg-white w-full text-black"
+              className="bg-theme-surface w-full text-theme-text-primary"
               disabled={isLoading || isViewMode}
             />
-            <div className="flex justify-between text-xs text-gray-600 mt-1">
+            <div className="flex justify-between text-xs text-theme-text-secondary mt-1">
               <span>Low</span>
               <span>Medium</span>
               <span>High</span>
@@ -275,7 +275,7 @@ export function CreateLeadModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+              className="flex-1 px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition"
               disabled={isLoading}
             >
               {isViewMode ? "Close" : "Cancel"}
@@ -283,7 +283,7 @@ export function CreateLeadModal({
             {!isViewMode && (
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg font-medium hover:bg-theme-accent-hover transition disabled:opacity-50"
                 disabled={isLoading}
               >
                 {isLoading ? (mode === "edit" ? "Saving..." : "Adding...") : submitLabel}
@@ -417,15 +417,15 @@ export function CreateContactModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
+          <h2 className="text-xl font-bold text-theme-text-primary">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-lg transition"
+            className="p-1 hover:bg-theme-muted rounded-lg transition"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-theme-text-secondary" />
           </button>
         </div>
 
@@ -437,56 +437,56 @@ export function CreateContactModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Name *
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="Jane Doe"
               disabled={isLoading || isViewMode}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Email *
             </label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="jane@example.com"
               disabled={isLoading || isViewMode}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Company
             </label>
             <input
               type="text"
               value={formData.company}
               onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="ABC Corp"
               disabled={isLoading || isViewMode}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Phone
             </label>
             <input
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="+1 (555) 000-0000"
               disabled={isLoading || isViewMode}
             />
@@ -494,13 +494,13 @@ export function CreateContactModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">
                 Type
               </label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={isLoading || isViewMode}
               >
                 <option>Customer</option>
@@ -510,13 +510,13 @@ export function CreateContactModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">
                 Segment
               </label>
               <select
                 value={formData.segment}
                 onChange={(e) => setFormData({ ...formData, segment: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={isLoading || isViewMode}
               >
                 <option>VIP</option>
@@ -531,7 +531,7 @@ export function CreateContactModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+              className="flex-1 px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition"
               disabled={isLoading}
             >
               {isViewMode ? "Close" : "Cancel"}
@@ -539,7 +539,7 @@ export function CreateContactModal({
             {!isViewMode && (
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg font-medium hover:bg-theme-accent-hover transition disabled:opacity-50"
                 disabled={isLoading}
               >
                 {isLoading ? (mode === "edit" ? "Saving..." : "Adding...") : submitLabel}
@@ -674,15 +674,15 @@ export function CreateDealModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
+          <h2 className="text-xl font-bold text-theme-text-primary">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-lg transition"
+            className="p-1 hover:bg-theme-muted rounded-lg transition"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-theme-text-secondary" />
           </button>
         </div>
 
@@ -694,28 +694,28 @@ export function CreateDealModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Deal Name *
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="Enterprise Deal - ABC Corp"
               disabled={isLoading || isViewMode}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Company
             </label>
             <input
               type="text"
               value={formData.company}
               onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="ABC Corporation"
               disabled={isLoading || isViewMode}
             />
@@ -723,7 +723,7 @@ export function CreateDealModal({
 
           {leads.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">
                 Link to Lead
               </label>
               <select
@@ -737,7 +737,7 @@ export function CreateDealModal({
                     name: selectedLead && !formData.name ? `Deal - ${selectedLead.companyName}` : formData.name,
                   });
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={isLoading || isViewMode}
               >
                 <option value="">None</option>
@@ -752,7 +752,7 @@ export function CreateDealModal({
 
           {customers.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">
                 Link to Customer
               </label>
               <select
@@ -765,7 +765,7 @@ export function CreateDealModal({
                     company: selectedCustomer ? selectedCustomer.name : formData.company,
                   });
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={isLoading || isViewMode}
               >
                 <option value="">None</option>
@@ -779,14 +779,14 @@ export function CreateDealModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Deal Amount ($) *
             </label>
             <input
               type="number"
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: +e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="50000"
               min="1"
               disabled={isLoading || isViewMode}
@@ -795,13 +795,13 @@ export function CreateDealModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">
                 Stage
               </label>
               <select
                 value={formData.stage}
                 onChange={(e) => setFormData({ ...formData, stage: e.target.value as (typeof DEAL_STAGE_OPTIONS)[number]["value"] })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={isLoading || isViewMode}
               >
                 {DEAL_STAGE_OPTIONS.map((option) => (
@@ -812,7 +812,7 @@ export function CreateDealModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">
                 Probability: {formData.probability}%
               </label>
               <input
@@ -822,21 +822,21 @@ export function CreateDealModal({
                 step="10"
                 value={formData.probability}
                 onChange={(e) => setFormData({ ...formData, probability: +e.target.value })}
-                className="bg-white w-full text-black"
+                className="bg-theme-surface w-full text-theme-text-primary"
                 disabled={isLoading || isViewMode}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Expected Closing Date
             </label>
             <input
               type="date"
               value={formData.closingDate}
               onChange={(e) => setFormData({ ...formData, closingDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface"
               disabled={isLoading || isViewMode}
             />
           </div>
@@ -845,7 +845,7 @@ export function CreateDealModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+              className="flex-1 px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition"
               disabled={isLoading}
             >
               {isViewMode ? "Close" : "Cancel"}
@@ -853,7 +853,7 @@ export function CreateDealModal({
             {!isViewMode && (
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-green-600 text-black rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-green-600 text-theme-text-primary rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50"
                 disabled={isLoading}
               >
                 {isLoading ? (mode === "edit" ? "Saving..." : "Creating...") : submitLabel}
@@ -894,30 +894,30 @@ export function DeleteConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4">
-        <div className="flex items-center gap-3 p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-sm w-full mx-4">
+        <div className="flex items-center gap-3 p-6 border-b border-theme-border">
           <AlertTriangle className="w-6 h-6 text-red-600" />
-          <h2 className="text-lg font-bold text-gray-900">Delete {itemType || "Item"}?</h2>
+          <h2 className="text-lg font-bold text-theme-text-primary">Delete {itemType || "Item"}?</h2>
         </div>
 
         <div className="p-6">
-          <p className="text-gray-600">
+          <p className="text-theme-text-secondary">
             Are you sure you want to delete <span className="font-semibold">&quot;{itemName}&quot;</span>? This action cannot be undone.
           </p>
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-200 flex gap-3">
+        <div className="px-6 py-4 border-t border-theme-border flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+            className="flex-1 px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition"
             disabled={isLoading}
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
-            className="flex-1 px-4 py-2 bg-red-600 text-black rounded-lg font-medium hover:bg-red-700 transition disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-red-600 text-theme-text-primary rounded-lg font-medium hover:bg-red-700 transition disabled:opacity-50"
             disabled={isLoading}
           >
             {isLoading ? "Deleting..." : "Delete"}
@@ -1155,15 +1155,15 @@ export function ImportContactsModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
           <div className="flex items-center gap-2">
-            <Upload className="w-5 h-5 text-blue-600" />
-            <h2 className="text-xl font-bold text-gray-900">Import Contacts from CSV</h2>
+            <Upload className="w-5 h-5 text-theme-accent" />
+            <h2 className="text-xl font-bold text-theme-text-primary">Import Contacts from CSV</h2>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition">
-            <X className="w-5 h-5 text-gray-600" />
+          <button onClick={onClose} className="p-1 hover:bg-theme-muted rounded-lg transition">
+            <X className="w-5 h-5 text-theme-text-secondary" />
           </button>
         </div>
 
@@ -1172,11 +1172,11 @@ export function ImportContactsModal({
           <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
             <div>
               <p className="text-sm font-semibold text-blue-800">Not sure about the format?</p>
-              <p className="text-xs text-blue-600 mt-0.5">Download the template and fill it in — then upload it here.</p>
+              <p className="text-xs text-theme-accent mt-0.5">Download the template and fill it in — then upload it here.</p>
             </div>
             <button
               onClick={downloadSampleCsv}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-black text-sm font-medium rounded-lg hover:bg-blue-700 transition whitespace-nowrap"
+              className="flex items-center gap-2 px-4 py-2 bg-theme-accent text-theme-text-primary text-sm font-medium rounded-lg hover:bg-theme-accent-hover transition whitespace-nowrap"
             >
               <FileDown className="w-4 h-4" /> Download Sample
             </button>
@@ -1192,18 +1192,18 @@ export function ImportContactsModal({
             <div
               onDrop={handleDrop}
               onDragOver={(e) => e.preventDefault()}
-              className="border-2 border-dashed border-gray-300 rounded-lg p-10 text-center hover:border-blue-400 transition cursor-pointer"
+              className="border-2 border-dashed border-theme-border rounded-lg p-10 text-center hover:border-theme-accent transition cursor-pointer"
               onClick={() => fileInputRef.current?.click()}
             >
               <Upload className="w-10 h-10 text-theme-text-tertiary mx-auto mb-3" />
-              <p className="text-gray-600 font-medium">Drop a file here or <span className="text-blue-600 underline">browse</span></p>
+              <p className="text-theme-text-secondary font-medium">Drop a file here or <span className="text-theme-accent underline">browse</span></p>
               <p className="text-xs text-theme-text-tertiary mt-2">Accepts <span className="font-medium">.csv, .tsv, .txt</span> — any column order is fine</p>
               <p className="text-xs text-theme-text-tertiary mt-1">
                 or{" "}
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); downloadSampleCsv(); }}
-                  className="text-blue-500 underline hover:text-theme-accent-hover"
+                  className="text-theme-accent underline hover:text-theme-accent-hover"
                 >
                   download the sample template
                 </button>
@@ -1212,15 +1212,15 @@ export function ImportContactsModal({
                 ref={fileInputRef}
                 type="file"
                 accept=".csv,.tsv,.txt"
-                className="bg-white hidden text-black"
+                className="bg-theme-surface hidden text-theme-text-primary"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
               />
             </div>
           ) : (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm text-gray-600">
-                  <span className="font-semibold text-gray-900">{rows.length}</span> contacts ready to import from <span className="font-medium">{fileName}</span>
+                <p className="text-sm text-theme-text-secondary">
+                  <span className="font-semibold text-theme-text-primary">{rows.length}</span> contacts ready to import from <span className="font-medium">{fileName}</span>
                 </p>
                 <button
                   onClick={() => { setRows([]); setFileName(null); setWarnings([]); setMatched([]); setIgnored([]); }}
@@ -1230,8 +1230,8 @@ export function ImportContactsModal({
                 </button>
               </div>
               {/* Column mapping summary */}
-              <div className="mb-3 p-3 bg-gray-50 border border-gray-200 rounded-lg space-y-2">
-                <p className="text-xs font-semibold text-gray-900">Column mapping</p>
+              <div className="mb-3 p-3 bg-theme-muted border border-theme-border rounded-lg space-y-2">
+                <p className="text-xs font-semibold text-theme-text-primary">Column mapping</p>
                 <div className="flex flex-wrap gap-1.5">
                   {matched.map((col) => (
                     <span key={col} className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full font-medium">
@@ -1239,13 +1239,13 @@ export function ImportContactsModal({
                     </span>
                   ))}
                   {ignored.map((col) => (
-                    <span key={col} className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-200 text-gray-500 text-xs rounded-full line-through">
+                    <span key={col} className="inline-flex items-center gap-1 px-2 py-0.5 bg-theme-muted text-theme-text-secondary text-xs rounded-full line-through">
                       {col}
                     </span>
                   ))}
                 </div>
                 {ignored.length > 0 && (
-                  <p className="text-xs text-gray-500">{ignored.length} column{ignored.length !== 1 ? "s" : ""} will be ignored during import.</p>
+                  <p className="text-xs text-theme-text-secondary">{ignored.length} column{ignored.length !== 1 ? "s" : ""} will be ignored during import.</p>
                 )}
               </div>
               {warnings.length > 0 && (
@@ -1255,23 +1255,23 @@ export function ImportContactsModal({
                   ))}
                 </div>
               )}
-              <div className="border border-gray-200 rounded-lg overflow-auto max-h-64">
+              <div className="border border-theme-border rounded-lg overflow-auto max-h-64">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                  <thead className="bg-theme-muted border-b border-theme-border sticky top-0">
                     <tr>
                       {["First Name", "Last Name", "Company", "Email", "Phone"].map((h) => (
-                        <th key={h} className="px-3 py-2 text-left text-xs font-semibold text-gray-900">{h}</th>
+                        <th key={h} className="px-3 py-2 text-left text-xs font-semibold text-theme-text-primary">{h}</th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-theme-border">
                     {rows.map((r, i) => (
-                      <tr key={i} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 text-gray-900">{r.firstName || "—"}</td>
-                        <td className="px-3 py-2 text-gray-600">{r.lastName || "—"}</td>
-                        <td className="px-3 py-2 text-gray-600">{r.company || "—"}</td>
-                        <td className="px-3 py-2 text-gray-600">{r.email || "—"}</td>
-                        <td className="px-3 py-2 text-gray-600">{r.phone || "—"}</td>
+                      <tr key={i} className="hover:bg-theme-muted">
+                        <td className="px-3 py-2 text-theme-text-primary">{r.firstName || "—"}</td>
+                        <td className="px-3 py-2 text-theme-text-secondary">{r.lastName || "—"}</td>
+                        <td className="px-3 py-2 text-theme-text-secondary">{r.company || "—"}</td>
+                        <td className="px-3 py-2 text-theme-text-secondary">{r.email || "—"}</td>
+                        <td className="px-3 py-2 text-theme-text-secondary">{r.phone || "—"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1281,17 +1281,17 @@ export function ImportContactsModal({
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-200 flex gap-3">
+        <div className="px-6 py-4 border-t border-theme-border flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+            className="flex-1 px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition"
             disabled={isLoading}
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg font-medium hover:bg-theme-accent-hover transition disabled:opacity-50"
             disabled={isLoading || rows.length === 0}
           >
             {isLoading ? "Importing..." : `Import ${rows.length > 0 ? rows.length : ""} Contact${rows.length !== 1 ? "s" : ""}`}
@@ -1348,15 +1348,15 @@ export function ConvertToLeadModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
           <div className="flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-green-600" />
-            <h2 className="text-xl font-bold text-gray-900">Convert to Lead</h2>
+            <h2 className="text-xl font-bold text-theme-text-primary">Convert to Lead</h2>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition">
-            <X className="w-5 h-5 text-gray-600" />
+          <button onClick={onClose} className="p-1 hover:bg-theme-muted rounded-lg transition">
+            <X className="w-5 h-5 text-theme-text-secondary" />
           </button>
         </div>
 
@@ -1375,11 +1375,11 @@ export function ConvertToLeadModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">Initial Stage</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">Initial Stage</label>
               <select
                 value={formData.stage}
                 onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={isLoading}
               >
                 {LEAD_STAGE_OPTIONS.map((o) => (
@@ -1388,11 +1388,11 @@ export function ConvertToLeadModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">Source</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">Source</label>
               <select
                 value={formData.source}
                 onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={isLoading}
               >
                 <option value="website">Website</option>
@@ -1405,12 +1405,12 @@ export function ConvertToLeadModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">Expected Value (optional)</label>
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Expected Value (optional)</label>
             <input
               type="number"
               value={formData.expectedValue}
               onChange={(e) => setFormData({ ...formData, expectedValue: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="e.g. 50000"
               min="0"
               disabled={isLoading}
@@ -1418,11 +1418,11 @@ export function ConvertToLeadModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">Notes (optional)</label>
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Notes (optional)</label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
               rows={2}
               placeholder="Add any context about this lead..."
               disabled={isLoading}
@@ -1433,14 +1433,14 @@ export function ConvertToLeadModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+              className="flex-1 px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition"
               disabled={isLoading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-green-600 text-black rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-green-600 text-theme-text-primary rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50"
               disabled={isLoading}
             >
               {isLoading ? "Converting..." : "Convert to Lead"}
@@ -1507,15 +1507,15 @@ export function ConvertToCustomerModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
           <div className="flex items-center gap-2">
             <Building2 className="w-5 h-5 text-purple-600" />
-            <h2 className="text-xl font-bold text-gray-900">Convert to Customer</h2>
+            <h2 className="text-xl font-bold text-theme-text-primary">Convert to Customer</h2>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition">
-            <X className="w-5 h-5 text-gray-600" />
+          <button onClick={onClose} className="p-1 hover:bg-theme-muted rounded-lg transition">
+            <X className="w-5 h-5 text-theme-text-secondary" />
           </button>
         </div>
 
@@ -1533,12 +1533,12 @@ export function ConvertToCustomerModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">Customer / Company Name *</label>
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Customer / Company Name *</label>
             <input
               type="text"
               value={formData.customerName}
               onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="Company name"
               disabled={isLoading}
             />
@@ -1546,23 +1546,23 @@ export function ConvertToCustomerModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">Region ID</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">Region ID</label>
               <input
                 type="text"
                 value={formData.regionId}
                 onChange={(e) => setFormData({ ...formData, regionId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 placeholder="default"
                 disabled={isLoading}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">Branch ID</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">Branch ID</label>
               <input
                 type="text"
                 value={formData.branchId}
                 onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 placeholder="default"
                 disabled={isLoading}
               />
@@ -1570,11 +1570,11 @@ export function ConvertToCustomerModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">Status</label>
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Status</label>
             <select
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
               disabled={isLoading}
             >
               <option value="active">Active</option>
@@ -1587,14 +1587,14 @@ export function ConvertToCustomerModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+              className="flex-1 px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition"
               disabled={isLoading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-purple-600 text-gray-900 rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-purple-600 text-theme-text-primary rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50"
               disabled={isLoading}
             >
               {isLoading ? "Converting..." : "Convert to Customer"}
@@ -1677,15 +1677,15 @@ export function ConvertLeadToDealModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
           <div className="flex items-center gap-2">
             <Target className="w-5 h-5 text-green-600" />
-            <h2 className="text-xl font-bold text-gray-900">Convert to Deal</h2>
+            <h2 className="text-xl font-bold text-theme-text-primary">Convert to Deal</h2>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition">
-            <X className="w-5 h-5 text-gray-600" />
+          <button onClick={onClose} className="p-1 hover:bg-theme-muted rounded-lg transition">
+            <X className="w-5 h-5 text-theme-text-secondary" />
           </button>
         </div>
 
@@ -1703,23 +1703,23 @@ export function ConvertLeadToDealModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">Deal Name *</label>
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Deal Name *</label>
             <input
               type="text"
               value={formData.dealName}
               onChange={(e) => setFormData({ ...formData, dealName: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="Deal name"
               disabled={isLoading}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">Pipeline Stage</label>
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Pipeline Stage</label>
             <select
               value={formData.stage}
               onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
               disabled={isLoading}
             >
               {DEAL_STAGE_OPTIONS.map((o) => (
@@ -1730,24 +1730,24 @@ export function ConvertLeadToDealModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">Deal Value</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">Deal Value</label>
               <input
                 type="number"
                 value={formData.value}
                 onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 placeholder="e.g. 50000"
                 min="0"
                 disabled={isLoading}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">Currency</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">Currency</label>
               <input
                 type="text"
                 value={formData.currency}
                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 placeholder="₦"
                 disabled={isLoading}
               />
@@ -1756,12 +1756,12 @@ export function ConvertLeadToDealModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">Probability (%)</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">Probability (%)</label>
               <input
                 type="number"
                 value={formData.probability}
                 onChange={(e) => setFormData({ ...formData, probability: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 placeholder="50"
                 min="0"
                 max="100"
@@ -1769,23 +1769,23 @@ export function ConvertLeadToDealModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">Expected Close Date</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">Expected Close Date</label>
               <input
                 type="date"
                 value={formData.expectedClose}
                 onChange={(e) => setFormData({ ...formData, expectedClose: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={isLoading}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">Notes (optional)</label>
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Notes (optional)</label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
               rows={2}
               placeholder="Add any context about this deal..."
               disabled={isLoading}
@@ -1796,7 +1796,7 @@ export function ConvertLeadToDealModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+              className="flex-1 px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition"
               disabled={isLoading}
             >
               Cancel
@@ -1874,15 +1874,15 @@ export function AssignLeadModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
           <div className="flex items-center gap-2">
-            <UserPlus className="w-5 h-5 text-blue-600" />
-            <h2 className="text-xl font-bold text-gray-900">Assign Lead</h2>
+            <UserPlus className="w-5 h-5 text-theme-accent" />
+            <h2 className="text-xl font-bold text-theme-text-primary">Assign Lead</h2>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition">
-            <X className="w-5 h-5 text-gray-600" />
+          <button onClick={onClose} className="p-1 hover:bg-theme-muted rounded-lg transition">
+            <X className="w-5 h-5 text-theme-text-secondary" />
           </button>
         </div>
 
@@ -1901,25 +1901,25 @@ export function AssignLeadModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">Search Team Members</label>
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Search Team Members</label>
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="Search by name, email, or title..."
               disabled={isLoading}
             />
           </div>
 
-          <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
+          <div className="max-h-60 overflow-y-auto border border-theme-border rounded-lg">
             {filteredMembers.length === 0 ? (
-              <p className="px-4 py-6 text-center text-sm text-gray-500">No team members found.</p>
+              <p className="px-4 py-6 text-center text-sm text-theme-text-secondary">No team members found.</p>
             ) : (
               filteredMembers.map((member) => (
                 <label
                   key={member.id}
-                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-blue-50 transition border-b border-gray-100 last:border-0 ${
+                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-theme-muted transition border-b border-theme-border last:border-0 ${
                     selectedId === member.id ? "bg-blue-50" : ""
                   }`}
                 >
@@ -1929,16 +1929,16 @@ export function AssignLeadModal({
                     value={member.id}
                     checked={selectedId === member.id}
                     onChange={(e) => setSelectedId(e.target.value)}
-                    className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                    className="w-4 h-4 text-theme-accent focus:ring-theme-accent"
                     disabled={isLoading}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{member.name}</p>
-                    <p className="text-xs text-gray-500 truncate">
+                    <p className="text-sm font-medium text-theme-text-primary">{member.name}</p>
+                    <p className="text-xs text-theme-text-secondary truncate">
                       {member.jobTitle ? `${member.jobTitle} • ` : ""}{member.email}
                     </p>
                     {member.departmentName && (
-                      <p className="text-xs text-gray-400">{member.departmentName}</p>
+                      <p className="text-xs text-theme-text-tertiary">{member.departmentName}</p>
                     )}
                   </div>
                 </label>
@@ -1950,14 +1950,14 @@ export function AssignLeadModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+              className="flex-1 px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition"
               disabled={isLoading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-theme-accent text-white rounded-lg font-medium hover:bg-theme-accent-hover transition disabled:opacity-50"
               disabled={isLoading || !selectedId}
             >
               {isLoading ? "Assigning..." : "Assign Lead"}
@@ -2012,15 +2012,15 @@ export function BulkConvertToLeadModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
           <div className="flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-green-600" />
-            <h2 className="text-xl font-bold text-gray-900">Bulk Convert to Leads</h2>
+            <h2 className="text-xl font-bold text-theme-text-primary">Bulk Convert to Leads</h2>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition">
-            <X className="w-5 h-5 text-gray-600" />
+          <button onClick={onClose} className="p-1 hover:bg-theme-muted rounded-lg transition">
+            <X className="w-5 h-5 text-theme-text-secondary" />
           </button>
         </div>
 
@@ -2039,11 +2039,11 @@ export function BulkConvertToLeadModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">Initial Stage</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">Initial Stage</label>
               <select
                 value={formData.stage}
                 onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={isLoading}
               >
                 {LEAD_STAGE_OPTIONS.map((o) => (
@@ -2052,11 +2052,11 @@ export function BulkConvertToLeadModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">Source</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">Source</label>
               <select
                 value={formData.source}
                 onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={isLoading}
               >
                 <option value="website">Website</option>
@@ -2069,11 +2069,11 @@ export function BulkConvertToLeadModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">Notes (optional, applied to all)</label>
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Notes (optional, applied to all)</label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
               rows={2}
               placeholder="Add any context about these leads..."
               disabled={isLoading}
@@ -2084,7 +2084,7 @@ export function BulkConvertToLeadModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+              className="flex-1 px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition"
               disabled={isLoading}
             >
               Cancel
@@ -2151,15 +2151,15 @@ export function BulkEditContactsModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
           <div className="flex items-center gap-2">
-            <Edit2 className="w-5 h-5 text-blue-600" />
-            <h2 className="text-xl font-bold text-gray-900">Bulk Edit Contacts</h2>
+            <Edit2 className="w-5 h-5 text-theme-accent" />
+            <h2 className="text-xl font-bold text-theme-text-primary">Bulk Edit Contacts</h2>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition">
-            <X className="w-5 h-5 text-gray-600" />
+          <button onClick={onClose} className="p-1 hover:bg-theme-muted rounded-lg transition">
+            <X className="w-5 h-5 text-theme-text-secondary" />
           </button>
         </div>
 
@@ -2182,16 +2182,16 @@ export function BulkEditContactsModal({
                 type="checkbox"
                 checked={formData.applyStatus}
                 onChange={(e) => setFormData({ ...formData, applyStatus: e.target.checked })}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="w-4 h-4 rounded border-theme-border text-theme-accent focus:ring-theme-accent"
                 disabled={isLoading}
               />
-              <span className="text-sm font-medium text-gray-900">Update Status</span>
+              <span className="text-sm font-medium text-theme-text-primary">Update Status</span>
             </label>
             {formData.applyStatus && (
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={isLoading}
               >
                 <option value="active">Active</option>
@@ -2206,16 +2206,16 @@ export function BulkEditContactsModal({
                 type="checkbox"
                 checked={formData.applySource}
                 onChange={(e) => setFormData({ ...formData, applySource: e.target.checked })}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="w-4 h-4 rounded border-theme-border text-theme-accent focus:ring-theme-accent"
                 disabled={isLoading}
               />
-              <span className="text-sm font-medium text-gray-900">Update Source</span>
+              <span className="text-sm font-medium text-theme-text-primary">Update Source</span>
             </label>
             {formData.applySource && (
               <select
                 value={formData.source}
                 onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={isLoading}
               >
                 <option value="website">Website</option>
@@ -2231,14 +2231,14 @@ export function BulkEditContactsModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+              className="flex-1 px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition"
               disabled={isLoading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-theme-accent text-white rounded-lg font-medium hover:bg-theme-accent-hover transition disabled:opacity-50"
               disabled={isLoading}
             >
               {isLoading ? "Updating..." : `Update ${selectedCount} Contact${selectedCount !== 1 ? "s" : ""}`}
@@ -2309,15 +2309,15 @@ export function CreateCustomerModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
           <div className="flex items-center gap-2">
             <Building2 className="w-5 h-5 text-purple-600" />
-            <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+            <h2 className="text-xl font-bold text-theme-text-primary">{title}</h2>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition">
-            <X className="w-5 h-5 text-gray-600" />
+          <button onClick={onClose} className="p-1 hover:bg-theme-muted rounded-lg transition">
+            <X className="w-5 h-5 text-theme-text-secondary" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -2328,41 +2328,41 @@ export function CreateCustomerModal({
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">Company / Customer Name <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Company / Customer Name <span className="text-red-500">*</span></label>
             <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black bg-white disabled:bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-purple-500 text-theme-text-primary bg-theme-surface disabled:bg-theme-surface"
               placeholder="Acme Corporation" disabled={readOnly || isLoading} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">First Name</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">First Name</label>
               <input type="text" value={formData.contactFirstName} onChange={(e) => setFormData({ ...formData, contactFirstName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black bg-white disabled:bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-purple-500 text-theme-text-primary bg-theme-surface disabled:bg-theme-surface"
                 placeholder="John" disabled={readOnly || isLoading} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">Last Name</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">Last Name</label>
               <input type="text" value={formData.contactLastName} onChange={(e) => setFormData({ ...formData, contactLastName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black bg-white disabled:bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-purple-500 text-theme-text-primary bg-theme-surface disabled:bg-theme-surface"
                 placeholder="Smith" disabled={readOnly || isLoading} />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">Email</label>
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Email</label>
             <input type="email" value={formData.contactEmail} onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black bg-white disabled:bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-purple-500 text-theme-text-primary bg-theme-surface disabled:bg-theme-surface"
               placeholder="john@acme.com" disabled={readOnly || isLoading} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">Phone</label>
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Phone</label>
             <input type="text" value={formData.contactPhone} onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black bg-white disabled:bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-purple-500 text-theme-text-primary bg-theme-surface disabled:bg-theme-surface"
               placeholder="+1 555 000 0000" disabled={readOnly || isLoading} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">Status</label>
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">Status</label>
             <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black bg-white disabled:bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-purple-500 text-theme-text-primary bg-theme-surface disabled:bg-theme-surface"
               disabled={readOnly || isLoading}>
               <option value="active">Active</option>
               <option value="prospect">Prospect</option>
@@ -2371,13 +2371,13 @@ export function CreateCustomerModal({
           </div>
           {!readOnly ? (
             <div className="flex gap-3 pt-2">
-              <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition" disabled={isLoading}>Cancel</button>
-              <button type="submit" className="flex-1 px-4 py-2 bg-purple-600 text-gray-900 rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50" disabled={isLoading}>
+              <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition" disabled={isLoading}>Cancel</button>
+              <button type="submit" className="flex-1 px-4 py-2 bg-purple-600 text-theme-text-primary rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50" disabled={isLoading}>
                 {isLoading ? "Saving..." : mode === "edit" ? "Save Changes" : "Add Customer"}
               </button>
             </div>
           ) : (
-            <button type="button" onClick={onClose} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition">Close</button>
+            <button type="button" onClick={onClose} className="w-full px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition">Close</button>
           )}
         </form>
       </div>
@@ -2477,14 +2477,14 @@ export function ImportCustomersModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
           <div className="flex items-center gap-2">
             <Upload className="w-5 h-5 text-purple-600" />
-            <h2 className="text-xl font-bold text-gray-900">Import Customers from CSV</h2>
+            <h2 className="text-xl font-bold text-theme-text-primary">Import Customers from CSV</h2>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition"><X className="w-5 h-5 text-gray-600" /></button>
+          <button onClick={onClose} className="p-1 hover:bg-theme-muted rounded-lg transition"><X className="w-5 h-5 text-theme-text-secondary" /></button>
         </div>
         <div className="p-6 space-y-4 overflow-y-auto flex-1">
           <div className="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-lg px-4 py-3">
@@ -2492,49 +2492,49 @@ export function ImportCustomersModal({
               <p className="text-sm font-semibold text-purple-800">Need a template?</p>
               <p className="text-xs text-purple-600 mt-0.5">Download, fill in, then upload.</p>
             </div>
-            <button onClick={downloadSample} className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-gray-900 text-sm font-medium rounded-lg hover:bg-purple-700 transition whitespace-nowrap">
+            <button onClick={downloadSample} className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-theme-text-primary text-sm font-medium rounded-lg hover:bg-purple-700 transition whitespace-nowrap">
               <FileDown className="w-4 h-4" /> Download Sample
             </button>
           </div>
           {custError && <div className="p-3 bg-red-50 border border-red-200 rounded-lg"><p className="text-sm text-red-800">{custError}</p></div>}
           {custRows.length === 0 ? (
             <div onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }} onDragOver={(e) => e.preventDefault()}
-              className="border-2 border-dashed border-gray-300 rounded-lg p-10 text-center hover:border-purple-400 transition cursor-pointer"
+              className="border-2 border-dashed border-theme-border rounded-lg p-10 text-center hover:border-purple-400 transition cursor-pointer"
               onClick={() => fileInputRef.current?.click()}>
               <Upload className="w-10 h-10 text-theme-text-tertiary mx-auto mb-3" />
-              <p className="text-gray-600 font-medium">Drop a file here or <span className="text-purple-600 underline">browse</span></p>
+              <p className="text-theme-text-secondary font-medium">Drop a file here or <span className="text-purple-600 underline">browse</span></p>
               <p className="text-xs text-theme-text-tertiary mt-2">Accepts .csv, .tsv, .txt — any column order</p>
-              <input ref={fileInputRef} type="file" accept=".csv,.tsv,.txt" className="bg-white hidden text-black" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+              <input ref={fileInputRef} type="file" accept=".csv,.tsv,.txt" className="bg-theme-surface hidden text-theme-text-primary" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
             </div>
           ) : (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm text-gray-600"><span className="font-semibold text-gray-900">{custRows.length}</span> customers ready from <span className="font-medium">{custFileName}</span></p>
+                <p className="text-sm text-theme-text-secondary"><span className="font-semibold text-theme-text-primary">{custRows.length}</span> customers ready from <span className="font-medium">{custFileName}</span></p>
                 <button onClick={() => { setCustRows([]); setCustFileName(null); setCustWarnings([]); setCustMatched([]); setCustIgnored([]); }} className="text-xs text-red-600 hover:underline">Clear</button>
               </div>
               {custMatched.length > 0 && (
-                <div className="mb-3 p-3 bg-gray-50 border border-gray-200 rounded-lg space-y-2">
-                  <p className="text-xs font-semibold text-gray-900">Column mapping</p>
+                <div className="mb-3 p-3 bg-theme-muted border border-theme-border rounded-lg space-y-2">
+                  <p className="text-xs font-semibold text-theme-text-primary">Column mapping</p>
                   <div className="flex flex-wrap gap-1.5">
                     {custMatched.map((col) => <span key={col} className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full font-medium">✓ {col}</span>)}
-                    {custIgnored.map((col) => <span key={col} className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-200 text-gray-500 text-xs rounded-full line-through">{col}</span>)}
+                    {custIgnored.map((col) => <span key={col} className="inline-flex items-center gap-1 px-2 py-0.5 bg-theme-muted text-theme-text-secondary text-xs rounded-full line-through">{col}</span>)}
                   </div>
                 </div>
               )}
               {custWarnings.length > 0 && <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">{custWarnings.map((w, i) => <p key={i} className="text-xs text-amber-800">⚠ {w}</p>)}</div>}
-              <div className="border border-gray-200 rounded-lg overflow-auto max-h-64">
+              <div className="border border-theme-border rounded-lg overflow-auto max-h-64">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
-                    <tr>{["Company", "First Name", "Last Name", "Email", "Phone"].map((h) => <th key={h} className="px-3 py-2 text-left text-xs font-semibold text-gray-900">{h}</th>)}</tr>
+                  <thead className="bg-theme-muted border-b border-theme-border sticky top-0">
+                    <tr>{["Company", "First Name", "Last Name", "Email", "Phone"].map((h) => <th key={h} className="px-3 py-2 text-left text-xs font-semibold text-theme-text-primary">{h}</th>)}</tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-theme-border">
                     {custRows.map((r, i) => (
-                      <tr key={i} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 text-gray-900 font-medium">{r.name || "—"}</td>
-                        <td className="px-3 py-2 text-gray-600">{r.contactFirstName || "—"}</td>
-                        <td className="px-3 py-2 text-gray-600">{r.contactLastName || "—"}</td>
-                        <td className="px-3 py-2 text-gray-600">{r.contactEmail || "—"}</td>
-                        <td className="px-3 py-2 text-gray-600">{r.contactPhone || "—"}</td>
+                      <tr key={i} className="hover:bg-theme-muted">
+                        <td className="px-3 py-2 text-theme-text-primary font-medium">{r.name || "—"}</td>
+                        <td className="px-3 py-2 text-theme-text-secondary">{r.contactFirstName || "—"}</td>
+                        <td className="px-3 py-2 text-theme-text-secondary">{r.contactLastName || "—"}</td>
+                        <td className="px-3 py-2 text-theme-text-secondary">{r.contactEmail || "—"}</td>
+                        <td className="px-3 py-2 text-theme-text-secondary">{r.contactPhone || "—"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -2543,14 +2543,14 @@ export function ImportCustomersModal({
             </div>
           )}
         </div>
-        <div className="p-6 border-t border-gray-200 flex gap-3">
-          <button onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition" disabled={isLoading}>Cancel</button>
+        <div className="p-6 border-t border-theme-border flex gap-3">
+          <button onClick={onClose} className="flex-1 px-4 py-2 border border-theme-border rounded-lg text-theme-text-primary font-medium hover:bg-theme-muted transition" disabled={isLoading}>Cancel</button>
           <button
             onClick={async () => {
               if (custRows.length === 0) { setCustError("No customers to import."); return; }
               try { await onImport(custRows); onClose(); } catch (err) { setCustError(err instanceof Error ? err.message : "Import failed"); }
             }}
-            className="flex-1 px-4 py-2 bg-purple-600 text-gray-900 rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-purple-600 text-theme-text-primary rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50"
             disabled={isLoading || custRows.length === 0}>
             {isLoading ? "Importing..." : `Import ${custRows.length} Customer${custRows.length !== 1 ? "s" : ""}`}
           </button>

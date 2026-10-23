@@ -99,19 +99,19 @@ export function LeaveTab({ profile: _profile }: { profile: EmployeeProfile }) {
   const approvedCount = requests.filter(r => r.status === 'approved').length;
 
   if (loading) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-blue-600 animate-spin" /></div>;
+    return <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-theme-accent animate-spin" /></div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Leave Requests</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Submit and track your leave applications</p>
+          <h2 className="text-xl font-bold text-theme-text-primary">Leave Requests</h2>
+          <p className="text-sm text-theme-text-secondary mt-0.5">Submit and track your leave applications</p>
         </div>
         <button
           onClick={() => setShowSubmit(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-theme-accent text-white rounded-lg text-sm font-medium hover:bg-theme-accent-hover transition-colors"
         >
           <Plus className="w-4 h-4" />
           Request Leave
@@ -120,11 +120,11 @@ export function LeaveTab({ profile: _profile }: { profile: EmployeeProfile }) {
 
       {/* HOD approval tabs */}
       {isHOD && (
-        <div className="flex items-center gap-2 border-b border-gray-200">
+        <div className="flex items-center gap-2 border-b border-theme-border">
           <button
             onClick={() => setView('mine')}
             className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              view === 'mine' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              view === 'mine' ? 'border-theme-accent text-theme-accent' : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
             }`}
           >
             <Plane className="w-4 h-4" />
@@ -133,7 +133,7 @@ export function LeaveTab({ profile: _profile }: { profile: EmployeeProfile }) {
           <button
             onClick={() => setView('approvals')}
             className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              view === 'approvals' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              view === 'approvals' ? 'border-theme-accent text-theme-accent' : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
             }`}
           >
             <ClipboardCheck className="w-4 h-4" />
@@ -146,23 +146,23 @@ export function LeaveTab({ profile: _profile }: { profile: EmployeeProfile }) {
       {/* Stats — only show on 'mine' view */}
       {view === 'mine' && (
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 mb-2">
+        <div className="bg-theme-surface rounded-xl border border-theme-border p-4">
+          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium bg-theme-muted text-theme-text-primary mb-2">
             <Calendar className="w-4 h-4" /> Total
           </div>
-          <p className="text-2xl font-bold text-gray-900">{requests.length}</p>
+          <p className="text-2xl font-bold text-theme-text-primary">{requests.length}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="bg-theme-surface rounded-xl border border-theme-border p-4">
           <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium bg-amber-100 text-amber-700 mb-2">
             <Clock className="w-4 h-4" /> Pending
           </div>
-          <p className="text-2xl font-bold text-gray-900">{pendingCount}</p>
+          <p className="text-2xl font-bold text-theme-text-primary">{pendingCount}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="bg-theme-surface rounded-xl border border-theme-border p-4">
           <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium bg-green-100 text-green-700 mb-2">
             <CheckCircle className="w-4 h-4" /> Approved
           </div>
-          <p className="text-2xl font-bold text-gray-900">{approvedCount}</p>
+          <p className="text-2xl font-bold text-theme-text-primary">{approvedCount}</p>
         </div>
       </div>
       )}
@@ -176,31 +176,31 @@ export function LeaveTab({ profile: _profile }: { profile: EmployeeProfile }) {
       {/* Pending approvals view (HOD) */}
       {view === 'approvals' && isHOD ? (
         pendingApprovals.length === 0 ? (
-          <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
-            <CheckCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 text-sm">No pending leave approvals</p>
+          <div className="text-center py-16 bg-theme-muted rounded-xl border border-theme-border">
+            <CheckCircle className="w-10 h-10 text-theme-text-secondary mx-auto mb-3" />
+            <p className="text-theme-text-secondary text-sm">No pending leave approvals</p>
           </div>
         ) : (
           <div className="space-y-2">
             {pendingApprovals.map(req => {
               const leaveType = LEAVE_TYPES.find(l => l.value === req.leave_type)?.label || req.leave_type;
               return (
-                <div key={req.id} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+                <div key={req.id} className="bg-theme-surface rounded-xl border border-theme-border p-4 hover:shadow-sm transition-shadow">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <h4 className="font-semibold text-gray-900 text-sm">{leaveType}</h4>
+                        <h4 className="font-semibold text-theme-text-primary text-sm">{leaveType}</h4>
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border bg-amber-100 text-amber-700 border-amber-200">
                           <Clock className="w-3 h-3" /> Pending
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                      <div className="flex items-center gap-2 text-xs text-theme-text-secondary mb-1">
                         <User className="w-3 h-3" />
-                        <span className="font-medium text-gray-700">{req.employee_name}</span>
+                        <span className="font-medium text-theme-text-primary">{req.employee_name}</span>
                         {req.employee_job_title && <span>· {req.employee_job_title}</span>}
                       </div>
-                      <p className="text-sm text-gray-600">{req.reason}</p>
-                      <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
+                      <p className="text-sm text-theme-text-secondary">{req.reason}</p>
+                      <div className="flex items-center gap-3 mt-1.5 text-xs text-theme-text-tertiary">
                         <span>{req.start_date} → {req.end_date}</span>
                       </div>
                     </div>
@@ -230,9 +230,9 @@ export function LeaveTab({ profile: _profile }: { profile: EmployeeProfile }) {
         )
       ) : view === 'mine' && (
       requests.length === 0 ? (
-        <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
-          <Plane className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">No leave requests yet. Submit one to get started.</p>
+        <div className="text-center py-16 bg-theme-muted rounded-xl border border-theme-border">
+          <Plane className="w-10 h-10 text-theme-text-secondary mx-auto mb-3" />
+          <p className="text-theme-text-secondary text-sm">No leave requests yet. Submit one to get started.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -240,20 +240,20 @@ export function LeaveTab({ profile: _profile }: { profile: EmployeeProfile }) {
             const cfg = STATUS_CONFIG[req.status] || STATUS_CONFIG.pending;
             const leaveType = LEAVE_TYPES.find(l => l.value === req.leave_type)?.label || req.leave_type;
             return (
-              <div key={req.id} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+              <div key={req.id} className="bg-theme-surface rounded-xl border border-theme-border p-4 hover:shadow-sm transition-shadow">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <h4 className="font-semibold text-gray-900 text-sm">{leaveType}</h4>
+                      <h4 className="font-semibold text-theme-text-primary text-sm">{leaveType}</h4>
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${cfg.color}`}>
                         {cfg.icon} {cfg.label}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600">{req.reason}</p>
+                    <p className="text-sm text-theme-text-secondary">{req.reason}</p>
                     {req.reviewer_comment && (
-                      <p className="text-xs text-gray-500 mt-1.5 italic">&quot;{req.reviewer_comment}&quot;</p>
+                      <p className="text-xs text-theme-text-secondary mt-1.5 italic">&quot;{req.reviewer_comment}&quot;</p>
                     )}
-                    <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
+                    <div className="flex items-center gap-3 mt-1.5 text-xs text-theme-text-tertiary">
                       <span>{req.start_date} → {req.end_date}</span>
                     </div>
                   </div>
@@ -314,11 +314,11 @@ function SubmitLeaveModal({ onClose, onSubmitted }: { onClose: () => void; onSub
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5 border-b border-gray-100">
-          <h3 className="font-bold text-gray-900">Request Leave</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="w-5 h-5 text-gray-500" /></button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay p-4" onClick={onClose}>
+      <div className="bg-theme-surface rounded-2xl shadow-xl max-w-md w-full" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-theme-border">
+          <h3 className="font-bold text-theme-text-primary">Request Leave</h3>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-theme-muted"><X className="w-5 h-5 text-theme-text-secondary" /></button>
         </div>
 
         <div className="p-5 space-y-4">
@@ -329,11 +329,11 @@ function SubmitLeaveModal({ onClose, onSubmitted }: { onClose: () => void; onSub
           )}
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Leave Type</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-1.5">Leave Type</label>
             <select
               value={leaveType}
               onChange={e => setLeaveType(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 rounded-lg border border-theme-border text-sm focus:ring-2 focus:ring-theme-accent focus:border-transparent"
             >
               {LEAVE_TYPES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
             </select>
@@ -341,43 +341,43 @@ function SubmitLeaveModal({ onClose, onSubmitted }: { onClose: () => void; onSub
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Start Date</label>
+              <label className="block text-xs font-medium text-theme-text-primary mb-1.5">Start Date</label>
               <input
                 type="date"
                 value={startDate}
                 onChange={e => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 rounded-lg border border-theme-border text-sm focus:ring-2 focus:ring-theme-accent focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">End Date</label>
+              <label className="block text-xs font-medium text-theme-text-primary mb-1.5">End Date</label>
               <input
                 type="date"
                 value={endDate}
                 onChange={e => setEndDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 rounded-lg border border-theme-border text-sm focus:ring-2 focus:ring-theme-accent focus:border-transparent"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Reason *</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-1.5">Reason *</label>
             <textarea
               value={reason}
               onChange={e => setReason(e.target.value)}
               rows={3}
               placeholder="Briefly explain the reason for your leave..."
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 rounded-lg border border-theme-border text-sm focus:ring-2 focus:ring-theme-accent focus:border-transparent resize-none"
             />
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 p-5 border-t border-gray-100">
-          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">Cancel</button>
+        <div className="flex items-center justify-end gap-2 p-5 border-t border-theme-border">
+          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-theme-text-secondary rounded-lg hover:bg-theme-muted">Cancel</button>
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-theme-accent text-white rounded-lg text-sm font-medium hover:bg-theme-accent-hover disabled:opacity-50"
           >
             {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
             Submit Request

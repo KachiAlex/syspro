@@ -115,11 +115,11 @@ export default function ProjectsTasks({ projects, tenantSlug }: ProjectsTasksPro
 
       <div className="flex gap-4 items-end">
         <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-900 mb-2">Select Project</label>
+          <label className="block text-sm font-medium text-theme-text-primary mb-2">Select Project</label>
           <select
             value={selectedProjectId}
             onChange={(e) => setSelectedProjectId(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+            className="w-full rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-theme-text-primary focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 transition"
           >
             {projects.map(p => (
               <option key={p.id} value={p.id}>{p.name}</option>
@@ -135,11 +135,11 @@ export default function ProjectsTasks({ projects, tenantSlug }: ProjectsTasksPro
           value={newTaskTitle}
           onChange={(e) => setNewTaskTitle(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
-          className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+          className="flex-1 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-theme-text-primary placeholder-theme-text-tertiary focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 transition"
         />
         <button
           onClick={handleAddTask}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center gap-2 rounded-lg bg-theme-accent px-4 py-2 text-sm font-semibold text-white hover:bg-theme-accent-hover transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add Task
@@ -147,20 +147,20 @@ export default function ProjectsTasks({ projects, tenantSlug }: ProjectsTasksPro
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-gray-500">Loading tasks...</div>
+        <div className="text-center py-8 text-theme-text-secondary">Loading tasks...</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* To Do Column */}
-          <div className="rounded-lg border border-gray-200 bg-theme-muted p-4">
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <div className="rounded-lg border border-theme-border bg-theme-muted p-4">
+            <h3 className="font-semibold text-theme-text-primary mb-4 flex items-center gap-2">
               <Circle className="w-4 h-4 text-theme-text-tertiary" />
               To Do ({todoTasks.length})
             </h3>
             <div className="space-y-2">
               {todoTasks.map(task => (
-                <div key={task.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3 hover:shadow-md transition">
+                <div key={task.id} className="rounded-lg border border-theme-border bg-theme-muted p-3 hover:shadow-md transition">
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="text-sm font-medium text-gray-900 flex-1">{task.title}</p>
+                    <p className="text-sm font-medium text-theme-text-primary flex-1">{task.title}</p>
                     <button
                       onClick={() => handleDeleteTask(task.id)}
                       className="text-red-600 hover:text-theme-danger transition"
@@ -182,15 +182,15 @@ export default function ProjectsTasks({ projects, tenantSlug }: ProjectsTasksPro
 
           {/* In Progress Column */}
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-blue-600" />
+            <h3 className="font-semibold text-theme-text-primary mb-4 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-theme-accent" />
               In Progress ({inProgressTasks.length})
             </h3>
             <div className="space-y-2">
               {inProgressTasks.map(task => (
                 <div key={task.id} className="rounded-lg border border-blue-200 bg-theme-muted p-3 hover:shadow-md transition">
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="text-sm font-medium text-gray-900 flex-1">{task.title}</p>
+                    <p className="text-sm font-medium text-theme-text-primary flex-1">{task.title}</p>
                     <button
                       onClick={() => handleDeleteTask(task.id)}
                       className="text-red-600 hover:text-theme-danger transition"
@@ -202,7 +202,7 @@ export default function ProjectsTasks({ projects, tenantSlug }: ProjectsTasksPro
                   <div className="flex gap-1">
                     <button
                       onClick={() => handleUpdateTaskStatus(task.id, 'todo')}
-                      className="flex-1 text-xs px-2 py-1 rounded bg-gray-100 text-gray-900 hover:bg-gray-200 transition"
+                      className="flex-1 text-xs px-2 py-1 rounded bg-theme-muted text-theme-text-primary hover:bg-theme-muted transition"
                     >
                       Back
                     </button>
@@ -220,7 +220,7 @@ export default function ProjectsTasks({ projects, tenantSlug }: ProjectsTasksPro
 
           {/* Done Column */}
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <h3 className="font-semibold text-theme-text-primary mb-4 flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-emerald-600" />
               Done ({doneTasks.length})
             </h3>
@@ -228,7 +228,7 @@ export default function ProjectsTasks({ projects, tenantSlug }: ProjectsTasksPro
               {doneTasks.map(task => (
                 <div key={task.id} className="rounded-lg border border-emerald-200 bg-theme-muted p-3 hover:shadow-md transition opacity-75">
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="text-sm font-medium text-gray-900 line-through flex-1">{task.title}</p>
+                    <p className="text-sm font-medium text-theme-text-primary line-through flex-1">{task.title}</p>
                     <button
                       onClick={() => handleDeleteTask(task.id)}
                       className="text-red-600 hover:text-theme-danger transition"
@@ -239,7 +239,7 @@ export default function ProjectsTasks({ projects, tenantSlug }: ProjectsTasksPro
                   </div>
                   <button
                     onClick={() => handleUpdateTaskStatus(task.id, 'in-progress')}
-                    className="w-full text-left text-xs px-2 py-1 rounded bg-gray-100 text-gray-900 hover:bg-gray-200 transition"
+                    className="w-full text-left text-xs px-2 py-1 rounded bg-theme-muted text-theme-text-primary hover:bg-theme-muted transition"
                   >
                     Reopen
                   </button>

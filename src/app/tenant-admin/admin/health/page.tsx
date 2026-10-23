@@ -42,7 +42,7 @@ export default function AdminHealthPage() {
       case "healthy": return "text-green-600 bg-green-50";
       case "degraded": return "text-amber-600 bg-amber-50";
       case "down": return "text-red-600 bg-red-50";
-      default: return "text-gray-600 bg-gray-50";
+      default: return "text-theme-text-secondary bg-theme-muted";
     }
   };
 

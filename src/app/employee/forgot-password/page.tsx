@@ -41,18 +41,18 @@ export default function ForgotPasswordPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 px-4">
         <div className="max-w-md w-full">
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
+          <div className="bg-theme-surface rounded-2xl shadow-xl border border-theme-border p-8 text-center">
             <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-7 h-7 text-green-600" />
             </div>
-            <h1 className="text-xl font-bold text-gray-900 mb-2">Check your email</h1>
-            <p className="text-sm text-gray-600 mb-6">
+            <h1 className="text-xl font-bold text-theme-text-primary mb-2">Check your email</h1>
+            <p className="text-sm text-theme-text-secondary mb-6">
               If an account exists for <strong>{email}</strong> in organization <strong>{tenantSlug}</strong>,
               you&apos;ll receive a password reset link shortly. The link expires in 30 minutes.
             </p>
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+              className="inline-flex items-center gap-2 text-sm font-medium text-theme-accent hover:text-blue-700"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to login
@@ -66,13 +66,13 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 px-4">
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+        <div className="bg-theme-surface rounded-2xl shadow-xl border border-theme-border p-8">
           <div className="flex flex-col items-center mb-6">
-            <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center mb-4">
+            <div className="w-14 h-14 bg-theme-accent rounded-xl flex items-center justify-center mb-4">
               <Mail className="w-7 h-7 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Forgot Password</h1>
-            <p className="text-sm text-gray-500 mt-1">Enter your details to reset your password</p>
+            <h1 className="text-2xl font-bold text-theme-text-primary">Forgot Password</h1>
+            <p className="text-sm text-theme-text-secondary mt-1">Enter your details to reset your password</p>
           </div>
 
           {error && (
@@ -84,7 +84,7 @@ export default function ForgotPasswordPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Organization ID</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-1.5">Organization ID</label>
               <input
                 type="text"
                 value={tenantSlug}
@@ -92,11 +92,11 @@ export default function ForgotPasswordPage() {
                 placeholder="e.g. acme-corp"
                 required
                 disabled={loading}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 border border-theme-border rounded-lg text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-1.5">Email</label>
               <input
                 type="email"
                 value={email}
@@ -104,13 +104,13 @@ export default function ForgotPasswordPage() {
                 placeholder="you@company.com"
                 required
                 disabled={loading}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 border border-theme-border rounded-lg text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-2.5 bg-theme-accent text-white rounded-lg font-medium hover:bg-theme-accent-hover transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -126,7 +126,7 @@ export default function ForgotPasswordPage() {
           <div className="mt-6 text-center">
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+              className="inline-flex items-center gap-2 text-sm font-medium text-theme-accent hover:text-blue-700"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to login

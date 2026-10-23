@@ -94,12 +94,12 @@ export default function DepartmentManagement({ tenantSlug }: { tenantSlug?: stri
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Structure</p>
-            <h2 className="text-xl font-semibold text-gray-900">Department management</h2>
-            <p className="mt-1 text-sm text-slate-500">Create and manage tenant departments (global or branch-scoped).</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Structure</p>
+            <h2 className="text-xl font-semibold text-theme-text-primary">Department management</h2>
+            <p className="mt-1 text-sm text-theme-text-tertiary">Create and manage tenant departments (global or branch-scoped).</p>
           </div>
         </div>
 
@@ -108,19 +108,19 @@ export default function DepartmentManagement({ tenantSlug }: { tenantSlug?: stri
             <input
               {...form.getFieldProps("name")}
               placeholder="Department name"
-              className={`bg-white w-full rounded-lg border px-3 py-2 ${form.errorMap.name ? "border-rose-300" : "border-slate-200"} text-black`}
+              className={`bg-theme-surface w-full rounded-lg border px-3 py-2 ${form.errorMap.name ? "border-rose-300" : "border-theme-border"} text-theme-text-primary`}
             />
             {form.errorMap.name && <p className="mt-1 text-xs text-rose-600">{form.errorMap.name}</p>}
           </div>
           <select
             value={form.values.scope}
             onChange={(e) => form.setValue("scope", e.target.value as Department["scope"])}
-            className="bg-white rounded-lg border px-3 py-2 text-black"
+            className="bg-theme-surface rounded-lg border px-3 py-2 text-theme-text-primary"
           >
             <option value="global">Global</option>
             <option value="branch">Branch</option>
           </select>
-          <button type="submit" disabled={form.isSubmitting} className="rounded-full bg-slate-900 px-4 py-2 text-white disabled:opacity-50">
+          <button type="submit" disabled={form.isSubmitting} className="rounded-full bg-theme-surface px-4 py-2 text-theme-text-primary disabled:opacity-50">
             {form.isSubmitting ? "Creating..." : "Create"}
           </button>
         </form>
@@ -129,11 +129,11 @@ export default function DepartmentManagement({ tenantSlug }: { tenantSlug?: stri
 
         <div className="mt-6 overflow-auto">
           {loading ? (
-            <div className="text-sm text-slate-500">Loading departments…</div>
+            <div className="text-sm text-theme-text-tertiary">Loading departments…</div>
           ) : (
-            <table className="w-full text-left text-sm text-slate-600">
+            <table className="w-full text-left text-sm text-theme-text-secondary">
               <thead>
-                <tr className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                <tr className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">
                   <th className="pb-2">Name</th>
                   <th className="pb-2">Scope</th>
                   <th className="pb-2">Created</th>
@@ -142,8 +142,8 @@ export default function DepartmentManagement({ tenantSlug }: { tenantSlug?: stri
               </thead>
               <tbody>
                 {(departments ?? []).map((d) => (
-                  <tr key={d.id} className="border-t border-slate-100">
-                    <td className="py-3 font-semibold text-gray-900">{d.name}</td>
+                  <tr key={d.id} className="border-t border-theme-border">
+                    <td className="py-3 font-semibold text-theme-text-primary">{d.name}</td>
                     <td>{d.scope}</td>
                     <td>{new Date(d.createdAt).toLocaleString()}</td>
                     <td>
@@ -153,7 +153,7 @@ export default function DepartmentManagement({ tenantSlug }: { tenantSlug?: stri
                 ))}
                 {(departments ?? []).length === 0 && (
                   <tr>
-                    <td colSpan={4} className="py-4 text-sm text-slate-500">No departments yet.</td>
+                    <td colSpan={4} className="py-4 text-sm text-theme-text-tertiary">No departments yet.</td>
                   </tr>
                 )}
               </tbody>

@@ -166,15 +166,15 @@ export default function IntegrationsPage() {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Integrations</h1>
         <div className="flex gap-2">
-          <button onClick={tab === "integrations" ? openCreate : () => setShowKeyForm(true)} className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded">
+          <button onClick={tab === "integrations" ? openCreate : () => setShowKeyForm(true)} className="px-3 py-1.5 bg-theme-accent text-white text-sm rounded">
             {tab === "integrations" ? "New integration" : "New API key"}
           </button>
         </div>
       </div>
 
-      <div className="flex gap-4 border-b border-gray-200 mb-4">
+      <div className="flex gap-4 border-b border-theme-border mb-4">
         {(["integrations", "api-keys"] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={`pb-2 text-sm ${tab === t ? "border-b-2 border-blue-600 text-blue-700 font-medium" : "text-gray-500"}`}>
+          <button key={t} onClick={() => setTab(t)} className={`pb-2 text-sm ${tab === t ? "border-b-2 border-theme-accent text-blue-700 font-medium" : "text-theme-text-secondary"}`}>
             {t === "integrations" ? "Integrations" : "API keys"}
           </button>
         ))}
@@ -187,37 +187,37 @@ export default function IntegrationsPage() {
       {newKey && (
         <div className="mb-4 p-4 border border-amber-300 bg-amber-50 rounded">
           <p className="font-medium text-amber-900">Save these credentials — they are shown only once.</p>
-          <p className="mt-2 text-sm"><span className="font-medium">Key:</span> <code className="bg-white px-1">{newKey.key}</code></p>
-          <p className="text-sm"><span className="font-medium">Secret:</span> <code className="bg-white px-1">{newKey.secret}</code></p>
+          <p className="mt-2 text-sm"><span className="font-medium">Key:</span> <code className="bg-theme-surface px-1">{newKey.key}</code></p>
+          <p className="text-sm"><span className="font-medium">Secret:</span> <code className="bg-theme-surface px-1">{newKey.secret}</code></p>
           <button onClick={() => setNewKey(null)} className="mt-2 text-sm text-blue-700 underline">I have saved them</button>
         </div>
       )}
 
       {tab === "integrations" && !loading && (
         <>
-          {integrations.length === 0 && <p className="text-gray-500">No integrations configured yet.</p>}
+          {integrations.length === 0 && <p className="text-theme-text-secondary">No integrations configured yet.</p>}
           {integrations.length > 0 && (
             <div className="overflow-x-auto">
-              <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+              <table className="min-w-full bg-theme-surface border border-theme-border rounded-lg">
                 <thead>
-                  <tr className="bg-gray-50">
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Type</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Last sync</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Error</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700"></th>
+                  <tr className="bg-theme-muted">
+                    <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Name</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Type</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Status</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Last sync</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Error</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {integrations.map((i) => (
-                    <tr key={i.id} className="border-t border-gray-100">
-                      <td className="px-4 py-2 text-sm text-gray-900 font-medium">{i.name}</td>
-                      <td className="px-4 py-2 text-sm text-gray-900">{i.type}</td>
+                    <tr key={i.id} className="border-t border-theme-border">
+                      <td className="px-4 py-2 text-sm text-theme-text-primary font-medium">{i.name}</td>
+                      <td className="px-4 py-2 text-sm text-theme-text-primary">{i.type}</td>
                       <td className="px-4 py-2 text-sm">
-                        <span className={`px-2 py-0.5 rounded text-xs ${i.status === "active" ? "bg-green-100 text-green-800" : i.status === "error" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-700"}`}>{i.status}</span>
+                        <span className={`px-2 py-0.5 rounded text-xs ${i.status === "active" ? "bg-green-100 text-green-800" : i.status === "error" ? "bg-red-100 text-red-800" : "bg-theme-muted text-theme-text-primary"}`}>{i.status}</span>
                       </td>
-                      <td className="px-4 py-2 text-sm text-gray-700">{fmt(i.last_sync_at)}</td>
+                      <td className="px-4 py-2 text-sm text-theme-text-primary">{fmt(i.last_sync_at)}</td>
                       <td className="px-4 py-2 text-sm text-red-600 max-w-[200px] truncate">{i.error_message || "—"}</td>
                       <td className="px-4 py-2 text-sm space-x-3 whitespace-nowrap">
                         <button onClick={() => openEdit(i)} className="text-blue-700 underline">Edit</button>
@@ -234,32 +234,32 @@ export default function IntegrationsPage() {
 
       {tab === "api-keys" && !loading && (
         <>
-          {apiKeys.length === 0 && <p className="text-gray-500">No API keys yet. Keys authenticate external calls (e.g. the AI agent API) via the <code>x-api-key</code> + <code>x-tenant-slug</code> headers.</p>}
+          {apiKeys.length === 0 && <p className="text-theme-text-secondary">No API keys yet. Keys authenticate external calls (e.g. the AI agent API) via the <code>x-api-key</code> + <code>x-tenant-slug</code> headers.</p>}
           {apiKeys.length > 0 && (
             <div className="overflow-x-auto">
-              <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+              <table className="min-w-full bg-theme-surface border border-theme-border rounded-lg">
                 <thead>
-                  <tr className="bg-gray-50">
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Label</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Key</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Expires</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Last used</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700"></th>
+                  <tr className="bg-theme-muted">
+                    <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Label</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Key</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Status</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Expires</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Last used</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {apiKeys.map((k) => (
-                    <tr key={k.id} className="border-t border-gray-100">
-                      <td className="px-4 py-2 text-sm text-gray-900 font-medium">{k.name}</td>
-                      <td className="px-4 py-2 text-sm text-gray-700"><code>{(k.keyPrefix || k.key_prefix || "")}…</code></td>
+                    <tr key={k.id} className="border-t border-theme-border">
+                      <td className="px-4 py-2 text-sm text-theme-text-primary font-medium">{k.name}</td>
+                      <td className="px-4 py-2 text-sm text-theme-text-primary"><code>{(k.keyPrefix || k.key_prefix || "")}…</code></td>
                       <td className="px-4 py-2 text-sm">
                         {k.revoked_at
                           ? <span className="px-2 py-0.5 rounded text-xs bg-red-100 text-red-800">revoked</span>
                           : <span className="px-2 py-0.5 rounded text-xs bg-green-100 text-green-800">active</span>}
                       </td>
-                      <td className="px-4 py-2 text-sm text-gray-700">{fmt(k.expires_at)}</td>
-                      <td className="px-4 py-2 text-sm text-gray-700">{fmt(k.last_used_at)}</td>
+                      <td className="px-4 py-2 text-sm text-theme-text-primary">{fmt(k.expires_at)}</td>
+                      <td className="px-4 py-2 text-sm text-theme-text-primary">{fmt(k.last_used_at)}</td>
                       <td className="px-4 py-2 text-sm">
                         {!k.revoked_at && <button onClick={() => revokeKey(k.id)} className="text-red-700 underline">Revoke</button>}
                       </td>
@@ -273,8 +273,8 @@ export default function IntegrationsPage() {
       )}
 
       {showIntForm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setShowIntForm(false)}>
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50" onClick={() => setShowIntForm(false)}>
+          <div className="bg-theme-surface rounded-lg p-6 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-semibold mb-4">{editing ? "Edit integration" : "New integration"}</h2>
             <label className="block text-sm mb-1">Name</label>
             <input value={intName} onChange={(e) => setIntName(e.target.value)} className="w-full border rounded px-2 py-1.5 mb-3 text-sm" />
@@ -295,21 +295,21 @@ export default function IntegrationsPage() {
             </label>
             <div className="flex justify-end gap-2">
               <button onClick={() => setShowIntForm(false)} className="px-3 py-1.5 text-sm border rounded">Cancel</button>
-              <button onClick={saveIntegration} className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded">{editing ? "Save" : "Create"}</button>
+              <button onClick={saveIntegration} className="px-3 py-1.5 text-sm bg-theme-accent text-white rounded">{editing ? "Save" : "Create"}</button>
             </div>
           </div>
         </div>
       )}
 
       {showKeyForm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setShowKeyForm(false)}>
-          <div className="bg-white rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50" onClick={() => setShowKeyForm(false)}>
+          <div className="bg-theme-surface rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-semibold mb-4">New API key</h2>
             <label className="block text-sm mb-1">Label</label>
             <input value={keyLabel} onChange={(e) => setKeyLabel(e.target.value)} placeholder="e.g. Reporting pipeline" className="w-full border rounded px-2 py-1.5 mb-4 text-sm" />
             <div className="flex justify-end gap-2">
               <button onClick={() => setShowKeyForm(false)} className="px-3 py-1.5 text-sm border rounded">Cancel</button>
-              <button onClick={createKey} className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded">Create</button>
+              <button onClick={createKey} className="px-3 py-1.5 text-sm bg-theme-accent text-white rounded">Create</button>
             </div>
           </div>
         </div>

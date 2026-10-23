@@ -105,12 +105,12 @@ export default function CostAllocationSection({ tenantSlug }: { tenantSlug?: str
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Cost Allocation</p>
-            <h2 className="text-2xl font-semibold text-gray-900">Cost Centers</h2>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Cost Allocation</p>
+            <h2 className="text-2xl font-semibold text-theme-text-primary">Cost Centers</h2>
+            <p className="mt-2 text-sm text-theme-text-secondary">
               Create and manage cost centers to organize and track expenses by department, region, or project.
             </p>
           </div>
@@ -119,7 +119,7 @@ export default function CostAllocationSection({ tenantSlug }: { tenantSlug?: str
               setShowCreateForm(!showCreateForm);
               form.resetForm();
             }}
-            className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+            className="whitespace-nowrap rounded-full bg-theme-accent px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-theme-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
           >
             {showCreateForm ? "Cancel" : "+ Create Cost Center"}
           </button>
@@ -153,11 +153,11 @@ export default function CostAllocationSection({ tenantSlug }: { tenantSlug?: str
 
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">Region</label>
+                <label className="block text-sm font-medium text-theme-text-primary mb-2">Region</label>
                 <select
                   value={form.values.region}
                   onChange={(e) => form.setValue("region", e.target.value)}
-                  className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-black"
+                  className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-theme-text-primary"
                 >
                   {REGIONS.map((r) => (
                     <option key={r} value={r}>
@@ -187,7 +187,7 @@ export default function CostAllocationSection({ tenantSlug }: { tenantSlug?: str
                   setShowCreateForm(false);
                   form.resetForm();
                 }}
-                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
+                className="rounded-full border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-tertiary transition hover:bg-theme-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300"
               >
                 Cancel
               </button>
@@ -197,13 +197,13 @@ export default function CostAllocationSection({ tenantSlug }: { tenantSlug?: str
 
         <div className="mt-6">
           {loading ? (
-            <div className="rounded-lg bg-slate-50 p-4 text-center text-sm text-slate-600">
-              <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900"></div>
+            <div className="rounded-lg bg-theme-muted p-4 text-center text-sm text-theme-text-secondary">
+              <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-theme-border border-t-slate-900"></div>
               <p className="mt-2">Loading cost centers…</p>
             </div>
           ) : (costCenters ?? []).length === 0 ? (
             <div className="rounded-lg bg-blue-50 p-4 text-center text-sm">
-              <p className="font-medium text-gray-900">No cost centers created</p>
+              <p className="font-medium text-theme-text-primary">No cost centers created</p>
               <p className="mt-1 text-blue-700">Create your first cost center to start tracking expenses</p>
             </div>
           ) : (
@@ -213,12 +213,12 @@ export default function CostAllocationSection({ tenantSlug }: { tenantSlug?: str
                 const percentageText = utilization.toFixed(1);
                 const isOverBudget = utilization > 100;
                 return (
-                  <div key={cc.id} className="rounded-lg border border-slate-200 p-4">
+                  <div key={cc.id} className="rounded-lg border border-theme-border p-4">
                     <div className="flex items-start justify-between gap-4 mb-3">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">{cc.code}</h3>
-                        <p className="text-sm text-slate-600">{cc.name}</p>
-                        <p className="mt-1 text-xs text-slate-500">{cc.region}</p>
+                        <h3 className="font-semibold text-theme-text-primary">{cc.code}</h3>
+                        <p className="text-sm text-theme-text-secondary">{cc.name}</p>
+                        <p className="mt-1 text-xs text-theme-text-tertiary">{cc.region}</p>
                       </div>
                       <button
                         onClick={() => deleteCostCenter(cc.id)}
@@ -230,12 +230,12 @@ export default function CostAllocationSection({ tenantSlug }: { tenantSlug?: str
 
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium text-gray-900">Budget Utilization</span>
-                        <span className={`font-semibold ${isOverBudget ? "text-rose-600" : "text-gray-900"}`}>
+                        <span className="font-medium text-theme-text-primary">Budget Utilization</span>
+                        <span className={`font-semibold ${isOverBudget ? "text-rose-600" : "text-theme-text-primary"}`}>
                           {percentageText}%
                         </span>
                       </div>
-                      <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+                      <div className="h-2 overflow-hidden rounded-full bg-theme-muted">
                         <div
                           className={`h-full transition-all ${
                             utilization > 100 ? "bg-rose-500" : utilization > 80 ? "bg-yellow-500" : "bg-green-500"
@@ -245,15 +245,15 @@ export default function CostAllocationSection({ tenantSlug }: { tenantSlug?: str
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                         <div>
-                          <p className="text-slate-500">Budget</p>
-                          <p className="font-semibold text-gray-900">₦{cc.budget.toLocaleString()}</p>
+                          <p className="text-theme-text-tertiary">Budget</p>
+                          <p className="font-semibold text-theme-text-primary">₦{cc.budget.toLocaleString()}</p>
                         </div>
                         <div>
-                          <p className="text-slate-500">Spent</p>
-                          <p className="font-semibold text-gray-900">₦{cc.spent.toLocaleString()}</p>
+                          <p className="text-theme-text-tertiary">Spent</p>
+                          <p className="font-semibold text-theme-text-primary">₦{cc.spent.toLocaleString()}</p>
                         </div>
                         <div>
-                          <p className="text-slate-500">Remaining</p>
+                          <p className="text-theme-text-tertiary">Remaining</p>
                           <p className={`font-semibold ${isOverBudget ? "text-rose-600" : "text-green-600"}`}>
                             ₦{Math.max(0, cc.budget - cc.spent).toLocaleString()}
                           </p>

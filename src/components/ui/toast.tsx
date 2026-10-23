@@ -60,7 +60,7 @@ export function Toast({ toast, onRemove }: ToastProps) {
       case 'info':
         return 'bg-blue-50 border-blue-200 text-blue-800';
       default:
-        return 'bg-gray-50 border-gray-200 text-gray-800';
+        return 'bg-theme-muted border-theme-border text-theme-text-primary';
     }
   };
 
@@ -73,9 +73,9 @@ export function Toast({ toast, onRemove }: ToastProps) {
       case 'warning':
         return 'text-yellow-600';
       case 'info':
-        return 'text-blue-600';
+        return 'text-theme-accent';
       default:
-        return 'text-gray-600';
+        return 'text-theme-text-secondary';
     }
   };
 
@@ -88,7 +88,7 @@ export function Toast({ toast, onRemove }: ToastProps) {
       `}
     >
       <div className={`
-        max-w-sm w-full bg-white border rounded-lg shadow-lg pointer-events-auto
+        max-w-sm w-full bg-theme-surface border rounded-lg shadow-lg pointer-events-auto
         ${getColors()}
       `}>
         <div className="p-4">
@@ -115,7 +115,7 @@ export function Toast({ toast, onRemove }: ToastProps) {
                         text-xs font-medium px-2 py-1 rounded transition-colors
                         ${action.variant === 'primary' 
                           ? 'bg-current text-white hover:opacity-90' 
-                          : 'border border-current hover:bg-current hover:text-white'
+                          : 'border border-current hover:bg-current hover:text-theme-text-primary'
                         }
                       `}
                     >

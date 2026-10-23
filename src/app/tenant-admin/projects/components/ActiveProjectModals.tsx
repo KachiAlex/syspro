@@ -33,13 +33,13 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
   if (!isOpen || !project) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Project Details</h2>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-theme-surface border-b border-theme-border p-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-theme-text-primary">Project Details</h2>
           <button 
             onClick={onClose} 
-            className="text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-theme-text-secondary hover:text-theme-text-primary transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
@@ -47,8 +47,8 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
 
         <div className="p-6 space-y-6">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{project.name}</h3>
-            <p className="text-gray-600">{project.description}</p>
+            <h3 className="text-lg font-semibold text-theme-text-primary mb-2">{project.name}</h3>
+            <p className="text-theme-text-secondary">{project.description}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -56,24 +56,24 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
               <div className="flex items-center gap-3">
                 <Briefcase className="w-5 h-5 text-theme-text-tertiary" />
                 <div>
-                  <p className="text-sm text-gray-500">Manager</p>
-                  <p className="font-medium text-gray-900">{project.managerName || project.manager}</p>
+                  <p className="text-sm text-theme-text-secondary">Manager</p>
+                  <p className="font-medium text-theme-text-primary">{project.managerName || project.manager}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <Users className="w-5 h-5 text-theme-text-tertiary" />
                 <div>
-                  <p className="text-sm text-gray-500">Team Size</p>
-                  <p className="font-medium text-gray-900">{project.teamMembers} members</p>
+                  <p className="text-sm text-theme-text-secondary">Team Size</p>
+                  <p className="font-medium text-theme-text-primary">{project.teamMembers} members</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <DollarSign className="w-5 h-5 text-theme-text-tertiary" />
                 <div>
-                  <p className="text-sm text-gray-500">Budget</p>
-                  <p className="font-medium text-gray-900">{project.budget}</p>
+                  <p className="text-sm text-theme-text-secondary">Budget</p>
+                  <p className="font-medium text-theme-text-primary">{project.budget}</p>
                 </div>
               </div>
 
@@ -81,7 +81,7 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                 <div className="flex items-center gap-3">
                   <AlertTriangle className="w-5 h-5 text-theme-text-tertiary" />
                   <div>
-                    <p className="text-sm text-gray-500">Priority</p>
+                    <p className="text-sm text-theme-text-secondary">Priority</p>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       project.priority === 'high' ? 'bg-red-100 text-red-800' :
                       project.priority === 'medium' ? 'bg-amber-100 text-amber-800' :
@@ -98,23 +98,23 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
               <div className="flex items-center gap-3">
                 <Calendar className="w-5 h-5 text-theme-text-tertiary" />
                 <div>
-                  <p className="text-sm text-gray-500">Start Date</p>
-                  <p className="font-medium text-gray-900">{project.startDate}</p>
+                  <p className="text-sm text-theme-text-secondary">Start Date</p>
+                  <p className="font-medium text-theme-text-primary">{project.startDate}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <Clock className="w-5 h-5 text-theme-text-tertiary" />
                 <div>
-                  <p className="text-sm text-gray-500">Due Date</p>
-                  <p className="font-medium text-gray-900">{project.dueDate}</p>
+                  <p className="text-sm text-theme-text-secondary">Due Date</p>
+                  <p className="font-medium text-theme-text-primary">{project.dueDate}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <AlertTriangle className="w-5 h-5 text-theme-text-tertiary" />
                 <div>
-                  <p className="text-sm text-gray-500">Status</p>
+                  <p className="text-sm text-theme-text-secondary">Status</p>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     project.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
                     project.status === 'Planning' ? 'bg-amber-100 text-amber-800' :
@@ -128,26 +128,26 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
 
               <div className="flex items-center gap-3">
                 <div className="w-5 h-5 text-theme-text-tertiary flex items-center justify-center">
-                  <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                  <div className="w-3 h-3 bg-theme-accent rounded-full"></div>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Progress</p>
+                  <p className="text-sm text-theme-text-secondary">Progress</p>
                   <div className="flex items-center gap-2">
-                    <div className="w-20 bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${project.progress}%` }} />
+                    <div className="w-20 bg-theme-muted rounded-full h-2">
+                      <div className="bg-theme-accent h-2 rounded-full" style={{ width: `${project.progress}%` }} />
                     </div>
-                    <span className="font-medium text-gray-900">{project.progress}%</span>
+                    <span className="font-medium text-theme-text-primary">{project.progress}%</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-gray-200">
+          <div className="pt-4 border-t border-theme-border">
             <div className="flex justify-end">
               <button
                 onClick={onClose}
-                className="px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors"
               >
                 Close
               </button>
@@ -219,13 +219,13 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
   if (!isOpen || !project) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Edit Project</h2>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-theme-surface border-b border-theme-border p-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-theme-text-primary">Edit Project</h2>
           <button 
             onClick={onClose} 
-            className="text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-theme-text-secondary hover:text-theme-text-primary transition-colors"
             disabled={loading}
           >
             <X className="w-6 h-6" />
@@ -244,39 +244,39 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Project Name
               </label>
               <input
                 type="text"
                 value={formData.name || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={loading}
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Description
               </label>
               <textarea
                 value={formData.description || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={loading}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Status
               </label>
               <select
                 value={formData.status || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={loading}
               >
                 <option value="Planning">Planning</option>
@@ -287,7 +287,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Progress (%)
               </label>
               <input
@@ -296,45 +296,45 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                 max="100"
                 value={formData.progress || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, progress: parseInt(e.target.value) || 0 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={loading}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Due Date
               </label>
               <input
                 type="date"
                 value={formData.dueDate || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={loading}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Budget
               </label>
               <input
                 type="text"
                 value={formData.budget || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={loading}
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Project Manager
               </label>
               <select
                 value={formData.manager || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, manager: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={loading}
               >
                 <option value="">Select a manager</option>
@@ -352,14 +352,14 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Updating...' : 'Update Project'}
@@ -401,31 +401,31 @@ export const DeleteProjectModal: React.FC<DeleteProjectModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-md w-full mx-4">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
               <AlertTriangle className="w-5 h-5 text-red-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">Delete Project</h3>
+            <h3 className="text-lg font-semibold text-theme-text-primary">Delete Project</h3>
           </div>
 
-          <p className="text-gray-600 mb-6">
+          <p className="text-theme-text-secondary mb-6">
             Are you sure you want to permanently delete &quot;{projectName}&quot;? This action cannot be undone and all project data will be lost.
           </p>
 
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               onClick={handleConfirm}
-              className="flex-1 px-4 py-2 bg-red-600 text-black rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-red-600 text-theme-text-primary rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Deleting...' : 'Delete'}

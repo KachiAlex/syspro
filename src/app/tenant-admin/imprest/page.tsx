@@ -33,7 +33,7 @@ const statusBadge = (s: string) =>
   s === "settled" || s === "posted" || s === "active"
     ? "bg-emerald-500/15 text-emerald-400"
     : s === "refunded" || s === "closed"
-    ? "bg-slate-500/15 text-slate-400"
+    ? "bg-theme-muted/15 text-theme-text-secondary"
     : "bg-sky-500/15 text-sky-400";
 
 export default function ImprestPage() {
@@ -111,7 +111,7 @@ export default function ImprestPage() {
           <Wallet className="h-6 w-6 text-sky-400" />
           <div>
             <h1 className="text-xl font-semibold">Imprest — Petty Cash &amp; Advances</h1>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-theme-text-secondary">
               Float-based petty cash funds and staff advance lifecycle — all movements post to the GL
             </p>
           </div>
@@ -131,21 +131,21 @@ export default function ImprestPage() {
       {error && <div className="flex items-center gap-2 rounded bg-rose-500/10 px-4 py-3 text-rose-400"><AlertCircle className="h-4 w-4" />{error}</div>}
       {msg && <div className="rounded bg-emerald-500/10 px-4 py-3 text-emerald-400">{msg}</div>}
 
-      <div className="flex gap-1 border-b border-slate-800">
+      <div className="flex gap-1 border-b border-theme-border">
         {(["funds", "advances"] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 text-sm border-b-2 -mb-px ${
-              tab === t ? "border-sky-400 text-sky-400" : "border-transparent text-slate-400 hover:text-slate-200"}`}>
+              tab === t ? "border-sky-400 text-sky-400" : "border-transparent text-theme-text-secondary hover:text-theme-text-primary"}`}>
             {t === "funds" ? "Petty cash funds" : `Staff advances (${advances.length})`}
           </button>
         ))}
       </div>
-      {loading && <Loader2 className="h-5 w-5 animate-spin text-slate-400" />}
+      {loading && <Loader2 className="h-5 w-5 animate-spin text-theme-text-secondary" />}
 
       {tab === "funds" && (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs text-slate-400">
+            <tr className="text-left text-xs text-theme-text-secondary">
               {["Fund", "Custodian", "Float", "Balance", "Petty / Bank a/c", "Status", ""].map((h) => (
                 <th key={h} className="px-3 py-2">{h}</th>
               ))}
@@ -153,7 +153,7 @@ export default function ImprestPage() {
           </thead>
           <tbody>
             {funds.map((f) => (
-              <tr key={f.id} className="border-t border-slate-800">
+              <tr key={f.id} className="border-t border-theme-border">
                 <td className="px-3 py-2">
                   <button className="text-sky-400 hover:underline flex items-center gap-1"
                     onClick={async () => {
@@ -163,10 +163,10 @@ export default function ImprestPage() {
                     <BookOpen className="h-3.5 w-3.5" /> {f.name}
                   </button>
                 </td>
-                <td className="px-3 py-2 text-slate-400">{f.custodian ?? "—"}</td>
+                <td className="px-3 py-2 text-theme-text-secondary">{f.custodian ?? "—"}</td>
                 <td className="px-3 py-2">{fmt(f.float_amount)}</td>
                 <td className={`px-3 py-2 ${f.balance < 0 ? "text-rose-400" : ""}`}>{fmt(f.balance)}</td>
-                <td className="px-3 py-2 text-slate-400">{f.petty_cash_account_code} / {f.bank_account_code}</td>
+                <td className="px-3 py-2 text-theme-text-secondary">{f.petty_cash_account_code} / {f.bank_account_code}</td>
                 <td className="px-3 py-2"><span className={`rounded px-2 py-0.5 text-xs ${statusBadge(f.status)}`}>{f.status}</span></td>
                 <td className="px-3 py-2">
                   <div className="flex gap-2">
@@ -179,7 +179,7 @@ export default function ImprestPage() {
               </tr>
             ))}
             {funds.length === 0 && !loading && (
-              <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-500">
+              <tr><td colSpan={7} className="px-3 py-6 text-center text-theme-text-tertiary">
                 No imprest funds yet — create one to start tracking petty cash.
               </td></tr>
             )}
@@ -190,7 +190,7 @@ export default function ImprestPage() {
       {tab === "advances" && (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs text-slate-400">
+            <tr className="text-left text-xs text-theme-text-secondary">
               {["Advance", "Employee", "Issued", "Amount", "Applied", "Refunded", "Outstanding", "Status", ""].map((h) => (
                 <th key={h} className="px-3 py-2">{h}</th>
               ))}
@@ -198,15 +198,15 @@ export default function ImprestPage() {
           </thead>
           <tbody>
             {advances.map((a) => (
-              <tr key={a.id} className="border-t border-slate-800">
+              <tr key={a.id} className="border-t border-theme-border">
                 <td className="px-3 py-2 font-mono text-xs">{a.advance_number}</td>
                 <td className="px-3 py-2">{a.employee_name}
-                  {a.purpose && <div className="text-xs text-slate-500">{a.purpose}</div>}
+                  {a.purpose && <div className="text-xs text-theme-text-tertiary">{a.purpose}</div>}
                 </td>
                 <td className="px-3 py-2">{String(a.issue_date).slice(0, 10)}</td>
                 <td className="px-3 py-2">{fmt(a.amount)}</td>
-                <td className="px-3 py-2 text-slate-400">{fmt(a.applied_amount)}</td>
-                <td className="px-3 py-2 text-slate-400">{fmt(a.refunded_amount)}</td>
+                <td className="px-3 py-2 text-theme-text-secondary">{fmt(a.applied_amount)}</td>
+                <td className="px-3 py-2 text-theme-text-secondary">{fmt(a.refunded_amount)}</td>
                 <td className={`px-3 py-2 ${outstanding(a) > 0 ? "text-amber-400" : "text-emerald-400"}`}>
                   {fmt(outstanding(a))}
                 </td>
@@ -224,7 +224,7 @@ export default function ImprestPage() {
               </tr>
             ))}
             {advances.length === 0 && !loading && (
-              <tr><td colSpan={9} className="px-3 py-6 text-center text-slate-500">
+              <tr><td colSpan={9} className="px-3 py-6 text-center text-theme-text-tertiary">
                 No staff advances issued yet.
               </td></tr>
             )}
@@ -233,27 +233,27 @@ export default function ImprestPage() {
       )}
 
       {showNewFund && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-5 space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+          <div className="w-full max-w-md rounded-lg border border-theme-border bg-theme-surface p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">New imprest fund</h2>
               <button onClick={() => setShowNewFund(false)}><X className="h-4 w-4" /></button>
             </div>
-            <input className="w-full rounded bg-slate-800 px-3 py-2 text-sm" placeholder="Fund name (e.g. Head Office Petty Cash)"
+            <input className="w-full rounded bg-theme-muted px-3 py-2 text-sm" placeholder="Fund name (e.g. Head Office Petty Cash)"
               value={fundForm.name} onChange={(e) => setFundForm({ ...fundForm, name: e.target.value })} />
-            <input className="w-full rounded bg-slate-800 px-3 py-2 text-sm" placeholder="Custodian (optional)"
+            <input className="w-full rounded bg-theme-muted px-3 py-2 text-sm" placeholder="Custodian (optional)"
               value={fundForm.custodian} onChange={(e) => setFundForm({ ...fundForm, custodian: e.target.value })} />
-            <label className="block text-xs text-slate-400">Float amount
-              <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+            <label className="block text-xs text-theme-text-secondary">Float amount
+              <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                 value={fundForm.floatAmount} onChange={(e) => setFundForm({ ...fundForm, floatAmount: e.target.value })} />
             </label>
             <div className="grid grid-cols-2 gap-2">
-              <label className="text-xs text-slate-400">Petty cash a/c
-                <input className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Petty cash a/c
+                <input className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={fundForm.pettyCashAccountCode} onChange={(e) => setFundForm({ ...fundForm, pettyCashAccountCode: e.target.value })} />
               </label>
-              <label className="text-xs text-slate-400">Bank a/c
-                <input className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Bank a/c
+                <input className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={fundForm.bankAccountCode} onChange={(e) => setFundForm({ ...fundForm, bankAccountCode: e.target.value })} />
               </label>
             </div>
@@ -271,39 +271,39 @@ export default function ImprestPage() {
       )}
 
       {fundAction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-5 space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+          <div className="w-full max-w-md rounded-lg border border-theme-border bg-theme-surface p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">
                 {fundAction.kind === "replenish" ? "Replenish" : "Disburse"} — {fundAction.fund.name}
               </h2>
               <button onClick={() => setFundAction(null)}><X className="h-4 w-4" /></button>
             </div>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-theme-text-secondary">
               Balance {fmt(fundAction.fund.balance)} of {fmt(fundAction.fund.float_amount)} float.
               {fundAction.kind === "replenish"
                 ? " Leave amount blank to top up to the full float — Dr petty cash / Cr bank."
                 : " Dr expense account / Cr petty cash."}
             </p>
-            <label className="block text-xs text-slate-400">Date
-              <input type="date" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+            <label className="block text-xs text-theme-text-secondary">Date
+              <input type="date" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                 value={actForm.txnDate} onChange={(e) => setActForm({ ...actForm, txnDate: e.target.value })} />
             </label>
-            <label className="block text-xs text-slate-400">
+            <label className="block text-xs text-theme-text-secondary">
               Amount{fundAction.kind === "replenish" ? " (blank = fill to float)" : ""}
-              <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                 value={actForm.amount} onChange={(e) => setActForm({ ...actForm, amount: e.target.value })} />
             </label>
             {fundAction.kind === "disburse" && (
-              <label className="block text-xs text-slate-400">Expense account
-                <select className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="block text-xs text-theme-text-secondary">Expense account
+                <select className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={actForm.expenseAccountCode} onChange={(e) => setActForm({ ...actForm, expenseAccountCode: e.target.value })}>
                   <option value="">Select…</option>
                   {expenseAccounts.map((a) => <option key={a.code} value={a.code}>{a.code} — {a.name}</option>)}
                 </select>
               </label>
             )}
-            <input className="w-full rounded bg-slate-800 px-3 py-2 text-sm" placeholder="Description (optional)"
+            <input className="w-full rounded bg-theme-muted px-3 py-2 text-sm" placeholder="Description (optional)"
               value={actForm.description} onChange={(e) => setActForm({ ...actForm, description: e.target.value })} />
             <button
               disabled={busy || (fundAction.kind === "disburse" && (!Number(actForm.amount) || !actForm.expenseAccountCode))}
@@ -322,35 +322,35 @@ export default function ImprestPage() {
       )}
 
       {showNewAdvance && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-5 space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+          <div className="w-full max-w-md rounded-lg border border-theme-border bg-theme-surface p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">Issue staff advance</h2>
               <button onClick={() => setShowNewAdvance(false)}><X className="h-4 w-4" /></button>
             </div>
-            <p className="text-sm text-slate-400">Dr staff advances / Cr petty cash (or bank when no fund is chosen).</p>
-            <input className="w-full rounded bg-slate-800 px-3 py-2 text-sm" placeholder="Employee name"
+            <p className="text-sm text-theme-text-secondary">Dr staff advances / Cr petty cash (or bank when no fund is chosen).</p>
+            <input className="w-full rounded bg-theme-muted px-3 py-2 text-sm" placeholder="Employee name"
               value={advForm.employeeName} onChange={(e) => setAdvForm({ ...advForm, employeeName: e.target.value })} />
             <div className="grid grid-cols-2 gap-2">
-              <input className="w-full rounded bg-slate-800 px-3 py-2 text-sm" placeholder="Employee ID (optional)"
+              <input className="w-full rounded bg-theme-muted px-3 py-2 text-sm" placeholder="Employee ID (optional)"
                 value={advForm.employeeId} onChange={(e) => setAdvForm({ ...advForm, employeeId: e.target.value })} />
-              <label className="text-xs text-slate-400">Issue date
-                <input type="date" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Issue date
+                <input type="date" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={advForm.issueDate} onChange={(e) => setAdvForm({ ...advForm, issueDate: e.target.value })} />
               </label>
             </div>
-            <label className="block text-xs text-slate-400">Funded from
-              <select className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+            <label className="block text-xs text-theme-text-secondary">Funded from
+              <select className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                 value={advForm.fundId} onChange={(e) => setAdvForm({ ...advForm, fundId: e.target.value })}>
                 <option value="">Bank directly (no fund)</option>
                 {funds.map((f) => <option key={f.id} value={f.id}>{f.name} — {fmt(f.balance)}</option>)}
               </select>
             </label>
-            <label className="block text-xs text-slate-400">Amount
-              <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+            <label className="block text-xs text-theme-text-secondary">Amount
+              <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                 value={advForm.amount} onChange={(e) => setAdvForm({ ...advForm, amount: e.target.value })} />
             </label>
-            <input className="w-full rounded bg-slate-800 px-3 py-2 text-sm" placeholder="Purpose (optional)"
+            <input className="w-full rounded bg-theme-muted px-3 py-2 text-sm" placeholder="Purpose (optional)"
               value={advForm.purpose} onChange={(e) => setAdvForm({ ...advForm, purpose: e.target.value })} />
             <button disabled={busy || !advForm.employeeName || !Number(advForm.amount)}
               onClick={() => void post(`/api/finance/imprest/advances?${qs()}`, {
@@ -366,29 +366,29 @@ export default function ImprestPage() {
       )}
 
       {advAction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-5 space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+          <div className="w-full max-w-md rounded-lg border border-theme-border bg-theme-surface p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">
                 {advAction.kind === "apply" ? "Apply to expense" : "Refund unused"} — {advAction.adv.advance_number}
               </h2>
               <button onClick={() => setAdvAction(null)}><X className="h-4 w-4" /></button>
             </div>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-theme-text-secondary">
               Outstanding {fmt(outstanding(advAction.adv))}.
               {advAction.kind === "apply" ? " Dr expense / Cr staff advances." : " Dr petty cash or bank / Cr staff advances."}
             </p>
-            <label className="block text-xs text-slate-400">Date
-              <input type="date" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+            <label className="block text-xs text-theme-text-secondary">Date
+              <input type="date" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                 value={settleForm.entryDate} onChange={(e) => setSettleForm({ ...settleForm, entryDate: e.target.value })} />
             </label>
-            <label className="block text-xs text-slate-400">Amount
-              <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+            <label className="block text-xs text-theme-text-secondary">Amount
+              <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                 value={settleForm.amount} onChange={(e) => setSettleForm({ ...settleForm, amount: e.target.value })} />
             </label>
             {advAction.kind === "apply" && (
-              <label className="block text-xs text-slate-400">Expense account
-                <select className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="block text-xs text-theme-text-secondary">Expense account
+                <select className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={settleForm.expenseAccountCode} onChange={(e) => setSettleForm({ ...settleForm, expenseAccountCode: e.target.value })}>
                   <option value="">Select…</option>
                   {expenseAccounts.map((a) => <option key={a.code} value={a.code}>{a.code} — {a.name}</option>)}
@@ -396,8 +396,8 @@ export default function ImprestPage() {
               </label>
             )}
             {advAction.kind === "refund" && (
-              <label className="block text-xs text-slate-400">Refund into
-                <select className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="block text-xs text-theme-text-secondary">Refund into
+                <select className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={settleForm.fundId} onChange={(e) => setSettleForm({ ...settleForm, fundId: e.target.value })}>
                   <option value="">Bank</option>
                   {funds.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
@@ -420,25 +420,25 @@ export default function ImprestPage() {
       )}
 
       {book && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+          <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-theme-border bg-theme-surface p-5">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">{book.fund.name} — petty cash book</h2>
               <button onClick={() => setBook(null)}><X className="h-4 w-4" /></button>
             </div>
             <table className="mt-3 w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-slate-400">
+                <tr className="text-left text-xs text-theme-text-secondary">
                   <th className="py-1">Date</th><th>Type</th><th>Description</th>
                   <th className="text-right">Amount</th><th className="text-right">Balance</th>
                 </tr>
               </thead>
               <tbody>
                 {book.lines.map((l) => (
-                  <tr key={l.id} className="border-t border-slate-800">
+                  <tr key={l.id} className="border-t border-theme-border">
                     <td className="py-1.5">{String(l.txn_date).slice(0, 10)}</td>
                     <td className="capitalize">{l.txn_type}</td>
-                    <td className="text-slate-400">{l.description ?? "—"}</td>
+                    <td className="text-theme-text-secondary">{l.description ?? "—"}</td>
                     <td className={`text-right ${l.txn_type === "replenishment" || l.txn_type === "adjustment" ? "text-emerald-400" : "text-amber-400"}`}>
                       {l.txn_type === "replenishment" || l.txn_type === "adjustment" ? "+" : "−"}{fmt(l.amount)}
                     </td>
@@ -446,11 +446,11 @@ export default function ImprestPage() {
                   </tr>
                 ))}
                 {book.lines.length === 0 && (
-                  <tr><td colSpan={5} className="py-6 text-center text-slate-500">No transactions yet</td></tr>
+                  <tr><td colSpan={5} className="py-6 text-center text-theme-text-tertiary">No transactions yet</td></tr>
                 )}
               </tbody>
             </table>
-            <div className="mt-3 border-t border-slate-700 pt-3 text-right text-sm">
+            <div className="mt-3 border-t border-theme-border pt-3 text-right text-sm">
               Closing balance: <span className="font-semibold">{fmt(book.closingBalance)}</span>
             </div>
           </div>

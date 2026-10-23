@@ -185,7 +185,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
         return (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Revenue ($)</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Revenue ($)</label>
               <input
                 type="number"
                 value={formData.data.revenue || ''}
@@ -193,12 +193,12 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                   ...prev,
                   data: { ...prev.data, revenue: parseFloat(e.target.value) || 0 }
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                 placeholder="Enter revenue amount"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Number of Deals</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Number of Deals</label>
               <input
                 type="number"
                 value={formData.data.deals || ''}
@@ -206,12 +206,12 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                   ...prev,
                   data: { ...prev.data, deals: parseInt(e.target.value) || 0 }
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                 placeholder="Enter number of deals"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Conversion Rate (%)</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Conversion Rate (%)</label>
               <input
                 type="number"
                 value={formData.data.conversionRate || ''}
@@ -219,7 +219,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                   ...prev,
                   data: { ...prev.data, conversionRate: parseFloat(e.target.value) || 0 }
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                 placeholder="Enter conversion rate"
                 min="0"
                 max="100"
@@ -232,7 +232,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
         return (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Total Expenses ($)</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Total Expenses ($)</label>
               <input
                 type="number"
                 value={formData.data.expenses || ''}
@@ -240,12 +240,12 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                   ...prev,
                   data: { ...prev.data, expenses: parseFloat(e.target.value) || 0 }
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                 placeholder="Enter total expenses"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Budget ($)</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Budget ($)</label>
               <input
                 type="number"
                 value={formData.data.budget || ''}
@@ -253,12 +253,12 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                   ...prev,
                   data: { ...prev.data, budget: parseFloat(e.target.value) || 0 }
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                 placeholder="Enter budget amount"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Variance (%)</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Variance (%)</label>
               <input
                 type="number"
                 value={formData.data.variance || ''}
@@ -266,7 +266,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                   ...prev,
                   data: { ...prev.data, variance: parseFloat(e.target.value) || 0 }
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                 placeholder="Enter budget variance"
               />
             </div>
@@ -277,7 +277,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
         return (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Headcount</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Headcount</label>
               <input
                 type="number"
                 value={formData.data.headcount || ''}
@@ -285,12 +285,12 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                   ...prev,
                   data: { ...prev.data, headcount: parseInt(e.target.value) || 0 }
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                 placeholder="Enter current headcount"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Attendance Rate (%)</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Attendance Rate (%)</label>
               <input
                 type="number"
                 value={formData.data.attendance || ''}
@@ -298,14 +298,14 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                   ...prev,
                   data: { ...prev.data, attendance: parseFloat(e.target.value) || 0 }
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                 placeholder="Enter attendance rate"
                 min="0"
                 max="100"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Turnover Rate (%)</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Turnover Rate (%)</label>
               <input
                 type="number"
                 value={formData.data.turnoverRate || ''}
@@ -313,7 +313,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                   ...prev,
                   data: { ...prev.data, turnoverRate: parseFloat(e.target.value) || 0 }
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                 placeholder="Enter turnover rate"
                 min="0"
                 max="100"
@@ -326,7 +326,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
         return (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Productivity Score</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Productivity Score</label>
               <input
                 type="number"
                 value={formData.data.productivity || ''}
@@ -334,14 +334,14 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                   ...prev,
                   data: { ...prev.data, productivity: parseFloat(e.target.value) || 0 }
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                 placeholder="Enter productivity score"
                 min="0"
                 max="100"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Efficiency (%)</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Efficiency (%)</label>
               <input
                 type="number"
                 value={formData.data.efficiency || ''}
@@ -349,14 +349,14 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                   ...prev,
                   data: { ...prev.data, efficiency: parseFloat(e.target.value) || 0 }
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                 placeholder="Enter efficiency percentage"
                 min="0"
                 max="100"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Output Units</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Output Units</label>
               <input
                 type="number"
                 value={formData.data.output || ''}
@@ -364,7 +364,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                   ...prev,
                   data: { ...prev.data, output: parseInt(e.target.value) || 0 }
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                 placeholder="Enter output units"
               />
             </div>
@@ -375,7 +375,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
         return (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Custom Data (JSON)</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Custom Data (JSON)</label>
               <textarea
                 value={JSON.stringify(formData.data, null, 2)}
                 onChange={(e) => {
@@ -386,7 +386,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                     // Invalid JSON, don't update
                   }
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                 rows={6}
                 placeholder="Enter custom data in JSON format"
               />
@@ -398,12 +398,12 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
 
   const getStatusColor = (status: TeamDataSubmission['status']) => {
     switch (status) {
-      case 'draft': return 'bg-gray-100 text-gray-900';
+      case 'draft': return 'bg-theme-muted text-theme-text-primary';
       case 'submitted': return 'bg-blue-100 text-blue-800';
       case 'under_review': return 'bg-yellow-100 text-yellow-800';
       case 'approved': return 'bg-green-100 text-green-800';
       case 'rejected': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-900';
+      default: return 'bg-theme-muted text-theme-text-primary';
     }
   };
 
@@ -412,7 +412,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
       case 'high': return 'bg-green-100 text-green-800';
       case 'medium': return 'bg-yellow-100 text-yellow-800';
       case 'low': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-900';
+      default: return 'bg-theme-muted text-theme-text-primary';
     }
   };
 
@@ -421,12 +421,12 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Data Submission Portal</h2>
-          <p className="text-gray-600">Submit and manage your team&apos;s data contributions</p>
+          <h2 className="text-2xl font-bold text-theme-text-primary">Data Submission Portal</h2>
+          <p className="text-theme-text-secondary">Submit and manage your team&apos;s data contributions</p>
         </div>
         <button
           onClick={() => setShowSubmissionModal(true)}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
         >
           <Plus className="w-4 h-4" />
           Submit Data
@@ -434,15 +434,15 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="border-b border-gray-200">
+      <div className="bg-theme-surface rounded-lg border border-theme-border">
+        <div className="border-b border-theme-border">
           <nav className="flex -mb-px">
             <button
               onClick={() => setActiveTab('submit')}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'submit'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-theme-accent text-theme-accent'
+                  : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
               }`}
             >
               <Send className="w-4 h-4 inline mr-2" />
@@ -452,8 +452,8 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
               onClick={() => setActiveTab('my-submissions')}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'my-submissions'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-theme-accent text-theme-accent'
+                  : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
               }`}
             >
               <FileText className="w-4 h-4 inline mr-2" />
@@ -463,8 +463,8 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
               onClick={() => setActiveTab('pending-review')}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'pending-review'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-theme-accent text-theme-accent'
+                  : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
               }`}
             >
               <Eye className="w-4 h-4 inline mr-2" />
@@ -477,14 +477,14 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
           {/* Submit Tab */}
           {activeTab === 'submit' && (
             <div className="text-center py-12">
-              <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Ready to Submit Data?</h3>
-              <p className="text-gray-600 mb-4">
+              <Upload className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-theme-text-primary mb-2">Ready to Submit Data?</h3>
+              <p className="text-theme-text-secondary mb-4">
                 Share your team&apos;s data to contribute to comprehensive reports and analytics
               </p>
               <button
                 onClick={() => setShowSubmissionModal(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover"
               >
                 Start New Submission
               </button>
@@ -496,14 +496,14 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
             <div className="space-y-4">
               {submissions.length === 0 ? (
                 <div className="text-center py-12">
-                  <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Submissions Yet</h3>
-                  <p className="text-gray-600 mb-4">
+                  <FileText className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-theme-text-primary mb-2">No Submissions Yet</h3>
+                  <p className="text-theme-text-secondary mb-4">
                     Start submitting data to see your contributions here
                   </p>
                   <button
                     onClick={() => setShowSubmissionModal(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover"
                   >
                     Submit Your First Data
                   </button>
@@ -511,11 +511,11 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
               ) : (
                 <div className="space-y-4">
                   {submissions.map((submission) => (
-                    <div key={submission.id} className="bg-gray-50 rounded-lg p-4">
+                    <div key={submission.id} className="bg-theme-muted rounded-lg p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <h4 className="font-medium text-gray-900">{submission.title}</h4>
+                            <h4 className="font-medium text-theme-text-primary">{submission.title}</h4>
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(submission.status)}`}>
                               {submission.status?.replace('_', ' ').toUpperCase()}
                             </span>
@@ -523,8 +523,8 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                               {submission.confidence.toUpperCase()} CONFIDENCE
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600 mb-2">{submission.description}</p>
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <p className="text-sm text-theme-text-secondary mb-2">{submission.description}</p>
+                          <div className="flex items-center gap-4 text-xs text-theme-text-secondary">
                             <span>Type: {submission.dataType}</span>
                             <span>Period: {submission.period.start} to {submission.period.end}</span>
                             <span>Submitted: {new Date(submission.submittedAt).toLocaleDateString()}</span>
@@ -537,14 +537,14 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                         </div>
                         <div className="flex items-center gap-2">
                           <button
-                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-accent hover:text-blue-700"
                             title="View Details"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           {submission.status === 'draft' && (
                             <button
-                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700"
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-text-secondary hover:text-theme-text-primary"
                               title="Edit"
                             >
                               <Edit className="w-4 h-4" />
@@ -569,9 +569,9 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
           {/* Pending Review Tab */}
           {activeTab === 'pending-review' && (
             <div className="text-center py-12">
-              <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Pending Reviews</h3>
-              <p className="text-gray-600">
+              <AlertCircle className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-theme-text-primary mb-2">No Pending Reviews</h3>
+              <p className="text-theme-text-secondary">
                 Submissions currently under review will appear here
               </p>
             </div>
@@ -581,17 +581,17 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
 
       {/* Submission Modal */}
       {showSubmissionModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+          <div className="bg-theme-surface rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-theme-border">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Submit Data</h3>
+                <h3 className="text-lg font-semibold text-theme-text-primary">Submit Data</h3>
                 <button
                   onClick={() => {
                     setShowSubmissionModal(false);
                     resetForm();
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-theme-text-secondary hover:text-theme-text-primary"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -611,11 +611,11 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Data Type *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Data Type *</label>
                   <select
                     value={formData.dataType}
                     onChange={(e) => setFormData(prev => ({ ...prev, dataType: e.target.value as TeamDataSubmission['dataType'] }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   >
                     <option value="sales">Sales Data</option>
                     <option value="financial">Financial Data</option>
@@ -626,11 +626,11 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Confidence Level</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Confidence Level</label>
                   <select
                     value={formData.confidence}
                     onChange={(e) => setFormData(prev => ({ ...prev, confidence: e.target.value as TeamDataSubmission['confidence'] }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   >
                     <option value="high">High</option>
                     <option value="medium">Medium</option>
@@ -639,13 +639,13 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Title *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Title *</label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                      errors.title ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                      errors.title ? 'border-red-500' : 'border-theme-border'
                     }`}
                     placeholder="Enter a descriptive title for your submission"
                   />
@@ -655,12 +655,12 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Description *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Description *</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                      errors.description ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                      errors.description ? 'border-red-500' : 'border-theme-border'
                     }`}
                     rows={3}
                     placeholder="Describe the data you're submitting"
@@ -671,7 +671,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Start Date *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">Start Date *</label>
                   <input
                     type="date"
                     value={formData.period.start}
@@ -679,8 +679,8 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                       ...prev,
                       period: { ...prev.period, start: e.target.value }
                     }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                      errors.startDate ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                      errors.startDate ? 'border-red-500' : 'border-theme-border'
                     }`}
                   />
                   {errors.startDate && (
@@ -689,7 +689,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">End Date *</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">End Date *</label>
                   <input
                     type="date"
                     value={formData.period.end}
@@ -697,8 +697,8 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                       ...prev,
                       period: { ...prev.period, end: e.target.value }
                     }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                      errors.endDate ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                      errors.endDate ? 'border-red-500' : 'border-theme-border'
                     }`}
                     min={formData.period.start}
                   />
@@ -710,7 +710,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
 
               {/* Data Form */}
               <div>
-                <h4 className="text-lg font-medium text-gray-900 mb-4">Data Details</h4>
+                <h4 className="text-lg font-medium text-theme-text-primary mb-4">Data Details</h4>
                 {renderDataForm()}
                 {errors.data && (
                   <p className="mt-2 text-sm text-red-600">{errors.data}</p>
@@ -719,11 +719,11 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
 
               {/* File Upload */}
               <div>
-                <h4 className="text-lg font-medium text-gray-900 mb-4">Attachments</h4>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                <h4 className="text-lg font-medium text-theme-text-primary mb-4">Attachments</h4>
+                <div className="border-2 border-dashed border-theme-border rounded-lg p-6">
                   <div className="text-center">
-                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-sm text-gray-600 mb-2">
+                    <Upload className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
+                    <p className="text-sm text-theme-text-secondary mb-2">
                       Upload files to support your data submission
                     </p>
                     <input
@@ -735,7 +735,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                     />
                     <label
                       htmlFor="file-upload"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 cursor-pointer"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover cursor-pointer"
                     >
                       <Upload className="w-4 h-4" />
                       Choose Files
@@ -746,13 +746,13 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                 {uploadedFiles.length > 0 && (
                   <div className="mt-4 space-y-2">
                     {uploadedFiles.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <span className="text-sm text-gray-600">{file.name}</span>
+                      <div key={index} className="flex items-center justify-between p-2 bg-theme-muted rounded">
+                        <span className="text-sm text-theme-text-secondary">{file.name}</span>
                         <div className="flex items-center gap-2">
                           {uploadProgress[file.name] !== undefined && (
-                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                            <div className="w-20 bg-theme-muted rounded-full h-2">
                               <div
-                                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                className="bg-theme-accent h-2 rounded-full transition-all duration-300"
                                 style={{ width: `${uploadProgress[file.name]}%` }}
                               />
                             </div>
@@ -778,14 +778,14 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                     setShowSubmissionModal(false);
                     resetForm();
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
                   disabled={loading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
                   disabled={loading}
                 >
                   {loading ? 'Submitting...' : 'Submit Data'}

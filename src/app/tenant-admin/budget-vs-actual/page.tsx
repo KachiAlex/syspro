@@ -37,7 +37,7 @@ function varianceBadge(v: number, isRevenueType: boolean) {
   // For expense accounts over-budget (positive variance) is bad; under is good.
   const bad = isRevenueType ? v < 0 : v > 0;
   const cls = Math.abs(v) < 0.01
-    ? "text-slate-400"
+    ? "text-theme-text-secondary"
     : bad ? "text-rose-400" : "text-emerald-400";
   return cls;
 }
@@ -77,14 +77,14 @@ export default function BudgetVsActualPage() {
           <BarChart3 className="h-6 w-6 text-sky-400" />
           <div>
             <h1 className="text-xl font-semibold">Budget vs Actual</h1>
-            <p className="text-sm text-slate-400">Posted GL actuals vs approved budget lines</p>
+            <p className="text-sm text-theme-text-secondary">Posted GL actuals vs approved budget lines</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <input
             type="number" placeholder="Fiscal year" value={fiscalYear}
             onChange={(e) => setFiscalYear(e.target.value)}
-            className="w-32 rounded bg-slate-800 px-3 py-1.5 text-sm"
+            className="w-32 rounded bg-theme-muted px-3 py-1.5 text-sm"
           />
         </div>
       </div>
@@ -94,10 +94,10 @@ export default function BudgetVsActualPage() {
           <AlertCircle className="h-4 w-4" /> {error}
         </div>
       )}
-      {loading && <Loader2 className="h-5 w-5 animate-spin text-slate-400" />}
+      {loading && <Loader2 className="h-5 w-5 animate-spin text-theme-text-secondary" />}
 
       {!loading && reports.length === 0 && !error && (
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-theme-text-secondary">
           No approved budgets found{fiscalYear ? ` for FY${fiscalYear}` : ""}. Create and approve a budget first.
         </p>
       )}
@@ -105,27 +105,27 @@ export default function BudgetVsActualPage() {
       {reports.map((r) => {
         const usedPct = r.totalBudget > 0 ? Math.round((r.totalActual / r.totalBudget) * 100) : 0;
         return (
-          <div key={r.budgetId} className="rounded-lg border border-slate-700 bg-slate-900/60">
-            <div className="flex items-center justify-between border-b border-slate-700 px-4 py-3">
+          <div key={r.budgetId} className="rounded-lg border border-theme-border bg-theme-surface/60">
+            <div className="flex items-center justify-between border-b border-theme-border px-4 py-3">
               <div>
                 <span className="font-semibold">{r.code}</span>
-                <span className="ml-2 text-slate-300">{r.name}</span>
-                <span className="ml-3 rounded bg-slate-700 px-2 py-0.5 text-xs">{r.periodType} FY{r.fiscalYear}</span>
+                <span className="ml-2 text-theme-text-primary">{r.name}</span>
+                <span className="ml-3 rounded bg-theme-elevated px-2 py-0.5 text-xs">{r.periodType} FY{r.fiscalYear}</span>
               </div>
-              <div className="text-sm text-slate-400">{r.periodStart} → {r.periodEnd}</div>
+              <div className="text-sm text-theme-text-secondary">{r.periodStart} → {r.periodEnd}</div>
             </div>
 
-            <div className="grid grid-cols-4 gap-4 border-b border-slate-700 px-4 py-3 text-sm">
-              <div><div className="text-slate-400 text-xs">Budgeted</div><div className="font-semibold">{fmt(r.totalBudget)}</div></div>
-              <div><div className="text-slate-400 text-xs">Actual</div><div className="font-semibold">{fmt(r.totalActual)}</div></div>
+            <div className="grid grid-cols-4 gap-4 border-b border-theme-border px-4 py-3 text-sm">
+              <div><div className="text-theme-text-secondary text-xs">Budgeted</div><div className="font-semibold">{fmt(r.totalBudget)}</div></div>
+              <div><div className="text-theme-text-secondary text-xs">Actual</div><div className="font-semibold">{fmt(r.totalActual)}</div></div>
               <div>
-                <div className="text-slate-400 text-xs">Variance</div>
+                <div className="text-theme-text-secondary text-xs">Variance</div>
                 <div className={`font-semibold ${varianceBadge(r.totalVariance, false)}`}>
                   {r.totalVariance >= 0 ? "+" : ""}{fmt(r.totalVariance)}
                 </div>
               </div>
               <div>
-                <div className="text-slate-400 text-xs">Budget used</div>
+                <div className="text-theme-text-secondary text-xs">Budget used</div>
                 <div className={`font-semibold ${usedPct > 100 ? "text-rose-400" : usedPct > 85 ? "text-amber-400" : "text-emerald-400"}`}>
                   {usedPct}%
                 </div>
@@ -134,7 +134,7 @@ export default function BudgetVsActualPage() {
 
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-slate-400">
+                <tr className="text-left text-xs text-theme-text-secondary">
                   <th className="px-4 py-2">Account</th>
                   <th className="px-4 py-2">Description</th>
                   <th className="px-4 py-2 text-right">Budgeted</th>
@@ -145,9 +145,9 @@ export default function BudgetVsActualPage() {
               </thead>
               <tbody>
                 {r.lines.map((l) => (
-                  <tr key={l.lineNumber} className="border-t border-slate-800">
+                  <tr key={l.lineNumber} className="border-t border-theme-border">
                     <td className="px-4 py-2">{l.accountCode} — {l.accountName}</td>
-                    <td className="px-4 py-2 text-slate-400">{l.description ?? "—"}</td>
+                    <td className="px-4 py-2 text-theme-text-secondary">{l.description ?? "—"}</td>
                     <td className="px-4 py-2 text-right">{fmt(l.budgeted)}</td>
                     <td className="px-4 py-2 text-right">{fmt(l.actual)}</td>
                     <td className={`px-4 py-2 text-right ${varianceBadge(l.variance, false)}`}>
@@ -159,7 +159,7 @@ export default function BudgetVsActualPage() {
                   </tr>
                 ))}
                 {r.lines.length === 0 && (
-                  <tr><td colSpan={6} className="px-4 py-3 text-center text-slate-500">No budget lines</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-3 text-center text-theme-text-tertiary">No budget lines</td></tr>
                 )}
               </tbody>
             </table>

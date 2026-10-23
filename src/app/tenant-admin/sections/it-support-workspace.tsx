@@ -84,13 +84,13 @@ const STATUS_LABELS: Record<SupportTicket["status"], string> = {
 
 const STATUS_STYLES: Record<SupportTicket["status"], string> = {
   new: "bg-indigo-50 text-indigo-600",
-  acknowledged: "bg-slate-100 text-slate-600",
+  acknowledged: "bg-theme-muted text-theme-text-secondary",
   diagnosing: "bg-amber-50 text-amber-600",
-  in_progress: "bg-blue-50 text-blue-600",
+  in_progress: "bg-blue-50 text-theme-accent",
   awaiting_customer: "bg-rose-50 text-rose-600",
   awaiting_dependency: "bg-fuchsia-50 text-fuchsia-600",
   resolved: "bg-emerald-50 text-emerald-600",
-  closed: "bg-slate-200 text-slate-600",
+  closed: "bg-theme-muted text-theme-text-secondary",
   reopened: "bg-purple-50 text-purple-600",
 };
 
@@ -98,7 +98,7 @@ const PRIORITY_BADGES: Record<SupportTicket["priority"], string> = {
   critical: "bg-rose-100 text-rose-700 border border-rose-200",
   high: "bg-amber-100 text-amber-800 border border-amber-200",
   medium: "bg-sky-100 text-sky-800 border border-sky-200",
-  low: "bg-slate-100 text-slate-600 border border-slate-200",
+  low: "bg-theme-muted text-theme-text-secondary border border-theme-border",
 };
 
 const PRIORITY_ORDER: Record<SupportTicket["priority"], number> = {
@@ -535,19 +535,19 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
     <div className="space-y-8">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Incident to resolution</p>
-          <h2 className="text-2xl font-semibold text-gray-900">IT Support control center</h2>
+          <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Incident to resolution</p>
+          <h2 className="text-2xl font-semibold text-theme-text-primary">IT Support control center</h2>
           <div className="mt-1 flex items-center gap-2">
-            <span className="text-sm text-slate-500">Tenant:</span>
-            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm font-medium text-slate-700">{tenantKey}</span>
+            <span className="text-sm text-theme-text-tertiary">Tenant:</span>
+            <span className="rounded-full border border-theme-border bg-theme-muted px-2 py-0.5 text-sm font-medium text-theme-text-primary">{tenantKey}</span>
           </div>
-          <p className="text-sm text-slate-500">Live ticket queue, SLA heatmap, dispatch radar, and assignment intelligence.</p>
+          <p className="text-sm text-theme-text-tertiary">Live ticket queue, SLA heatmap, dispatch radar, and assignment intelligence.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
+            className="inline-flex items-center gap-2 rounded-full border border-theme-border bg-theme-surface px-4 py-2 text-sm font-semibold text-theme-text-primary shadow-sm transition hover:bg-theme-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-border"
           >
             <Plus className="h-4 w-4" />
             New ticket
@@ -555,7 +555,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
           <button
             type="button"
             onClick={() => setRefreshToken((prev) => prev + 1)}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-theme-muted px-4 py-2 text-sm text-slate-600 shadow-sm hover:border-slate-300"
+            className="inline-flex items-center gap-2 rounded-full border border-theme-border bg-theme-muted px-4 py-2 text-sm text-theme-text-secondary shadow-sm hover:border-theme-border"
           >
             <RefreshCcw className="h-4 w-4" />
             Refresh data
@@ -581,21 +581,21 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
 
       <div className="grid gap-8 xl:grid-cols-3">
         <div className="space-y-8 xl:col-span-2">
-          <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+          <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Queues</p>
-                <h3 className="text-xl font-semibold text-gray-900">Ticket board</h3>
-                <p className="text-sm text-slate-500">Filter by SLA risk, priority, or region to focus the war room.</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Queues</p>
+                <h3 className="text-xl font-semibold text-theme-text-primary">Ticket board</h3>
+                <p className="text-sm text-theme-text-tertiary">Filter by SLA risk, priority, or region to focus the war room.</p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)} className="bg-theme-bg rounded-2xl border border-theme-border px-3 py-2 text-sm text-white">
+                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)} className="bg-theme-bg rounded-2xl border border-theme-border px-3 py-2 text-sm text-theme-text-primary">
                   <option value="all">All statuses</option>
                   {STATUS_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
                 </select>
-                <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value as typeof filterPriority)} className="bg-theme-bg rounded-2xl border border-theme-border px-3 py-2 text-sm text-white">
+                <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value as typeof filterPriority)} className="bg-theme-bg rounded-2xl border border-theme-border px-3 py-2 text-sm text-theme-text-primary">
                   <option value="all">All priorities</option>
                   {(["critical", "high", "medium", "low"] as SupportTicket["priority"][]).map((priority) => (
                     <option key={priority} value={priority}>{priority.toUpperCase()}</option>
@@ -606,36 +606,36 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search ticket or title"
-                  className="bg-white rounded-2xl border border-slate-200 px-3 py-2 text-sm text-black"
+                  className="bg-theme-surface rounded-2xl border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
                 />
               </div>
             </div>
 
-            <div className="mt-5 rounded-2xl border border-slate-100">
-              <div className="grid grid-cols-[1.5fr,0.7fr,0.8fr,0.8fr] gap-4 border-b border-slate-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+            <div className="mt-5 rounded-2xl border border-theme-border">
+              <div className="grid grid-cols-[1.5fr,0.7fr,0.8fr,0.8fr] gap-4 border-b border-theme-border px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-theme-text-secondary">
                 <span>Ticket</span>
                 <span>Priority</span>
                 <span>Status</span>
                 <span>Resolution</span>
               </div>
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-theme-border">
                 {workspaceLoading && filteredTickets.length === 0 ? (
-                  <div className="flex items-center justify-center gap-2 px-4 py-10 text-sm text-slate-500">
+                  <div className="flex items-center justify-center gap-2 px-4 py-10 text-sm text-theme-text-tertiary">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Loading queue...
                   </div>
                 ) : filteredTickets.length === 0 ? (
-                  <div className="px-4 py-8 text-sm text-slate-500">No tickets match the filters.</div>
+                  <div className="px-4 py-8 text-sm text-theme-text-tertiary">No tickets match the filters.</div>
                 ) : (
                   filteredTickets.map((ticket) => (
                     <button
                       key={ticket.id}
                       onClick={() => setSelectedTicketId(ticket.id)}
-                      className={`grid w-full grid-cols-[1.5fr,0.7fr,0.8fr,0.8fr] gap-4 px-4 py-4 text-left transition ${selectedTicketId === ticket.id ? "bg-slate-900/5" : "hover:bg-slate-50"}`}
+                      className={`grid w-full grid-cols-[1.5fr,0.7fr,0.8fr,0.8fr] gap-4 px-4 py-4 text-left transition ${selectedTicketId === ticket.id ? "bg-theme-surface/5" : "hover:bg-theme-muted"}`}
                     >
                       <div>
-                        <p className="font-medium text-gray-900">{ticket.ticketNumber} · {ticket.title}</p>
-                        <p className="text-xs text-slate-500">{ticket.serviceArea || "General"} · {ticket.region || "Region N/A"}</p>
+                        <p className="font-medium text-theme-text-primary">{ticket.ticketNumber} · {ticket.title}</p>
+                        <p className="text-xs text-theme-text-tertiary">{ticket.serviceArea || "General"} · {ticket.region || "Region N/A"}</p>
                       </div>
                       <span className={`inline-flex items-center justify-center rounded-full px-2 py-1 text-xs font-semibold ${PRIORITY_BADGES[ticket.priority]}`}>
                         {ticket.priority.toUpperCase()}
@@ -644,8 +644,8 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                         {STATUS_LABELS[ticket.status]}
                       </span>
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">{ticket.resolutionDueAt ? formatRelative(ticket.resolutionDueAt) : "TBD"}</p>
-                        <p className="text-xs text-slate-500">Due {ticket.resolutionDueAt ? formatClock(ticket.resolutionDueAt) : "—"}</p>
+                        <p className="text-sm font-semibold text-theme-text-primary">{ticket.resolutionDueAt ? formatRelative(ticket.resolutionDueAt) : "TBD"}</p>
+                        <p className="text-xs text-theme-text-tertiary">Due {ticket.resolutionDueAt ? formatClock(ticket.resolutionDueAt) : "—"}</p>
                       </div>
                     </button>
                   ))
@@ -654,12 +654,12 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+          <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Ticket detail</p>
-                <h3 className="text-xl font-semibold text-gray-900">{selectedTicket ? selectedTicket.title : "Select a ticket"}</h3>
-                <p className="text-sm text-slate-500">Lifecycle, diagnostics timeline, field dispatch, and collaboration thread.</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Ticket detail</p>
+                <h3 className="text-xl font-semibold text-theme-text-primary">{selectedTicket ? selectedTicket.title : "Select a ticket"}</h3>
+                <p className="text-sm text-theme-text-tertiary">Lifecycle, diagnostics timeline, field dispatch, and collaboration thread.</p>
               </div>
               {selectedTicket && (
                 <div className="flex flex-wrap items-center gap-3">
@@ -667,7 +667,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                     value={selectedTicket.status}
                     onChange={(e) => handleStatusChange(e.target.value as SupportTicket["status"])}
                     disabled={statusUpdating}
-                    className="bg-white rounded-2xl border border-slate-200 px-3 py-2 text-sm text-black"
+                    className="bg-theme-surface rounded-2xl border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
                   >
                     {STATUS_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>
@@ -677,7 +677,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                     type="button"
                     onClick={handleDispatch}
                     disabled={dispatching}
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:border-slate-300"
+                    className="inline-flex items-center gap-2 rounded-full border border-theme-border px-4 py-2 text-sm text-theme-text-secondary hover:border-theme-border"
                   >
                     {dispatching ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="h-4 w-4" />}
                     Dispatch field crew
@@ -696,20 +696,20 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
             )}
 
             {!selectedTicket && !detailLoading && (
-              <div className="mt-6 rounded-2xl border border-dashed border-slate-200 px-6 py-10 text-center text-sm text-slate-500">
+              <div className="mt-6 rounded-2xl border border-dashed border-theme-border px-6 py-10 text-center text-sm text-theme-text-tertiary">
                 Choose a ticket from the board to inspect timeline, comments, and SLA clocks.
               </div>
             )}
 
             {detailLoading ? (
-              <div className="mt-6 flex items-center gap-2 text-sm text-slate-500">
+              <div className="mt-6 flex items-center gap-2 text-sm text-theme-text-tertiary">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading ticket context…
               </div>
             ) : selectedTicket ? (
               <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
                 <div className="space-y-6">
-                  <div className="rounded-2xl border border-slate-100 p-5">
+                  <div className="rounded-2xl border border-theme-border p-5">
                     <div className="flex flex-wrap items-center gap-4 text-sm">
                       <span className={`inline-flex items-center rounded-full px-3 py-1 font-semibold ${PRIORITY_BADGES[selectedTicket.priority]}`}>
                         {selectedTicket.priority.toUpperCase()}
@@ -717,73 +717,73 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                       <span className={`inline-flex items-center rounded-full px-3 py-1 font-semibold ${STATUS_STYLES[selectedTicket.status]}`}>
                         {STATUS_LABELS[selectedTicket.status]}
                       </span>
-                      <span className="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-3 py-1 text-slate-600">
+                      <span className="inline-flex items-center gap-2 rounded-full bg-theme-surface/5 px-3 py-1 text-theme-text-secondary">
                         <MapPin className="h-3.5 w-3.5" />
                         {selectedTicket.region || "Region N/A"}
                       </span>
                     </div>
-                    <div className="mt-4 grid gap-3 text-sm text-slate-600 md:grid-cols-2">
+                    <div className="mt-4 grid gap-3 text-sm text-theme-text-secondary md:grid-cols-2">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Service area</p>
-                        <p className="font-semibold text-gray-900">{selectedTicket.serviceArea || "Unmapped"}</p>
+                        <p className="text-xs uppercase tracking-[0.2em] text-theme-text-secondary">Service area</p>
+                        <p className="font-semibold text-theme-text-primary">{selectedTicket.serviceArea || "Unmapped"}</p>
                       </div>
                       <div>
-                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">SLA resolution</p>
-                        <p className="font-semibold text-gray-900">{selectedTicket.resolutionDueAt ? formatRelative(selectedTicket.resolutionDueAt) : "No SLA"}</p>
+                        <p className="text-xs uppercase tracking-[0.2em] text-theme-text-secondary">SLA resolution</p>
+                        <p className="font-semibold text-theme-text-primary">{selectedTicket.resolutionDueAt ? formatRelative(selectedTicket.resolutionDueAt) : "No SLA"}</p>
                       </div>
                       <div>
-                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Assigned engineer</p>
-                        <p className="font-semibold text-gray-900">{selectedTicket.assignedEngineerId || "Auto pending"}</p>
+                        <p className="text-xs uppercase tracking-[0.2em] text-theme-text-secondary">Assigned engineer</p>
+                        <p className="font-semibold text-theme-text-primary">{selectedTicket.assignedEngineerId || "Auto pending"}</p>
                       </div>
                       <div>
-                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Tags</p>
-                        <p className="font-semibold text-gray-900">
+                        <p className="text-xs uppercase tracking-[0.2em] text-theme-text-secondary">Tags</p>
+                        <p className="font-semibold text-theme-text-primary">
                           {(selectedTicket.tags || []).length ? selectedTicket.tags.join(", ") : "No tags"}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-slate-100 p-5">
+                  <div className="rounded-2xl border border-theme-border p-5">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Timeline</p>
-                      <span className="text-xs text-slate-500">{activities.length} entries</span>
+                      <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Timeline</p>
+                      <span className="text-xs text-theme-text-tertiary">{activities.length} entries</span>
                     </div>
                     <div className="mt-4 space-y-4">
                       {activities.slice(0, 6).map((activity) => (
                         <div key={activity.id} className="flex items-start gap-3">
-                          <div className="rounded-full bg-slate-900/5 p-2 text-slate-600">
+                          <div className="rounded-full bg-theme-surface/5 p-2 text-theme-text-secondary">
                             <Activity className="h-4 w-4" />
                           </div>
                           <div>
-                            <p className="text-sm font-semibold text-gray-900">{activity.activityType?.replace(/_/g, " ")}</p>
-                            <p className="text-xs text-slate-500">{formatClock(activity.createdAt)}</p>
+                            <p className="text-sm font-semibold text-theme-text-primary">{activity.activityType?.replace(/_/g, " ")}</p>
+                            <p className="text-xs text-theme-text-tertiary">{formatClock(activity.createdAt)}</p>
                           </div>
                         </div>
                       ))}
-                      {activities.length === 0 && <p className="text-sm text-slate-500">No activity logged yet.</p>}
+                      {activities.length === 0 && <p className="text-sm text-theme-text-tertiary">No activity logged yet.</p>}
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-slate-100 p-5">
+                  <div className="rounded-2xl border border-theme-border p-5">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Collaboration</p>
-                      <span className="text-xs text-slate-500">{comments.length} comments</span>
+                      <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Collaboration</p>
+                      <span className="text-xs text-theme-text-tertiary">{comments.length} comments</span>
                     </div>
                     <div className="mt-4 space-y-4">
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="rounded-2xl border border-theme-border bg-theme-muted p-4">
                         <textarea
                           value={commentBody}
                           onChange={(e) => setCommentBody(e.target.value)}
                           placeholder="Drop an internal note or customer update"
-                          className="h-24 w-full resize-none rounded-lg border border-slate-200 bg-white p-3 text-sm text-black focus:border-slate-400 focus:outline-none"
+                          className="h-24 w-full resize-none rounded-lg border border-theme-border bg-theme-surface p-3 text-sm text-theme-text-primary focus:border-theme-border focus:outline-none"
                         />
                         <div className="mt-3 flex justify-end">
                           <button
                             type="button"
                             onClick={handleCommentSubmit}
                             disabled={!commentBody.trim() || commentSubmitting}
-                            className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex items-center gap-2 rounded-full bg-theme-surface px-4 py-2 text-sm font-semibold text-theme-text-primary transition hover:bg-theme-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-border disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {commentSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
                             Log update
@@ -791,46 +791,46 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                         </div>
                       </div>
                       {comments.slice(0, 4).map((comment) => (
-                        <div key={comment.id} className="rounded-2xl border border-slate-100 p-4">
-                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <div key={comment.id} className="rounded-2xl border border-theme-border p-4">
+                          <div className="flex items-center gap-2 text-xs text-theme-text-tertiary">
                             <MessageSquare className="h-3.5 w-3.5" />
                             {comment.visibility === "internal" ? "Internal" : "External"}
                             · {formatClock(comment.createdAt)}
                           </div>
-                          <p className="mt-2 text-sm text-slate-700">{comment.body}</p>
+                          <p className="mt-2 text-sm text-theme-text-primary">{comment.body}</p>
                         </div>
                       ))}
-                      {comments.length === 0 && <p className="text-sm text-slate-500">No commentary logged.</p>}
+                      {comments.length === 0 && <p className="text-sm text-theme-text-tertiary">No commentary logged.</p>}
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-5">
-                  <div className="rounded-2xl border border-slate-100 p-5">
+                  <div className="rounded-2xl border border-theme-border p-5">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Field jobs</p>
-                      <span className="text-xs text-slate-500">{fieldJobs.length} assignments</span>
+                      <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Field jobs</p>
+                      <span className="text-xs text-theme-text-tertiary">{fieldJobs.length} assignments</span>
                     </div>
                     <div className="mt-4 space-y-3">
-                      {fieldJobs.length === 0 && <p className="text-sm text-slate-500">No field dispatch yet.</p>}
+                      {fieldJobs.length === 0 && <p className="text-sm text-theme-text-tertiary">No field dispatch yet.</p>}
                       {fieldJobs.slice(0, 4).map((job) => (
-                        <div key={job.id} className="rounded-xl border border-slate-100 px-4 py-3 text-sm text-slate-700">
+                        <div key={job.id} className="rounded-xl border border-theme-border px-4 py-3 text-sm text-theme-text-primary">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <UserCheck className="h-4 w-4 text-slate-500" />
+                              <UserCheck className="h-4 w-4 text-theme-text-tertiary" />
                               {job.engineerId || "Unassigned"}
                             </div>
-                            <span className="text-xs uppercase tracking-[0.2em] text-slate-400">{job.status?.replace(/_/g, " ")}</span>
+                            <span className="text-xs uppercase tracking-[0.2em] text-theme-text-secondary">{job.status?.replace(/_/g, " ")}</span>
                           </div>
-                          <p className="mt-1 text-xs text-slate-500">Scheduled {formatClock(job.scheduledAt)} · {typeof job.location?.region === "string" ? job.location.region : "No region"}</p>
+                          <p className="mt-1 text-xs text-theme-text-tertiary">Scheduled {formatClock(job.scheduledAt)} · {typeof job.location?.region === "string" ? job.location.region : "No region"}</p>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-slate-100 p-5">
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Root cause notes</p>
-                    <p className="mt-2 text-sm text-slate-600">
+                  <div className="rounded-2xl border border-theme-border p-5">
+                    <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Root cause notes</p>
+                    <p className="mt-2 text-sm text-theme-text-secondary">
                       {selectedTicket.description || "No diagnostic notes captured. Use the comment field to capture hypotheses and learnings."}
                     </p>
                   </div>
@@ -841,16 +841,16 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+          <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">SLA radar</p>
-                <h3 className="text-lg font-semibold text-gray-900">At-risk countdown</h3>
+                <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">SLA radar</p>
+                <h3 className="text-lg font-semibold text-theme-text-primary">At-risk countdown</h3>
               </div>
-              <ShieldCheck className="h-5 w-5 text-slate-400" />
+              <ShieldCheck className="h-5 w-5 text-theme-text-secondary" />
             </div>
             <div className="mt-4 space-y-4">
-              {slaAtRisk.length === 0 && <p className="text-sm text-slate-500">All tickets within SLA right now.</p>}
+              {slaAtRisk.length === 0 && <p className="text-sm text-theme-text-tertiary">All tickets within SLA right now.</p>}
               {slaAtRisk.slice(0, 4).map((entry) => (
                 <div key={entry.ticketId} className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3">
                   <div className="flex items-center justify-between text-sm font-semibold text-amber-900">
@@ -863,67 +863,67 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+          <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Incident feed</p>
-                <h3 className="text-lg font-semibold text-gray-900">Monitoring signals</h3>
+                <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Incident feed</p>
+                <h3 className="text-lg font-semibold text-theme-text-primary">Monitoring signals</h3>
               </div>
               <Siren className="h-5 w-5 text-rose-500" />
             </div>
             <div className="mt-4 space-y-4">
-              {incidents.length === 0 && <p className="text-sm text-slate-500">No live incidents linked.</p>}
+              {incidents.length === 0 && <p className="text-sm text-theme-text-tertiary">No live incidents linked.</p>}
               {incidents.slice(0, 4).map((incident) => (
-                <div key={incident.id} className="rounded-2xl border border-slate-100 px-4 py-3">
-                  <div className="flex items-center justify-between text-sm font-semibold text-gray-900">
+                <div key={incident.id} className="rounded-2xl border border-theme-border px-4 py-3">
+                  <div className="flex items-center justify-between text-sm font-semibold text-theme-text-primary">
                     <span>{incident.summary || incident.incidentType || "Incident"}</span>
-                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${incident.severity === "critical" ? "bg-rose-100 text-rose-700" : incident.severity === "high" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"}`}>
+                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${incident.severity === "critical" ? "bg-rose-100 text-rose-700" : incident.severity === "high" ? "bg-amber-100 text-amber-700" : "bg-theme-muted text-theme-text-secondary"}`}>
                       {incident.severity.toUpperCase()}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-slate-500">Detected {formatClock(incident.detectedAt)} · {incident.affectedServices?.join(", ") || "Core"}</p>
+                  <p className="mt-1 text-xs text-theme-text-tertiary">Detected {formatClock(incident.detectedAt)} · {incident.affectedServices?.join(", ") || "Core"}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+          <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Assignment intelligence</p>
-                <h3 className="text-lg font-semibold text-gray-900">Recommended crew</h3>
+                <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Assignment intelligence</p>
+                <h3 className="text-lg font-semibold text-theme-text-primary">Recommended crew</h3>
               </div>
               <Sparkles className="h-5 w-5 text-indigo-500" />
             </div>
             {assignment?.primary ? (
               <div className="mt-4 space-y-4">
-                <div className="rounded-2xl border border-slate-100 bg-slate-900 p-4 text-white">
-                  <p className="text-xs uppercase tracking-[0.3em] text-white/60">Primary engineer</p>
+                <div className="rounded-2xl border border-theme-border bg-theme-surface p-4 text-theme-text-primary">
+                  <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Primary engineer</p>
                   <div className="mt-2 flex items-center justify-between">
                     <div>
                       <p className="text-lg font-semibold">{assignment.primary.engineerName}</p>
-                      <p className="text-sm text-white/70">Skill match {assignment.primary.skillMatch}% · Load score {assignment.primary.loadScore}%</p>
+                      <p className="text-sm text-theme-text-secondary">Skill match {assignment.primary.skillMatch}% · Load score {assignment.primary.loadScore}%</p>
                     </div>
                     <div className="rounded-full bg-theme-muted/10 px-3 py-1 text-xs">{assignment.primary.total}% fit</div>
                   </div>
                 </div>
                 {assignment.backup && (
-                  <div className="rounded-2xl border border-slate-100 px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Backup</p>
-                    <p className="text-sm font-semibold text-gray-900">{assignment.backup.engineerName}</p>
+                  <div className="rounded-2xl border border-theme-border px-4 py-3">
+                    <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Backup</p>
+                    <p className="text-sm font-semibold text-theme-text-primary">{assignment.backup.engineerName}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Workload radar</p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Workload radar</p>
                   <div className="mt-2 space-y-2">
                     {workload.slice(0, 4).map((engineer) => (
-                      <div key={engineer.engineerId} className="overflow-hidden rounded-xl border border-slate-100">
-                        <div className="flex items-center justify-between px-4 py-2 text-sm font-semibold text-gray-900">
+                      <div key={engineer.engineerId} className="overflow-hidden rounded-xl border border-theme-border">
+                        <div className="flex items-center justify-between px-4 py-2 text-sm font-semibold text-theme-text-primary">
                           <span>{engineer.engineerName}</span>
                           <span>{engineer.utilization}% utilized</span>
                         </div>
-                        <div className="h-1.5 w-full bg-slate-100">
-                          <div className="h-full bg-slate-900" style={{ width: `${Math.min(engineer.utilization, 100)}%` }} />
+                        <div className="h-1.5 w-full bg-theme-muted">
+                          <div className="h-full bg-theme-surface" style={{ width: `${Math.min(engineer.utilization, 100)}%` }} />
                         </div>
                       </div>
                     ))}
@@ -931,25 +931,25 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                 </div>
               </div>
             ) : (
-              <p className="mt-4 text-sm text-slate-500">Assignment engine will populate once tickets load.</p>
+              <p className="mt-4 text-sm text-theme-text-tertiary">Assignment engine will populate once tickets load.</p>
             )}
           </div>
 
-          <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+          <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Knowledge loop</p>
-                <h3 className="text-lg font-semibold text-gray-900">Suggested playbooks</h3>
+                <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Knowledge loop</p>
+                <h3 className="text-lg font-semibold text-theme-text-primary">Suggested playbooks</h3>
               </div>
               <BookIcon />
             </div>
             <div className="mt-4 space-y-4">
-              {knowledge.length === 0 && <p className="text-sm text-slate-500">No KB articles yet. Capture learnings after resolution.</p>}
+              {knowledge.length === 0 && <p className="text-sm text-theme-text-tertiary">No KB articles yet. Capture learnings after resolution.</p>}
               {knowledge.slice(0, 3).map((article) => (
-                <div key={article.id} className="rounded-2xl border border-slate-100 p-4">
-                  <p className="text-sm font-semibold text-gray-900">{article.title}</p>
-                  <p className="text-xs text-slate-500">Audience: {article.audience} · Score {article.effectivenessScore}</p>
-                  <button className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-gray-900">
+                <div key={article.id} className="rounded-2xl border border-theme-border p-4">
+                  <p className="text-sm font-semibold text-theme-text-primary">{article.title}</p>
+                  <p className="text-xs text-theme-text-tertiary">Audience: {article.audience} · Score {article.effectivenessScore}</p>
+                  <button className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-theme-text-primary">
                     Open playbook <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -960,15 +960,15 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
       </div>
 
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 px-4 py-6">
-          <div className="w-full max-w-3xl rounded-3xl bg-white p-8 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-surface/60 px-4 py-6">
+          <div className="w-full max-w-3xl rounded-3xl bg-theme-surface p-8 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Ticket intake</p>
-                <h3 className="text-2xl font-semibold text-gray-900">Log a new support ticket</h3>
-                <p className="text-sm text-slate-500">Capture context, SLA classification, and tags so the war room can act immediately.</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Ticket intake</p>
+                <h3 className="text-2xl font-semibold text-theme-text-primary">Log a new support ticket</h3>
+                <p className="text-sm text-theme-text-tertiary">Capture context, SLA classification, and tags so the war room can act immediately.</p>
               </div>
-              <button onClick={closeCreateModal} className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-slate-700" aria-label="Close create ticket dialog">
+              <button onClick={closeCreateModal} className="rounded-full border border-theme-border p-2 text-theme-text-tertiary hover:text-theme-text-primary" aria-label="Close create ticket dialog">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -984,35 +984,35 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
 
             <form onSubmit={handleCreateTicket} className="mt-6 space-y-5">
               <div>
-                <label className="text-sm font-semibold text-gray-900">Title</label>
+                <label className="text-sm font-semibold text-theme-text-primary">Title</label>
                 <input
                   type="text"
                   value={createForm.title}
                   onChange={(event) => handleCreateFieldChange("title", event.target.value)}
                   required
                   placeholder="e.g., MetroWave POP outage"
-                  className="bg-white mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-black focus:border-slate-500 focus:outline-none"
+                  className="bg-theme-surface mt-2 w-full rounded-2xl border border-theme-border px-4 py-2 text-sm text-theme-text-primary focus:border-theme-border focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-gray-900">Description</label>
+                <label className="text-sm font-semibold text-theme-text-primary">Description</label>
                 <textarea
                   value={createForm.description}
                   onChange={(event) => handleCreateFieldChange("description", event.target.value)}
                   rows={4}
                   placeholder="Add quick diagnostic notes, affected services, or monitoring signal"
-                  className="bg-white mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-black focus:border-slate-500 focus:outline-none"
+                  className="bg-theme-surface mt-2 w-full rounded-2xl border border-theme-border px-4 py-2 text-sm text-theme-text-primary focus:border-theme-border focus:outline-none"
                 />
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className="text-sm font-semibold text-gray-900">Ticket type</label>
+                  <label className="text-sm font-semibold text-theme-text-primary">Ticket type</label>
                   <select
                     value={createForm.ticketType}
                     onChange={(event) => handleCreateFieldChange("ticketType", event.target.value as CreateTicketForm["ticketType"])}
-                    className="bg-white mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-black"
+                    className="bg-theme-surface mt-2 w-full rounded-2xl border border-theme-border px-4 py-2 text-sm text-theme-text-primary"
                   >
                     {TICKET_TYPE_OPTIONS.map((option) => (
                       <option key={option} value={option}>{option === "customer" ? "Customer" : "Internal"}</option>
@@ -1020,11 +1020,11 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-gray-900">Source</label>
+                  <label className="text-sm font-semibold text-theme-text-primary">Source</label>
                   <select
                     value={createForm.source}
                     onChange={(event) => handleCreateFieldChange("source", event.target.value as CreateTicketForm["source"])}
-                    className="bg-white mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-black"
+                    className="bg-theme-surface mt-2 w-full rounded-2xl border border-theme-border px-4 py-2 text-sm text-theme-text-primary"
                   >
                     {SOURCE_OPTIONS.map((option) => (
                       <option key={option} value={option}>{option.toUpperCase()}</option>
@@ -1035,11 +1035,11 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className="text-sm font-semibold text-gray-900">Impact level</label>
+                  <label className="text-sm font-semibold text-theme-text-primary">Impact level</label>
                   <select
                     value={createForm.impactLevel}
                     onChange={(event) => handleCreateFieldChange("impactLevel", event.target.value as CreateTicketForm["impactLevel"])}
-                    className="bg-white mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-black"
+                    className="bg-theme-surface mt-2 w-full rounded-2xl border border-theme-border px-4 py-2 text-sm text-theme-text-primary"
                   >
                     {IMPACT_OPTIONS.map((option) => (
                       <option key={option} value={option}>{option.toUpperCase()}</option>
@@ -1047,11 +1047,11 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-gray-900">Priority</label>
+                  <label className="text-sm font-semibold text-theme-text-primary">Priority</label>
                   <select
                     value={createForm.priority}
                     onChange={(event) => handleCreateFieldChange("priority", event.target.value as CreateTicketForm["priority"])}
-                    className="bg-white mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-black"
+                    className="bg-theme-surface mt-2 w-full rounded-2xl border border-theme-border px-4 py-2 text-sm text-theme-text-primary"
                   >
                     {PRIORITY_OPTIONS.map((option) => (
                       <option key={option} value={option}>{option.toUpperCase()}</option>
@@ -1062,47 +1062,47 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className="text-sm font-semibold text-gray-900">Service area</label>
+                  <label className="text-sm font-semibold text-theme-text-primary">Service area</label>
                   <input
                     type="text"
                     value={createForm.serviceArea}
                     onChange={(event) => handleCreateFieldChange("serviceArea", event.target.value)}
                     placeholder="Core Network, Internal IT, Field"
-                    className="bg-white mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-black"
+                    className="bg-theme-surface mt-2 w-full rounded-2xl border border-theme-border px-4 py-2 text-sm text-theme-text-primary"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-gray-900">Region</label>
+                  <label className="text-sm font-semibold text-theme-text-primary">Region</label>
                   <input
                     type="text"
                     value={createForm.region}
                     onChange={(event) => handleCreateFieldChange("region", event.target.value)}
                     placeholder="Global HQ, EMEA, APAC"
-                    className="bg-white mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-black"
+                    className="bg-theme-surface mt-2 w-full rounded-2xl border border-theme-border px-4 py-2 text-sm text-theme-text-primary"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-gray-900">Tags</label>
+                <label className="text-sm font-semibold text-theme-text-primary">Tags</label>
                 <input
                   type="text"
                   value={createForm.tags}
                   onChange={(event) => handleCreateFieldChange("tags", event.target.value)}
                   placeholder="fiber, authentication, vpn"
-                  className="bg-white mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-black"
+                  className="bg-theme-surface mt-2 w-full rounded-2xl border border-theme-border px-4 py-2 text-sm text-theme-text-primary"
                 />
-                <p className="mt-1 text-xs text-slate-500">Comma separated list. Helps the assignment engine find specialists.</p>
+                <p className="mt-1 text-xs text-theme-text-tertiary">Comma separated list. Helps the assignment engine find specialists.</p>
               </div>
 
               <div className="flex flex-wrap justify-end gap-3 pt-2">
-                <button type="button" onClick={closeCreateModal} className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+                <button type="button" onClick={closeCreateModal} className="rounded-full border border-theme-border px-5 py-2 text-sm font-semibold text-theme-text-secondary hover:bg-theme-muted">
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isCreateDisabled || createLoading}
-                  className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-5 py-2 text-sm font-semibold text-black hover:bg-gray-200 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-full bg-theme-muted px-5 py-2 text-sm font-semibold text-theme-text-primary hover:bg-theme-muted disabled:opacity-50"
                 >
                   {createLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <SendHorizontal className="h-4 w-4" />}
                   Create ticket
@@ -1130,12 +1130,12 @@ function StatCard({
   icon: ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className={`rounded-3xl border border-slate-100 bg-gradient-to-br ${accent} p-6 text-white shadow-sm`}>
+    <div className={`rounded-3xl border border-theme-border bg-gradient-to-br ${accent} p-6 text-white shadow-sm`}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-white/60">{title}</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">{title}</p>
           <p className="mt-2 text-3xl font-semibold">{value}</p>
-          <p className="text-sm text-white/70">{sublabel}</p>
+          <p className="text-sm text-theme-text-secondary">{sublabel}</p>
         </div>
         <div className="rounded-2xl bg-theme-muted/15 p-3">
           <Icon className="h-5 w-5" />
@@ -1147,7 +1147,7 @@ function StatCard({
 
 function BookIcon() {
   return (
-    <div className="rounded-2xl bg-slate-100 p-3 text-slate-500">
+    <div className="rounded-2xl bg-theme-muted p-3 text-theme-text-tertiary">
       <SendHorizontal className="h-5 w-5" />
     </div>
   );

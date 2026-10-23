@@ -312,8 +312,8 @@ export default function BudgetPlanningWorkspace({
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading budgets...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-theme-accent" />
+          <p className="text-theme-text-secondary">Loading budgets...</p>
         </div>
       </div>
     );
@@ -334,7 +334,7 @@ export default function BudgetPlanningWorkspace({
   }
 
   return (
-    <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
+    <div className="space-y-6 p-6 bg-theme-muted min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -347,7 +347,7 @@ export default function BudgetPlanningWorkspace({
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 bg-theme-accent text-white px-4 py-2 rounded-lg hover:bg-theme-accent-hover"
         >
           <Plus className="h-5 w-5" />
           New Budget
@@ -355,7 +355,7 @@ export default function BudgetPlanningWorkspace({
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-300">
+      <div className="flex gap-2 border-b border-theme-border">
         {["planning", "tracking", "forecasting"].map((tab) => (
           <button
             key={tab}
@@ -364,8 +364,8 @@ export default function BudgetPlanningWorkspace({
             }
             className={`px-4 py-2 font-medium capitalize ${
               activeTab === tab
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-600 hover:text-gray-700"
+                ? "text-theme-accent border-b-2 border-theme-accent"
+                : "text-theme-text-secondary hover:text-theme-text-primary"
             }`}
           >
             {tab}
@@ -381,10 +381,10 @@ export default function BudgetPlanningWorkspace({
             {/* Budget List */}
             <div className="grid gap-4">
               {summaries.length === 0 ? (
-                <div className="text-center p-12 bg-theme-muted rounded-lg border border-gray-200">
-                  <BarChart3 className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                  <p className="text-gray-600">No budgets created yet</p>
-                  <p className="text-sm text-gray-500 mt-1">
+                <div className="text-center p-12 bg-theme-muted rounded-lg border border-theme-border">
+                  <BarChart3 className="h-12 w-12 mx-auto text-theme-text-secondary mb-4" />
+                  <p className="text-theme-text-secondary">No budgets created yet</p>
+                  <p className="text-sm text-theme-text-secondary mt-1">
                     Create your first budget to get started
                   </p>
                 </div>
@@ -392,35 +392,35 @@ export default function BudgetPlanningWorkspace({
                 summaries.map((summary) => (
                   <div
                     key={summary.id}
-                    className="bg-theme-muted rounded-lg border border-gray-200 p-4 hover:border-gray-300"
+                    className="bg-theme-muted rounded-lg border border-theme-border p-4 hover:border-theme-border"
                   >
                     <div
                       className="cursor-pointer flex items-center justify-between"
                       onClick={() => setSelectedBudget(summary)}
                     >
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">
+                        <h3 className="font-semibold text-theme-text-primary">
                           {summary.name} ({summary.code})
                         </h3>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-theme-text-secondary mt-1">
                           {summary.budgetType} • {summary.periodType}{" "}
                           {summary.fiscalYear}
                         </p>
                         <div className="mt-3 flex gap-6">
                           <div>
-                            <p className="text-xs text-gray-600">Total Budget</p>
-                            <p className="font-semibold text-gray-900">
+                            <p className="text-xs text-theme-text-secondary">Total Budget</p>
+                            <p className="font-semibold text-theme-text-primary">
                               ${summary.totalBudgetAmount.toFixed(2)}
                             </p>
                           </div>
                           <div>
-                            <p className="text-xs text-gray-600">Actual</p>
-                            <p className="font-semibold text-gray-900">
+                            <p className="text-xs text-theme-text-secondary">Actual</p>
+                            <p className="font-semibold text-theme-text-primary">
                               ${summary.totalActual.toFixed(2)}
                             </p>
                           </div>
                           <div>
-                            <p className="text-xs text-gray-600">Remaining</p>
+                            <p className="text-xs text-theme-text-secondary">Remaining</p>
                             <p
                               className={`font-semibold ${getVarianceColor(
                                 summary.percentUtilized
@@ -430,7 +430,7 @@ export default function BudgetPlanningWorkspace({
                             </p>
                           </div>
                           <div>
-                            <p className="text-xs text-gray-600">Utilized</p>
+                            <p className="text-xs text-theme-text-secondary">Utilized</p>
                             <p
                               className={`font-semibold ${getVarianceColor(
                                 summary.percentUtilized
@@ -452,16 +452,16 @@ export default function BudgetPlanningWorkspace({
 
                     {/* Budget Details (when expanded) */}
                     {selectedBudget?.id === summary.id && (
-                      <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
+                      <div className="mt-4 pt-4 border-t border-theme-border space-y-4">
                         {/* Budget Lines Table */}
                         {budgetLines.length > 0 && (
                           <div>
-                            <h4 className="font-medium text-gray-900 mb-3">
+                            <h4 className="font-medium text-theme-text-primary mb-3">
                               Budget Lines
                             </h4>
                             <div className="overflow-x-auto">
                               <table className="w-full text-sm">
-                                <thead className="bg-gray-100">
+                                <thead className="bg-theme-muted">
                                   <tr>
                                     <th className="px-3 py-2 text-left">
                                       Account
@@ -484,13 +484,13 @@ export default function BudgetPlanningWorkspace({
                                   {budgetLines.map((line) => (
                                     <tr
                                       key={line.budgetLineId}
-                                      className="border-b border-gray-200 hover:bg-gray-50"
+                                      className="border-b border-theme-border hover:bg-theme-muted"
                                     >
                                       <td className="px-3 py-2">
                                         <p className="font-medium">
                                           {line.accountCode}
                                         </p>
-                                        <p className="text-gray-600">
+                                        <p className="text-theme-text-secondary">
                                           {line.accountName}
                                         </p>
                                       </td>
@@ -539,30 +539,30 @@ export default function BudgetPlanningWorkspace({
           <div className="space-y-6">
             {/* Budget Summary Card */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              <h2 className="text-xl font-semibold text-theme-text-primary mb-4">
                 {selectedBudget.name}
               </h2>
               <div className="grid grid-cols-4 gap-4">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Total Budget</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm text-theme-text-secondary mb-1">Total Budget</p>
+                  <p className="text-2xl font-bold text-theme-text-primary">
                     ${selectedBudget.totalBudgetAmount.toFixed(2)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Actual Spent</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm text-theme-text-secondary mb-1">Actual Spent</p>
+                  <p className="text-2xl font-bold text-theme-text-primary">
                     ${selectedBudget.totalActual.toFixed(2)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Committed</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm text-theme-text-secondary mb-1">Committed</p>
+                  <p className="text-2xl font-bold text-theme-text-primary">
                     ${selectedBudget.totalCommitted.toFixed(2)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Remaining</p>
+                  <p className="text-sm text-theme-text-secondary mb-1">Remaining</p>
                   <p
                     className={`text-2xl font-bold ${getVarianceColor(
                       selectedBudget.percentUtilized
@@ -576,14 +576,14 @@ export default function BudgetPlanningWorkspace({
               {/* Progress Bar */}
               <div className="mt-6">
                 <div className="flex justify-between items-center mb-2">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-theme-text-primary">
                     Budget Utilization
                   </p>
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-theme-text-primary">
                     {selectedBudget.percentUtilized.toFixed(1)}%
                   </p>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-theme-muted rounded-full h-2">
                   <div
                     className={`h-2 rounded-full transition-all ${
                       selectedBudget.percentUtilized > 100
@@ -603,7 +603,7 @@ export default function BudgetPlanningWorkspace({
             {/* Variances */}
             {variances.length > 0 && (
               <div className="space-y-3">
-                <h3 className="font-semibold text-gray-900">Budget Variances</h3>
+                <h3 className="font-semibold text-theme-text-primary">Budget Variances</h3>
                 {variances.map((variance) => (
                   <div
                     key={variance.id}
@@ -613,14 +613,14 @@ export default function BudgetPlanningWorkspace({
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-theme-text-primary">
                           {variance.varianceType}
                         </p>
-                        <p className="text-sm text-gray-900 mt-1">
+                        <p className="text-sm text-theme-text-primary mt-1">
                           Variance: ${variance.varianceAmount.toFixed(2)}{" "}
                           ({variance.variancePercent.toFixed(1)}%)
                         </p>
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-xs text-theme-text-secondary mt-1">
                           Budgeted: ${variance.budgetedAmount?.toFixed(2) || "0.00"} |
                           Actual: ${variance.actualAmount?.toFixed(2) || "0.00"} |
                           Committed: ${variance.committedAmount?.toFixed(2) || "0.00"}
@@ -629,7 +629,7 @@ export default function BudgetPlanningWorkspace({
                       {!variance.isAcknowledged && (
                         <button
                           onClick={() => acknowledgeVariance(BigInt(variance.id!))}
-                          className="text-sm bg-theme-muted px-3 py-1 rounded hover:bg-gray-100 ml-4"
+                          className="text-sm bg-theme-muted px-3 py-1 rounded hover:bg-theme-muted ml-4"
                         >
                           Acknowledge
                         </button>
@@ -641,9 +641,9 @@ export default function BudgetPlanningWorkspace({
             )}
 
             {variances.length === 0 && (
-              <div className="text-center p-6 bg-theme-muted rounded-lg border border-gray-200">
+              <div className="text-center p-6 bg-theme-muted rounded-lg border border-theme-border">
                 <AlertCircle className="h-8 w-8 mx-auto text-theme-text-tertiary mb-2" />
-                <p className="text-gray-600">No variances detected</p>
+                <p className="text-theme-text-secondary">No variances detected</p>
               </div>
             )}
           </div>
@@ -653,12 +653,12 @@ export default function BudgetPlanningWorkspace({
         {activeTab === "forecasting" && selectedBudget && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold text-theme-text-primary">
                 {selectedBudget.name} - Forecasts
               </h2>
               <button
                 onClick={() => setShowForecastModal(true)}
-                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                className="flex items-center gap-2 bg-theme-accent text-white px-4 py-2 rounded-lg hover:bg-theme-accent-hover"
               >
                 <TrendingUp className="h-5 w-5" />
                 Generate Forecast
@@ -666,10 +666,10 @@ export default function BudgetPlanningWorkspace({
             </div>
 
             {forecasts.length === 0 ? (
-              <div className="text-center p-12 bg-theme-muted rounded-lg border border-gray-200">
-                <TrendingUp className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                <p className="text-gray-600">No forecasts available</p>
-                <p className="text-sm text-gray-500 mt-1">
+              <div className="text-center p-12 bg-theme-muted rounded-lg border border-theme-border">
+                <TrendingUp className="h-12 w-12 mx-auto text-theme-text-secondary mb-4" />
+                <p className="text-theme-text-secondary">No forecasts available</p>
+                <p className="text-sm text-theme-text-secondary mt-1">
                   Generate a forecast to see projections
                 </p>
               </div>
@@ -678,16 +678,16 @@ export default function BudgetPlanningWorkspace({
                 {forecasts.map((forecast) => (
                   <div
                     key={forecast.id}
-                    className="bg-theme-muted rounded-lg border border-gray-200 p-4"
+                    className="bg-theme-muted rounded-lg border border-theme-border p-4"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="font-semibold text-gray-900">
+                        <h3 className="font-semibold text-theme-text-primary">
                           {forecast.forecastType === "ROLLING"
                             ? "Rolling Forecast"
                             : forecast.scenarioName || "Scenario Forecast"}
                         </h3>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-theme-text-secondary">
                           Methodology: {forecast.methodology || "Custom"} • Created:{" "}
                           {new Date(forecast.createdAt!).toLocaleDateString()}
                         </p>
@@ -712,16 +712,16 @@ export default function BudgetPlanningWorkspace({
                             key={idx}
                             className="flex justify-between text-sm py-1"
                           >
-                            <span className="text-gray-600">
+                            <span className="text-theme-text-secondary">
                               Line {line.budgetLineId}
                             </span>
-                            <span className="font-medium text-gray-900">
+                            <span className="font-medium text-theme-text-primary">
                               ${line.forecastedAmount.toFixed(2)}
                             </span>
                           </div>
                         ))}
                         {forecast.forecastLines.length > 3 && (
-                          <p className="text-sm text-gray-500 pt-2">
+                          <p className="text-sm text-theme-text-secondary pt-2">
                             +{forecast.forecastLines.length - 3} more lines
                           </p>
                         )}
@@ -737,15 +737,15 @@ export default function BudgetPlanningWorkspace({
 
       {/* CREATE BUDGET MODAL */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+          <div className="bg-theme-surface rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-theme-surface border-b border-theme-border px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-theme-text-primary">
                 Create New Budget
               </h2>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-theme-text-tertiary hover:text-gray-600"
+                className="text-theme-text-tertiary hover:text-theme-text-secondary"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -755,7 +755,7 @@ export default function BudgetPlanningWorkspace({
               {/* Basic Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
+                  <label className="block text-sm font-medium text-theme-text-primary mb-1">
                     Budget Code
                   </label>
                   <input
@@ -764,12 +764,12 @@ export default function BudgetPlanningWorkspace({
                     onChange={(e) =>
                       setFormData({ ...formData, code: e.target.value })
                     }
-                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-black"
+                    className="bg-theme-surface w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary"
                     placeholder="BUDGET-2024-01"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
+                  <label className="block text-sm font-medium text-theme-text-primary mb-1">
                     Budget Name
                   </label>
                   <input
@@ -778,14 +778,14 @@ export default function BudgetPlanningWorkspace({
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-black"
+                    className="bg-theme-surface w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary"
                     placeholder="Q1 2024 Budget"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">
+                <label className="block text-sm font-medium text-theme-text-primary mb-1">
                   Description
                 </label>
                 <textarea
@@ -793,7 +793,7 @@ export default function BudgetPlanningWorkspace({
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="bg-theme-surface w-full border border-theme-border rounded-lg px-3 py-2 text-sm"
                   rows={2}
                   placeholder="Budget description..."
                 />
@@ -802,7 +802,7 @@ export default function BudgetPlanningWorkspace({
               {/* Period and Type */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
+                  <label className="block text-sm font-medium text-theme-text-primary mb-1">
                     Period Type
                   </label>
                   <select
@@ -813,7 +813,7 @@ export default function BudgetPlanningWorkspace({
                         periodType: e.target.value as any,
                       })
                     }
-                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-black"
+                    className="bg-theme-surface w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary"
                   >
                     {BUDGET_PERIOD_TYPES.map((t) => (
                       <option key={t} value={t}>
@@ -823,7 +823,7 @@ export default function BudgetPlanningWorkspace({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
+                  <label className="block text-sm font-medium text-theme-text-primary mb-1">
                     Budget Type
                   </label>
                   <select
@@ -831,7 +831,7 @@ export default function BudgetPlanningWorkspace({
                     onChange={(e) =>
                       setFormData({ ...formData, budgetType: e.target.value as any })
                     }
-                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-black"
+                    className="bg-theme-surface w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary"
                   >
                     {BUDGET_TYPES.map((t) => (
                       <option key={t} value={t}>
@@ -841,7 +841,7 @@ export default function BudgetPlanningWorkspace({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
+                  <label className="block text-sm font-medium text-theme-text-primary mb-1">
                     Fiscal Year
                   </label>
                   <input
@@ -853,7 +853,7 @@ export default function BudgetPlanningWorkspace({
                         fiscalYear: parseInt(e.target.value),
                       })
                     }
-                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-black"
+                    className="bg-theme-surface w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary"
                   />
                 </div>
               </div>
@@ -861,11 +861,11 @@ export default function BudgetPlanningWorkspace({
               {/* Budget Amount & Enforcement */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
+                  <label className="block text-sm font-medium text-theme-text-primary mb-1">
                     Total Budget Amount
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-2 text-gray-500">$</span>
+                    <span className="absolute left-3 top-2 text-theme-text-secondary">$</span>
                     <input
                       type="number"
                       value={formData.totalBudgetAmount}
@@ -875,12 +875,12 @@ export default function BudgetPlanningWorkspace({
                           totalBudgetAmount: parseFloat(e.target.value),
                         })
                       }
-                      className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 pl-7 text-sm"
+                      className="bg-theme-surface w-full border border-theme-border rounded-lg px-3 py-2 pl-7 text-sm"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
+                  <label className="block text-sm font-medium text-theme-text-primary mb-1">
                     Enforcement Mode
                   </label>
                   <select
@@ -891,7 +891,7 @@ export default function BudgetPlanningWorkspace({
                         enforcementMode: e.target.value as any,
                       })
                     }
-                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-black"
+                    className="bg-theme-surface w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary"
                   >
                     {ENFORCEMENT_MODES.map((m) => (
                       <option key={m} value={m}>
@@ -903,11 +903,11 @@ export default function BudgetPlanningWorkspace({
               </div>
 
               {/* Budget Lines Section */}
-              <div className="border-t border-gray-200 pt-4">
-                <h3 className="font-semibold text-gray-900 mb-3">Budget Lines</h3>
+              <div className="border-t border-theme-border pt-4">
+                <h3 className="font-semibold text-theme-text-primary mb-3">Budget Lines</h3>
 
                 {/* Add Line Form */}
-                <div className="bg-gray-50 p-3 rounded-lg mb-3 space-y-3">
+                <div className="bg-theme-muted p-3 rounded-lg mb-3 space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <input
                       type="text"
@@ -919,7 +919,7 @@ export default function BudgetPlanningWorkspace({
                           accountCode: e.target.value,
                         })
                       }
-                      className="bg-white border border-gray-300 rounded px-2 py-1 text-sm"
+                      className="bg-theme-surface border border-theme-border rounded px-2 py-1 text-sm"
                     />
                     <input
                       type="text"
@@ -931,7 +931,7 @@ export default function BudgetPlanningWorkspace({
                           accountName: e.target.value,
                         })
                       }
-                      className="bg-white border border-gray-300 rounded px-2 py-1 text-sm"
+                      className="bg-theme-surface border border-theme-border rounded px-2 py-1 text-sm"
                     />
                   </div>
                   <div className="flex gap-3">
@@ -950,12 +950,12 @@ export default function BudgetPlanningWorkspace({
                             budgetedAmount: parseFloat(e.target.value) || 0,
                           })
                         }
-                        className="bg-white w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                        className="bg-theme-surface w-full border border-theme-border rounded px-2 py-1 text-sm"
                       />
                     </div>
                     <button
                       onClick={addBudgetLine}
-                      className="bg-blue-600 text-black px-4 py-1 rounded text-sm hover:bg-blue-700"
+                      className="bg-theme-accent text-theme-text-primary px-4 py-1 rounded text-sm hover:bg-theme-accent-hover"
                     >
                       Add Line
                     </button>
@@ -968,11 +968,11 @@ export default function BudgetPlanningWorkspace({
                     {formData.budgetLines.map((line, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm"
+                        className="flex items-center justify-between bg-theme-muted p-2 rounded text-sm"
                       >
                         <div>
                           <p className="font-medium">{line.accountCode}</p>
-                          <p className="text-gray-600">{line.accountName}</p>
+                          <p className="text-theme-text-secondary">{line.accountName}</p>
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="font-semibold">
@@ -993,17 +993,17 @@ export default function BudgetPlanningWorkspace({
             </div>
 
             {/* Modal Footer */}
-            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
+            <div className="sticky bottom-0 bg-theme-muted border-t border-theme-border px-6 py-4 flex justify-end gap-3">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 text-gray-900 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-theme-text-primary bg-theme-muted border border-theme-border rounded-lg hover:bg-theme-muted"
               >
                 Cancel
               </button>
               <button
                 onClick={createBudget}
                 disabled={loading}
-                className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full bg-theme-accent px-4 py-2 text-sm font-semibold text-theme-text-primary shadow-sm transition hover:bg-theme-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? "Creating..." : "Create Budget"}
               </button>
@@ -1014,15 +1014,15 @@ export default function BudgetPlanningWorkspace({
 
       {/* FORECAST MODAL */}
       {showForecastModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
-            <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+          <div className="bg-theme-surface rounded-lg shadow-lg w-full max-w-md">
+            <div className="border-b border-theme-border px-6 py-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-theme-text-primary">
                 Generate Forecast
               </h2>
               <button
                 onClick={() => setShowForecastModal(false)}
-                className="text-theme-text-tertiary hover:text-gray-600"
+                className="text-theme-text-tertiary hover:text-theme-text-secondary"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -1033,10 +1033,10 @@ export default function BudgetPlanningWorkspace({
                 onClick={() => {
                   generateForecast("rolling");
                 }}
-                className="w-full p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 text-left"
+                className="w-full p-4 border border-theme-border rounded-lg hover:border-theme-accent hover:bg-theme-muted text-left"
               >
-                <p className="font-medium text-gray-900">Rolling Forecast</p>
-                <p className="text-sm text-gray-600">
+                <p className="font-medium text-theme-text-primary">Rolling Forecast</p>
+                <p className="text-sm text-theme-text-secondary">
                   Average of last N periods
                 </p>
               </button>
@@ -1045,20 +1045,20 @@ export default function BudgetPlanningWorkspace({
                 onClick={() => {
                   generateForecast("trend_based");
                 }}
-                className="w-full p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 text-left"
+                className="w-full p-4 border border-theme-border rounded-lg hover:border-theme-accent hover:bg-theme-muted text-left"
               >
-                <p className="font-medium text-gray-900">Trend-Based</p>
-                <p className="text-sm text-gray-600">Projection from trends</p>
+                <p className="font-medium text-theme-text-primary">Trend-Based</p>
+                <p className="text-sm text-theme-text-secondary">Projection from trends</p>
               </button>
 
               <button
                 onClick={() => {
                   generateForecast("scenario");
                 }}
-                className="w-full p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 text-left"
+                className="w-full p-4 border border-theme-border rounded-lg hover:border-theme-accent hover:bg-theme-muted text-left"
               >
-                <p className="font-medium text-gray-900">Scenario</p>
-                <p className="text-sm text-gray-600">Custom scenario analysis</p>
+                <p className="font-medium text-theme-text-primary">Scenario</p>
+                <p className="text-sm text-theme-text-secondary">Custom scenario analysis</p>
               </button>
             </div>
           </div>

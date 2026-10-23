@@ -17,7 +17,7 @@ export function AgedReceivablesComponent({
     return (
       <Card className="p-6">
         <div className="flex items-center justify-center h-64">
-          <p className="text-gray-500">Loading Aged Receivables Report...</p>
+          <p className="text-theme-text-secondary">Loading Aged Receivables Report...</p>
         </div>
       </Card>
     );
@@ -26,7 +26,7 @@ export function AgedReceivablesComponent({
   if (!report) {
     return (
       <Card className="p-6">
-        <p className="text-gray-500">No report data available</p>
+        <p className="text-theme-text-secondary">No report data available</p>
       </Card>
     );
   }
@@ -56,20 +56,20 @@ export function AgedReceivablesComponent({
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Aged Receivables</h2>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-theme-text-secondary">
             As of {report.asOfDate.toLocaleDateString()}
           </p>
         </div>
         <div className="space-x-2">
           <button
             onClick={() => onExport?.('csv')}
-            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm font-medium"
+            className="px-4 py-2 bg-theme-muted hover:bg-theme-elevated rounded text-sm font-medium"
           >
             Export CSV
           </button>
           <button
             onClick={() => onExport?.('pdf')}
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm font-medium"
+            className="px-4 py-2 bg-blue-500 hover:bg-theme-accent-hover text-white rounded text-sm font-medium"
           >
             Export PDF
           </button>
@@ -79,16 +79,16 @@ export function AgedReceivablesComponent({
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-4">
         <Card className="p-6">
-          <p className="text-sm text-gray-600 mb-2">Total Outstanding</p>
+          <p className="text-sm text-theme-text-secondary mb-2">Total Outstanding</p>
           <p className="text-2xl font-bold text-red-600">
             {formatCurrency(report.totalOutstanding)}
           </p>
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-theme-text-secondary mt-2">
             {report.receivables.length} invoices
           </p>
         </Card>
         <Card className="p-6">
-          <p className="text-sm text-gray-600 mb-2">Days Sales Outstanding</p>
+          <p className="text-sm text-theme-text-secondary mb-2">Days Sales Outstanding</p>
           <p className="text-2xl font-bold">
             {Math.round(
               report.receivables.reduce((sum, r) => sum + r.daysOutstanding, 0) /
@@ -98,7 +98,7 @@ export function AgedReceivablesComponent({
           </p>
         </Card>
         <Card className="p-6">
-          <p className="text-sm text-gray-600 mb-2">Average Invoice</p>
+          <p className="text-sm text-theme-text-secondary mb-2">Average Invoice</p>
           <p className="text-2xl font-bold">
             {formatCurrency(
               report.totalOutstanding / (report.receivables.length || 1)
@@ -118,12 +118,12 @@ export function AgedReceivablesComponent({
                 <span className="text-right">
                   {formatCurrency(bucket.value)}
                   {' '}
-                  <span className="text-gray-600 text-sm">
+                  <span className="text-theme-text-secondary text-sm">
                     {formatPercent(bucket.value / report.totalOutstanding)}
                   </span>
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-theme-muted rounded-full h-2">
                 <div
                   className={`h-2 rounded-full ${
                     bucket.label.includes('Current')
@@ -165,7 +165,7 @@ export function AgedReceivablesComponent({
             </thead>
             <tbody>
               {report.receivables.slice(0, 20).map((receivable, idx) => (
-                <tr key={idx} className="border-b hover:bg-gray-50">
+                <tr key={idx} className="border-b hover:bg-theme-muted">
                   <td className="py-2 px-4">{receivable.customerName}</td>
                   <td className="py-2 px-4">{receivable.invoiceId.toString()}</td>
                   <td className="py-2 px-4 text-right">
@@ -198,7 +198,7 @@ export function AgedReceivablesComponent({
           </table>
         </div>
         {report.receivables.length > 20 && (
-          <p className="text-sm text-gray-600 mt-4">
+          <p className="text-sm text-theme-text-secondary mt-4">
             Showing 20 of {report.receivables.length} receivables
           </p>
         )}

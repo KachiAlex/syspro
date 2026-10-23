@@ -17,7 +17,7 @@ type Quotation = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: "bg-slate-700 text-slate-200",
+  draft: "bg-theme-elevated text-theme-text-primary",
   sent: "bg-blue-900/60 text-blue-300",
   accepted: "bg-emerald-900/60 text-emerald-300",
   converted: "bg-emerald-900/60 text-emerald-200",
@@ -91,16 +91,16 @@ export default function QuotationsPage() {
   if (!tenantSlug) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 text-slate-100">
+    <div className="min-h-screen bg-theme-bg p-6 text-theme-text-primary">
       <div className="mx-auto max-w-6xl">
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Quotations</h1>
-            <p className="text-sm text-slate-400">Pre-sale quotes — convert accepted quotes into sales orders</p>
+            <p className="text-sm text-theme-text-secondary">Pre-sale quotes — convert accepted quotes into sales orders</p>
           </div>
           <div className="flex gap-2">
             <button onClick={() => fetch("/api/sales/quotations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "expire-stale" }) }).then(load)}
-              className="rounded-lg bg-slate-800 px-3 py-2 text-sm hover:bg-slate-700">Expire Stale</button>
+              className="rounded-lg bg-theme-muted px-3 py-2 text-sm hover:bg-theme-elevated">Expire Stale</button>
             <button onClick={() => setShowCreate(true)}
               className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium hover:bg-emerald-500">New Quotation</button>
           </div>
@@ -109,42 +109,42 @@ export default function QuotationsPage() {
         {error && <div className="mb-4 rounded-lg bg-red-900/40 p-3 text-sm text-red-300">{error}<button onClick={() => setError("")} className="ml-2 underline">dismiss</button></div>}
 
         {showCreate && (
-          <div className="mb-6 rounded-xl border border-slate-800 bg-slate-900 p-5">
+          <div className="mb-6 rounded-xl border border-theme-border bg-theme-surface p-5">
             <h2 className="mb-4 font-semibold">New Quotation</h2>
             <div className="mb-3 grid grid-cols-3 gap-3">
               <input placeholder="Customer name" value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })}
-                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm" />
+                className="rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm" />
               <input type="date" value={form.validUntil} onChange={(e) => setForm({ ...form, validUntil: e.target.value })}
-                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm" title="Valid until" />
+                className="rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm" title="Valid until" />
               <input placeholder="Notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm" />
+                className="rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm" />
             </div>
             {items.map((item, idx) => (
               <div key={idx} className="mb-2 flex gap-2">
                 <input placeholder="Description" value={item.description}
                   onChange={(e) => setItems(items.map((it, i) => i === idx ? { ...it, description: e.target.value } : it))}
-                  className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm" />
+                  className="flex-1 rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm" />
                 <input type="number" placeholder="Qty" value={item.quantity} min={0}
                   onChange={(e) => setItems(items.map((it, i) => i === idx ? { ...it, quantity: Number(e.target.value) } : it))}
-                  className="w-24 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm" />
+                  className="w-24 rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm" />
                 <input type="number" placeholder="Unit price" value={item.unitPrice} min={0}
                   onChange={(e) => setItems(items.map((it, i) => i === idx ? { ...it, unitPrice: Number(e.target.value) } : it))}
-                  className="w-32 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm" />
+                  className="w-32 rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm" />
               </div>
             ))}
             <div className="flex gap-2">
               <button onClick={() => setItems([...items, { description: "", quantity: 1, unitPrice: 0 }])}
-                className="rounded-lg bg-slate-800 px-3 py-2 text-sm hover:bg-slate-700">+ Line</button>
+                className="rounded-lg bg-theme-muted px-3 py-2 text-sm hover:bg-theme-elevated">+ Line</button>
               <button onClick={create} disabled={busy || !form.customerName || !items.some((i) => i.description)}
                 className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium hover:bg-emerald-500 disabled:opacity-50">Create</button>
-              <button onClick={() => setShowCreate(false)} className="rounded-lg bg-slate-800 px-3 py-2 text-sm hover:bg-slate-700">Cancel</button>
+              <button onClick={() => setShowCreate(false)} className="rounded-lg bg-theme-muted px-3 py-2 text-sm hover:bg-theme-elevated">Cancel</button>
             </div>
           </div>
         )}
 
-        <div className="rounded-xl border border-slate-800 bg-slate-900">
+        <div className="rounded-xl border border-theme-border bg-theme-surface">
           <table className="w-full text-sm">
-            <thead className="border-b border-slate-800 text-left text-slate-400">
+            <thead className="border-b border-theme-border text-left text-theme-text-secondary">
               <tr>
                 <th className="p-3">Number</th><th className="p-3">Customer</th><th className="p-3">Date</th>
                 <th className="p-3">Valid Until</th><th className="p-3 text-right">Total</th>
@@ -153,17 +153,17 @@ export default function QuotationsPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className="p-6 text-center text-slate-500">Loading…</td></tr>
+                <tr><td colSpan={7} className="p-6 text-center text-theme-text-tertiary">Loading…</td></tr>
               ) : quotations.length === 0 ? (
-                <tr><td colSpan={7} className="p-6 text-center text-slate-500">No quotations yet</td></tr>
+                <tr><td colSpan={7} className="p-6 text-center text-theme-text-tertiary">No quotations yet</td></tr>
               ) : quotations.map((q) => (
-                <tr key={q.id} className="border-b border-slate-800/50 hover:bg-slate-800/30">
+                <tr key={q.id} className="border-b border-theme-border hover:bg-theme-muted/30">
                   <td className="p-3 font-mono">{q.quotationNumber}</td>
                   <td className="p-3">{q.customerName}</td>
-                  <td className="p-3 text-slate-400">{String(q.quotationDate).slice(0, 10)}</td>
-                  <td className="p-3 text-slate-400">{q.validUntil ? String(q.validUntil).slice(0, 10) : "—"}</td>
+                  <td className="p-3 text-theme-text-secondary">{String(q.quotationDate).slice(0, 10)}</td>
+                  <td className="p-3 text-theme-text-secondary">{q.validUntil ? String(q.validUntil).slice(0, 10) : "—"}</td>
                   <td className="p-3 text-right font-mono">{q.currency} {q.total.toLocaleString()}</td>
-                  <td className="p-3"><span className={`rounded-full px-2 py-0.5 text-xs ${STATUS_COLORS[q.status] ?? "bg-slate-700"}`}>{q.status}</span></td>
+                  <td className="p-3"><span className={`rounded-full px-2 py-0.5 text-xs ${STATUS_COLORS[q.status] ?? "bg-theme-elevated"}`}>{q.status}</span></td>
                   <td className="p-3">
                     <div className="flex justify-end gap-1">
                       {["draft", "sent"].includes(q.status) && (
@@ -174,7 +174,7 @@ export default function QuotationsPage() {
                           <button onClick={() => act(q.id, { status: "rejected" })} className="rounded bg-red-900/50 px-2 py-1 text-xs text-red-300 hover:bg-red-900">Reject</button>
                         </>
                       )}
-                      {q.salesOrderId && <span className="text-xs text-slate-500">→ {q.salesOrderId}</span>}
+                      {q.salesOrderId && <span className="text-xs text-theme-text-tertiary">→ {q.salesOrderId}</span>}
                     </div>
                   </td>
                 </tr>

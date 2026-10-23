@@ -153,8 +153,8 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
 
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-black mb-2">Accounting Workspace</h2>
-          <p className="text-black">Manage journal entries, financial reports, and chart of accounts</p>
+          <h2 className="text-2xl font-bold text-theme-text-primary mb-2">Accounting Workspace</h2>
+          <p className="text-theme-text-primary">Manage journal entries, financial reports, and chart of accounts</p>
         </div>
         <button onClick={loadData} className="p-2 rounded-lg border border-theme-border hover:bg-theme-sidebar-hover">
           <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
@@ -166,8 +166,8 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
         <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-black">Total Revenue</p>
-              <p className="text-xl font-bold text-black">{loading ? '...' : formatCurrency(summary?.totalRevenue)}</p>
+              <p className="text-sm text-theme-text-primary">Total Revenue</p>
+              <p className="text-xl font-bold text-theme-text-primary">{loading ? '...' : formatCurrency(summary?.totalRevenue)}</p>
             </div>
             <TrendingUp className="w-8 h-8 text-green-400" />
           </div>
@@ -175,8 +175,8 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
         <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-black">Total Expenses</p>
-              <p className="text-xl font-bold text-black">{loading ? '...' : formatCurrency(summary?.totalExpenses)}</p>
+              <p className="text-sm text-theme-text-primary">Total Expenses</p>
+              <p className="text-xl font-bold text-theme-text-primary">{loading ? '...' : formatCurrency(summary?.totalExpenses)}</p>
             </div>
             <Calculator className="w-8 h-8 text-red-400" />
           </div>
@@ -184,8 +184,8 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
         <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-black">Net Income</p>
-              <p className="text-xl font-bold text-black">{loading ? '...' : formatCurrency(summary?.netIncome)}</p>
+              <p className="text-sm text-theme-text-primary">Net Income</p>
+              <p className="text-xl font-bold text-theme-text-primary">{loading ? '...' : formatCurrency(summary?.netIncome)}</p>
             </div>
             <TrendingUp className="w-8 h-8 text-theme-accent" />
           </div>
@@ -193,8 +193,8 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
         <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-black">Cash Balance</p>
-              <p className="text-xl font-bold text-black">{loading ? '...' : formatCurrency(summary?.cashBalance)}</p>
+              <p className="text-sm text-theme-text-primary">Cash Balance</p>
+              <p className="text-xl font-bold text-theme-text-primary">{loading ? '...' : formatCurrency(summary?.cashBalance)}</p>
             </div>
             <Database className="w-8 h-8 text-theme-accent" />
           </div>
@@ -204,7 +204,7 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
       {/* Quick Actions */}
       <div className="bg-theme-muted rounded-xl border border-theme-border p-4 mb-6">
         <div className="flex flex-wrap gap-3">
-          <button onClick={() => setShowJournalModal(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          <button onClick={() => setShowJournalModal(true)} className="px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover">
             <Plus className="w-4 h-4 mr-2 inline" />
             Journal Entry
           </button>
@@ -226,47 +226,47 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
       {/* Financial Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
-          <h3 className="text-lg font-semibold text-black mb-4">Income Statement (YTD)</h3>
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Income Statement (YTD)</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-black">Revenue</span>
-              <span className="font-semibold text-black">{formatCurrency(summary?.totalRevenue)}</span>
+              <span className="text-theme-text-primary">Revenue</span>
+              <span className="font-semibold text-theme-text-primary">{formatCurrency(summary?.totalRevenue)}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-black">Total Expenses</span>
-              <span className="font-semibold text-black">{formatCurrency(summary?.totalExpenses)}</span>
+              <span className="text-theme-text-primary">Total Expenses</span>
+              <span className="font-semibold text-theme-text-primary">{formatCurrency(summary?.totalExpenses)}</span>
             </div>
             <div className="flex justify-between items-center py-2">
-              <span className="font-bold text-black">Net Income</span>
+              <span className="font-bold text-theme-text-primary">Net Income</span>
               <span className="font-bold text-lg text-green-400">{formatCurrency(summary?.netIncome)}</span>
             </div>
           </div>
         </div>
 
         <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
-          <h3 className="text-lg font-semibold text-black mb-4">Balance Sheet Summary</h3>
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Balance Sheet Summary</h3>
           <div className="space-y-3">
             <div className="border-b pb-3">
-              <h4 className="font-medium text-black mb-2">Assets</h4>
+              <h4 className="font-medium text-theme-text-primary mb-2">Assets</h4>
               {assets.length > 0 ? assets.slice(0, 3).map((a) => (
                 <div key={a.code} className="flex justify-between text-sm mb-1">
-                  <span className="text-black">{a.name}</span>
-                  <span className="text-black">{formatCurrency(a.balance)}</span>
+                  <span className="text-theme-text-primary">{a.name}</span>
+                  <span className="text-theme-text-primary">{formatCurrency(a.balance)}</span>
                 </div>
-              )) : <p className="text-sm text-gray-400">No asset accounts</p>}
+              )) : <p className="text-sm text-theme-text-tertiary">No asset accounts</p>}
             </div>
             <div>
-              <h4 className="font-medium text-black mb-2">Liabilities & Equity</h4>
+              <h4 className="font-medium text-theme-text-primary mb-2">Liabilities & Equity</h4>
               {liabilities.length > 0 ? liabilities.slice(0, 2).map((l) => (
                 <div key={l.code} className="flex justify-between text-sm mb-1">
-                  <span className="text-black">{l.name}</span>
-                  <span className="text-black">{formatCurrency(l.balance)}</span>
+                  <span className="text-theme-text-primary">{l.name}</span>
+                  <span className="text-theme-text-primary">{formatCurrency(l.balance)}</span>
                 </div>
-              )) : <p className="text-sm text-gray-400">No liability accounts</p>}
+              )) : <p className="text-sm text-theme-text-tertiary">No liability accounts</p>}
               {equity.length > 0 ? equity.slice(0, 1).map((e) => (
                 <div key={e.code} className="flex justify-between font-semibold text-sm border-t pt-1">
-                  <span className="text-black">{e.name}</span>
-                  <span className="text-black">{formatCurrency(e.balance)}</span>
+                  <span className="text-theme-text-primary">{e.name}</span>
+                  <span className="text-theme-text-primary">{formatCurrency(e.balance)}</span>
                 </div>
               )) : null}
             </div>
@@ -277,12 +277,12 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
       {/* Recent Journal Entries */}
       <div className="bg-theme-muted rounded-xl border border-theme-border p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-black">Recent Journal Entries</h3>
+          <h3 className="text-lg font-semibold text-theme-text-primary">Recent Journal Entries</h3>
           <button className="text-theme-accent hover:text-blue-800 text-sm">View All</button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-theme-muted border-b">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-tertiary uppercase">Entry #</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-tertiary uppercase">Date</th>
@@ -295,17 +295,17 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
             <tbody className="divide-y">
               {journalEntries.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-theme-text-tertiary">
                     {loading ? 'Loading...' : 'No journal entries found'}
                   </td>
                 </tr>
               ) : journalEntries.map((entry) => (
                 <tr key={entry.id} className="hover:bg-theme-sidebar-hover">
-                  <td className="px-4 py-3 text-black">{entry.entry_number}</td>
-                  <td className="px-4 py-3 text-black">{formatDate(entry.entry_date)}</td>
-                  <td className="px-4 py-3 text-black">{entry.reference_type}</td>
-                  <td className="px-4 py-3 text-black">{entry.description}</td>
-                  <td className="px-4 py-3 text-black">{entry.lines?.length || 0}</td>
+                  <td className="px-4 py-3 text-theme-text-primary">{entry.entry_number}</td>
+                  <td className="px-4 py-3 text-theme-text-primary">{formatDate(entry.entry_date)}</td>
+                  <td className="px-4 py-3 text-theme-text-primary">{entry.reference_type}</td>
+                  <td className="px-4 py-3 text-theme-text-primary">{entry.description}</td>
+                  <td className="px-4 py-3 text-theme-text-primary">{entry.lines?.length || 0}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       <button className="text-theme-accent"><Eye className="w-4 h-4" /></button>
@@ -322,38 +322,38 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
       {/* Chart of Accounts */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
-          <h3 className="text-lg font-semibold text-black mb-4">Assets</h3>
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Assets</h3>
           <div className="space-y-2 text-sm">
             {assets.length > 0 ? assets.map((a) => (
               <div key={a.code} className="flex justify-between py-2 border-b">
-                <span className="text-black">{a.name}</span>
-                <span className="font-semibold text-black">{formatCurrency(a.balance)}</span>
+                <span className="text-theme-text-primary">{a.name}</span>
+                <span className="font-semibold text-theme-text-primary">{formatCurrency(a.balance)}</span>
               </div>
-            )) : <p className="text-gray-400">No asset accounts</p>}
+            )) : <p className="text-theme-text-tertiary">No asset accounts</p>}
           </div>
         </div>
 
         <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
-          <h3 className="text-lg font-semibold text-black mb-4">Liabilities</h3>
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Liabilities</h3>
           <div className="space-y-2 text-sm">
             {liabilities.length > 0 ? liabilities.map((l) => (
               <div key={l.code} className="flex justify-between py-2 border-b">
-                <span className="text-black">{l.name}</span>
-                <span className="font-semibold text-black">{formatCurrency(l.balance)}</span>
+                <span className="text-theme-text-primary">{l.name}</span>
+                <span className="font-semibold text-theme-text-primary">{formatCurrency(l.balance)}</span>
               </div>
-            )) : <p className="text-gray-400">No liability accounts</p>}
+            )) : <p className="text-theme-text-tertiary">No liability accounts</p>}
           </div>
         </div>
 
         <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
-          <h3 className="text-lg font-semibold text-black mb-4">Equity</h3>
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Equity</h3>
           <div className="space-y-2 text-sm">
             {equity.length > 0 ? equity.map((e) => (
               <div key={e.code} className="flex justify-between py-2 border-b">
-                <span className="text-black">{e.name}</span>
-                <span className="font-semibold text-black">{formatCurrency(e.balance)}</span>
+                <span className="text-theme-text-primary">{e.name}</span>
+                <span className="font-semibold text-theme-text-primary">{formatCurrency(e.balance)}</span>
               </div>
-            )) : <p className="text-gray-400">No equity accounts</p>}
+            )) : <p className="text-theme-text-tertiary">No equity accounts</p>}
           </div>
         </div>
       </div>
@@ -463,8 +463,8 @@ function JournalEntryModal({ tenantSlug, onClose, onSuccess }: {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50 p-4">
+      <div className="bg-theme-surface rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <h3 className="text-lg font-semibold mb-4">Create Journal Entry</h3>
           {error && <div className="mb-4 p-3 rounded bg-red-50 text-red-700 text-sm">{error}</div>}
@@ -536,14 +536,14 @@ function JournalEntryModal({ tenantSlug, onClose, onSuccess }: {
                   </tr>
                 </tfoot>
               </table>
-              <button onClick={() => setLines([...lines, { accountCode: '', debitAmount: 0, creditAmount: 0 }])} className="text-sm text-blue-600 mt-2">
+              <button onClick={() => setLines([...lines, { accountCode: '', debitAmount: 0, creditAmount: 0 }])} className="text-sm text-theme-accent mt-2">
                 + Add Line
               </button>
             </div>
           </div>
           <div className="flex justify-end gap-3 mt-6">
             <button onClick={onClose} className="px-4 py-2 border rounded-lg">Cancel</button>
-            <button onClick={handleSave} disabled={saving || !isBalanced} className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50">
+            <button onClick={handleSave} disabled={saving || !isBalanced} className="px-4 py-2 bg-theme-accent text-white rounded-lg disabled:opacity-50">
               {saving ? 'Saving...' : 'Save Entry'}
             </button>
           </div>
@@ -571,18 +571,18 @@ function ChartOfAccountsModal({ tenantSlug, onClose }: {
   }, [tenantSlug]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50 p-4">
+      <div className="bg-theme-surface rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Chart of Accounts</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">x</button>
+            <button onClick={onClose} className="text-theme-text-tertiary hover:text-theme-text-secondary">x</button>
           </div>
           {loading ? (
-            <p className="text-center py-8 text-gray-400">Loading...</p>
+            <p className="text-center py-8 text-theme-text-tertiary">Loading...</p>
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-theme-muted border-b">
                 <tr>
                   <th className="px-4 py-2 text-left">Code</th>
                   <th className="px-4 py-2 text-left">Name</th>
@@ -592,7 +592,7 @@ function ChartOfAccountsModal({ tenantSlug, onClose }: {
               </thead>
               <tbody className="divide-y">
                 {accounts.length === 0 ? (
-                  <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-400">No accounts found</td></tr>
+                  <tr><td colSpan={4} className="px-4 py-8 text-center text-theme-text-tertiary">No accounts found</td></tr>
                 ) : accounts.map((a) => (
                   <tr key={a.code}>
                     <td className="px-4 py-2 font-mono">{a.code}</td>

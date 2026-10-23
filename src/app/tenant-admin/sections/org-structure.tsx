@@ -308,19 +308,19 @@ export default function OrgStructureManager({
       return (
         <div key={node.id} className="space-y-1">
           <div
-            className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-slate-50"
+            className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-theme-muted"
             style={{ paddingLeft: `${paddingLeft}px` }}
           >
             {/* Expand/Collapse */}
             {hasChildren ? (
               <button
                 onClick={() => toggleNodeExpanded(node.id)}
-                className="flex-shrink-0 p-0.5 hover:bg-slate-200 rounded"
+                className="flex-shrink-0 p-0.5 hover:bg-theme-elevated rounded"
               >
                 {isExpanded ? (
-                  <ChevronDown className="w-4 h-4 text-slate-600" />
+                  <ChevronDown className="w-4 h-4 text-theme-text-secondary" />
                 ) : (
-                  <ChevronRight className="w-4 h-4 text-slate-600" />
+                  <ChevronRight className="w-4 h-4 text-theme-text-secondary" />
                 )}
               </button>
             ) : (
@@ -328,20 +328,20 @@ export default function OrgStructureManager({
             )}
 
             {/* Icon */}
-            <Building2 className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <Building2 className="w-4 h-4 text-theme-text-secondary flex-shrink-0" />
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-sm font-medium text-theme-text-primary truncate">
                 {node.name}
               </p>
-              <p className="text-xs text-slate-500 truncate">
+              <p className="text-xs text-theme-text-tertiary truncate">
                 Lead: {node.manager}
               </p>
             </div>
 
             {/* Badge */}
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 lowercase flex-shrink-0">
+            <span className="inline-flex items-center rounded-full bg-theme-muted px-2.5 py-0.5 text-xs font-medium text-theme-text-primary lowercase flex-shrink-0">
               {node.type}
             </span>
           </div>
@@ -444,15 +444,15 @@ export default function OrgStructureManager({
 
 function WelcomeStep({ onStart }: { onStart: () => void }) {
   return (
-    <div className="space-y-6 rounded-2xl border border-slate-100 bg-theme-muted p-8 shadow-sm">
+    <div className="space-y-6 rounded-2xl border border-theme-border bg-theme-muted p-8 shadow-sm">
       <div className="space-y-3">
-        <p className="text-sm font-semibold uppercase tracking-widest text-slate-500">
+        <p className="text-sm font-semibold uppercase tracking-widest text-theme-text-tertiary">
           Tier-Based Setup
         </p>
         <h1 className="text-3xl font-bold text-theme-text-primary">
           Build Your Organization Hierarchy
         </h1>
-        <p className="text-base text-slate-600">
+        <p className="text-base text-theme-text-secondary">
           Enterprise-grade structure with Global Admin controlling Tiers 0-4,
           and Branch Admins managing local operations.
         </p>
@@ -460,9 +460,9 @@ function WelcomeStep({ onStart }: { onStart: () => void }) {
 
       <div className="space-y-4">
         <div className="flex gap-4 rounded-lg border border-blue-100 bg-blue-50 p-4">
-          <Globe className="h-5 w-5 flex-shrink-0 text-blue-600 mt-0.5" />
+          <Globe className="h-5 w-5 flex-shrink-0 text-theme-accent mt-0.5" />
           <div className="space-y-1">
-            <p className="font-semibold text-gray-900 text-sm">
+            <p className="font-semibold text-theme-text-primary text-sm">
               Tier 1-3: Global Hierarchy
             </p>
             <p className="text-xs text-blue-800">
@@ -500,7 +500,7 @@ function WelcomeStep({ onStart }: { onStart: () => void }) {
 
       <button
         onClick={onStart}
-        className="flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 active:opacity-95"
+        className="flex w-full items-center justify-center gap-2 rounded-full bg-theme-surface px-6 py-3 text-base font-semibold text-theme-text-primary shadow-sm transition hover:bg-theme-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-border active:opacity-95"
       >
         Start Setup <ArrowRight className="h-5 w-5" />
       </button>
@@ -516,12 +516,12 @@ function TierSelectStep({
   onBack: () => void;
 }) {
   return (
-    <div className="space-y-6 rounded-2xl border border-slate-100 bg-theme-muted p-8 shadow-sm">
+    <div className="space-y-6 rounded-2xl border border-theme-border bg-theme-muted p-8 shadow-sm">
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h2 className="text-2xl font-bold text-theme-text-primary">
           Select Organization Tier
         </h2>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-theme-text-secondary">
           Choose which tier to create next:
         </p>
       </div>
@@ -531,20 +531,20 @@ function TierSelectStep({
           <button
             key={option.tier}
             onClick={() => onSelectTier(option.tier)}
-            className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-theme-muted p-4 text-left hover:border-slate-400 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+            className="flex w-full items-center justify-between rounded-lg border border-theme-border bg-theme-muted p-4 text-left hover:border-theme-border hover:bg-theme-muted active:bg-theme-muted transition-colors"
           >
             <div className="space-y-1">
-              <p className="font-semibold text-gray-900">{option.label}</p>
-              <p className="text-sm text-slate-600">{option.description}</p>
+              <p className="font-semibold text-theme-text-primary">{option.label}</p>
+              <p className="text-sm text-theme-text-secondary">{option.description}</p>
             </div>
-            <ArrowRight className="h-5 w-5 flex-shrink-0 text-slate-400" />
+            <ArrowRight className="h-5 w-5 flex-shrink-0 text-theme-text-secondary" />
           </button>
         ))}
       </div>
 
       <button
         onClick={onBack}
-        className="w-full rounded-full border border-slate-200 bg-theme-muted px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+        className="w-full rounded-full border border-theme-border bg-theme-muted px-4 py-2 text-sm font-semibold text-theme-text-primary hover:bg-theme-muted active:bg-theme-muted transition-colors"
       >
         Back
       </button>
@@ -574,12 +574,12 @@ function LocationStep({
   onBack: () => void;
 }) {
   return (
-    <div className="space-y-6 rounded-2xl border border-slate-100 bg-theme-muted p-8 shadow-sm">
+    <div className="space-y-6 rounded-2xl border border-theme-border bg-theme-muted p-8 shadow-sm">
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h2 className="text-2xl font-bold text-theme-text-primary">
           {tier ? `Create ${getTierLabel(tier as OrgTier)}` : "Tier Details"}
         </h2>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-theme-text-secondary">
           Fill in the details for this organizational tier:
         </p>
       </div>
@@ -599,7 +599,7 @@ function LocationStep({
         className="space-y-4"
       >
         <div className="space-y-2">
-          <label htmlFor="name" className="block text-sm font-semibold text-slate-700">
+          <label htmlFor="name" className="block text-sm font-semibold text-theme-text-primary">
             Name <span className="text-red-500">*</span>
           </label>
           <input
@@ -609,12 +609,12 @@ function LocationStep({
             value={name}
             onChange={(e) => onNameChange(e.target.value)}
             placeholder="e.g., Africa Operations"
-            className="bg-white w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-opacity-10"
+            className="bg-theme-surface w-full rounded-lg border border-theme-border px-4 py-2 text-sm focus:border-theme-border focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-opacity-10"
           />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="manager" className="block text-sm font-semibold text-slate-700">
+          <label htmlFor="manager" className="block text-sm font-semibold text-theme-text-primary">
             Manager / Lead <span className="text-red-500">*</span>
           </label>
           <input
@@ -624,7 +624,7 @@ function LocationStep({
             value={manager}
             onChange={(e) => onManagerChange(e.target.value)}
             placeholder="e.g., John Smith"
-            className="bg-white w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-opacity-10"
+            className="bg-theme-surface w-full rounded-lg border border-theme-border px-4 py-2 text-sm focus:border-theme-border focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-opacity-10"
           />
         </div>
 
@@ -632,14 +632,14 @@ function LocationStep({
           <button
             type="button"
             onClick={onBack}
-            className="flex-1 rounded-full border border-slate-200 bg-theme-muted px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+            className="flex-1 rounded-full border border-theme-border bg-theme-muted px-4 py-2 text-sm font-semibold text-theme-text-primary hover:bg-theme-muted active:bg-theme-muted transition-colors"
           >
             Back
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 active:bg-slate-950 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 rounded-full bg-theme-surface px-4 py-2 text-sm font-semibold text-theme-text-primary hover:bg-theme-muted active:bg-theme-bg disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? "Creating..." : "Create"}
@@ -682,12 +682,12 @@ function BranchConfigStep({
   onBack: () => void;
 }) {
   return (
-    <div className="space-y-6 rounded-2xl border border-slate-100 bg-theme-muted p-8 shadow-sm">
+    <div className="space-y-6 rounded-2xl border border-theme-border bg-theme-muted p-8 shadow-sm">
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h2 className="text-2xl font-bold text-theme-text-primary">
           Configure Branch Settings
         </h2>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-theme-text-secondary">
           Set operational parameters for this branch:
         </p>
       </div>
@@ -707,7 +707,7 @@ function BranchConfigStep({
         className="space-y-4"
       >
         <div className="space-y-2">
-          <label htmlFor="branch-name" className="block text-sm font-semibold text-slate-700">
+          <label htmlFor="branch-name" className="block text-sm font-semibold text-theme-text-primary">
             Branch Name <span className="text-red-500">*</span>
           </label>
           <input
@@ -717,12 +717,12 @@ function BranchConfigStep({
             value={name}
             onChange={(e) => onNameChange(e.target.value)}
             placeholder="e.g., Lagos Branch"
-            className="bg-white w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-opacity-10"
+            className="bg-theme-surface w-full rounded-lg border border-theme-border px-4 py-2 text-sm focus:border-theme-border focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-opacity-10"
           />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="branch-admin" className="block text-sm font-semibold text-slate-700">
+          <label htmlFor="branch-admin" className="block text-sm font-semibold text-theme-text-primary">
             Branch Admin <span className="text-red-500">*</span>
           </label>
           <input
@@ -732,19 +732,19 @@ function BranchConfigStep({
             value={manager}
             onChange={(e) => onManagerChange(e.target.value)}
             placeholder="e.g., Alice Johnson"
-            className="bg-white w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-opacity-10"
+            className="bg-theme-surface w-full rounded-lg border border-theme-border px-4 py-2 text-sm focus:border-theme-border focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-opacity-10"
           />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="currency" className="block text-sm font-semibold text-slate-700">
+          <label htmlFor="currency" className="block text-sm font-semibold text-theme-text-primary">
             Currency
           </label>
           <select
             id="currency"
             value={currency}
             onChange={(e) => onCurrencyChange(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-opacity-10 bg-white"
+            className="w-full rounded-lg border border-theme-border px-4 py-2 text-sm focus:border-theme-border focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-opacity-10 bg-theme-surface"
           >
             {CURRENCY_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -755,14 +755,14 @@ function BranchConfigStep({
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="timezone" className="block text-sm font-semibold text-slate-700">
+          <label htmlFor="timezone" className="block text-sm font-semibold text-theme-text-primary">
             Timezone
           </label>
           <select
             id="timezone"
             value={timezone}
             onChange={(e) => onTimezoneChange(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-opacity-10 bg-white"
+            className="w-full rounded-lg border border-theme-border px-4 py-2 text-sm focus:border-theme-border focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-opacity-10 bg-theme-surface"
           >
             {TIMEZONE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -773,7 +773,7 @@ function BranchConfigStep({
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="working-days" className="block text-sm font-semibold text-slate-700">
+          <label htmlFor="working-days" className="block text-sm font-semibold text-theme-text-primary">
             Working Days
           </label>
           <input
@@ -782,7 +782,7 @@ function BranchConfigStep({
             value={workingDays}
             onChange={(e) => onWorkingDaysChange(e.target.value)}
             placeholder="e.g., MON-FRI"
-            className="bg-white w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-opacity-10"
+            className="bg-theme-surface w-full rounded-lg border border-theme-border px-4 py-2 text-sm focus:border-theme-border focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-opacity-10"
           />
         </div>
 
@@ -790,14 +790,14 @@ function BranchConfigStep({
           <button
             type="button"
             onClick={onBack}
-            className="flex-1 rounded-full border border-slate-200 bg-theme-muted px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+            className="flex-1 rounded-full border border-theme-border bg-theme-muted px-4 py-2 text-sm font-semibold text-theme-text-primary hover:bg-theme-muted active:bg-theme-muted transition-colors"
           >
             Back
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 active:bg-slate-950 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 rounded-full bg-theme-surface px-4 py-2 text-sm font-semibold text-theme-text-primary hover:bg-theme-muted active:bg-theme-bg disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? "Creating..." : "Create Branch"}
@@ -861,21 +861,21 @@ function ViewStep({
   onAddMore: () => void;
 }) {
   return (
-    <div className="space-y-6 rounded-2xl border border-slate-100 bg-theme-muted p-8 shadow-sm">
+    <div className="space-y-6 rounded-2xl border border-theme-border bg-theme-muted p-8 shadow-sm">
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h2 className="text-2xl font-bold text-theme-text-primary">
           Organization Structure
         </h2>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-theme-text-secondary">
           Tier-based hierarchy with Global Admin controlling Tiers 0-4
         </p>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-4">
         {tree ? (
           <div className="space-y-1">{renderNode(tree)}</div>
         ) : (
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-theme-text-secondary">
             No organization structure loaded.
           </p>
         )}
@@ -883,7 +883,7 @@ function ViewStep({
 
       <button
         onClick={onAddMore}
-        className="w-full rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 active:bg-slate-950 transition-colors"
+        className="w-full rounded-full bg-theme-surface px-4 py-2 text-sm font-semibold text-theme-text-primary hover:bg-theme-muted active:bg-theme-bg transition-colors"
       >
         Add More Tiers
       </button>

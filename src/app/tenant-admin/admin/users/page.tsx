@@ -46,24 +46,24 @@ export default function AdminUsersPage() {
       {!loading && !error && users.length === 0 && <p>No users found.</p>}
       {!loading && users.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+          <table className="min-w-full bg-theme-surface border border-theme-border rounded-lg">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Email</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Role</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Created</th>
+              <tr className="bg-theme-muted">
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Name</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Email</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Role</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Status</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Created</th>
               </tr>
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr key={user.id} className="border-t border-gray-100">
-                  <td className="px-4 py-2 text-sm text-gray-900">{user.name}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{user.email}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{user.role}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{user.status}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{new Date(user.createdAt).toLocaleDateString()}</td>
+                <tr key={user.id} className="border-t border-theme-border">
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{user.name}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{user.email}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{user.role}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{user.status}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{new Date(user.createdAt).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>

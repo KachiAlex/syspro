@@ -168,15 +168,15 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
   if (!isOpen || !employee) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-theme-surface border-b border-theme-border p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Pencil className="w-5 h-5 text-blue-600" />
+            <h2 className="text-2xl font-bold text-theme-text-primary flex items-center gap-2">
+              <Pencil className="w-5 h-5 text-theme-accent" />
               Edit Employee
             </h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-primary">
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -195,41 +195,41 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">First Name</label>
+                <label className="block text-sm font-medium text-theme-text-primary mb-2">First Name</label>
                 <input
                   type="text"
                   value={formData.firstName}
                   onChange={(e) => setFormData((prev) => ({ ...prev, firstName: e.target.value }))}
-                  className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   disabled={loading}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">Last Name</label>
+                <label className="block text-sm font-medium text-theme-text-primary mb-2">Last Name</label>
                 <input
                   type="text"
                   value={formData.lastName}
                   onChange={(e) => setFormData((prev) => ({ ...prev, lastName: e.target.value }))}
-                  className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   disabled={loading}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">Email</label>
+                <label className="block text-sm font-medium text-theme-text-primary mb-2">Email</label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-                  className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   disabled={loading}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">Department</label>
+                <label className="block text-sm font-medium text-theme-text-primary mb-2">Department</label>
                 <select
                   value={formData.department}
                   onChange={(e) => setFormData((prev) => ({ ...prev, department: e.target.value }))}
-                  className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   disabled={loading}
                 >
                   <option value="">Select department</option>
@@ -239,45 +239,45 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">Position</label>
+                <label className="block text-sm font-medium text-theme-text-primary mb-2">Position</label>
                 <input
                   type="text"
                   value={formData.position}
                   onChange={(e) => setFormData((prev) => ({ ...prev, position: e.target.value }))}
-                  className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   disabled={loading}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">Start Date</label>
+                <label className="block text-sm font-medium text-theme-text-primary mb-2">Start Date</label>
                 <input
                   type="date"
                   value={formData.startDate}
                   onChange={(e) => setFormData((prev) => ({ ...prev, startDate: e.target.value }))}
-                  className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   disabled={loading}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">Salary</label>
+                <label className="block text-sm font-medium text-theme-text-primary mb-2">Salary</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-gray-500 text-sm">{CURRENCY_SYMBOLS[currency] || currency}</span>
+                  <span className="absolute left-3 top-2.5 text-theme-text-secondary text-sm">{CURRENCY_SYMBOLS[currency] || currency}</span>
                   <input
                     type="text"
                     value={formData.salary}
                     onChange={(e) => setFormData((prev) => ({ ...prev, salary: e.target.value }))}
-                    className="bg-white w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="bg-theme-surface w-full pl-8 pr-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                     disabled={loading}
                     placeholder="65,000"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">Employment Type</label>
+                <label className="block text-sm font-medium text-theme-text-primary mb-2">Employment Type</label>
                 <select
                   value={formData.employmentType}
                   onChange={(e) => setFormData((prev) => ({ ...prev, employmentType: e.target.value }))}
-                  className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   disabled={loading}
                 >
                   <option value="Full-time">Full-time</option>
@@ -287,11 +287,11 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">Work Mode</label>
+                <label className="block text-sm font-medium text-theme-text-primary mb-2">Work Mode</label>
                 <select
                   value={formData.workMode}
                   onChange={(e) => setFormData((prev) => ({ ...prev, workMode: e.target.value }))}
-                  className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   disabled={loading}
                 >
                   <option value="ONSITE">On-site</option>
@@ -301,11 +301,11 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">Role</label>
+                <label className="block text-sm font-medium text-theme-text-primary mb-2">Role</label>
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData((prev) => ({ ...prev, role: e.target.value }))}
-                  className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   disabled={loading}
                 >
                   <option value="Staff">Staff</option>
@@ -315,11 +315,11 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">Status</label>
+                <label className="block text-sm font-medium text-theme-text-primary mb-2">Status</label>
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
-                  className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   disabled={loading}
                 >
                   <option value="Active">Active</option>
@@ -331,9 +331,9 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
             </div>
 
             {/* Portal Access Section */}
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-blue-600" />
+            <div className="border-t border-theme-border pt-6">
+              <h3 className="text-sm font-bold text-theme-text-primary mb-4 flex items-center gap-2">
+                <KeyRound className="w-4 h-4 text-theme-accent" />
                 Portal Access
               </h3>
 
@@ -346,14 +346,14 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
                       Active
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-theme-muted text-theme-text-secondary">
                       <Lock className="w-3 h-3" />
                       Inactive
                     </span>
                   )}
                 </div>
                 {employee.lastLogin && (
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-theme-text-secondary">
                     Last login: {new Date(employee.lastLogin).toLocaleDateString()}
                   </span>
                 )}
@@ -368,25 +368,25 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
                       Portal password set for <strong>{portalCredentials.name}</strong>. Share these credentials securely — they won&apos;t be shown again.
                     </p>
                   </div>
-                  <div className="grid grid-cols-1 gap-2 bg-white rounded-lg p-3 border border-green-100">
+                  <div className="grid grid-cols-1 gap-2 bg-theme-surface rounded-lg p-3 border border-green-100">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">Email</span>
-                      <span className="text-sm font-mono text-gray-900">{portalCredentials.email}</span>
+                      <span className="text-xs text-theme-text-secondary">Email</span>
+                      <span className="text-sm font-mono text-theme-text-primary">{portalCredentials.email}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">Password</span>
-                      <span className="text-sm font-mono text-gray-900">{portalCredentials.password}</span>
+                      <span className="text-xs text-theme-text-secondary">Password</span>
+                      <span className="text-sm font-mono text-theme-text-primary">{portalCredentials.password}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">Login URL</span>
-                      <span className="text-sm font-mono text-gray-900">{typeof window !== 'undefined' ? `${window.location.origin}/login` : '/login'}</span>
+                      <span className="text-xs text-theme-text-secondary">Login URL</span>
+                      <span className="text-sm font-mono text-theme-text-primary">{typeof window !== 'undefined' ? `${window.location.origin}/login` : '/login'}</span>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={handleCopyCredentials}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
                     >
                       {copied ? <CheckCircle className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                       {copied ? 'Copied!' : 'Copy All'}
@@ -394,7 +394,7 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setPortalCredentials(null)}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                      className="px-3 py-1.5 text-xs font-medium text-theme-text-primary border border-theme-border rounded-lg hover:bg-theme-muted"
                     >
                       Dismiss
                     </button>
@@ -419,7 +419,7 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
                     type="button"
                     onClick={() => setPortalMode('custom')}
                     disabled={portalLoading}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-theme-muted disabled:opacity-50"
                   >
                     <KeyRound className="w-3.5 h-3.5" />
                     {employee.isPortalActive ? 'Set Custom Password' : 'Activate with Custom Password'}
@@ -451,13 +451,13 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
               {portalMode === 'custom' && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1.5">Custom Password</label>
+                    <label className="block text-xs font-medium text-theme-text-primary mb-1.5">Custom Password</label>
                     <input
                       type="text"
                       value={portalPassword}
                       onChange={(e) => setPortalPassword(e.target.value)}
                       placeholder="Enter a password (min 6 characters)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                      className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                       disabled={portalLoading}
                       autoFocus
                     />
@@ -467,7 +467,7 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
                       type="button"
                       onClick={handleSetPortalPassword}
                       disabled={portalLoading || portalPassword.length < 6}
-                      className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                      className="px-3 py-1.5 text-xs font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover disabled:opacity-50"
                     >
                       {portalLoading ? 'Saving...' : 'Set Password & Activate'}
                     </button>
@@ -475,7 +475,7 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
                       type="button"
                       onClick={() => { setPortalMode('none'); setPortalPassword(''); }}
                       disabled={portalLoading}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                      className="px-3 py-1.5 text-xs font-medium text-theme-text-primary border border-theme-border rounded-lg hover:bg-theme-muted"
                     >
                       Cancel
                     </button>
@@ -486,7 +486,7 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
               {/* Generate password confirmation */}
               {portalMode === 'generate' && (
                 <div className="space-y-3">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-theme-text-secondary">
                     A secure password will be generated automatically and shown once for you to share with the employee.
                   </p>
                   <div className="flex gap-2">
@@ -502,7 +502,7 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
                       type="button"
                       onClick={() => setPortalMode('none')}
                       disabled={portalLoading}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                      className="px-3 py-1.5 text-xs font-medium text-theme-text-primary border border-theme-border rounded-lg hover:bg-theme-muted"
                     >
                       Cancel
                     </button>
@@ -519,14 +519,14 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
                 disabled={loading}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
                 disabled={loading}
               >
                 {loading ? 'Saving...' : 'Save Changes'}

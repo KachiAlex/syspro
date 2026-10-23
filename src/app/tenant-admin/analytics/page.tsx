@@ -63,19 +63,19 @@ export default function AnalyticsPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Reports & Analytics</h2>
+        <h2 className="text-2xl font-bold text-theme-text-primary">Reports & Analytics</h2>
         <div className="flex items-center gap-3">
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
           >
             <option>This Month</option>
             <option>Last Month</option>
             <option>Last Quarter</option>
             <option>This Year</option>
           </select>
-          <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+          <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover">
             <Download className="w-4 h-4" />
             Export
           </button>
@@ -83,10 +83,10 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Total Revenue</p>
               <p className="text-3xl font-bold text-green-600 mt-2">$425K</p>
               <p className="text-xs text-green-600 mt-2">↑ 12.5% from last month</p>
             </div>
@@ -94,21 +94,21 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Employees</p>
-              <p className="text-3xl font-bold text-blue-600 mt-2">156</p>
-              <p className="text-xs text-blue-600 mt-2">↑ 3.2% from last month</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Active Employees</p>
+              <p className="text-3xl font-bold text-theme-accent mt-2">156</p>
+              <p className="text-xs text-theme-accent mt-2">↑ 3.2% from last month</p>
             </div>
-            <Users className="w-12 h-12 text-blue-500" />
+            <Users className="w-12 h-12 text-theme-accent" />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Orders</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Total Orders</p>
               <p className="text-3xl font-bold text-purple-600 mt-2">1,248</p>
               <p className="text-xs text-purple-600 mt-2">↑ 8.7% from last month</p>
             </div>
@@ -116,10 +116,10 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Profit Margin</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Profit Margin</p>
               <p className="text-3xl font-bold text-amber-600 mt-2">23.4%</p>
               <p className="text-xs text-amber-600 mt-2">↑ 2.1% from last month</p>
             </div>
@@ -128,19 +128,19 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="border-b border-gray-200">
+      <div className="bg-theme-surface rounded-lg border border-theme-border">
+        <div className="border-b border-theme-border">
           <nav className="flex space-x-8 px-6" aria-label="Tabs">
             {reportTabs.map((tab) => (
               <Link
                 key={tab.id}
                 href={tab.href}
-                className="flex items-center gap-2 py-4 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap"
+                className="flex items-center gap-2 py-4 px-1 border-b-2 border-transparent text-sm font-medium text-theme-text-secondary hover:text-theme-text-primary hover:border-theme-border whitespace-nowrap"
               >
                 <tab.icon className="w-4 h-4" />
                 {tab.name}
                 {tab.count && (
-                  <span className="bg-gray-100 text-gray-900 px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  <span className="bg-theme-muted text-theme-text-primary px-2.5 py-0.5 rounded-full text-xs font-medium">
                     {tab.count}
                   </span>
                 )}
@@ -153,27 +153,27 @@ export default function AnalyticsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 border border-blue-200">
               <div className="flex items-center gap-3 mb-4">
-                <DollarSign className="w-8 h-8 text-blue-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Financial Reports</h3>
+                <DollarSign className="w-8 h-8 text-theme-accent" />
+                <h3 className="text-lg font-semibold text-theme-text-primary">Financial Reports</h3>
               </div>
               <p className="text-sm text-blue-700 mb-4">Revenue, expenses, cash flow, and financial health analysis</p>
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-blue-600">Revenue Analysis</span>
-                  <span className="font-medium text-gray-900">$425K</span>
+                  <span className="text-theme-accent">Revenue Analysis</span>
+                  <span className="font-medium text-theme-text-primary">$425K</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-blue-600">Expense Tracking</span>
-                  <span className="font-medium text-gray-900">$326K</span>
+                  <span className="text-theme-accent">Expense Tracking</span>
+                  <span className="font-medium text-theme-text-primary">$326K</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-blue-600">Profit Margin</span>
-                  <span className="font-medium text-gray-900">23.4%</span>
+                  <span className="text-theme-accent">Profit Margin</span>
+                  <span className="font-medium text-theme-text-primary">23.4%</span>
                 </div>
               </div>
               <Link
                 href="/tenant-admin/analytics/financial"
-                className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-theme-accent-hover"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-theme-accent hover:text-theme-accent-hover"
               >
                 View Financial Reports →
               </Link>
@@ -238,20 +238,20 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Reports & Insights</h3>
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Recent Reports & Insights</h3>
         {loadingReports ? (
-          <div className="text-sm text-gray-500">Loading reports...</div>
+          <div className="text-sm text-theme-text-secondary">Loading reports...</div>
         ) : (
           <div className="space-y-4">
             {recentReports.length === 0 ? (
-              <div className="text-sm text-gray-500">No reports generated yet.</div>
+              <div className="text-sm text-theme-text-secondary">No reports generated yet.</div>
             ) : (
               recentReports.map((report: any, idx: number) => (
-                <div key={report.id || idx} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                <div key={report.id || idx} className="flex items-center justify-between p-4 border border-theme-border rounded-lg">
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900">{report.name || 'Untitled'}</p>
-                    <p className="text-xs text-gray-600 mt-1">{(report.module || report.reportType || 'Report').charAt(0).toUpperCase() + (report.module || report.reportType || 'Report').slice(1)} • {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : 'Unknown'}</p>
+                    <p className="font-medium text-theme-text-primary">{report.name || 'Untitled'}</p>
+                    <p className="text-xs text-theme-text-secondary mt-1">{(report.module || report.reportType || 'Report').charAt(0).toUpperCase() + (report.module || report.reportType || 'Report').slice(1)} • {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : 'Unknown'}</p>
                   </div>
                   <div className="flex items-center gap-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -262,7 +262,7 @@ export default function AnalyticsPage() {
                     </span>
                     <button
                       onClick={() => handleDownload(report.id)}
-                      className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover"
+                      className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-theme-accent hover:text-theme-accent-hover"
                     >
                       <Download className="w-3 h-3" />
                       Download

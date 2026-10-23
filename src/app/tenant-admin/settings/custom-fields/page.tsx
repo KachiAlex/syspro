@@ -82,10 +82,10 @@ export default function CustomFieldsPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#F8FAFC] flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-theme-text-primary flex items-center gap-2">
             <Settings2 className="w-6 h-6 text-emerald-400" /> Custom Fields
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-theme-text-secondary mt-1">
             Define extra fields per document type. They appear on the record&apos;s detail view and are stored in its metadata.
           </p>
         </div>
@@ -98,43 +98,43 @@ export default function CustomFieldsPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
+        <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-theme-text-secondary" /></div>
       ) : !fields.length ? (
-        <div className="bg-slate-800 rounded-xl border border-slate-700 p-16 text-center">
-          <Settings2 className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-400">No custom fields defined yet.</p>
-          <p className="text-xs text-slate-500 mt-1">Create one to capture extra data on invoices, products, orders and more.</p>
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-16 text-center">
+          <Settings2 className="w-10 h-10 text-theme-text-secondary mx-auto mb-3" />
+          <p className="text-theme-text-secondary">No custom fields defined yet.</p>
+          <p className="text-xs text-theme-text-tertiary mt-1">Create one to capture extra data on invoices, products, orders and more.</p>
         </div>
       ) : (
         <div className="space-y-6">
           {Object.entries(grouped).map(([doctype, defs]) => (
-            <div key={doctype} className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-              <div className="px-5 py-3 border-b border-slate-700">
-                <h2 className="text-sm font-semibold text-[#F8FAFC]">
+            <div key={doctype} className="bg-theme-muted rounded-xl border border-theme-border overflow-hidden">
+              <div className="px-5 py-3 border-b border-theme-border">
+                <h2 className="text-sm font-semibold text-theme-text-primary">
                   {DOCTYPES.find((d) => d.value === doctype)?.label ?? doctype}
-                  <span className="ml-2 text-xs font-normal text-slate-500">{doctype}</span>
+                  <span className="ml-2 text-xs font-normal text-theme-text-tertiary">{doctype}</span>
                 </h2>
               </div>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs text-slate-500 border-b border-slate-700/50">
+                  <tr className="text-left text-xs text-theme-text-tertiary border-b border-theme-border">
                     <th className="px-5 py-2">Field</th><th className="px-5 py-2">Label</th>
                     <th className="px-5 py-2">Type</th><th className="px-5 py-2">Options</th>
                     <th className="px-5 py-2">Required</th><th className="px-5 py-2 text-right"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-700/50">
+                <tbody className="divide-y divide-theme-border/50">
                   {defs.map((f) => (
                     <tr key={f.id}>
-                      <td className="px-5 py-3 font-mono text-xs text-slate-300">{f.fieldName}</td>
-                      <td className="px-5 py-3 text-[#F8FAFC]">{f.label}</td>
-                      <td className="px-5 py-3"><span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 capitalize">{f.fieldType}</span></td>
-                      <td className="px-5 py-3 text-slate-400 text-xs">{f.options?.join(", ") ?? "—"}</td>
-                      <td className="px-5 py-3 text-slate-400">{f.required ? "Yes" : "No"}</td>
+                      <td className="px-5 py-3 font-mono text-xs text-theme-text-primary">{f.fieldName}</td>
+                      <td className="px-5 py-3 text-theme-text-primary">{f.label}</td>
+                      <td className="px-5 py-3"><span className="text-xs px-2 py-0.5 rounded-full bg-theme-elevated text-theme-text-primary capitalize">{f.fieldType}</span></td>
+                      <td className="px-5 py-3 text-theme-text-secondary text-xs">{f.options?.join(", ") ?? "—"}</td>
+                      <td className="px-5 py-3 text-theme-text-secondary">{f.required ? "Yes" : "No"}</td>
                       <td className="px-5 py-3 text-right">
                         <button
                           onClick={() => remove(f.id)} disabled={deleting === f.id}
-                          className="p-1.5 text-slate-500 hover:text-red-400 rounded"
+                          className="p-1.5 text-theme-text-tertiary hover:text-red-400 rounded"
                         >
                           {deleting === f.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                         </button>
@@ -150,61 +150,61 @@ export default function CustomFieldsPage() {
 
       {/* Create modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-slate-800 rounded-xl border border-slate-700 w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50 p-4" onClick={() => setShowModal(false)}>
+          <div className="bg-theme-muted rounded-xl border border-theme-border w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-[#F8FAFC]">New custom field</h2>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-200"><X className="w-5 h-5" /></button>
+              <h2 className="text-lg font-bold text-theme-text-primary">New custom field</h2>
+              <button onClick={() => setShowModal(false)} className="text-theme-text-secondary hover:text-theme-text-primary"><X className="w-5 h-5" /></button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Document type</label>
+                <label className="block text-xs font-medium text-theme-text-secondary mb-1">Document type</label>
                 <select
                   value={form.doctype} onChange={(e) => setForm({ ...form, doctype: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC]"
+                  className="w-full px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-theme-text-primary"
                 >
                   {DOCTYPES.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Field name</label>
+                  <label className="block text-xs font-medium text-theme-text-secondary mb-1">Field name</label>
                   <input
                     value={form.fieldName}
                     onChange={(e) => setForm({ ...form, fieldName: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_") })}
                     placeholder="snake_case"
-                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC] font-mono"
+                    className="w-full px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-theme-text-primary font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Type</label>
+                  <label className="block text-xs font-medium text-theme-text-secondary mb-1">Type</label>
                   <select
                     value={form.fieldType} onChange={(e) => setForm({ ...form, fieldType: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC]"
+                    className="w-full px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-theme-text-primary"
                   >
                     {FIELD_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Label</label>
+                <label className="block text-xs font-medium text-theme-text-secondary mb-1">Label</label>
                 <input
                   value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })}
                   placeholder="Shown on the record form"
-                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC]"
+                  className="w-full px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-theme-text-primary"
                 />
               </div>
               {form.fieldType === "select" && (
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Options (comma-separated)</label>
+                  <label className="block text-xs font-medium text-theme-text-secondary mb-1">Options (comma-separated)</label>
                   <input
                     value={form.options} onChange={(e) => setForm({ ...form, options: e.target.value })}
                     placeholder="Option A, Option B"
-                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC]"
+                    className="w-full px-3 py-2 rounded-lg bg-theme-surface border border-theme-border text-sm text-theme-text-primary"
                   />
                 </div>
               )}
-              <label className="flex items-center gap-2 text-sm text-slate-300">
+              <label className="flex items-center gap-2 text-sm text-theme-text-primary">
                 <input
                   type="checkbox" checked={form.required}
                   onChange={(e) => setForm({ ...form, required: e.target.checked })}
@@ -218,7 +218,7 @@ export default function CustomFieldsPage() {
             )}
             <div className="mt-6 flex gap-3">
               <button onClick={() => setShowModal(false)}
-                className="flex-1 py-2.5 rounded-lg bg-slate-700 text-slate-300 text-sm font-medium hover:bg-slate-600">
+                className="flex-1 py-2.5 rounded-lg bg-theme-elevated text-theme-text-primary text-sm font-medium hover:bg-theme-elevated">
                 Cancel
               </button>
               <button

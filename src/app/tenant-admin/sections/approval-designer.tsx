@@ -98,22 +98,22 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Approvals</p>
-            <h2 className="text-xl font-semibold text-gray-900">Approval flow designer</h2>
-            <p className="mt-1 text-sm text-slate-500">Define multi-step approval routes with owners and SLAs.</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Approvals</p>
+            <h2 className="text-xl font-semibold text-theme-text-primary">Approval flow designer</h2>
+            <p className="mt-1 text-sm text-theme-text-tertiary">Define multi-step approval routes with owners and SLAs.</p>
           </div>
         </div>
 
         <form className="mt-4 space-y-3" onSubmit={handleCreate}>
           <div className="flex items-center gap-3">
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Route name" className="bg-white rounded-lg border px-3 py-2 w-full text-black" />
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Route name" className="bg-theme-surface rounded-lg border px-3 py-2 w-full text-theme-text-primary" />
             <button 
               type="submit" 
               disabled={!canCreate || permissions.loading}
-              className="rounded-full bg-slate-900 px-4 py-2 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-full bg-theme-surface px-4 py-2 text-theme-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
               title={!canCreate ? "You don't have permission to create approval routes" : undefined}
             >
               Create
@@ -123,9 +123,9 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
           <div className="space-y-2">
             {(steps ?? []).map((s, idx) => (
               <div key={idx} className="flex items-center gap-2">
-                <div className="w-8 text-sm text-slate-600">Step {idx + 1}</div>
-                <input value={s.owners} onChange={(e) => updateStep(idx, "owners", e.target.value)} placeholder="Owners (comma-separated)" className="bg-white rounded-lg border px-3 py-2 flex-1 text-black" />
-                <input type="number" value={s.slaHours} onChange={(e) => updateStep(idx, "slaHours", Number(e.target.value))} className="bg-white w-28 rounded-lg border px-2 py-2 text-black" />
+                <div className="w-8 text-sm text-theme-text-secondary">Step {idx + 1}</div>
+                <input value={s.owners} onChange={(e) => updateStep(idx, "owners", e.target.value)} placeholder="Owners (comma-separated)" className="bg-theme-surface rounded-lg border px-3 py-2 flex-1 text-theme-text-primary" />
+                <input type="number" value={s.slaHours} onChange={(e) => updateStep(idx, "slaHours", Number(e.target.value))} className="bg-theme-surface w-28 rounded-lg border px-2 py-2 text-theme-text-primary" />
                 <button type="button" onClick={() => removeStep(idx)} className="rounded-full border px-3 py-1 text-xs text-rose-700">Remove</button>
               </div>
             ))}
@@ -136,20 +136,20 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
         </form>
       </div>
 
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Existing routes</p>
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
+        <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Existing routes</p>
         <div className="mt-4 space-y-3">
           {loading ? (
-            <div className="text-sm text-slate-500">Loading routes…</div>
+            <div className="text-sm text-theme-text-tertiary">Loading routes…</div>
           ) : (approvals ?? []).length === 0 ? (
-            <div className="text-sm text-slate-500">No routes defined.</div>
+            <div className="text-sm text-theme-text-tertiary">No routes defined.</div>
           ) : (
             approvals.map((a) => (
-              <div key={a.id} className="rounded-2xl border border-slate-100 px-4 py-3">
+              <div key={a.id} className="rounded-2xl border border-theme-border px-4 py-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-gray-900">{a.name}</p>
-                    <p className="text-xs text-slate-500">Created {new Date(a.createdAt).toLocaleString()}</p>
+                    <p className="font-semibold text-theme-text-primary">{a.name}</p>
+                    <p className="text-xs text-theme-text-tertiary">Created {new Date(a.createdAt).toLocaleString()}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button 
@@ -162,11 +162,11 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
                     </button>
                   </div>
                 </div>
-                <div className="mt-3 text-sm text-slate-600">
+                <div className="mt-3 text-sm text-theme-text-secondary">
                   {(Array.isArray(a.steps) ? a.steps : []).map((s) => (
                     <div key={s.step} className="flex items-center justify-between">
                       <div>Step {s.step} · {Array.isArray(s.owners) ? s.owners.join(", ") : String(s.owners ?? "")}</div>
-                      <div className="text-xs text-slate-500">SLA {s.slaHours ?? "—"}h</div>
+                      <div className="text-xs text-theme-text-tertiary">SLA {s.slaHours ?? "—"}h</div>
                     </div>
                   ))}
                 </div>

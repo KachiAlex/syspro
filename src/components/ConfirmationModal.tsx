@@ -50,7 +50,7 @@ export default function ConfirmationModal({
           <AlertCircle className="h-6 w-6" />
         </div>
         <div>
-          <p className="text-gray-700">{message}</p>
+          <p className="text-theme-text-primary">{message}</p>
         </div>
       </div>
 
@@ -59,17 +59,17 @@ export default function ConfirmationModal({
         <button
           onClick={onClose}
           disabled={isLoading}
-          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {cancelText}
         </button>
         <button
           onClick={handleConfirm}
           disabled={isLoading}
-          className={`px-4 py-2 rounded-lg text-gray-900 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+          className={`px-4 py-2 rounded-lg text-theme-text-primary font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
             isDangerous
               ? "bg-red-600 hover:bg-red-700"
-              : "bg-blue-600 hover:bg-blue-700"
+              : "bg-theme-accent hover:bg-theme-accent-hover"
           }`}
         >
           {isLoading ? "Processing..." : confirmText}

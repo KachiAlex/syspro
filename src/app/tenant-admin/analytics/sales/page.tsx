@@ -89,32 +89,32 @@ export default function SalesAnalyticsPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Sales Reports</h2>
+        <h2 className="text-2xl font-bold text-theme-text-primary">Sales Reports</h2>
         <div className="flex gap-3">
           <button
             onClick={() => setShowReportModal(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
           >
             <BarChart3 className="w-4 h-4" />
             Generate Report
           </button>
           <Link
             href="/tenant-admin/analytics"
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted"
           >
             ← Back to Overview
           </Link>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-900 mb-2">Period</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-2">Period</label>
             <select
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
             >
               <option>This Month</option>
               <option>Last Month</option>
@@ -123,11 +123,11 @@ export default function SalesAnalyticsPage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-900 mb-2">Report Type</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-2">Report Type</label>
             <select
               value={selectedReportType}
               onChange={(e) => setSelectedReportType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
             >
               <option>All</option>
               <option>Performance</option>
@@ -137,7 +137,7 @@ export default function SalesAnalyticsPage() {
             </select>
           </div>
           <div className="flex items-end">
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover">
               <Download className="w-4 h-4" />
               Generate Report
             </button>
@@ -147,11 +147,11 @@ export default function SalesAnalyticsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {salesMetrics.map((metric, idx) => (
-          <div key={idx} className="bg-white rounded-lg border border-gray-200 p-6">
+          <div key={idx} className="bg-theme-surface rounded-lg border border-theme-border p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{metric.title}</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{metric.value}</p>
+                <p className="text-sm font-medium text-theme-text-secondary">{metric.title}</p>
+                <p className="text-3xl font-bold text-theme-text-primary mt-2">{metric.value}</p>
                 <p className={`text-xs mt-2 flex items-center gap-1 ${
                   metric.trend === 'up' ? 'text-green-600' : 'text-red-600'
                 }`}>
@@ -168,46 +168,46 @@ export default function SalesAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Sales Performance Metrics</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Sales Performance Metrics</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Leads Generated</span>
-              <span className="text-sm font-semibold text-gray-900">6,742</span>
+              <span className="text-sm text-theme-text-secondary">Leads Generated</span>
+              <span className="text-sm font-semibold text-theme-text-primary">6,742</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Qualified Leads</span>
-              <span className="text-sm font-semibold text-gray-900">2,156</span>
+              <span className="text-sm text-theme-text-secondary">Qualified Leads</span>
+              <span className="text-sm font-semibold text-theme-text-primary">2,156</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Deals Closed</span>
-              <span className="text-sm font-semibold text-gray-900">1,248</span>
+              <span className="text-sm text-theme-text-secondary">Deals Closed</span>
+              <span className="text-sm font-semibold text-theme-text-primary">1,248</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Win Rate</span>
+              <span className="text-sm text-theme-text-secondary">Win Rate</span>
               <span className="text-sm font-semibold text-green-600">57.9%</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Breakdown</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Revenue Breakdown</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">New Customers</span>
-              <span className="text-sm font-semibold text-gray-900">$185,000</span>
+              <span className="text-sm text-theme-text-secondary">New Customers</span>
+              <span className="text-sm font-semibold text-theme-text-primary">$185,000</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Existing Customers</span>
-              <span className="text-sm font-semibold text-gray-900">$156,000</span>
+              <span className="text-sm text-theme-text-secondary">Existing Customers</span>
+              <span className="text-sm font-semibold text-theme-text-primary">$156,000</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Upsells & Cross-sells</span>
-              <span className="text-sm font-semibold text-gray-900">$84,000</span>
+              <span className="text-sm text-theme-text-secondary">Upsells & Cross-sells</span>
+              <span className="text-sm font-semibold text-theme-text-primary">$84,000</span>
             </div>
-            <div className="pt-4 border-t border-gray-200">
+            <div className="pt-4 border-t border-theme-border">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-900">Total Revenue</span>
+                <span className="text-sm font-medium text-theme-text-primary">Total Revenue</span>
                 <span className="text-sm font-bold text-green-600">$425,000</span>
               </div>
             </div>
@@ -215,14 +215,14 @@ export default function SalesAnalyticsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Available Reports</h3>
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Available Reports</h3>
         <div className="space-y-3">
           {salesReports.map((report) => (
-            <div key={report.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+            <div key={report.id} className="flex items-center justify-between p-4 border border-theme-border rounded-lg hover:bg-theme-muted">
               <div className="flex-1">
-                <p className="font-medium text-gray-900">{report.name}</p>
-                <p className="text-xs text-gray-600 mt-1">{report.type} • {report.date} • {report.size}</p>
+                <p className="font-medium text-theme-text-primary">{report.name}</p>
+                <p className="text-xs text-theme-text-secondary mt-1">{report.type} • {report.date} • {report.size}</p>
               </div>
               <div className="flex items-center gap-4">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -231,7 +231,7 @@ export default function SalesAnalyticsPage() {
                 }`}>
                   {report.status}
                 </span>
-                <button className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover">
+                <button className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-theme-accent hover:text-theme-accent-hover">
                   <Download className="w-3 h-3" />
                   Download
                 </button>
@@ -242,67 +242,67 @@ export default function SalesAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Customer Acquisition</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Customer Acquisition</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">New Customers</span>
+              <span className="text-sm text-theme-text-secondary">New Customers</span>
               <span className="text-sm font-semibold text-green-600">324</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Customer Acquisition Cost</span>
-              <span className="text-sm font-semibold text-gray-900">$285</span>
+              <span className="text-sm text-theme-text-secondary">Customer Acquisition Cost</span>
+              <span className="text-sm font-semibold text-theme-text-primary">$285</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Customer Lifetime Value</span>
+              <span className="text-sm text-theme-text-secondary">Customer Lifetime Value</span>
               <span className="text-sm font-semibold text-green-600">$3,420</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Churn Rate</span>
+              <span className="text-sm text-theme-text-secondary">Churn Rate</span>
               <span className="text-sm font-semibold text-amber-600">5.2%</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Sales Pipeline</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Sales Pipeline</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Leads</span>
-              <span className="text-sm font-semibold text-blue-600">6,742</span>
+              <span className="text-sm text-theme-text-secondary">Leads</span>
+              <span className="text-sm font-semibold text-theme-accent">6,742</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Opportunities</span>
+              <span className="text-sm text-theme-text-secondary">Opportunities</span>
               <span className="text-sm font-semibold text-purple-600">2,156</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Proposals</span>
+              <span className="text-sm text-theme-text-secondary">Proposals</span>
               <span className="text-sm font-semibold text-amber-600">1,487</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Closed Won</span>
+              <span className="text-sm text-theme-text-secondary">Closed Won</span>
               <span className="text-sm font-semibold text-green-600">1,248</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Forecasting</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Revenue Forecasting</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Next Month Forecast</span>
+              <span className="text-sm text-theme-text-secondary">Next Month Forecast</span>
               <span className="text-sm font-semibold text-green-600">$468,000</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Q2 Forecast</span>
+              <span className="text-sm text-theme-text-secondary">Q2 Forecast</span>
               <span className="text-sm font-semibold text-green-600">$1.42M</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Annual Forecast</span>
+              <span className="text-sm text-theme-text-secondary">Annual Forecast</span>
               <span className="text-sm font-semibold text-green-600">$5.8M</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Forecast Accuracy</span>
+              <span className="text-sm text-theme-text-secondary">Forecast Accuracy</span>
               <span className="text-sm font-semibold text-green-600">92.3%</span>
             </div>
           </div>

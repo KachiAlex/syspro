@@ -21,7 +21,7 @@ export const HRStatistics: React.FC<HRStatisticsProps> = ({
       label: 'Total Employees',
       value: totalEmployees,
       icon: Users,
-      color: 'text-blue-600'
+      color: 'text-theme-accent'
     },
     {
       label: 'Open Positions',
@@ -48,11 +48,11 @@ export const HRStatistics: React.FC<HRStatisticsProps> = ({
       {stats.map((stat, index) => {
         const Icon = stat.icon;
         return (
-          <div key={index} className="bg-white rounded-lg border border-gray-200 p-4">
+          <div key={index} className="bg-theme-surface rounded-lg border border-theme-border p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">{stat.label}</p>
-                <p className="text-xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-sm text-theme-text-secondary">{stat.label}</p>
+                <p className="text-xl font-bold text-theme-text-primary">{stat.value}</p>
               </div>
               <Icon className={`w-8 h-8 ${stat.color}`} />
             </div>

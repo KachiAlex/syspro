@@ -14,7 +14,7 @@ const STATUS_BADGE: Record<string, string> = {
   unmatched: "bg-amber-500/15 text-amber-400",
   matched: "bg-emerald-500/15 text-emerald-400",
   posted: "bg-sky-500/15 text-sky-400",
-  ignored: "bg-slate-500/15 text-slate-400",
+  ignored: "bg-theme-muted/15 text-theme-text-secondary",
 };
 
 type StmtLine = {
@@ -189,16 +189,16 @@ export default function BankReconciliationPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#F8FAFC] flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-theme-text-primary flex items-center gap-2">
             <Landmark className="w-6 h-6 text-emerald-400" /> Bank Reconciliation
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-theme-text-secondary mt-1">
             Import statement lines, auto-match to payments and journal entries, post bank-side items.
           </p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setShowImport(true)}
-            className="px-4 py-2 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 text-sm flex items-center gap-2">
+            className="px-4 py-2 rounded-lg bg-theme-muted text-theme-text-primary hover:bg-theme-elevated text-sm flex items-center gap-2">
             <Upload className="w-4 h-4" /> Import statement
           </button>
           <button onClick={runAutoMatch} disabled={busy === "auto"}
@@ -211,7 +211,7 @@ export default function BankReconciliationPage() {
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <select value={account} onChange={(e) => setAccount(e.target.value)}
-          className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200">
+          className="bg-theme-muted border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary">
           {accounts.length === 0 && <option value={account}>{account}</option>}
           {accounts.map((a) => (
             <option key={a.code} value={a.code}>{a.code} — {a.name}</option>
@@ -220,7 +220,7 @@ export default function BankReconciliationPage() {
         <div className="flex gap-1">
           {STATUS_TABS.map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize ${tab === t ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`}>
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize ${tab === t ? "bg-emerald-600 text-white" : "bg-theme-muted text-theme-text-primary hover:bg-theme-elevated"}`}>
               {t}{t !== "all" && counts[t] != null ? ` (${counts[t]})` : ""}
             </button>
           ))}
@@ -238,10 +238,10 @@ export default function BankReconciliationPage() {
         </div>
       )}
 
-      <div className="bg-slate-900/60 border border-slate-800 rounded-xl overflow-hidden">
+      <div className="bg-theme-surface/60 border border-theme-border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs text-slate-500 border-b border-slate-800">
+            <tr className="text-left text-xs text-theme-text-tertiary border-b border-theme-border">
               <th className="px-4 py-3">Date</th>
               <th className="px-4 py-3">Description</th>
               <th className="px-4 py-3">Reference</th>
@@ -253,23 +253,23 @@ export default function BankReconciliationPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-500"><Loader2 className="w-5 h-5 animate-spin inline" /></td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-theme-text-tertiary"><Loader2 className="w-5 h-5 animate-spin inline" /></td></tr>
             ) : visible.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-500">No {tab === "all" ? "" : tab + " "}statement lines — import a statement to begin.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-theme-text-tertiary">No {tab === "all" ? "" : tab + " "}statement lines — import a statement to begin.</td></tr>
             ) : visible.map((l) => (
-              <tr key={l.id} className="border-b border-slate-800/50 hover:bg-slate-800/30">
-                <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{String(l.line_date).slice(0, 10)}</td>
-                <td className="px-4 py-3 text-slate-200 max-w-xs truncate">{l.description ?? "—"}</td>
-                <td className="px-4 py-3 text-slate-400 text-xs">{l.reference ?? "—"}</td>
+              <tr key={l.id} className="border-b border-theme-border hover:bg-theme-muted/30">
+                <td className="px-4 py-3 text-theme-text-primary whitespace-nowrap">{String(l.line_date).slice(0, 10)}</td>
+                <td className="px-4 py-3 text-theme-text-primary max-w-xs truncate">{l.description ?? "—"}</td>
+                <td className="px-4 py-3 text-theme-text-secondary text-xs">{l.reference ?? "—"}</td>
                 <td className={`px-4 py-3 text-right font-mono ${Number(l.amount) < 0 ? "text-rose-400" : "text-emerald-400"}`}>
                   {fmt(l.amount)}
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`px-2 py-0.5 rounded-full text-xs capitalize ${STATUS_BADGE[l.status] ?? "bg-slate-500/15 text-slate-400"}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-xs capitalize ${STATUS_BADGE[l.status] ?? "bg-theme-muted/15 text-theme-text-secondary"}`}>
                     {l.status}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-xs text-slate-400">
+                <td className="px-4 py-3 text-xs text-theme-text-secondary">
                   {l.matched_entity ? `${l.matched_entity === "finance_payment" ? "Payment" : "JE"} ${String(l.matched_id).slice(0, 8)}` : "—"}
                 </td>
                 <td className="px-4 py-3 text-right">
@@ -278,18 +278,18 @@ export default function BankReconciliationPage() {
                       {l.status === "unmatched" && (
                         <>
                           <button onClick={() => openMatch(l)} title="Match to a payment"
-                            className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 flex items-center gap-1">
+                            className="px-2 py-1 rounded bg-theme-muted hover:bg-theme-elevated text-xs text-theme-text-primary flex items-center gap-1">
                             <Link2 className="w-3 h-3" /> Match
                           </button>
                           <button onClick={() => { setPostLine(l); setPostDesc(l.description ?? ""); setPostKind(Number(l.amount) < 0 ? "bank_charge" : "interest"); }}
-                            className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-200">Post</button>
+                            className="px-2 py-1 rounded bg-theme-muted hover:bg-theme-elevated text-xs text-theme-text-primary">Post</button>
                           <button onClick={async () => { if (await act(l.id, { action: "ignore" })) load(); }}
-                            className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-400">Ignore</button>
+                            className="px-2 py-1 rounded bg-theme-muted hover:bg-theme-elevated text-xs text-theme-text-secondary">Ignore</button>
                         </>
                       )}
                       {l.status === "matched" && (
                         <button onClick={async () => { if (await act(l.id, { action: "unmatch" })) load(); }}
-                          className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-amber-400">Unmatch</button>
+                          className="px-2 py-1 rounded bg-theme-muted hover:bg-theme-elevated text-xs text-amber-400">Unmatch</button>
                       )}
                     </div>
                   )}
@@ -302,15 +302,15 @@ export default function BankReconciliationPage() {
 
       {showImport && (
         <Modal onClose={() => setShowImport(false)} title={`Import statement — ${account}`}>
-          <p className="text-xs text-slate-400 mb-2">
-            Paste CSV rows: <code className="text-slate-300">YYYY-MM-DD, description, reference, amount</code>.
+          <p className="text-xs text-theme-text-secondary mb-2">
+            Paste CSV rows: <code className="text-theme-text-primary">YYYY-MM-DD, description, reference, amount</code>.
             Header row is skipped automatically; deposits positive, withdrawals negative.
           </p>
           <textarea value={csvText} onChange={(e) => setCsvText(e.target.value)} rows={10}
             placeholder={"2026-11-01, Customer payment INV-0042, TRF8841, 125000\n2026-11-02, Bank charges, , -1500"}
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 font-mono" />
+            className="w-full bg-theme-muted border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary font-mono" />
           <div className="flex justify-end gap-2 mt-4">
-            <button onClick={() => setShowImport(false)} className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-sm">Cancel</button>
+            <button onClick={() => setShowImport(false)} className="px-4 py-2 rounded-lg bg-theme-muted text-theme-text-primary text-sm">Cancel</button>
             <button onClick={doImport} disabled={busy === "import" || !csvText.trim()}
               className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm disabled:opacity-50 flex items-center gap-2">
               {busy === "import" && <Loader2 className="w-4 h-4 animate-spin" />} Import
@@ -321,9 +321,9 @@ export default function BankReconciliationPage() {
 
       {matchLine && (
         <Modal onClose={() => setMatchLine(null)} title={`Match ${fmt(matchLine.amount)} — ${matchLine.description ?? "statement line"}`}>
-          <p className="text-xs text-slate-400 mb-3">Closest successful payments by amount:</p>
+          <p className="text-xs text-theme-text-secondary mb-3">Closest successful payments by amount:</p>
           <div className="max-h-80 overflow-y-auto space-y-1">
-            {candidates.length === 0 && <p className="text-sm text-slate-500 py-4 text-center">No successful payments found.</p>}
+            {candidates.length === 0 && <p className="text-sm text-theme-text-tertiary py-4 text-center">No successful payments found.</p>}
             {candidates.map((p) => (
               <button key={p.id}
                 onClick={async () => {
@@ -331,13 +331,13 @@ export default function BankReconciliationPage() {
                     setMatchLine(null); load();
                   }
                 }}
-                className="w-full text-left px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-between">
+                className="w-full text-left px-3 py-2 rounded-lg bg-theme-muted hover:bg-theme-elevated flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-200">{p.reference}</p>
-                  <p className="text-xs text-slate-400">{String(p.paymentDate).slice(0, 10)} · {p.method}</p>
+                  <p className="text-sm text-theme-text-primary">{p.reference}</p>
+                  <p className="text-xs text-theme-text-secondary">{String(p.paymentDate).slice(0, 10)} · {p.method}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-mono text-slate-200">{fmt(p.netAmount)}</p>
+                  <p className="text-sm font-mono text-theme-text-primary">{fmt(p.netAmount)}</p>
                   <p className={`text-xs ${p.diff < 0.01 ? "text-emerald-400" : "text-amber-400"}`}>
                     {p.diff < 0.01 ? "exact" : `Δ ${fmt(p.diff)}`}
                   </p>
@@ -352,9 +352,9 @@ export default function BankReconciliationPage() {
         <Modal onClose={() => setPostLine(null)} title={`Post to GL — ${fmt(postLine.amount)}`}>
           <div className="space-y-3">
             <div>
-              <label className="text-xs text-slate-400">Entry type</label>
+              <label className="text-xs text-theme-text-secondary">Entry type</label>
               <select value={postKind} onChange={(e) => setPostKind(e.target.value as any)}
-                className="w-full mt-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200">
+                className="w-full mt-1 bg-theme-muted border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary">
                 <option value="bank_charge">Bank charge (Dr 6810 / Cr bank)</option>
                 <option value="interest">Interest income (Dr bank / Cr interest)</option>
                 <option value="manual">Manual (choose account)</option>
@@ -362,21 +362,21 @@ export default function BankReconciliationPage() {
             </div>
             {postKind === "manual" && (
               <div>
-                <label className="text-xs text-slate-400">Offset account</label>
+                <label className="text-xs text-theme-text-secondary">Offset account</label>
                 <select value={postAccount} onChange={(e) => setPostAccount(e.target.value)}
-                  className="w-full mt-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200">
+                  className="w-full mt-1 bg-theme-muted border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary">
                   <option value="">— select —</option>
                   {accounts.map((a) => <option key={a.code} value={a.code}>{a.code} — {a.name}</option>)}
                 </select>
               </div>
             )}
             <div>
-              <label className="text-xs text-slate-400">Description</label>
+              <label className="text-xs text-theme-text-secondary">Description</label>
               <input value={postDesc} onChange={(e) => setPostDesc(e.target.value)}
-                className="w-full mt-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200" />
+                className="w-full mt-1 bg-theme-muted border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary" />
             </div>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setPostLine(null)} className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-sm">Cancel</button>
+              <button onClick={() => setPostLine(null)} className="px-4 py-2 rounded-lg bg-theme-muted text-theme-text-primary text-sm">Cancel</button>
               <button
                 onClick={async () => {
                   if (await act(postLine.id, {
@@ -398,11 +398,11 @@ export default function BankReconciliationPage() {
 
 function Modal({ children, onClose, title }: { children: React.ReactNode; onClose: () => void; title: string }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-lg p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay p-4">
+      <div className="bg-theme-surface border border-theme-border rounded-xl w-full max-w-lg p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[#F8FAFC]">{title}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-200"><X className="w-5 h-5" /></button>
+          <h2 className="text-lg font-semibold text-theme-text-primary">{title}</h2>
+          <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-primary"><X className="w-5 h-5" /></button>
         </div>
         {children}
       </div>

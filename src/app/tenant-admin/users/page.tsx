@@ -503,7 +503,7 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
               <p className="text-sm font-medium text-theme-text-secondary">Portal Inactive</p>
               <p className="text-3xl font-bold text-theme-text-secondary mt-2">{employees.length - portalActiveCount}</p>
             </div>
-            <UserX className="w-12 h-12 text-gray-400" />
+            <UserX className="w-12 h-12 text-theme-text-tertiary" />
           </div>
         </div>
       </div>
@@ -511,7 +511,7 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
       {/* Info banner */}
       <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
         <div className="flex items-start gap-3">
-          <Monitor className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <Monitor className="w-5 h-5 text-theme-accent flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-blue-900">Employee Module Access</p>
             <p className="text-xs text-blue-700 mt-1">
@@ -608,7 +608,7 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
           className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white brand-gradient rounded-lg hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Shield className="w-4 h-4" /> Bulk Assign
-          {selectedIds.size > 0 && <span className="text-xs bg-white/20 rounded-full px-1.5">{selectedIds.size}</span>}
+          {selectedIds.size > 0 && <span className="text-xs bg-theme-surface/20 rounded-full px-1.5">{selectedIds.size}</span>}
         </button>
       </div>
 
@@ -677,7 +677,7 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
                             {perms[mod.key] === true ? (
                               <CheckCircle className="w-4 h-4 text-green-500 mx-auto" />
                             ) : (
-                              <div className="w-4 h-4 mx-auto rounded-full border border-gray-300" />
+                              <div className="w-4 h-4 mx-auto rounded-full border border-theme-border" />
                             )}
                           </td>
                         ))}
@@ -764,7 +764,7 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
                           <CheckCircle className="w-3 h-3" /> Active
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-theme-muted text-theme-text-secondary">
                           <Clock className="w-3 h-3" /> Inactive
                         </span>
                       )}
@@ -797,7 +797,7 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
 
       {/* Permissions Modal */}
       {editingEmp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) setEditingEmp(null); }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay" onClick={(e) => { if (e.target === e.currentTarget) setEditingEmp(null); }}>
           <div className="w-full max-w-lg rounded-xl bg-theme-surface p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -820,18 +820,18 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
               {BUSINESS_MODULES.map((mod) => (
                 <div
                   key={mod.key}
-                  className={`flex items-center justify-between p-3 rounded-lg border ${permissions[mod.key] ? "border-blue-200 bg-blue-50" : "border-gray-200 bg-gray-50"}`}
+                  className={`flex items-center justify-between p-3 rounded-lg border ${permissions[mod.key] ? "border-blue-200 bg-blue-50" : "border-theme-border bg-theme-muted"}`}
                 >
                   <div className="flex items-center gap-3">
                     {permissions[mod.key] ? (
-                      <ToggleRight className="w-5 h-5 text-blue-600" />
+                      <ToggleRight className="w-5 h-5 text-theme-accent" />
                     ) : (
-                      <ToggleLeft className="w-5 h-5 text-gray-400" />
+                      <ToggleLeft className="w-5 h-5 text-theme-text-tertiary" />
                     )}
                     <div>
                       <span className="text-sm font-medium text-theme-text-primary">{mod.label}</span>
                       {mod.alwaysOn && (
-                        <span className="ml-2 text-xs text-gray-400">(always on)</span>
+                        <span className="ml-2 text-xs text-theme-text-tertiary">(always on)</span>
                       )}
                     </div>
                   </div>
@@ -841,9 +841,9 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
                       setPermissions((prev) => ({ ...prev, [mod.key]: !prev[mod.key] }));
                     }}
                     disabled={mod.alwaysOn}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${permissions[mod.key] ? "bg-blue-600" : "bg-gray-300"} ${mod.alwaysOn ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${permissions[mod.key] ? "bg-theme-accent" : "bg-theme-muted"} ${mod.alwaysOn ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                   >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${permissions[mod.key] ? "translate-x-6" : "translate-x-1"}`} />
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-theme-surface transition-transform ${permissions[mod.key] ? "translate-x-6" : "translate-x-1"}`} />
                   </button>
                 </div>
               ))}
@@ -875,7 +875,7 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
 
       {/* Bulk Assign Modal */}
       {showBulkModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) setShowBulkModal(false); }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowBulkModal(false); }}>
           <div className="w-full max-w-lg rounded-xl bg-theme-surface p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -896,18 +896,18 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
 
             <div className="space-y-2">
               {BUSINESS_MODULES.map((mod) => (
-                <div key={mod.key} className={`flex items-center justify-between p-3 rounded-lg border ${bulkModules[mod.key] ? "border-blue-200 bg-blue-50" : "border-gray-200 bg-gray-50"}`}>
+                <div key={mod.key} className={`flex items-center justify-between p-3 rounded-lg border ${bulkModules[mod.key] ? "border-blue-200 bg-blue-50" : "border-theme-border bg-theme-muted"}`}>
                   <div className="flex items-center gap-3">
-                    {bulkModules[mod.key] ? <ToggleRight className="w-5 h-5 text-blue-600" /> : <ToggleLeft className="w-5 h-5 text-gray-400" />}
+                    {bulkModules[mod.key] ? <ToggleRight className="w-5 h-5 text-theme-accent" /> : <ToggleLeft className="w-5 h-5 text-theme-text-tertiary" />}
                     <span className="text-sm font-medium text-theme-text-primary">{mod.label}</span>
-                    {mod.alwaysOn && <span className="ml-2 text-xs text-gray-400">(always on)</span>}
+                    {mod.alwaysOn && <span className="ml-2 text-xs text-theme-text-tertiary">(always on)</span>}
                   </div>
                   <button
                     onClick={() => { if (!mod.alwaysOn) setBulkModules((prev) => ({ ...prev, [mod.key]: !prev[mod.key] })); }}
                     disabled={mod.alwaysOn}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${bulkModules[mod.key] ? "bg-blue-600" : "bg-gray-300"} ${mod.alwaysOn ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${bulkModules[mod.key] ? "bg-theme-accent" : "bg-theme-muted"} ${mod.alwaysOn ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                   >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${bulkModules[mod.key] ? "translate-x-6" : "translate-x-1"}`} />
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-theme-surface transition-transform ${bulkModules[mod.key] ? "translate-x-6" : "translate-x-1"}`} />
                   </button>
                 </div>
               ))}
@@ -938,7 +938,7 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
 
       {/* Save Preset Modal */}
       {showSavePreset && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) setShowSavePreset(false); }}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-theme-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowSavePreset(false); }}>
           <div className="w-full max-w-sm rounded-xl bg-theme-surface p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-theme-text-primary">Save Module Preset</h2>

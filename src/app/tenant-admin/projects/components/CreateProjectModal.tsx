@@ -144,13 +144,13 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Create New Project</h2>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-theme-surface border-b border-theme-border p-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-theme-text-primary">Create New Project</h2>
           <button 
             onClick={onClose} 
-            className="text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-theme-text-secondary hover:text-theme-text-primary transition-colors"
             disabled={loading}
           >
             <X className="w-6 h-6" />
@@ -169,15 +169,15 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Project Name *
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                  errors.name ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                  errors.name ? 'border-red-500' : 'border-theme-border'
                 }`}
                 placeholder="Enter project name"
                 disabled={loading}
@@ -188,15 +188,15 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Description *
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                  errors.description ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                  errors.description ? 'border-red-500' : 'border-theme-border'
                 }`}
                 placeholder="Describe the project objectives and scope"
                 disabled={loading}
@@ -207,7 +207,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 <Calendar className="w-4 h-4 inline mr-1" />
                 Start Date *
               </label>
@@ -215,8 +215,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 type="date"
                 value={formData.startDate}
                 onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                  errors.startDate ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                  errors.startDate ? 'border-red-500' : 'border-theme-border'
                 }`}
                 disabled={loading}
               />
@@ -226,7 +226,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 <Calendar className="w-4 h-4 inline mr-1" />
                 Due Date *
               </label>
@@ -234,8 +234,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 type="date"
                 value={formData.dueDate}
                 onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                  errors.dueDate ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                  errors.dueDate ? 'border-red-500' : 'border-theme-border'
                 }`}
                 min={formData.startDate}
                 disabled={loading}
@@ -246,7 +246,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 <DollarSign className="w-4 h-4 inline mr-1" />
                 Budget *
               </label>
@@ -254,8 +254,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 type="text"
                 value={formData.budget}
                 onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                  errors.budget ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                  errors.budget ? 'border-red-500' : 'border-theme-border'
                 }`}
                 placeholder="$50,000"
                 disabled={loading}
@@ -266,15 +266,15 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 <Briefcase className="w-4 h-4 inline mr-1" />
                 Project Manager *
               </label>
               <select
                 value={formData.manager}
                 onChange={(e) => setFormData(prev => ({ ...prev, manager: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                  errors.manager ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                  errors.manager ? 'border-red-500' : 'border-theme-border'
                 }`}
                 disabled={loading}
               >
@@ -289,7 +289,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Priority
               </label>
               <select
@@ -298,7 +298,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                   ...prev, 
                   priority: e.target.value as 'low' | 'medium' | 'high' 
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={loading}
               >
                 <option value="low">Low</option>
@@ -308,7 +308,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Initial Status
               </label>
               <select
@@ -317,7 +317,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                   ...prev, 
                   status: e.target.value as 'planning' | 'in_progress' | 'on_hold' 
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={loading}
               >
                 <option value="planning">Planning</option>
@@ -328,7 +328,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               <Users className="w-4 h-4 inline mr-1" />
               Team Members *
             </label>
@@ -338,8 +338,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 value={teamMemberInput}
                 onChange={(e) => setTeamMemberInput(e.target.value)}
                 onKeyPress={handleTeamMemberKeyPress}
-                className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                  errors.teamMembers ? 'border-red-500' : 'border-gray-300'
+                className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                  errors.teamMembers ? 'border-red-500' : 'border-theme-border'
                 }`}
                 placeholder="Enter team member name and press Enter"
                 disabled={loading}
@@ -347,7 +347,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               <button
                 type="button"
                 onClick={addTeamMember}
-                className="px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
                 disabled={loading || !teamMemberInput.trim()}
               >
                 Add
@@ -365,7 +365,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                     <button
                       type="button"
                       onClick={() => removeTeamMember(member)}
-                      className="ml-1 text-blue-600 hover:text-blue-800"
+                      className="ml-1 text-theme-accent hover:text-blue-800"
                       disabled={loading}
                     >
                       <X className="w-3 h-3" />
@@ -384,14 +384,14 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Creating...' : 'Create Project'}

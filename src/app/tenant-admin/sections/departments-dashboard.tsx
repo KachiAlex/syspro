@@ -112,7 +112,7 @@ export const DepartmentsDashboard: React.FC = () => {
           </button>
           <button
             onClick={() => { setModalMode('create'); setSelectedDept(null); setShowModal(true); }}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
           >
             <Plus className="w-4 h-4" /> New Department
           </button>
@@ -126,7 +126,7 @@ export const DepartmentsDashboard: React.FC = () => {
               <p className="text-xs font-medium text-theme-text-secondary">Total Departments</p>
               <p className="text-2xl font-bold text-theme-text-primary mt-1">{departments.length}</p>
             </div>
-            <Users className="w-8 h-8 text-blue-500" />
+            <Users className="w-8 h-8 text-theme-accent" />
           </div>
         </div>
         <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
@@ -200,7 +200,7 @@ export const DepartmentsDashboard: React.FC = () => {
                     )}
                     <button
                       onClick={() => { setModalMode('edit'); setSelectedDept(d); setShowModal(true); }}
-                      className="p-1.5 rounded-md hover:bg-blue-500/10 text-theme-text-tertiary hover:text-blue-400"
+                      className="p-1.5 rounded-md hover:bg-theme-accent-hover/10 text-theme-text-tertiary hover:text-blue-400"
                       title="Edit"
                     >
                       <Edit3 className="w-4 h-4" />

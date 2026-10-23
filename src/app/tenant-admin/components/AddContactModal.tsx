@@ -118,14 +118,14 @@ export default function AddContactModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Add New Contact</h2>
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
+          <h2 className="text-xl font-bold text-theme-text-primary">Add New Contact</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition"
+            className="text-theme-text-secondary hover:text-theme-text-primary transition"
             disabled={isSubmitting}
           >
             <X className="w-6 h-6" />
@@ -154,7 +154,7 @@ export default function AddContactModal({
           <div className="grid grid-cols-2 gap-4 mb-4">
             {/* First Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">
                 First Name *
               </label>
               <input
@@ -163,10 +163,10 @@ export default function AddContactModal({
                 value={formData.firstName}
                 onChange={handleInputChange}
                 placeholder="John"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-theme-text-primary ${
                   errors.firstName
                     ? "border-red-300 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
+                    : "border-theme-border focus:ring-theme-accent"
                 }`}
                 disabled={isSubmitting}
               />
@@ -177,7 +177,7 @@ export default function AddContactModal({
 
             {/* Last Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">
                 Last Name *
               </label>
               <input
@@ -186,10 +186,10 @@ export default function AddContactModal({
                 value={formData.lastName}
                 onChange={handleInputChange}
                 placeholder="Smith"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-theme-text-primary ${
                   errors.lastName
                     ? "border-red-300 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
+                    : "border-theme-border focus:ring-theme-accent"
                 }`}
                 disabled={isSubmitting}
               />
@@ -203,7 +203,7 @@ export default function AddContactModal({
           <div className="grid grid-cols-2 gap-4 mb-4">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">
                 Email *
               </label>
               <input
@@ -212,10 +212,10 @@ export default function AddContactModal({
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="john@example.com"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-theme-text-primary ${
                   errors.email
                     ? "border-red-300 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
+                    : "border-theme-border focus:ring-theme-accent"
                 }`}
                 disabled={isSubmitting}
               />
@@ -226,7 +226,7 @@ export default function AddContactModal({
 
             {/* Phone */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">
                 Phone *
               </label>
               <input
@@ -235,10 +235,10 @@ export default function AddContactModal({
                 value={formData.phone}
                 onChange={handleInputChange}
                 placeholder="+1 (555) 123-4567"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-theme-text-primary ${
                   errors.phone
                     ? "border-red-300 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
+                    : "border-theme-border focus:ring-theme-accent"
                 }`}
                 disabled={isSubmitting}
               />
@@ -252,7 +252,7 @@ export default function AddContactModal({
           <div className="grid grid-cols-2 gap-4 mb-4">
             {/* Company */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">
                 Company *
               </label>
               <input
@@ -261,10 +261,10 @@ export default function AddContactModal({
                 value={formData.company}
                 onChange={handleInputChange}
                 placeholder="Tech Corp"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-theme-text-primary ${
                   errors.company
                     ? "border-red-300 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
+                    : "border-theme-border focus:ring-theme-accent"
                 }`}
                 disabled={isSubmitting}
               />
@@ -275,7 +275,7 @@ export default function AddContactModal({
 
             {/* Title */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">
                 Job Title *
               </label>
               <input
@@ -284,10 +284,10 @@ export default function AddContactModal({
                 value={formData.title}
                 onChange={handleInputChange}
                 placeholder="CEO"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-theme-text-primary ${
                   errors.title
                     ? "border-red-300 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
+                    : "border-theme-border focus:ring-theme-accent"
                 }`}
                 disabled={isSubmitting}
               />
@@ -301,14 +301,14 @@ export default function AddContactModal({
           <div className="grid grid-cols-2 gap-4 mb-4">
             {/* Contact Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">
                 Contact Type
               </label>
               <select
                 name="type"
                 value={formData.type}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={isSubmitting}
               >
                 <option value="Customer">Customer</option>
@@ -320,14 +320,14 @@ export default function AddContactModal({
 
             {/* Segment */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">
+              <label className="block text-sm font-medium text-theme-text-primary mb-1">
                 Segment
               </label>
               <select
                 name="segment"
                 value={formData.segment}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={isSubmitting}
               >
                 <option value="VIP">VIP</option>
@@ -340,7 +340,7 @@ export default function AddContactModal({
 
           {/* Notes */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-900 mb-1">
+            <label className="block text-sm font-medium text-theme-text-primary mb-1">
               Notes
             </label>
             <textarea
@@ -349,24 +349,24 @@ export default function AddContactModal({
               onChange={handleInputChange}
               placeholder="Add any additional notes..."
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
               disabled={isSubmitting}
             />
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+          <div className="flex justify-end gap-3 pt-6 border-t border-theme-border">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
               disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Creating..." : "Create Contact"}

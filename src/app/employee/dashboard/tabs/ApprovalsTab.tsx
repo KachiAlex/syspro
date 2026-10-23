@@ -96,7 +96,7 @@ export function ApprovalsTab() {
   const formatDateTime = (d: string) => new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   if (loading) {
-    return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 text-blue-600 animate-spin" /></div>;
+    return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 text-theme-accent animate-spin" /></div>;
   }
 
   const hasMyReports = myReports.length > 0;
@@ -107,8 +107,8 @@ export function ApprovalsTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Report Approvals</h2>
-          <p className="text-sm text-gray-500">Review and act on reports submitted by your team</p>
+          <h2 className="text-lg font-semibold text-theme-text-primary">Report Approvals</h2>
+          <p className="text-sm text-theme-text-secondary">Review and act on reports submitted by your team</p>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200">
           <Clock className="w-4 h-4 text-amber-600" />
@@ -121,11 +121,11 @@ export function ApprovalsTab() {
 
       {/* Category tabs — only show if HOD has own reports */}
       {hasMyReports && (
-        <div className="flex items-center gap-2 border-b border-gray-200">
+        <div className="flex items-center gap-2 border-b border-theme-border">
           <button
             onClick={() => setActiveCategory('team')}
             className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              activeCategory === 'team' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              activeCategory === 'team' ? 'border-theme-accent text-theme-accent' : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
             }`}
           >
             <Users className="w-4 h-4" />
@@ -135,41 +135,41 @@ export function ApprovalsTab() {
           <button
             onClick={() => setActiveCategory('mine')}
             className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              activeCategory === 'mine' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              activeCategory === 'mine' ? 'border-theme-accent text-theme-accent' : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
             }`}
           >
             <FolderOpen className="w-4 h-4" />
             My Reports
-            <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-gray-100 text-gray-600">{myReports.length}</span>
+            <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-theme-muted text-theme-text-secondary">{myReports.length}</span>
           </button>
         </div>
       )}
 
       {activeReports.length === 0 ? (
         <div className="text-center py-12">
-          <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <CheckCircle className="w-7 h-7 text-gray-400" />
+          <div className="w-14 h-14 bg-theme-muted rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <CheckCircle className="w-7 h-7 text-theme-text-tertiary" />
           </div>
-          <p className="text-sm font-medium text-gray-600">
+          <p className="text-sm font-medium text-theme-text-secondary">
             {activeCategory === 'team' ? 'All caught up!' : 'No reports submitted yet'}
           </p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-theme-text-tertiary mt-1">
             {activeCategory === 'team' ? 'No reports pending your approval' : 'Your submitted reports will appear here'}
           </p>
         </div>
       ) : (
         <div className="space-y-3">
           {activeReports.map((r) => (
-            <div key={r.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div key={r.id} className="bg-theme-surface rounded-xl border border-theme-border overflow-hidden">
               {/* Header row */}
-              <div className="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-50" onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
+              <div className="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-theme-muted" onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-4 h-4 text-blue-600" />
+                    <FileText className="w-4 h-4 text-theme-accent" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{r.title || `${r.report_type} report`}</p>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <p className="text-sm font-semibold text-theme-text-primary truncate">{r.title || `${r.report_type} report`}</p>
+                    <div className="flex items-center gap-2 text-xs text-theme-text-secondary">
                       <span className="inline-flex items-center gap-1"><User className="w-3 h-3" />{r.employee_name}</span>
                       <span>·</span>
                       <span>{formatDate(r.report_date)}</span>
@@ -180,13 +180,13 @@ export function ApprovalsTab() {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 capitalize">{r.status?.replace('_', ' ')}</span>
-                  {expandedId === r.id ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  {expandedId === r.id ? <ChevronUp className="w-4 h-4 text-theme-text-tertiary" /> : <ChevronDown className="w-4 h-4 text-theme-text-tertiary" />}
                 </div>
               </div>
 
               {/* Expanded content */}
               {expandedId === r.id && (
-                <div className="border-t border-gray-100 px-4 py-4 space-y-3 bg-gray-50/50">
+                <div className="border-t border-theme-border px-4 py-4 space-y-3 bg-theme-muted">
                   <ReportSection label="Objectives" content={r.objectives} />
                   <ReportSection label="Achievements" content={r.achievements} />
                   {r.activities && <ReportSection label="Activities" content={r.activities} />}
@@ -199,33 +199,33 @@ export function ApprovalsTab() {
                   {/* KPI metrics */}
                   {r.appraisal?.kpiMetrics?.length > 0 && (
                     <div>
-                      <label className="text-xs font-semibold text-gray-700">KPI Metrics</label>
+                      <label className="text-xs font-semibold text-theme-text-primary">KPI Metrics</label>
                       <div className="mt-1 space-y-1">
                         {r.appraisal.kpiMetrics.map((m: any, i: number) => (
-                          <div key={i} className="flex items-center gap-2 text-xs bg-white rounded-lg px-2 py-1.5 border border-gray-200">
-                            <span className="font-medium text-gray-700">{m.name}</span>
-                            <span className="text-gray-400">Target: {m.target || '—'}</span>
-                            <span className="text-gray-400">Actual: {m.actual || '—'}</span>
-                            <span className={`px-1.5 py-0.5 rounded-full font-medium ${m.status === 'on_track' ? 'bg-green-100 text-green-700' : m.status === 'ahead' ? 'bg-blue-100 text-blue-700' : m.status === 'behind' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}`}>{m.status?.replace('_', ' ') || '—'}</span>
+                          <div key={i} className="flex items-center gap-2 text-xs bg-theme-surface rounded-lg px-2 py-1.5 border border-theme-border">
+                            <span className="font-medium text-theme-text-primary">{m.name}</span>
+                            <span className="text-theme-text-tertiary">Target: {m.target || '—'}</span>
+                            <span className="text-theme-text-tertiary">Actual: {m.actual || '—'}</span>
+                            <span className={`px-1.5 py-0.5 rounded-full font-medium ${m.status === 'on_track' ? 'bg-green-100 text-green-700' : m.status === 'ahead' ? 'bg-blue-100 text-blue-700' : m.status === 'behind' ? 'bg-red-100 text-red-700' : 'bg-theme-muted text-theme-text-secondary'}`}>{m.status?.replace('_', ' ') || '—'}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  <div className="text-xs text-gray-400 pt-1">Submitted: {formatDateTime(r.submitted_at)}</div>
+                  <div className="text-xs text-theme-text-tertiary pt-1">Submitted: {formatDateTime(r.submitted_at)}</div>
 
                   {/* Comment box — only for team reports (not own reports) */}
                   {activeCategory === 'team' && (
-                  <div className="pt-2 border-t border-gray-200">
-                    <label className="text-xs font-semibold text-gray-700 flex items-center gap-1 mb-1">
+                  <div className="pt-2 border-t border-theme-border">
+                    <label className="text-xs font-semibold text-theme-text-primary flex items-center gap-1 mb-1">
                       <MessageSquare className="w-3 h-3" />Comment / Reason {actionLoading === r.id && <Loader2 className="w-3 h-3 animate-spin" />}
                     </label>
                     <textarea
                       value={commentMap[r.id] || ''}
                       onChange={(e) => setCommentMap(prev => ({ ...prev, [r.id]: e.target.value }))}
                       rows={2}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500"
+                      className="w-full border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text-primary outline-none focus:border-theme-accent"
                       placeholder="Add a comment or reason (required for rejection)..."
                     />
                   </div>
@@ -233,7 +233,7 @@ export function ApprovalsTab() {
 
                   {/* Show reviewer feedback for own reports */}
                   {activeCategory === 'mine' && r.hod_comment && (
-                    <div className="pt-2 border-t border-gray-200">
+                    <div className="pt-2 border-t border-theme-border">
                       <div className="rounded-lg bg-amber-50 px-3 py-2">
                         <p className="text-xs font-semibold text-amber-700 flex items-center gap-1"><MessageSquare className="w-3 h-3" />Reviewer Feedback</p>
                         <p className="text-xs text-amber-600 mt-0.5">{r.hod_comment}</p>
@@ -281,8 +281,8 @@ function ReportSection({ label, content }: { label: string; content: string }) {
   if (!content?.trim()) return null;
   return (
     <div>
-      <label className="text-xs font-semibold text-gray-700">{label}</label>
-      <p className="text-sm text-gray-600 mt-0.5 whitespace-pre-line">{content}</p>
+      <label className="text-xs font-semibold text-theme-text-primary">{label}</label>
+      <p className="text-sm text-theme-text-secondary mt-0.5 whitespace-pre-line">{content}</p>
     </div>
   );
 }

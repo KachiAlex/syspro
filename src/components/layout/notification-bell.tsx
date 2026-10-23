@@ -92,7 +92,7 @@ export function NotificationBell() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-theme-border">
             <p className="text-sm font-semibold text-theme-text">Notifications</p>
             {unread > 0 && (
-              <button onClick={markAll} className="text-xs text-blue-500 hover:underline flex items-center gap-1">
+              <button onClick={markAll} className="text-xs text-theme-accent hover:underline flex items-center gap-1">
                 <Check className="w-3 h-3" /> Mark all read
               </button>
             )}

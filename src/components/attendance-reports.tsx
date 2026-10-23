@@ -82,11 +82,11 @@ export default function AttendanceReports({
     return (
       <div className="space-y-6">
         <div className="animate-pulse">
-          <div className="h-8 bg-slate-200 rounded w-1/4 mb-4"></div>
-          <div className="h-32 bg-slate-200 rounded mb-6"></div>
+          <div className="h-8 bg-theme-muted rounded w-1/4 mb-4"></div>
+          <div className="h-32 bg-theme-muted rounded mb-6"></div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-48 bg-slate-200 rounded"></div>
+              <div key={i} className="h-48 bg-theme-muted rounded"></div>
             ))}
           </div>
         </div>
@@ -99,14 +99,14 @@ export default function AttendanceReports({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Attendance Reports</h1>
-          <p className="text-slate-600 mt-1">Track attendance patterns across different time periods</p>
+          <h1 className="text-3xl font-bold text-theme-text-primary">Attendance Reports</h1>
+          <p className="text-theme-text-secondary mt-1">Track attendance patterns across different time periods</p>
         </div>
       </div>
 
       {/* Period Selector */}
-      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Time Period</h2>
+      <div className="rounded-3xl border border-theme-border bg-theme-surface p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-theme-text-primary mb-4">Time Period</h2>
         <div className="flex flex-wrap gap-2">
           {periodTypes.map(({ value, label, icon: Icon }) => (
             <button
@@ -115,7 +115,7 @@ export default function AttendanceReports({
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 selectedPeriod === value
                   ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+                  : 'bg-theme-muted text-theme-text-secondary hover:bg-theme-muted border border-theme-border'
               }`}
             >
               <Icon size={16} />
@@ -129,40 +129,40 @@ export default function AttendanceReports({
       {reportsData && reportsData.summaries.length > 0 && (
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="rounded-3xl border border-theme-border bg-theme-surface p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-2">
-                <Calendar className="text-blue-600" size={20} />
-                <p className="text-sm font-medium text-slate-600">Total Periods</p>
+                <Calendar className="text-theme-accent" size={20} />
+                <p className="text-sm font-medium text-theme-text-secondary">Total Periods</p>
               </div>
-              <p className="text-2xl font-bold text-slate-900">{reportsData.totalPeriods}</p>
+              <p className="text-2xl font-bold text-theme-text-primary">{reportsData.totalPeriods}</p>
             </div>
 
-            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="rounded-3xl border border-theme-border bg-theme-surface p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <TrendingUp className="text-emerald-600" size={20} />
-                <p className="text-sm font-medium text-slate-600">Avg Compliance</p>
+                <p className="text-sm font-medium text-theme-text-secondary">Avg Compliance</p>
               </div>
-              <p className="text-2xl font-bold text-slate-900">
+              <p className="text-2xl font-bold text-theme-text-primary">
                 {reportsData.summaries.reduce((acc, s) => acc + s.compliancePercentage, 0) / reportsData.summaries.length || 0}%
               </p>
             </div>
 
-            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="rounded-3xl border border-theme-border bg-theme-surface p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <Clock className="text-purple-600" size={20} />
-                <p className="text-sm font-medium text-slate-600">Total Hours</p>
+                <p className="text-sm font-medium text-theme-text-secondary">Total Hours</p>
               </div>
-              <p className="text-2xl font-bold text-slate-900">
+              <p className="text-2xl font-bold text-theme-text-primary">
                 {reportsData.summaries.reduce((acc, s) => acc + s.totalHoursWorked, 0).toFixed(1)}h
               </p>
             </div>
 
-            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="rounded-3xl border border-theme-border bg-theme-surface p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <Users className="text-amber-600" size={20} />
-                <p className="text-sm font-medium text-slate-600">Avg Confidence</p>
+                <p className="text-sm font-medium text-theme-text-secondary">Avg Confidence</p>
               </div>
-              <p className="text-2xl font-bold text-slate-900">
+              <p className="text-2xl font-bold text-theme-text-primary">
                 {reportsData.summaries.reduce((acc, s) => acc + s.averageConfidence, 0) / reportsData.summaries.length || 0}%
               </p>
             </div>
@@ -171,9 +171,9 @@ export default function AttendanceReports({
           {/* Detailed Reports */}
           <div className="space-y-4">
             {reportsData.summaries.map((summary) => (
-              <div key={summary.period} className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <div key={summary.period} className="rounded-3xl border border-theme-border bg-theme-surface p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-slate-900">{summary.periodLabel}</h3>
+                  <h3 className="text-xl font-bold text-theme-text-primary">{summary.periodLabel}</h3>
                   <div className={`px-3 py-1 rounded-full text-sm font-medium ${getComplianceColor(summary.compliancePercentage)}`}>
                     {summary.compliancePercentage}% Compliance
                   </div>
@@ -182,22 +182,22 @@ export default function AttendanceReports({
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
                   {/* Attendance Breakdown */}
                   <div className="space-y-3">
-                    <h4 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Attendance</h4>
+                    <h4 className="text-sm font-semibold text-theme-text-primary uppercase tracking-wide">Attendance</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-600">Present</span>
+                        <span className="text-sm text-theme-text-secondary">Present</span>
                         <span className="font-semibold text-emerald-600">{summary.presentDays}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-600">Absent</span>
+                        <span className="text-sm text-theme-text-secondary">Absent</span>
                         <span className="font-semibold text-red-600">{summary.absentDays}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-600">Leave</span>
-                        <span className="font-semibold text-blue-600">{summary.leaveDays}</span>
+                        <span className="text-sm text-theme-text-secondary">Leave</span>
+                        <span className="font-semibold text-theme-accent">{summary.leaveDays}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-600">Training</span>
+                        <span className="text-sm text-theme-text-secondary">Training</span>
                         <span className="font-semibold text-purple-600">{summary.trainingDays}</span>
                       </div>
                     </div>
@@ -205,18 +205,18 @@ export default function AttendanceReports({
 
                   {/* Time Metrics */}
                   <div className="space-y-3">
-                    <h4 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Time</h4>
+                    <h4 className="text-sm font-semibold text-theme-text-primary uppercase tracking-wide">Time</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-600">Hours Worked</span>
-                        <span className="font-semibold text-slate-900">{summary.totalHoursWorked}h</span>
+                        <span className="text-sm text-theme-text-secondary">Hours Worked</span>
+                        <span className="font-semibold text-theme-text-primary">{summary.totalHoursWorked}h</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-600">Break Time</span>
-                        <span className="font-semibold text-slate-900">{summary.totalBreakTime}h</span>
+                        <span className="text-sm text-theme-text-secondary">Break Time</span>
+                        <span className="font-semibold text-theme-text-primary">{summary.totalBreakTime}h</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-600">Avg Confidence</span>
+                        <span className="text-sm text-theme-text-secondary">Avg Confidence</span>
                         <span className={`font-semibold ${getConfidenceColor(summary.averageConfidence)}`}>
                           {summary.averageConfidence}%
                         </span>
@@ -226,12 +226,12 @@ export default function AttendanceReports({
 
                   {/* Work Mode Distribution */}
                   <div className="space-y-3">
-                    <h4 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Work Modes</h4>
+                    <h4 className="text-sm font-semibold text-theme-text-primary uppercase tracking-wide">Work Modes</h4>
                     <div className="space-y-2">
                       {Object.entries(summary.modeDistribution).map(([mode, count]) => (
                         <div key={mode} className="flex justify-between items-center">
-                          <span className="text-sm text-slate-600">{mode}</span>
-                          <span className="font-semibold text-slate-900">{count}</span>
+                          <span className="text-sm text-theme-text-secondary">{mode}</span>
+                          <span className="font-semibold text-theme-text-primary">{count}</span>
                         </div>
                       ))}
                     </div>
@@ -239,15 +239,15 @@ export default function AttendanceReports({
 
                   {/* Period Stats */}
                   <div className="space-y-3">
-                    <h4 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Summary</h4>
+                    <h4 className="text-sm font-semibold text-theme-text-primary uppercase tracking-wide">Summary</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-600">Total Days</span>
-                        <span className="font-semibold text-slate-900">{summary.totalDays}</span>
+                        <span className="text-sm text-theme-text-secondary">Total Days</span>
+                        <span className="font-semibold text-theme-text-primary">{summary.totalDays}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-600">Present Rate</span>
-                        <span className="font-semibold text-slate-900">
+                        <span className="text-sm text-theme-text-secondary">Present Rate</span>
+                        <span className="font-semibold text-theme-text-primary">
                           {summary.totalDays > 0 ? ((summary.presentDays / summary.totalDays) * 100).toFixed(1) : 0}%
                         </span>
                       </div>
@@ -256,14 +256,14 @@ export default function AttendanceReports({
                 </div>
 
                 {/* Progress Bar */}
-                <div className="pt-4 border-t border-slate-100">
+                <div className="pt-4 border-t border-theme-border">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-700">Attendance Rate</span>
-                    <span className="text-sm text-slate-600">
+                    <span className="text-sm font-medium text-theme-text-primary">Attendance Rate</span>
+                    <span className="text-sm text-theme-text-secondary">
                       {summary.presentDays} of {summary.totalDays} days
                     </span>
                   </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2">
+                  <div className="w-full bg-theme-muted rounded-full h-2">
                     <div
                       className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${summary.totalDays > 0 ? (summary.presentDays / summary.totalDays) * 100 : 0}%` }}
@@ -278,10 +278,10 @@ export default function AttendanceReports({
 
       {/* Empty State */}
       {reportsData && reportsData.summaries.length === 0 && (
-        <div className="rounded-3xl border border-slate-100 bg-white p-12 shadow-sm text-center">
-          <Calendar size={48} className="mx-auto text-slate-400 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">No Data Available</h3>
-          <p className="text-slate-600">
+        <div className="rounded-3xl border border-theme-border bg-theme-surface p-12 shadow-sm text-center">
+          <Calendar size={48} className="mx-auto text-theme-text-secondary mb-4" />
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-2">No Data Available</h3>
+          <p className="text-theme-text-secondary">
             No attendance records found for the selected time period. Start tracking attendance to see reports here.
           </p>
         </div>

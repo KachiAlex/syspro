@@ -71,7 +71,7 @@ export default function MarketingSalesDashboard({ tenantSlug }: { tenantSlug?: s
       )}
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200 bg-theme-muted rounded-lg shadow-sm">
+      <div className="border-b border-theme-border bg-theme-muted rounded-lg shadow-sm">
         <div className="flex flex-wrap gap-0">
           {TABS.map((tab) => {
             const Icon = tab.icon;
@@ -82,8 +82,8 @@ export default function MarketingSalesDashboard({ tenantSlug }: { tenantSlug?: s
                 onClick={() => setActiveTab(tab.key)}
                 className={`flex items-center gap-2 px-6 py-4 font-medium border-b-2 transition-colors ${
                   isActive
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-900 hover:text-gray-700 hover:bg-gray-50"
+                    ? "border-theme-accent text-theme-accent"
+                    : "border-transparent text-theme-text-primary hover:text-theme-text-primary hover:bg-theme-muted"
                 }`}
               >
                 <Icon className="w-5 h-5" />

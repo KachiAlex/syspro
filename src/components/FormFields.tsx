@@ -23,7 +23,7 @@ export function FormField({
 }: FormFieldProps) {
   return (
     <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-sm font-medium text-theme-text-primary mb-1">
         {label}
         {required && <span className="text-red-600">*</span>}
       </label>
@@ -32,8 +32,8 @@ export function FormField({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          error ? "border-red-500" : "border-gray-300"
+        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent ${
+          error ? "border-red-500" : "border-theme-border"
         }`}
       />
       {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
@@ -60,15 +60,15 @@ export function FormSelect({
 }: FormSelectProps) {
   return (
     <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-sm font-medium text-theme-text-primary mb-1">
         {label}
         {required && <span className="text-red-600">*</span>}
       </label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          error ? "border-red-500" : "border-gray-300"
+        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent ${
+          error ? "border-red-500" : "border-theme-border"
         }`}
       >
         <option value="">Select an option</option>
@@ -104,7 +104,7 @@ export function FormTextarea({
 }: FormTextareaProps) {
   return (
     <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-sm font-medium text-theme-text-primary mb-1">
         {label}
         {required && <span className="text-red-600">*</span>}
       </label>
@@ -113,8 +113,8 @@ export function FormTextarea({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={rows}
-        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
-          error ? "border-red-500" : "border-gray-300"
+        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent resize-none ${
+          error ? "border-red-500" : "border-theme-border"
         }`}
       />
       {error && <p className="text-red-600 text-sm mt-1">{error}</p>}

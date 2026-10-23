@@ -109,7 +109,7 @@ export default function TaskManagerPage() {
   if (!tenantSlug) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-theme-text-tertiary" />
       </div>
     );
   }
@@ -120,14 +120,14 @@ export default function TaskManagerPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Task Manager</h1>
-            <p className="text-sm text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-theme-text-primary">Task Manager</h1>
+            <p className="text-sm text-theme-text-secondary mt-1">
               Manage and assign tasks across all projects. HODs are automatically notified when their department members are assigned.
             </p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover transition-colors"
           >
             <Plus className="w-4 h-4" />
             New Task
@@ -136,37 +136,37 @@ export default function TaskManagerPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <p className="text-xs text-gray-600">Total Tasks</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
+          <div className="bg-theme-surface border border-theme-border rounded-lg p-4">
+            <p className="text-xs text-theme-text-secondary">Total Tasks</p>
+            <p className="text-2xl font-bold text-theme-text-primary mt-1">{stats.total}</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <p className="text-xs text-gray-600">Unassigned</p>
+          <div className="bg-theme-surface border border-theme-border rounded-lg p-4">
+            <p className="text-xs text-theme-text-secondary">Unassigned</p>
             <p className="text-2xl font-bold text-amber-600 mt-1">{stats.unassigned}</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <p className="text-xs text-gray-600">In Progress</p>
-            <p className="text-2xl font-bold text-blue-600 mt-1">{stats.inProgress}</p>
+          <div className="bg-theme-surface border border-theme-border rounded-lg p-4">
+            <p className="text-xs text-theme-text-secondary">In Progress</p>
+            <p className="text-2xl font-bold text-theme-accent mt-1">{stats.inProgress}</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <p className="text-xs text-gray-600">Completed</p>
+          <div className="bg-theme-surface border border-theme-border rounded-lg p-4">
+            <p className="text-xs text-theme-text-secondary">Completed</p>
             <p className="text-2xl font-bold text-green-600 mt-1">{stats.completed}</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <p className="text-xs text-gray-600">Overdue</p>
+          <div className="bg-theme-surface border border-theme-border rounded-lg p-4">
+            <p className="text-xs text-theme-text-secondary">Overdue</p>
             <p className="text-2xl font-bold text-red-600 mt-1">{stats.overdue}</p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="bg-theme-surface border border-theme-border rounded-lg p-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Project</label>
+              <label className="block text-xs font-medium text-theme-text-primary mb-1">Project</label>
               <select
                 value={projectFilter}
                 onChange={(e) => setProjectFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary bg-theme-surface focus:outline-none focus:ring-2 focus:ring-theme-accent"
               >
                 <option value="">All Projects</option>
                 {projects.map((p) => (
@@ -175,11 +175,11 @@ export default function TaskManagerPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+              <label className="block text-xs font-medium text-theme-text-primary mb-1">Status</label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary bg-theme-surface focus:outline-none focus:ring-2 focus:ring-theme-accent"
               >
                 <option value="">All Statuses</option>
                 <option value="Todo">Todo</option>
@@ -189,11 +189,11 @@ export default function TaskManagerPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
+              <label className="block text-xs font-medium text-theme-text-primary mb-1">Priority</label>
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary bg-theme-surface focus:outline-none focus:ring-2 focus:ring-theme-accent"
               >
                 <option value="">All Priorities</option>
                 <option value="Low">Low</option>
@@ -202,15 +202,15 @@ export default function TaskManagerPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Search</label>
+              <label className="block text-xs font-medium text-theme-text-primary mb-1">Search</label>
               <div className="relative">
-                <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-2.5 w-4 h-4 text-theme-text-tertiary" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Task or assignee..."
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-10 pr-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary bg-theme-surface focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 />
               </div>
             </div>
@@ -226,42 +226,42 @@ export default function TaskManagerPage() {
         )}
 
         {/* Task table */}
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-theme-surface border border-theme-border rounded-lg overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+              <Loader2 className="w-6 h-6 animate-spin text-theme-text-tertiary" />
             </div>
           ) : filteredTasks.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-sm text-gray-500">No tasks found. Create one to get started.</p>
+              <p className="text-sm text-theme-text-secondary">No tasks found. Create one to get started.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-theme-muted border-b border-theme-border">
                   <tr>
-                    <th className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider px-4 py-3">Task</th>
-                    <th className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider px-4 py-3">Project</th>
-                    <th className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider px-4 py-3">Priority</th>
-                    <th className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider px-4 py-3">Status</th>
-                    <th className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider px-4 py-3">Assignees</th>
-                    <th className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider px-4 py-3">Due Date</th>
-                    <th className="text-right text-xs font-semibold text-gray-600 uppercase tracking-wider px-4 py-3">Actions</th>
+                    <th className="text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider px-4 py-3">Task</th>
+                    <th className="text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider px-4 py-3">Project</th>
+                    <th className="text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider px-4 py-3">Priority</th>
+                    <th className="text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider px-4 py-3">Status</th>
+                    <th className="text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider px-4 py-3">Assignees</th>
+                    <th className="text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider px-4 py-3">Due Date</th>
+                    <th className="text-right text-xs font-semibold text-theme-text-secondary uppercase tracking-wider px-4 py-3">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-theme-border">
                   {filteredTasks.map((task) => {
                     const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'Done';
                     return (
-                      <tr key={task.id} className="hover:bg-gray-50">
+                      <tr key={task.id} className="hover:bg-theme-muted">
                         <td className="px-4 py-3">
-                          <p className="text-sm font-medium text-gray-900">{task.title}</p>
+                          <p className="text-sm font-medium text-theme-text-primary">{task.title}</p>
                           {task.description && (
-                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{task.description}</p>
+                            <p className="text-xs text-theme-text-secondary mt-0.5 line-clamp-1">{task.description}</p>
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <p className="text-sm text-gray-700">{task.projectName}</p>
+                          <p className="text-sm text-theme-text-primary">{task.projectName}</p>
                         </td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -277,7 +277,7 @@ export default function TaskManagerPage() {
                             task.status === 'Done' ? 'bg-green-100 text-green-800' :
                             task.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
                             task.status === 'Review' ? 'bg-purple-100 text-purple-800' :
-                            'bg-gray-100 text-gray-700'
+                            'bg-theme-muted text-theme-text-primary'
                           }`}>
                             {task.status}
                           </span>
@@ -291,29 +291,29 @@ export default function TaskManagerPage() {
                                 </span>
                               ))}
                               {task.assignedEmployees.length > 2 && (
-                                <span className="text-xs text-gray-500 self-center">
+                                <span className="text-xs text-theme-text-secondary self-center">
                                   +{task.assignedEmployees.length - 2} more
                                 </span>
                               )}
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-400">Unassigned</span>
+                            <span className="text-xs text-theme-text-tertiary">Unassigned</span>
                           )}
                         </td>
                         <td className="px-4 py-3">
                           {task.dueDate ? (
-                            <span className={`text-xs ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-600'}`}>
+                            <span className={`text-xs ${isOverdue ? 'text-red-600 font-medium' : 'text-theme-text-secondary'}`}>
                               {new Date(task.dueDate).toLocaleDateString()}
                               {isOverdue && ' (Overdue)'}
                             </span>
                           ) : (
-                            <span className="text-xs text-gray-400">—</span>
+                            <span className="text-xs text-theme-text-tertiary">—</span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <button
                             onClick={() => openAssignModal(task)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-theme-accent border border-blue-200 rounded-lg hover:bg-theme-muted transition-colors"
                           >
                             <Users className="w-3.5 h-3.5" />
                             Assign

@@ -7,13 +7,13 @@ export default function ReportDefinitionModal({ open, onClose, definition }: { o
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-3xl rounded-xl bg-white p-6">
+      <div className="absolute inset-0 bg-theme-overlay" onClick={onClose} />
+      <div className="relative w-full max-w-3xl rounded-xl bg-theme-surface p-6">
         <div className="flex items-start justify-between">
           <h3 className="text-lg font-semibold">Report definition</h3>
-          <button onClick={onClose} className="text-sm text-slate-500">Close</button>
+          <button onClick={onClose} className="text-sm text-theme-text-tertiary">Close</button>
         </div>
-        <div className="mt-4 max-h-[60vh] overflow-auto text-xs font-mono whitespace-pre-wrap break-all p-2 bg-slate-50 rounded">
+        <div className="mt-4 max-h-[60vh] overflow-auto text-xs font-mono whitespace-pre-wrap break-all p-2 bg-theme-muted rounded">
           {typeof definition === "string" ? definition : JSON.stringify(definition, null, 2)}
         </div>
       </div>

@@ -118,13 +118,13 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Submit Project Report</h2>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-theme-surface border-b border-theme-border p-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-theme-text-primary">Submit Project Report</h2>
           <button 
             onClick={onClose} 
-            className="text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-theme-text-secondary hover:text-theme-text-primary transition-colors"
             disabled={loading}
           >
             <X className="w-6 h-6" />
@@ -143,15 +143,15 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 <FileText className="w-4 h-4 inline mr-1" />
                 Project *
               </label>
               <select
                 value={formData.projectId}
                 onChange={(e) => setFormData(prev => ({ ...prev, projectId: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                  errors.projectId ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                  errors.projectId ? 'border-red-500' : 'border-theme-border'
                 }`}
                 disabled={loading}
               >
@@ -168,7 +168,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Report Type
               </label>
               <select
@@ -177,7 +177,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
                   ...prev, 
                   reportType: e.target.value as 'daily' | 'weekly' | 'milestone' | 'issue'
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={loading}
               >
                 <option value="daily">Daily Report</option>
@@ -189,15 +189,15 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               Report Content *
             </label>
             <textarea
               value={formData.content}
               onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
               rows={4}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                errors.content ? 'border-red-500' : 'border-gray-300'
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                errors.content ? 'border-red-500' : 'border-theme-border'
               }`}
               placeholder="Describe your work, achievements, and any important updates..."
               disabled={loading}
@@ -208,7 +208,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               <TrendingUp className="w-4 h-4 inline mr-1" />
               Progress (%)
             </label>
@@ -222,7 +222,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
                 className="flex-1"
                 disabled={loading}
               />
-              <span className="text-sm font-medium text-gray-900 w-12 text-right">{formData.progress}%</span>
+              <span className="text-sm font-medium text-theme-text-primary w-12 text-right">{formData.progress}%</span>
             </div>
             {errors.progress && (
               <p className="mt-1 text-sm text-red-600">{errors.progress}</p>
@@ -230,7 +230,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               <AlertCircle className="w-4 h-4 inline mr-1" />
               Blockers/Issues
             </label>
@@ -240,14 +240,14 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
                 value={blockerInput}
                 onChange={(e) => setBlockerInput(e.target.value)}
                 onKeyPress={handleBlockerKeyPress}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="flex-1 px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                 placeholder="Enter blocker/issue and press Enter"
                 disabled={loading}
               />
               <button
                 type="button"
                 onClick={addBlocker}
-                className="px-4 py-2 bg-amber-600 text-gray-900 rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-amber-600 text-theme-text-primary rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50"
                 disabled={loading || !blockerInput.trim()}
               >
                 Add
@@ -277,7 +277,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               <CheckCircle className="w-4 h-4 inline mr-1" />
               Next Steps
             </label>
@@ -285,18 +285,18 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
               value={formData.nextSteps}
               onChange={(e) => setFormData(prev => ({ ...prev, nextSteps: e.target.value }))}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
               placeholder="What are your next steps or planned activities?"
               disabled={loading}
             />
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="bg-theme-muted rounded-lg p-4">
+            <div className="flex items-center gap-2 text-sm text-theme-text-secondary">
               <Users className="w-4 h-4" />
               <span>Submitted by: <strong>{currentUser}</strong></span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+            <div className="flex items-center gap-2 text-sm text-theme-text-secondary mt-1">
               <Calendar className="w-4 h-4" />
               <span>Date: {new Date().toLocaleDateString()}</span>
             </div>
@@ -306,14 +306,14 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Submitting...' : 'Submit Report'}

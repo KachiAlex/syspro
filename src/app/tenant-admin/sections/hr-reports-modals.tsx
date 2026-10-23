@@ -82,11 +82,11 @@ export const GenerateReportModal: React.FC<GenerateReportModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Generate HR Report</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-theme-surface border-b border-theme-border p-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-theme-text-primary">Generate HR Report</h2>
+          <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-primary">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -102,7 +102,7 @@ export const GenerateReportModal: React.FC<GenerateReportModalProps> = ({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               <FileText className="w-4 h-4 inline mr-1" />
               Report Type
             </label>
@@ -112,7 +112,7 @@ export const GenerateReportModal: React.FC<GenerateReportModalProps> = ({
                 ...prev, 
                 reportType: e.target.value as any
               }))}
-              className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+              className="bg-theme-surface w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
               disabled={loading}
             >
               <option value="workforce">Workforce Summary</option>
@@ -125,7 +125,7 @@ export const GenerateReportModal: React.FC<GenerateReportModalProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 <Calendar className="w-4 h-4 inline mr-1" />
                 Start Date *
               </label>
@@ -133,7 +133,7 @@ export const GenerateReportModal: React.FC<GenerateReportModalProps> = ({
                 type="date"
                 value={formData.startDate}
                 onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                className={`bg-white w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${ errors.startDate ? 'border-red-500' : 'border-gray-300' } text-black`}
+                className={`bg-theme-surface w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent ${ errors.startDate ? 'border-red-500' : 'border-theme-border' } text-theme-text-primary`}
                 disabled={loading}
               />
               {errors.startDate && (
@@ -142,7 +142,7 @@ export const GenerateReportModal: React.FC<GenerateReportModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 <Calendar className="w-4 h-4 inline mr-1" />
                 End Date *
               </label>
@@ -150,7 +150,7 @@ export const GenerateReportModal: React.FC<GenerateReportModalProps> = ({
                 type="date"
                 value={formData.endDate}
                 onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
-                className={`bg-white w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${ errors.endDate ? 'border-red-500' : 'border-gray-300' } text-black`}
+                className={`bg-theme-surface w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent ${ errors.endDate ? 'border-red-500' : 'border-theme-border' } text-theme-text-primary`}
                 min={formData.startDate}
                 disabled={loading}
               />
@@ -161,7 +161,7 @@ export const GenerateReportModal: React.FC<GenerateReportModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               Format
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -173,10 +173,10 @@ export const GenerateReportModal: React.FC<GenerateReportModalProps> = ({
                     value={format}
                     checked={formData.format === format}
                     onChange={(e) => setFormData(prev => ({ ...prev, format: format as any }))}
-                    className="bg-white text-blue-600 focus:ring-blue-500"
+                    className="bg-theme-surface text-theme-accent focus:ring-theme-accent"
                     disabled={loading}
                   />
-                  <span className="text-sm font-medium text-gray-900 capitalize">{format}</span>
+                  <span className="text-sm font-medium text-theme-text-primary capitalize">{format}</span>
                 </label>
               ))}
             </div>
@@ -188,10 +188,10 @@ export const GenerateReportModal: React.FC<GenerateReportModalProps> = ({
                 type="checkbox"
                 checked={formData.includeCharts}
                 onChange={(e) => setFormData(prev => ({ ...prev, includeCharts: e.target.checked }))}
-                className="bg-white text-blue-600 focus:ring-blue-500 rounded"
+                className="bg-theme-surface text-theme-accent focus:ring-theme-accent rounded"
                 disabled={loading}
               />
-              <span className="text-sm font-medium text-gray-900">Include charts and graphs</span>
+              <span className="text-sm font-medium text-theme-text-primary">Include charts and graphs</span>
             </label>
           </div>
 
@@ -199,14 +199,14 @@ export const GenerateReportModal: React.FC<GenerateReportModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Generating...' : 'Generate Report'}
@@ -262,36 +262,36 @@ export const ReportHistoryModal: React.FC<ReportHistoryModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Report History</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-theme-surface border-b border-theme-border p-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-theme-text-primary">Report History</h2>
+          <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-primary">
             <X className="w-6 h-6" />
           </button>
         </div>
 
         <div className="p-6">
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="bg-theme-surface rounded-lg border border-theme-border overflow-hidden">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-theme-muted border-b border-theme-border">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Report</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Date Range</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Generated</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Status</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary">Report</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary">Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary">Date Range</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary">Generated</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary">Status</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-theme-text-primary">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-theme-border">
                 {reports.length > 0 ? (
                   reports.map((report) => (
-                    <tr key={report.id} className="hover:bg-gray-50">
+                    <tr key={report.id} className="hover:bg-theme-muted">
                       <td className="px-4 py-3">
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{report.title}</p>
-                          <p className="text-xs text-gray-600">by {report.generatedBy}</p>
+                          <p className="text-sm font-medium text-theme-text-primary">{report.title}</p>
+                          <p className="text-xs text-theme-text-secondary">by {report.generatedBy}</p>
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -299,10 +299,10 @@ export const ReportHistoryModal: React.FC<ReportHistoryModalProps> = ({
                           {report.type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-theme-text-secondary">
                         {report.dateRange.start} to {report.dateRange.end}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-theme-text-secondary">
                         {new Date(report.generatedAt).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3">
@@ -320,7 +320,7 @@ export const ReportHistoryModal: React.FC<ReportHistoryModalProps> = ({
                             <button
                               onClick={() => handleDownload(report.id)}
                               disabled={loading === report.id}
-                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover disabled:opacity-50"
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-accent hover:text-theme-accent-hover disabled:opacity-50"
                             >
                               <Download className="w-4 h-4" />
                             </button>
@@ -338,7 +338,7 @@ export const ReportHistoryModal: React.FC<ReportHistoryModalProps> = ({
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-600">
+                    <td colSpan={6} className="px-4 py-8 text-center text-sm text-theme-text-secondary">
                       No reports found
                     </td>
                   </tr>

@@ -164,13 +164,13 @@ export default function ProjectsArchive({ tenantSlug, onRefresh }: ProjectsArchi
       {/* Header with Actions */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-2xl font-bold text-gray-900">Archived Projects</h3>
+          <h3 className="text-2xl font-bold text-theme-text-primary">Archived Projects</h3>
           <p className="text-theme-text-secondary mt-1">{archivedProjects.length} archived project(s)</p>
         </div>
         <button
           onClick={fetchArchivedProjects}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-900 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm border border-theme-border rounded-lg text-theme-text-primary hover:bg-theme-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -179,29 +179,29 @@ export default function ProjectsArchive({ tenantSlug, onRefresh }: ProjectsArchi
 
       {/* Search */}
       {archivedProjects.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-theme-muted p-4">
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-4">
           <input
             type="text"
             placeholder="Search archived projects..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+            className="w-full rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-theme-text-primary placeholder-theme-text-tertiary focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 transition"
           />
         </div>
       )}
 
       {/* Bulk Actions */}
       {filteredProjects.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-theme-muted p-4">
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={selectedProjects.size === filteredProjects.length && filteredProjects.length > 0}
                 onChange={handleSelectAll}
-                className="bg-white w-4 h-4 rounded border-gray-300 text-black"
+                className="bg-theme-surface w-4 h-4 rounded border-theme-border text-theme-text-primary"
               />
-              <span className="text-sm font-medium text-gray-900">
+              <span className="text-sm font-medium text-theme-text-primary">
                 Select All ({selectedProjects.size}/{filteredProjects.length})
               </span>
             </label>
@@ -229,12 +229,12 @@ export default function ProjectsArchive({ tenantSlug, onRefresh }: ProjectsArchi
 
       {/* Projects List */}
       {loading ? (
-        <div className="text-center py-8 text-gray-500">Loading archived projects...</div>
+        <div className="text-center py-8 text-theme-text-secondary">Loading archived projects...</div>
       ) : filteredProjects.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-12 text-center">
           <Archive className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No archived projects</h3>
-          <p className="text-gray-600">Archive completed or inactive projects to keep your workspace organized</p>
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-2">No archived projects</h3>
+          <p className="text-theme-text-secondary">Archive completed or inactive projects to keep your workspace organized</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -242,47 +242,47 @@ export default function ProjectsArchive({ tenantSlug, onRefresh }: ProjectsArchi
             const budgetUtilization = getBudgetUtilization(project.budgetSpent, project.budgetApproved);
             
             return (
-              <div key={project.id} className="rounded-lg border border-gray-200 bg-theme-muted p-6 hover:shadow-md transition">
+              <div key={project.id} className="rounded-lg border border-theme-border bg-theme-muted p-6 hover:shadow-md transition">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-3 flex-1">
                     <input
                       type="checkbox"
                       checked={selectedProjects.has(project.id)}
                       onChange={() => handleSelectProject(project.id)}
-                      className="bg-white w-4 h-4 rounded border-gray-300 mt-1 text-black"
+                      className="bg-theme-surface w-4 h-4 rounded border-theme-border mt-1 text-theme-text-primary"
                     />
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">{project.name}</h3>
-                      <p className="text-sm text-gray-600">{project.objective}</p>
+                      <h3 className="text-lg font-semibold text-theme-text-primary mb-1">{project.name}</h3>
+                      <p className="text-sm text-theme-text-secondary">{project.objective}</p>
                     </div>
                   </div>
-                  <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-900 border border-gray-200">
+                  <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-theme-muted text-theme-text-primary border border-theme-border">
                     {project.status}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                   <div>
-                    <p className="text-gray-500 text-xs mb-1">Owner</p>
-                    <p className="font-medium text-gray-900">{project.ownerName || project.owner}</p>
+                    <p className="text-theme-text-secondary text-xs mb-1">Owner</p>
+                    <p className="font-medium text-theme-text-primary">{project.ownerName || project.owner}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500 text-xs mb-1">Completed Date</p>
-                    <p className="font-medium text-gray-900">{new Date(project.completedDate).toLocaleDateString()}</p>
+                    <p className="text-theme-text-secondary text-xs mb-1">Completed Date</p>
+                    <p className="font-medium text-theme-text-primary">{new Date(project.completedDate).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500 text-xs mb-1">Budget Spent</p>
-                    <p className="font-medium text-gray-900">${project.budgetSpent.toFixed(2)}</p>
+                    <p className="text-theme-text-secondary text-xs mb-1">Budget Spent</p>
+                    <p className="font-medium text-theme-text-primary">${project.budgetSpent.toFixed(2)}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500 text-xs mb-1">Budget Utilization</p>
-                    <p className="font-medium text-gray-900">{budgetUtilization}%</p>
+                    <p className="text-theme-text-secondary text-xs mb-1">Budget Utilization</p>
+                    <p className="font-medium text-theme-text-primary">{budgetUtilization}%</p>
                   </div>
                 </div>
 
                 {/* Budget Utilization Bar */}
-                <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
-                  <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+                <div className="mb-4 rounded-lg border border-theme-border bg-theme-muted p-3">
+                  <div className="h-2 w-full rounded-full bg-theme-muted overflow-hidden">
                     <div
                       className={`h-full transition-all ${
                         budgetUtilization > 90 ? 'bg-red-500' :
@@ -298,7 +298,7 @@ export default function ProjectsArchive({ tenantSlug, onRefresh }: ProjectsArchi
                 <div className="flex gap-2">
                   <button
                     onClick={() => {}}
-                    className="flex-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100 flex items-center justify-center gap-1"
+                    className="flex-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-theme-muted flex items-center justify-center gap-1"
                     title="View project details"
                   >
                     <Eye className="w-4 h-4" />

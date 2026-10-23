@@ -112,86 +112,86 @@ export default function MaterialRequestsPage() {
   if (!tenantSlug) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 text-slate-100">
+    <div className="min-h-screen bg-theme-bg p-6 text-theme-text-primary">
       <div className="mx-auto max-w-6xl">
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Material Requests &amp; Replenishment</h1>
-            <p className="text-sm text-slate-400">Internal requisitions → PO / work order, plus reorder-level automation</p>
+            <p className="text-sm text-theme-text-secondary">Internal requisitions → PO / work order, plus reorder-level automation</p>
           </div>
           <button onClick={() => setShowCreate(true)} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium hover:bg-emerald-500">New Request</button>
         </div>
 
-        <div className="mb-4 flex gap-1 rounded-lg bg-slate-900 p-1">
+        <div className="mb-4 flex gap-1 rounded-lg bg-theme-surface p-1">
           {(["requests", "reorder"] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`rounded-md px-4 py-1.5 text-sm ${tab === t ? "bg-slate-700" : "text-slate-400 hover:text-white"}`}>
+              className={`rounded-md px-4 py-1.5 text-sm ${tab === t ? "bg-theme-elevated" : "text-theme-text-secondary hover:text-theme-text-primary"}`}>
               {t === "requests" ? "Material Requests" : "Reorder Rules"}
             </button>
           ))}
         </div>
 
-        {error && <div className="mb-4 rounded-lg bg-slate-800 p-3 text-sm text-slate-200">{error}<button onClick={() => setError("")} className="ml-2 underline">dismiss</button></div>}
+        {error && <div className="mb-4 rounded-lg bg-theme-muted p-3 text-sm text-theme-text-primary">{error}<button onClick={() => setError("")} className="ml-2 underline">dismiss</button></div>}
 
         {tab === "requests" && (
           <>
             {showCreate && (
-              <div className="mb-6 rounded-xl border border-slate-800 bg-slate-900 p-5">
+              <div className="mb-6 rounded-xl border border-theme-border bg-theme-surface p-5">
                 <div className="mb-3 grid grid-cols-3 gap-3">
                   <select value={form.requestType} onChange={(e) => setForm({ ...form, requestType: e.target.value })}
-                    className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm">
+                    className="rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm">
                     <option value="purchase">Purchase</option>
                     <option value="manufacture">Manufacture</option>
                     <option value="transfer">Transfer</option>
                   </select>
                   <input type="date" value={form.requiredBy} onChange={(e) => setForm({ ...form, requiredBy: e.target.value })}
-                    className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm" />
+                    className="rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm" />
                   <input placeholder="Notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                    className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm" />
+                    className="rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm" />
                 </div>
                 {items.map((item, idx) => (
                   <div key={idx} className="mb-2 flex gap-2">
                     <input placeholder="Product SKU" value={item.productId}
                       onChange={(e) => setItems(items.map((it, i) => i === idx ? { ...it, productId: e.target.value } : it))}
-                      className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm" />
+                      className="flex-1 rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm" />
                     <input type="number" placeholder="Qty" value={item.quantity} min={0}
                       onChange={(e) => setItems(items.map((it, i) => i === idx ? { ...it, quantity: Number(e.target.value) } : it))}
-                      className="w-28 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm" />
+                      className="w-28 rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm" />
                   </div>
                 ))}
                 <div className="flex gap-2">
                   <button onClick={() => setItems([...items, { productId: "", quantity: 1 }])}
-                    className="rounded-lg bg-slate-800 px-3 py-2 text-sm hover:bg-slate-700">+ Item</button>
+                    className="rounded-lg bg-theme-muted px-3 py-2 text-sm hover:bg-theme-elevated">+ Item</button>
                   <button onClick={create} disabled={!items.some((i) => i.productId)}
                     className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium hover:bg-emerald-500 disabled:opacity-50">Create</button>
-                  <button onClick={() => setShowCreate(false)} className="rounded-lg bg-slate-800 px-3 py-2 text-sm hover:bg-slate-700">Cancel</button>
+                  <button onClick={() => setShowCreate(false)} className="rounded-lg bg-theme-muted px-3 py-2 text-sm hover:bg-theme-elevated">Cancel</button>
                 </div>
               </div>
             )}
-            <div className="rounded-xl border border-slate-800 bg-slate-900">
+            <div className="rounded-xl border border-theme-border bg-theme-surface">
               <table className="w-full text-sm">
-                <thead className="border-b border-slate-800 text-left text-slate-400">
+                <thead className="border-b border-theme-border text-left text-theme-text-secondary">
                   <tr><th className="p-3">MR #</th><th className="p-3">Type</th><th className="p-3">Required By</th><th className="p-3">Items</th><th className="p-3">Status</th><th className="p-3"></th></tr>
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan={6} className="p-6 text-center text-slate-500">Loading…</td></tr>
+                    <tr><td colSpan={6} className="p-6 text-center text-theme-text-tertiary">Loading…</td></tr>
                   ) : requests.length === 0 ? (
-                    <tr><td colSpan={6} className="p-6 text-center text-slate-500">No material requests</td></tr>
+                    <tr><td colSpan={6} className="p-6 text-center text-theme-text-tertiary">No material requests</td></tr>
                   ) : requests.map((m) => (
-                    <tr key={m.id} className="border-b border-slate-800/50">
+                    <tr key={m.id} className="border-b border-theme-border">
                       <td className="p-3 font-mono">{m.mrNumber}</td>
                       <td className="p-3">{m.requestType}</td>
-                      <td className="p-3 text-slate-400">{m.requiredBy ? String(m.requiredBy).slice(0, 10) : "—"}</td>
+                      <td className="p-3 text-theme-text-secondary">{m.requiredBy ? String(m.requiredBy).slice(0, 10) : "—"}</td>
                       <td className="p-3">{m.itemCount}</td>
-                      <td className="p-3"><span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs">{m.status}</span></td>
+                      <td className="p-3"><span className="rounded-full bg-theme-elevated px-2 py-0.5 text-xs">{m.status}</span></td>
                       <td className="p-3">
                         <div className="flex justify-end gap-1">
                           {m.status === "draft" && <button onClick={() => act(m.id, { action: "open" })} className="rounded bg-blue-900/50 px-2 py-1 text-xs text-blue-300">Open</button>}
                           {(m.status === "open" || m.status === "partially_ordered") && m.requestType === "purchase" && (
                             <>
                               <select value={convertSupplier} onChange={(e) => setConvertSupplier(e.target.value)}
-                                className="rounded bg-slate-800 px-2 py-1 text-xs">
+                                className="rounded bg-theme-muted px-2 py-1 text-xs">
                                 <option value="">Supplier…</option>
                                 {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                               </select>
@@ -216,31 +216,31 @@ export default function MaterialRequestsPage() {
 
         {tab === "reorder" && (
           <>
-            <div className="mb-4 flex items-end gap-2 rounded-xl border border-slate-800 bg-slate-900 p-4">
+            <div className="mb-4 flex items-end gap-2 rounded-xl border border-theme-border bg-theme-surface p-4">
               <input placeholder="SKU" value={ruleForm.productSku} onChange={(e) => setRuleForm({ ...ruleForm, productSku: e.target.value })}
-                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm" />
+                className="rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm" />
               <input placeholder="Warehouse" value={ruleForm.warehouseId} onChange={(e) => setRuleForm({ ...ruleForm, warehouseId: e.target.value })}
-                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm" />
+                className="rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm" />
               <input type="number" placeholder="Reorder at" value={ruleForm.reorderLevel} min={0}
                 onChange={(e) => setRuleForm({ ...ruleForm, reorderLevel: Number(e.target.value) })}
-                className="w-28 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm" />
+                className="w-28 rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm" />
               <input type="number" placeholder="Reorder qty" value={ruleForm.reorderQuantity} min={0}
                 onChange={(e) => setRuleForm({ ...ruleForm, reorderQuantity: Number(e.target.value) })}
-                className="w-28 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm" />
+                className="w-28 rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm" />
               <button onClick={saveRule} disabled={!ruleForm.productSku}
                 className="rounded-lg bg-emerald-600 px-4 py-2 text-sm hover:bg-emerald-500 disabled:opacity-50">Save Rule</button>
-              <button onClick={runScan} className="ml-auto rounded-lg bg-blue-700 px-4 py-2 text-sm hover:bg-blue-600">Run Scan Now</button>
+              <button onClick={runScan} className="ml-auto rounded-lg bg-theme-accent px-4 py-2 text-sm hover:bg-theme-accent-hover">Run Scan Now</button>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-900">
+            <div className="rounded-xl border border-theme-border bg-theme-surface">
               <table className="w-full text-sm">
-                <thead className="border-b border-slate-800 text-left text-slate-400">
+                <thead className="border-b border-theme-border text-left text-theme-text-secondary">
                   <tr><th className="p-3">SKU</th><th className="p-3">Warehouse</th><th className="p-3 text-right">On Hand</th><th className="p-3 text-right">Reorder At</th><th className="p-3 text-right">Reorder Qty</th><th className="p-3">Type</th><th className="p-3">State</th></tr>
                 </thead>
                 <tbody>
                   {rules.length === 0 ? (
-                    <tr><td colSpan={7} className="p-6 text-center text-slate-500">No reorder rules</td></tr>
+                    <tr><td colSpan={7} className="p-6 text-center text-theme-text-tertiary">No reorder rules</td></tr>
                   ) : rules.map((r) => (
-                    <tr key={r.id} className={`border-b border-slate-800/50 ${r.belowLevel ? "bg-amber-900/10" : ""}`}>
+                    <tr key={r.id} className={`border-b border-theme-border ${r.belowLevel ? "bg-amber-900/10" : ""}`}>
                       <td className="p-3 font-mono">{r.productSku}</td>
                       <td className="p-3">{r.warehouseId}</td>
                       <td className={`p-3 text-right font-mono ${r.belowLevel ? "text-amber-400" : ""}`}>{r.currentQuantity}</td>

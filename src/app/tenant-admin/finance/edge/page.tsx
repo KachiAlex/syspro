@@ -32,7 +32,7 @@ export default function FinanceEdgePage() {
     setError(""); load(); return d;
   };
 
-  const input = "rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm";
+  const input = "rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm";
   const btn = "rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium hover:bg-emerald-500";
   const th = "p-3";
 
@@ -49,22 +49,22 @@ export default function FinanceEdgePage() {
   if (!tenantSlug) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 text-slate-100">
+    <div className="min-h-screen bg-theme-bg p-6 text-theme-text-primary">
       <div className="mx-auto max-w-5xl">
         <h1 className="mb-1 text-2xl font-bold">Finance Edge</h1>
-        <p className="mb-4 text-sm text-slate-400">Party links, advance taxes, bank-reconciliation match suggestions</p>
-        <div className="mb-4 flex gap-1 rounded-lg bg-slate-900 p-1">
+        <p className="mb-4 text-sm text-theme-text-secondary">Party links, advance taxes, bank-reconciliation match suggestions</p>
+        <div className="mb-4 flex gap-1 rounded-lg bg-theme-surface p-1">
           {TABS.map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`rounded-md px-3 py-1.5 text-sm capitalize ${tab === t ? "bg-slate-700" : "text-slate-400 hover:text-white"}`}>{t.replace("-", " ")}</button>
+              className={`rounded-md px-3 py-1.5 text-sm capitalize ${tab === t ? "bg-theme-elevated" : "text-theme-text-secondary hover:text-theme-text-primary"}`}>{t.replace("-", " ")}</button>
           ))}
         </div>
         {error && <div className="mb-4 rounded-lg bg-red-900/40 p-3 text-sm text-red-300">{error}<button onClick={() => setError("")} className="ml-2 underline">dismiss</button></div>}
-        {msg && <div className="mb-4 rounded-lg bg-slate-800 p-3 text-sm">{msg}<button onClick={() => setMsg("")} className="ml-2 underline">dismiss</button></div>}
+        {msg && <div className="mb-4 rounded-lg bg-theme-muted p-3 text-sm">{msg}<button onClick={() => setMsg("")} className="ml-2 underline">dismiss</button></div>}
 
         {tab === "party-links" && (
           <div className="space-y-4">
-            <p className="text-xs text-slate-400">Link a customer/supplier to a related party in another role (e.g. a customer who is also a supplier) so transactions can be netted or cross-referenced.</p>
+            <p className="text-xs text-theme-text-secondary">Link a customer/supplier to a related party in another role (e.g. a customer who is also a supplier) so transactions can be netted or cross-referenced.</p>
             <div className="flex flex-wrap gap-2">
               <select value={f.plPType ?? "customer"} onChange={(e) => setF({ ...f, plPType: e.target.value })} className={input}>
                 <option value="customer">Customer</option><option value="supplier">Supplier</option>
@@ -76,17 +76,17 @@ export default function FinanceEdgePage() {
               <input placeholder="Secondary code" value={f.plSCode ?? ""} onChange={(e) => setF({ ...f, plSCode: e.target.value })} className={input} />
               <button className={btn} onClick={() => post({ action: "create-link", primaryType: f.plPType, primaryId: f.plPCode, secondaryType: f.plSType, secondaryId: f.plSCode })}>Link</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Primary</th><th className={th}>Code</th><th className={th}>Secondary</th><th className={th}>Code</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Primary</th><th className={th}>Code</th><th className={th}>Secondary</th><th className={th}>Code</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.links?.map((l: any) => (
-                  <tr key={l.id} className="border-t border-slate-800/50">
+                  <tr key={l.id} className="border-t border-theme-border">
                     <td className={th}>{l.primary_party_type}</td><td className={`${th} font-mono`}>{l.primary_party_code}</td>
                     <td className={th}>{l.secondary_party_type}</td><td className={`${th} font-mono`}>{l.secondary_party_code}</td>
                     <td className={th}><button className="text-xs text-red-400" onClick={() => post({ action: "delete-link", id: l.id })}>unlink</button></td>
                   </tr>
                 ))}
-                {!data.links?.length && <tr><td colSpan={5} className="p-6 text-center text-slate-500">No party links</td></tr>}
+                {!data.links?.length && <tr><td colSpan={5} className="p-6 text-center text-theme-text-tertiary">No party links</td></tr>}
               </tbody>
             </table>
           </div>
@@ -94,7 +94,7 @@ export default function FinanceEdgePage() {
 
         {tab === "advance-taxes" && (
           <div className="space-y-4">
-            <p className="text-xs text-slate-400">Advance tax paid during the year (e.g. company income tax installments), deducted at period end.</p>
+            <p className="text-xs text-theme-text-secondary">Advance tax paid during the year (e.g. company income tax installments), deducted at period end.</p>
             <div className="flex flex-wrap gap-2">
               <input placeholder="Payment entry ID" value={f.atPay ?? ""} onChange={(e) => setF({ ...f, atPay: e.target.value })} className={input} />
               <input placeholder="Tax code" value={f.atCode ?? ""} onChange={(e) => setF({ ...f, atCode: e.target.value })} className={`${input} w-28`} />
@@ -103,17 +103,17 @@ export default function FinanceEdgePage() {
               <input placeholder="Account code" value={f.atAcct ?? ""} onChange={(e) => setF({ ...f, atAcct: e.target.value })} className={`${input} w-28`} />
               <button className={btn} onClick={() => post({ action: "add-advance-tax", paymentId: f.atPay, taxCode: f.atCode, rate: Number(f.atRate ?? 0), taxAmount: Number(f.atAmt), accountCode: f.atAcct })}>Record</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Tax Code</th><th className={th}>Rate</th><th className={th}>Amount</th><th className={th}>Payment</th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Tax Code</th><th className={th}>Rate</th><th className={th}>Amount</th><th className={th}>Payment</th></tr></thead>
               <tbody>
                 {data.taxes?.map((t: any) => (
-                  <tr key={t.id} className="border-t border-slate-800/50">
+                  <tr key={t.id} className="border-t border-theme-border">
                     <td className={th}>{t.tax_code}</td><td className={th}>{t.rate}%</td>
                     <td className={th}>{Number(t.tax_amount).toLocaleString()}</td>
                     <td className={`${th} font-mono text-xs`}>{String(t.payment_id).slice(0, 14)}</td>
                   </tr>
                 ))}
-                {!data.taxes?.length && <tr><td colSpan={4} className="p-6 text-center text-slate-500">No advance taxes recorded</td></tr>}
+                {!data.taxes?.length && <tr><td colSpan={4} className="p-6 text-center text-theme-text-tertiary">No advance taxes recorded</td></tr>}
               </tbody>
             </table>
           </div>
@@ -121,21 +121,21 @@ export default function FinanceEdgePage() {
 
         {tab === "bank-rec-match" && (
           <div className="space-y-4">
-            <p className="text-xs text-slate-400">Auto-match suggestions: unreconciled bank-statement lines paired with book entries by amount ± date proximity and description similarity.</p>
+            <p className="text-xs text-theme-text-secondary">Auto-match suggestions: unreconciled bank-statement lines paired with book entries by amount ± date proximity and description similarity.</p>
             <div className="flex gap-2">
               <input placeholder="Reconciliation session ID" value={f.brSession ?? ""} onChange={(e) => setF({ ...f, brSession: e.target.value })} className={`${input} flex-1`} />
               <button className={btn} onClick={loadSuggestions}>Suggest Matches</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Bank line</th><th className={th}>Amount</th><th className={th}>Suggested book entry</th><th className={th}>Apply</th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Bank line</th><th className={th}>Amount</th><th className={th}>Suggested book entry</th><th className={th}>Apply</th></tr></thead>
               <tbody>
                 {data.suggestions?.map((s: any, i: number) => (
-                  <tr key={i} className="border-t border-slate-800/50">
+                  <tr key={i} className="border-t border-theme-border">
                     <td className={`${th} max-w-[260px] truncate`}>{s.bankItem?.description ?? s.bankItem?.id}</td>
                     <td className={th}>{Number(s.amount ?? 0).toLocaleString()}</td>
                     <td className={`${th} max-w-[260px] truncate`}>{s.bookItem?.description ?? "—"}</td>
                     <td className={th}>
-                      <button className="rounded bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700"
+                      <button className="rounded bg-theme-muted px-2 py-1 text-xs hover:bg-theme-elevated"
                         onClick={async () => {
                           const res = await fetch("/api/finance/edge", {
                             method: "POST", headers: { "Content-Type": "application/json" },
@@ -146,7 +146,7 @@ export default function FinanceEdgePage() {
                     </td>
                   </tr>
                 ))}
-                {!data.suggestions?.length && <tr><td colSpan={4} className="p-6 text-center text-slate-500">Enter a session ID and run suggestions</td></tr>}
+                {!data.suggestions?.length && <tr><td colSpan={4} className="p-6 text-center text-theme-text-tertiary">Enter a session ID and run suggestions</td></tr>}
               </tbody>
             </table>
           </div>
@@ -154,7 +154,7 @@ export default function FinanceEdgePage() {
 
         {tab === "ledger-bisect" && (
           <div className="space-y-4">
-            <p className="text-xs text-slate-400">Recompute an account&apos;s running balance and locate where it diverges from the expected closing — surfaces duplicate lines, journal-number gaps, and unbalanced entries.</p>
+            <p className="text-xs text-theme-text-secondary">Recompute an account&apos;s running balance and locate where it diverges from the expected closing — surfaces duplicate lines, journal-number gaps, and unbalanced entries.</p>
             <div className="flex flex-wrap gap-2">
               <input placeholder="Account code" value={f.bxAcct ?? ""} onChange={(e) => setF({ ...f, bxAcct: e.target.value })} className={input} />
               <input type="number" placeholder="Expected closing" value={f.bxExp ?? ""} onChange={(e) => setF({ ...f, bxExp: e.target.value })} className={`${input} w-36`} />
@@ -182,11 +182,11 @@ export default function FinanceEdgePage() {
                   </div>
                 </div>
                 {data.bisect.anomalies?.length > 0 && (
-                  <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-                    <thead className="text-left text-slate-400"><tr><th className={th}>Kind</th><th className={th}>Entry</th><th className={th}>Date</th><th className={th}>Detail</th></tr></thead>
+                  <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+                    <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Kind</th><th className={th}>Entry</th><th className={th}>Date</th><th className={th}>Detail</th></tr></thead>
                     <tbody>
                       {data.bisect.anomalies.map((a: any, i: number) => (
-                        <tr key={i} className="border-t border-slate-800/50">
+                        <tr key={i} className="border-t border-theme-border">
                           <td className={th}><span className="rounded bg-amber-900/50 px-2 py-0.5 text-xs">{a.kind}</span></td>
                           <td className={`${th} font-mono text-xs`}>{a.entryNumber ?? String(a.entryId ?? "").slice(0, 8)}</td>
                           <td className={th}>{a.postingDate ? String(a.postingDate).slice(0, 10) : "—"}</td>
@@ -196,15 +196,15 @@ export default function FinanceEdgePage() {
                     </tbody>
                   </table>
                 )}
-                <details className="rounded-xl border border-slate-800 bg-slate-900 p-3 text-xs">
-                  <summary className="cursor-pointer text-slate-400">Running-balance checkpoints ({data.bisect.checkpoint?.length ?? 0})</summary>
+                <details className="rounded-xl border border-theme-border bg-theme-surface p-3 text-xs">
+                  <summary className="cursor-pointer text-theme-text-secondary">Running-balance checkpoints ({data.bisect.checkpoint?.length ?? 0})</summary>
                   <div className="mt-2 max-h-64 overflow-auto font-mono">
                     {data.bisect.checkpoint?.map((c: any) => (
-                      <div key={c.entryId} className="flex gap-4 border-b border-slate-800/40 py-1">
-                        <span className="w-24 text-slate-500">{String(c.postingDate).slice(0, 10)}</span>
+                      <div key={c.entryId} className="flex gap-4 border-b border-theme-border/40 py-1">
+                        <span className="w-24 text-theme-text-tertiary">{String(c.postingDate).slice(0, 10)}</span>
                         <span className="w-16">{c.entryNumber}</span>
                         <span className="w-24 text-right">{(c.debit - c.credit).toLocaleString()}</span>
-                        <span className="w-28 text-right text-slate-300">{Number(c.runningBalance).toLocaleString()}</span>
+                        <span className="w-28 text-right text-theme-text-primary">{Number(c.runningBalance).toLocaleString()}</span>
                       </div>
                     ))}
                   </div>

@@ -7,7 +7,7 @@ import { AlertCircle, CheckCircle2, Loader2, Plus, Search } from "lucide-react";
 const fmt = (n: number) =>
   `₦${Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
 
-const inputCls = "rounded bg-slate-800 px-3 py-2 text-sm w-full";
+const inputCls = "rounded bg-theme-muted px-3 py-2 text-sm w-full";
 const btnCls = "flex items-center gap-1.5 rounded bg-sky-600 px-3 py-1.5 text-sm hover:bg-sky-500 disabled:opacity-50";
 
 type Tab = "templates" | "rules" | "withholding" | "shipping" | "resolve";
@@ -56,15 +56,15 @@ export default function TaxEnginePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Tax Engine</h1>
-          <p className="text-sm text-slate-400">Tax templates, resolution rules, withholding (WHT/TDS), and shipping charges.</p>
+          <p className="text-sm text-theme-text-secondary">Tax templates, resolution rules, withholding (WHT/TDS), and shipping charges.</p>
         </div>
-        {loading && <Loader2 className="h-5 w-5 animate-spin text-slate-400" />}
+        {loading && <Loader2 className="h-5 w-5 animate-spin text-theme-text-secondary" />}
       </div>
 
-      <div className="flex gap-1 border-b border-slate-800">
+      <div className="flex gap-1 border-b border-theme-border">
         {(["templates", "rules", "withholding", "shipping", "resolve"] as Tab[]).map((t) => (
           <button key={t} onClick={() => { setTab(t); setError(null); setMsg(null); }}
-            className={`px-3 py-2 text-sm capitalize ${tab === t ? "border-b-2 border-sky-500 text-sky-400" : "text-slate-400 hover:text-slate-200"}`}>
+            className={`px-3 py-2 text-sm capitalize ${tab === t ? "border-b-2 border-sky-500 text-sky-400" : "text-theme-text-secondary hover:text-theme-text-primary"}`}>
             {t === "resolve" ? "Test Resolve" : t}
           </button>
         ))}
@@ -89,7 +89,7 @@ function TemplatesTab({ templates, post, busy, reload }: any) {
   const total = lines.reduce((s, l) => s + (Number(l.rate) || 0), 0);
   return (
     <div className="space-y-4">
-      <div className="rounded border border-slate-800 p-4 space-y-3">
+      <div className="rounded border border-theme-border p-4 space-y-3">
         <div className="font-medium text-sm">New Tax Template</div>
         <div className="flex gap-2">
           <input className={`${inputCls} w-64`} placeholder="Name (e.g. VAT 7.5%)" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -105,12 +105,12 @@ function TemplatesTab({ templates, post, busy, reload }: any) {
               onChange={(e) => setLines(lines.map((x, j) => (j === i ? { ...x, rate: e.target.value } : x)))} />
             <input className={`${inputCls} w-36`} placeholder="Account code" value={l.accountCode}
               onChange={(e) => setLines(lines.map((x, j) => (j === i ? { ...x, accountCode: e.target.value } : x)))} />
-            <button className="text-slate-400 hover:text-rose-400" onClick={() => setLines(lines.filter((_, j) => j !== i))}>×</button>
+            <button className="text-theme-text-secondary hover:text-rose-400" onClick={() => setLines(lines.filter((_, j) => j !== i))}>×</button>
           </div>
         ))}
         <div className="flex gap-3 items-center">
           <button className="text-xs text-sky-400" onClick={() => setLines([...lines, { description: "", rate: "", accountCode: "" }])}>+ Add line</button>
-          <span className="text-xs text-slate-400">Total rate: {total}%</span>
+          <span className="text-xs text-theme-text-secondary">Total rate: {total}%</span>
         </div>
         <button className={btnCls} disabled={busy || !form.name || !lines.length}
           onClick={async () => {
@@ -121,7 +121,7 @@ function TemplatesTab({ templates, post, busy, reload }: any) {
         </button>
       </div>
 
-      <div className="rounded border border-slate-800 p-4 space-y-3">
+      <div className="rounded border border-theme-border p-4 space-y-3">
         <div className="font-medium text-sm">Map Item → Template</div>
         <div className="flex gap-2 items-end">
           <input className={`${inputCls} w-56`} placeholder="Item code" value={itemMap.item} onChange={(e) => setItemMap({ ...itemMap, item: e.target.value })} />
@@ -137,18 +137,18 @@ function TemplatesTab({ templates, post, busy, reload }: any) {
       </div>
 
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-slate-400 border-b border-slate-800">
+        <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border">
           <th className="py-2 pr-3">Name</th><th className="py-2 pr-3">Direction</th><th className="py-2">Lines</th>
         </tr></thead>
         <tbody>
           {templates.map((t: any) => (
-            <tr key={t.id} className="border-b border-slate-800/60">
+            <tr key={t.id} className="border-b border-theme-border/60">
               <td className="py-2 pr-3">{t.name}</td>
               <td className="py-2 pr-3 capitalize">{t.direction}</td>
               <td className="py-2 font-mono text-xs">{(t.lines ?? []).map((l: any) => `${l.description ?? "tax"} ${l.rate}%${l.accountCode ? ` → ${l.accountCode}` : ""}`).join(" · ")}</td>
             </tr>
           ))}
-          {!templates.length && <tr><td colSpan={3} className="py-6 text-center text-slate-500">No tax templates</td></tr>}
+          {!templates.length && <tr><td colSpan={3} className="py-6 text-center text-theme-text-tertiary">No tax templates</td></tr>}
         </tbody>
       </table>
     </div>
@@ -162,8 +162,8 @@ function RulesTab({ templates, post, busy }: any) {
   });
   return (
     <div className="space-y-4 max-w-3xl">
-      <p className="text-sm text-slate-400">Rules decide which template applies — priority desc, then most-specific match wins.</p>
-      <div className="rounded border border-slate-800 p-4 space-y-3">
+      <p className="text-sm text-theme-text-secondary">Rules decide which template applies — priority desc, then most-specific match wins.</p>
+      <div className="rounded border border-theme-border p-4 space-y-3">
         <div className="grid gap-2 sm:grid-cols-3">
           <input className={inputCls} placeholder="Rule name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <input className={inputCls} placeholder="Priority" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} />
@@ -204,19 +204,19 @@ function WithholdingTab({ rows, post, busy, reload }: any) {
       <div className="space-y-3">
         <div className="font-medium text-sm">Withholding Categories (WHT/TDS)</div>
         <table className="w-full text-sm">
-          <thead><tr className="text-left text-slate-400 border-b border-slate-800"><th className="py-2 pr-3">Name</th><th className="py-2 pr-3">Account</th><th className="py-2">Rates</th></tr></thead>
+          <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border"><th className="py-2 pr-3">Name</th><th className="py-2 pr-3">Account</th><th className="py-2">Rates</th></tr></thead>
           <tbody>
             {rows.map((r: any) => (
-              <tr key={r.id} className="border-b border-slate-800/60">
+              <tr key={r.id} className="border-b border-theme-border/60">
                 <td className="py-2 pr-3">{r.name}</td>
                 <td className="py-2 pr-3 font-mono">{r.account_code}</td>
                 <td className="py-2 font-mono text-xs">{(r.rates ?? []).map((x: any) => `${x.rate}%${x.cumulativeThreshold ? ` cum>${fmt(x.cumulativeThreshold)}` : ""}`).join(" · ")}</td>
               </tr>
             ))}
-            {!rows.length && <tr><td colSpan={3} className="py-4 text-center text-slate-500">None</td></tr>}
+            {!rows.length && <tr><td colSpan={3} className="py-4 text-center text-theme-text-tertiary">None</td></tr>}
           </tbody>
         </table>
-        <div className="rounded border border-slate-800 p-4 space-y-3">
+        <div className="rounded border border-theme-border p-4 space-y-3">
           <div className="flex gap-2">
             <input className={`${inputCls} w-56`} placeholder="Category name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <input className={`${inputCls} w-36`} placeholder="Account" value={form.accountCode} onChange={(e) => setForm({ ...form, accountCode: e.target.value })} />
@@ -229,7 +229,7 @@ function WithholdingTab({ rows, post, busy, reload }: any) {
                 onChange={(e) => setRates(rates.map((x, j) => (j === i ? { ...x, singleThreshold: e.target.value } : x)))} />
               <input className={`${inputCls} w-36`} placeholder="Cum. threshold" value={r.cumulativeThreshold}
                 onChange={(e) => setRates(rates.map((x, j) => (j === i ? { ...x, cumulativeThreshold: e.target.value } : x)))} />
-              <button className="text-slate-400 hover:text-rose-400" onClick={() => setRates(rates.filter((_, j) => j !== i))}>×</button>
+              <button className="text-theme-text-secondary hover:text-rose-400" onClick={() => setRates(rates.filter((_, j) => j !== i))}>×</button>
             </div>
           ))}
           <button className="text-xs text-sky-400" onClick={() => setRates([...rates, { rate: "", singleThreshold: "", cumulativeThreshold: "" }])}>+ Add rate</button>
@@ -263,7 +263,7 @@ function WithholdingTab({ rows, post, busy, reload }: any) {
           onClick={async () => { const r = await post({ action: "compute-withholding", ...calc, taxableAmount: Number(calc.taxableAmount) }); if (r) setCalcResult(r); }}>
           Compute
         </button>
-        {calcResult && <pre className="rounded bg-slate-800 p-3 text-xs overflow-auto">{JSON.stringify(calcResult, null, 2)}</pre>}
+        {calcResult && <pre className="rounded bg-theme-muted p-3 text-xs overflow-auto">{JSON.stringify(calcResult, null, 2)}</pre>}
       </div>
     </div>
   );
@@ -307,7 +307,7 @@ function ShippingTab({ post, busy }: any) {
             <Search className="h-3.5 w-3.5" /> Resolve
           </button>
         </div>
-        {testResult !== null && <pre className="rounded bg-slate-800 p-3 text-xs overflow-auto">{JSON.stringify(testResult, null, 2)}</pre>}
+        {testResult !== null && <pre className="rounded bg-theme-muted p-3 text-xs overflow-auto">{JSON.stringify(testResult, null, 2)}</pre>}
       </div>
     </div>
   );
@@ -332,7 +332,7 @@ function ResolveTab({ tenantSlug }: { tenantSlug: string }) {
   };
   return (
     <div className="space-y-4 max-w-2xl">
-      <p className="text-sm text-slate-400">Dry-run template resolution for a transaction context.</p>
+      <p className="text-sm text-theme-text-secondary">Dry-run template resolution for a transaction context.</p>
       <div className="flex flex-wrap gap-2">
         <select className={`${inputCls} w-36`} value={form.direction} onChange={(e) => setForm({ ...form, direction: e.target.value })}>
           <option value="sales">Sales</option><option value="purchase">Purchase</option>
@@ -343,7 +343,7 @@ function ResolveTab({ tenantSlug }: { tenantSlug: string }) {
         <button className={btnCls} disabled={busy} onClick={run}><Search className="h-3.5 w-3.5" /> Resolve</button>
       </div>
       {error && <div className="text-rose-400 text-sm">{error}</div>}
-      {result && <pre className="rounded bg-slate-800 p-3 text-xs overflow-auto">{JSON.stringify(result, null, 2)}</pre>}
+      {result && <pre className="rounded bg-theme-muted p-3 text-xs overflow-auto">{JSON.stringify(result, null, 2)}</pre>}
     </div>
   );
 }

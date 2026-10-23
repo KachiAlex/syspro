@@ -27,10 +27,10 @@ export function FormButton({
     "inline-flex items-center justify-center gap-2 rounded-full font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
   const variantClasses: Record<NonNullable<FormButtonProps["variant"]>, string> = {
-    primary: "bg-slate-900 text-white shadow-sm hover:bg-slate-800 focus-visible:outline-slate-400",
-    secondary: "border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900 focus-visible:outline-slate-300",
+    primary: "bg-theme-surface text-theme-text-primary shadow-sm hover:bg-theme-muted focus-visible:outline-theme-border",
+    secondary: "border border-theme-border bg-theme-surface text-theme-text-secondary hover:border-theme-border hover:text-theme-text-primary focus-visible:outline-slate-300",
     danger: "bg-rose-600 text-white shadow-sm hover:bg-rose-500 focus-visible:outline-rose-500",
-    success: "bg-emerald-500 text-slate-900 shadow-sm hover:bg-emerald-400 focus-visible:outline-emerald-500",
+    success: "bg-emerald-500 text-theme-text-primary shadow-sm hover:bg-emerald-400 focus-visible:outline-emerald-500",
   };
 
   const sizeClasses: Record<NonNullable<FormButtonProps["size"]>, string> = {

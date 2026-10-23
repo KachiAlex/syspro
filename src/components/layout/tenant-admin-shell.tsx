@@ -199,80 +199,80 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
         >
           <div className="flex items-start justify-center pt-20">
             <div
-              className="bg-white rounded-[14px] border border-slate-200 shadow-2xl w-full max-w-2xl mx-4"
+              className="bg-theme-surface rounded-[14px] border border-theme-border shadow-2xl w-full max-w-2xl mx-4"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4">
                 <div className="flex items-center gap-3 mb-4">
-                  <Search className="w-5 h-5 text-gray-500" />
+                  <Search className="w-5 h-5 text-theme-text-secondary" />
                   <input
                     type="text"
                     placeholder="Search anything..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 px-3 py-2 text-lg border-0 outline-none bg-transparent text-black placeholder-gray-500"
+                    className="flex-1 px-3 py-2 text-lg border-0 outline-none bg-transparent text-theme-text-primary placeholder-theme-text-tertiary"
                     autoFocus
                   />
                   <button
                     onClick={() => setSearchOpen(false)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 hover:bg-theme-muted rounded-lg transition-colors"
                   >
-                    <X className="w-4 h-4 text-gray-500" />
+                    <X className="w-4 h-4 text-theme-text-secondary" />
                   </button>
                 </div>
-                <div className="text-xs text-gray-500 mb-2">
-                  Press <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs text-gray-500 border border-gray-200">Ctrl</kbd> + <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs text-gray-500 border border-gray-200">K</kbd> to open search
+                <div className="text-xs text-theme-text-secondary mb-2">
+                  Press <kbd className="px-1 py-0.5 bg-theme-muted rounded text-xs text-theme-text-secondary border border-theme-border">Ctrl</kbd> + <kbd className="px-1 py-0.5 bg-theme-muted rounded text-xs text-theme-text-secondary border border-theme-border">K</kbd> to open search
                 </div>
                 {/* Search Results */}
-                <div className="border-t border-slate-200 pt-2 max-h-80 overflow-y-auto">
+                <div className="border-t border-theme-border pt-2 max-h-80 overflow-y-auto">
                   {searchHits.length > 0 && (
                     <div className="py-2">
-                      <p className="text-xs text-gray-500 px-2 mb-1">Records</p>
+                      <p className="text-xs text-theme-text-secondary px-2 mb-1">Records</p>
                       {searchHits.map((hit) => (
                         <Link
                           key={`${hit.entity}-${hit.id}`}
                           href={hit.href}
                           onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 transition-colors group"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-theme-muted transition-colors group"
                         >
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 w-16 shrink-0">{hit.entity}</span>
-                          <span className="text-sm text-black">{hit.title}</span>
-                          {hit.subtitle && <span className="text-xs text-gray-400 truncate">{hit.subtitle}</span>}
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-theme-text-tertiary w-16 shrink-0">{hit.entity}</span>
+                          <span className="text-sm text-theme-text-primary">{hit.title}</span>
+                          {hit.subtitle && <span className="text-xs text-theme-text-tertiary truncate">{hit.subtitle}</span>}
                         </Link>
                       ))}
                     </div>
                   )}
                   {filteredLinks.length > 0 ? (
                     <div className="py-2">
-                      <p className="text-xs text-gray-500 px-2 mb-1">Quick Links</p>
+                      <p className="text-xs text-theme-text-secondary px-2 mb-1">Quick Links</p>
                       {filteredLinks.map((link) => (
                         <Link
                           key={link.href}
                           href={link.href}
                           onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 transition-colors group"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-theme-muted transition-colors group"
                         >
-                          <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-blue-600" />
-                          <span className="text-sm text-black">{link.label}</span>
+                          <ArrowRight className="w-4 h-4 text-theme-text-secondary group-hover:text-theme-accent" />
+                          <span className="text-sm text-theme-text-primary">{link.label}</span>
                         </Link>
                       ))}
                     </div>
                   ) : searchQuery && searchHits.length === 0 ? (
-                    <p className="text-sm text-gray-500 text-center py-4">
+                    <p className="text-sm text-theme-text-secondary text-center py-4">
                       No results for &quot;{searchQuery}&quot;
                     </p>
                   ) : (
                     <div className="py-2">
-                      <p className="text-xs text-gray-500 px-2 mb-1">Quick Links</p>
+                      <p className="text-xs text-theme-text-secondary px-2 mb-1">Quick Links</p>
                       {QUICK_LINKS.slice(0, 5).map((link) => (
                         <Link
                           key={link.href}
                           href={link.href}
                           onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 transition-colors group"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-theme-muted transition-colors group"
                         >
-                          <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-blue-600" />
-                          <span className="text-sm text-black">{link.label}</span>
+                          <ArrowRight className="w-4 h-4 text-theme-text-secondary group-hover:text-theme-accent" />
+                          <span className="text-sm text-theme-text-primary">{link.label}</span>
                         </Link>
                       ))}
                     </div>
@@ -475,7 +475,7 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
           <div className="p-4 sm:p-6 lg:p-8">
             {perms.loading ? (
               <div className="flex items-center justify-center h-full min-h-[50vh]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-theme-accent"></div>
               </div>
             ) : allowed ? (
               <>
@@ -483,9 +483,9 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
                 {children}
               </>
             ) : (
-              <div className="p-8 bg-white rounded-xl border border-gray-200 max-w-xl">
-                <h2 className="text-lg font-semibold text-gray-900">Access Denied</h2>
-                <p className="text-sm text-gray-600 mt-2">You do not have permission to view this dashboard.</p>
+              <div className="p-8 bg-theme-surface rounded-xl border border-theme-border max-w-xl">
+                <h2 className="text-lg font-semibold text-theme-text-primary">Access Denied</h2>
+                <p className="text-sm text-theme-text-secondary mt-2">You do not have permission to view this dashboard.</p>
               </div>
             )}
           </div>

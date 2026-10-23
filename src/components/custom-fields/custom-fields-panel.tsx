@@ -74,17 +74,17 @@ export function CustomFieldsPanel({
   const set = (name: string, v: any) => setValues((prev) => ({ ...prev, [name]: v }));
 
   if (loading) {
-    return <div className="py-3 flex justify-center"><Loader2 className="w-4 h-4 animate-spin text-slate-400" /></div>;
+    return <div className="py-3 flex justify-center"><Loader2 className="w-4 h-4 animate-spin text-theme-text-secondary" /></div>;
   }
   if (!defs.length) return null;
 
   const light = variant === "light";
   const inputCls = light
-    ? "w-full px-2 py-1.5 rounded border border-gray-300 text-sm text-gray-900 bg-white"
-    : "w-full px-2 py-1.5 rounded bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC]";
-  const borderCls = light ? "border-gray-200" : "border-slate-700";
-  const labelCls = light ? "text-gray-500" : "text-slate-400";
-  const textCls = light ? "text-gray-700" : "text-slate-300";
+    ? "w-full px-2 py-1.5 rounded border border-theme-border text-sm text-theme-text-primary bg-theme-surface"
+    : "w-full px-2 py-1.5 rounded bg-theme-surface border border-theme-border text-sm text-theme-text-primary";
+  const borderCls = light ? "border-theme-border" : "border-theme-border";
+  const labelCls = light ? "text-theme-text-secondary" : "text-theme-text-secondary";
+  const textCls = light ? "text-theme-text-primary" : "text-theme-text-primary";
 
   return (
     <div className={`border-t ${borderCls} mt-4 pt-4`}>

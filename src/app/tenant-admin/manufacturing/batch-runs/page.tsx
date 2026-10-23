@@ -144,7 +144,7 @@ export default function BatchRunsPage() {
       </table>
 
       {showNew && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
           <div className="w-full max-w-sm rounded-lg border border-theme-border bg-theme-surface p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">New production run</h2>

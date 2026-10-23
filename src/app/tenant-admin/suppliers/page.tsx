@@ -46,24 +46,24 @@ export default function SuppliersPage() {
       {!loading && !error && suppliers.length === 0 && <p>No suppliers found.</p>}
       {!loading && suppliers.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+          <table className="min-w-full bg-theme-surface border border-theme-border rounded-lg">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Contact</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Email</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Phone</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
+              <tr className="bg-theme-muted">
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Name</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Contact</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Email</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Phone</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Status</th>
               </tr>
             </thead>
             <tbody>
               {suppliers.map((supplier) => (
-                <tr key={supplier.id} className="border-t border-gray-100">
-                  <td className="px-4 py-2 text-sm text-gray-900">{supplier.name}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{supplier.contact}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{supplier.email}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{supplier.phone}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{supplier.status}</td>
+                <tr key={supplier.id} className="border-t border-theme-border">
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{supplier.name}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{supplier.contact}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{supplier.email}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{supplier.phone}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{supplier.status}</td>
                 </tr>
               ))}
             </tbody>

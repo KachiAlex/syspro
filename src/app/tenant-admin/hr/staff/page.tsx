@@ -210,12 +210,12 @@ export default function StaffPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Staff Management</h2>
+        <h2 className="text-2xl font-bold text-theme-text-primary">Staff Management</h2>
         <div className="flex items-center gap-2">
           <button
             onClick={() => handleMigrateDepartments(true)}
             disabled={migrationLoading}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted disabled:opacity-50"
             title="Scan and fix department links for existing employees"
           >
             <RefreshCw className={`w-4 h-4 ${migrationLoading ? 'animate-spin' : ''}`} />
@@ -223,7 +223,7 @@ export default function StaffPage() {
           </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
           >
             <Plus className="w-4 h-4" />
             Add Employee
@@ -231,10 +231,10 @@ export default function StaffPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-900 mb-2">Search</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-2">Search</label>
             <div className="relative">
               <Search className="absolute left-3 top-2.5 w-4 h-4 text-theme-text-tertiary" />
               <input
@@ -242,16 +242,16 @@ export default function StaffPage() {
                 placeholder="Name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
               />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-900 mb-2">Department</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-2">Department</label>
             <select
               value={departmentFilter}
               onChange={(e) => setDepartmentFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
             >
               {departments.map((dept) => (
                 <option key={dept} value={dept}>{dept}</option>
@@ -259,11 +259,11 @@ export default function StaffPage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-900 mb-2">Status</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-2">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
             >
               {statuses.map((status) => (
                 <option key={status} value={status}>{status}</option>
@@ -273,36 +273,36 @@ export default function StaffPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-theme-surface rounded-lg border border-theme-border overflow-hidden">
         <div className="overflow-x-auto">
         <table className="w-full min-w-[900px]">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-theme-muted border-b border-theme-border">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Name</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Email</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Department</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Position</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Role</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Portal</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Start Date</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900 whitespace-nowrap">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Name</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Email</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Department</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Position</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Role</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Portal</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Start Date</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-theme-text-primary whitespace-nowrap">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-theme-border">
             {paginatedEmployees.length > 0 ? (
               paginatedEmployees.map((emp) => (
-                <tr key={emp.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">{emp.name}</td>
-                  <td className="px-4 py-4 text-sm text-gray-600 whitespace-nowrap">{emp.email}</td>
-                  <td className="px-4 py-4 text-sm text-gray-600 whitespace-nowrap">{emp.department}</td>
-                  <td className="px-4 py-4 text-sm text-gray-600 whitespace-nowrap">{emp.position}</td>
+                <tr key={emp.id} className="hover:bg-theme-muted">
+                  <td className="px-4 py-4 text-sm font-medium text-theme-text-primary whitespace-nowrap">{emp.name}</td>
+                  <td className="px-4 py-4 text-sm text-theme-text-secondary whitespace-nowrap">{emp.email}</td>
+                  <td className="px-4 py-4 text-sm text-theme-text-secondary whitespace-nowrap">{emp.department}</td>
+                  <td className="px-4 py-4 text-sm text-theme-text-secondary whitespace-nowrap">{emp.position}</td>
                   <td className="px-4 py-4 text-sm whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       emp.role === 'Executive' ? 'bg-purple-100 text-purple-800' :
                       emp.role === 'Admin' ? 'bg-blue-100 text-blue-800' :
                       emp.role === 'HOD' ? 'bg-amber-100 text-amber-800' :
-                      'bg-gray-100 text-gray-800'
+                      'bg-theme-muted text-theme-text-primary'
                     }`}>
                       {emp.role}
                     </span>
@@ -311,7 +311,7 @@ export default function StaffPage() {
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       emp.status === 'Active' ? 'bg-green-100 text-green-800' :
                       emp.status === 'On Leave' ? 'bg-amber-100 text-amber-800' :
-                      emp.status === 'Inactive' ? 'bg-gray-100 text-gray-900' :
+                      emp.status === 'Inactive' ? 'bg-theme-muted text-theme-text-primary' :
                       'bg-red-100 text-red-800'
                     }`}>
                       {emp.status}
@@ -324,13 +324,13 @@ export default function StaffPage() {
                         Active
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-theme-muted text-theme-text-secondary">
                         <Lock className="w-3 h-3" />
                         Inactive
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-600 whitespace-nowrap">{emp.startDate}</td>
+                  <td className="px-4 py-4 text-sm text-theme-text-secondary whitespace-nowrap">{emp.startDate}</td>
                   <td className="px-4 py-4 text-center whitespace-nowrap">
                     <div className="flex items-center justify-center gap-2">
                       <button
@@ -338,7 +338,7 @@ export default function StaffPage() {
                           setEditingEmployee(emp);
                           setShowEditModal(true);
                         }}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800"
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-accent hover:text-blue-800"
                       >
                         <Pencil className="w-4 h-4" />
                         Edit
@@ -381,7 +381,7 @@ export default function StaffPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={9} className="px-6 py-8 text-center text-sm text-gray-600">
+                <td colSpan={9} className="px-6 py-8 text-center text-sm text-theme-text-secondary">
                   No employees found
                 </td>
               </tr>
@@ -392,15 +392,15 @@ export default function StaffPage() {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between bg-white rounded-lg border border-gray-200 px-4 py-3">
-          <div className="text-sm text-gray-600">
+        <div className="flex items-center justify-between bg-theme-surface rounded-lg border border-theme-border px-4 py-3">
+          <div className="text-sm text-theme-text-secondary">
             Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredEmployees.length)} of {filteredEmployees.length}
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg border border-theme-border hover:bg-theme-muted disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -410,8 +410,8 @@ export default function StaffPage() {
                 onClick={() => setCurrentPage(page)}
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                   page === currentPage
-                    ? 'bg-blue-600 text-white'
-                    : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
+                    ? 'bg-theme-accent text-white'
+                    : 'border border-theme-border text-theme-text-primary hover:bg-theme-muted'
                 }`}
               >
                 {page}
@@ -420,7 +420,7 @@ export default function StaffPage() {
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg border border-theme-border hover:bg-theme-muted disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -446,69 +446,69 @@ export default function StaffPage() {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-xs text-gray-600 mb-1">Total Employees</p>
-          <p className="text-2xl font-bold text-gray-900">{employees.length}</p>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
+          <p className="text-xs text-theme-text-secondary mb-1">Total Employees</p>
+          <p className="text-2xl font-bold text-theme-text-primary">{employees.length}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-xs text-gray-600 mb-1">Active</p>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
+          <p className="text-xs text-theme-text-secondary mb-1">Active</p>
           <p className="text-2xl font-bold text-green-600">{employees.filter(e => e.status === 'Active').length}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-xs text-gray-600 mb-1">On Leave</p>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
+          <p className="text-xs text-theme-text-secondary mb-1">On Leave</p>
           <p className="text-2xl font-bold text-amber-600">{employees.filter(e => e.status === 'On Leave').length}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-xs text-gray-600 mb-1">Departments</p>
-          <p className="text-2xl font-bold text-blue-600">{new Set(employees.map(e => e.department)).size}</p>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
+          <p className="text-xs text-theme-text-secondary mb-1">Departments</p>
+          <p className="text-2xl font-bold text-theme-accent">{new Set(employees.map(e => e.department)).size}</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Training & Development</h3>
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Training & Development</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {trainingSessions.length > 0 ? trainingSessions.map((session) => (
-            <div key={session.id} className="border border-gray-200 rounded-lg p-4">
+            <div key={session.id} className="border border-theme-border rounded-lg p-4">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h5 className="font-semibold text-gray-900">{session.title}</h5>
-                  <p className="text-xs text-gray-600 mt-1">{session.description}</p>
+                  <h5 className="font-semibold text-theme-text-primary">{session.title}</h5>
+                  <p className="text-xs text-theme-text-secondary mt-1">{session.description}</p>
                 </div>
                 <span className={`text-xs font-medium px-2 py-1 rounded whitespace-nowrap ${
                   session.status === 'completed' ? 'bg-green-100 text-green-800' :
                   session.status === 'ongoing' ? 'bg-blue-100 text-blue-800' :
-                  'bg-gray-100 text-gray-900'
+                  'bg-theme-muted text-theme-text-primary'
                 }`}>
                   {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
                 </span>
               </div>
               <div className="space-y-2 text-sm mb-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Instructor:</span>
-                  <span className="font-medium text-gray-900">{session.instructor}</span>
+                  <span className="text-theme-text-secondary">Instructor:</span>
+                  <span className="font-medium text-theme-text-primary">{session.instructor}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Enrollment:</span>
-                  <span className="font-medium text-gray-900">{session.enrolled}/{session.capacity}</span>
+                  <span className="text-theme-text-secondary">Enrollment:</span>
+                  <span className="font-medium text-theme-text-primary">{session.enrolled}/{session.capacity}</span>
                 </div>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${(session.enrolled / session.capacity) * 100}%` }} />
+              <div className="w-full bg-theme-muted rounded-full h-2">
+                <div className="bg-theme-accent h-2 rounded-full" style={{ width: `${(session.enrolled / session.capacity) * 100}%` }} />
               </div>
             </div>
           )) : (
-            <p className="text-sm text-gray-600">No training sessions available.</p>
+            <p className="text-sm text-theme-text-secondary">No training sessions available.</p>
           )}
         </div>
       </div>
 
       {/* Portal credentials modal */}
       {portalCredentials && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900">Portal Credentials</h3>
-              <button onClick={() => setPortalCredentials(null)} className="text-gray-400 hover:text-gray-600">
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+          <div className="bg-theme-surface rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between p-6 border-b border-theme-border">
+              <h3 className="text-lg font-bold text-theme-text-primary">Portal Credentials</h3>
+              <button onClick={() => setPortalCredentials(null)} className="text-theme-text-tertiary hover:text-theme-text-secondary">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -519,17 +519,17 @@ export default function StaffPage() {
                   Portal account activated for <strong>{portalCredentials.name}</strong>. Share these credentials securely.
                 </p>
               </div>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-2">
+              <div className="bg-theme-muted border border-theme-border rounded-lg p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600">Email</span>
-                  <span className="text-sm font-mono text-gray-900">{portalCredentials.email}</span>
+                  <span className="text-xs text-theme-text-secondary">Email</span>
+                  <span className="text-sm font-mono text-theme-text-primary">{portalCredentials.email}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600">Password</span>
-                  <span className="text-sm font-mono text-gray-900 select-all">{portalCredentials.password}</span>
+                  <span className="text-xs text-theme-text-secondary">Password</span>
+                  <span className="text-sm font-mono text-theme-text-primary select-all">{portalCredentials.password}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600">Login URL</span>
+                  <span className="text-xs text-theme-text-secondary">Login URL</span>
                   <span className="text-sm font-mono text-blue-700">/login</span>
                 </div>
               </div>
@@ -540,14 +540,14 @@ export default function StaffPage() {
                       `Login URL: /login\nEmail: ${portalCredentials.email}\nPassword: ${portalCredentials.password}`
                     );
                   }}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted"
                 >
                   <Copy className="w-4 h-4" />
                   Copy
                 </button>
                 <button
                   onClick={() => setPortalCredentials(null)}
-                  className="flex-1 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="flex-1 px-4 py-2 text-sm bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover"
                 >
                   Done
                 </button>
@@ -559,11 +559,11 @@ export default function StaffPage() {
 
       {/* Migration result modal */}
       {MigrationResult && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[80vh] flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900">Department Sync</h3>
-              <button onClick={() => setMigrationResult(null)} className="text-gray-400 hover:text-gray-600">
+        <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+          <div className="bg-theme-surface rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-theme-border">
+              <h3 className="text-lg font-bold text-theme-text-primary">Department Sync</h3>
+              <button onClick={() => setMigrationResult(null)} className="text-theme-text-tertiary hover:text-theme-text-secondary">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -593,27 +593,27 @@ export default function StaffPage() {
                     </div>
                   </div>
 
-                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <div className="border border-theme-border rounded-lg overflow-hidden">
                     <table className="w-full text-sm">
-                      <thead className="bg-gray-50 border-b border-gray-200">
+                      <thead className="bg-theme-muted border-b border-theme-border">
                         <tr>
-                          <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700">Employee</th>
-                          <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700">Old Dept ID</th>
-                          <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700">Resolved To</th>
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-theme-text-primary">Employee</th>
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-theme-text-primary">Old Dept ID</th>
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-theme-text-primary">Resolved To</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y divide-theme-border">
                         {MigrationResult.repairs.slice(0, 20).map((r: any, i: number) => (
                           <tr key={i}>
-                            <td className="px-3 py-2 text-xs text-gray-900">{r.employeeName}</td>
-                            <td className="px-3 py-2 text-xs font-mono text-gray-500 truncate max-w-[120px]">{r.oldDepartmentId}</td>
-                            <td className="px-3 py-2 text-xs text-gray-900">{r.departmentName}</td>
+                            <td className="px-3 py-2 text-xs text-theme-text-primary">{r.employeeName}</td>
+                            <td className="px-3 py-2 text-xs font-mono text-theme-text-secondary truncate max-w-[120px]">{r.oldDepartmentId}</td>
+                            <td className="px-3 py-2 text-xs text-theme-text-primary">{r.departmentName}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                     {MigrationResult.repairs.length > 20 && (
-                      <p className="px-3 py-2 text-xs text-gray-500 bg-gray-50">
+                      <p className="px-3 py-2 text-xs text-theme-text-secondary bg-theme-muted">
                         ...and {MigrationResult.repairs.length - 20} more
                       </p>
                     )}
@@ -624,13 +624,13 @@ export default function StaffPage() {
                       <button
                         onClick={() => { setMigrationResult(null); handleMigrateDepartments(false); }}
                         disabled={migrationLoading}
-                        className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        className="flex-1 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover disabled:opacity-50"
                       >
                         {migrationLoading ? 'Applying...' : 'Apply Repair'}
                       </button>
                       <button
                         onClick={() => setMigrationResult(null)}
-                        className="flex-1 px-4 py-2 text-sm border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50"
+                        className="flex-1 px-4 py-2 text-sm border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted"
                       >
                         Cancel
                       </button>
@@ -640,7 +640,7 @@ export default function StaffPage() {
                   {!MigrationResult.dryRun && (
                     <button
                       onClick={() => setMigrationResult(null)}
-                      className="w-full px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      className="w-full px-4 py-2 text-sm bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover"
                     >
                       Done
                     </button>

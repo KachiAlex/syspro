@@ -208,14 +208,14 @@ export default function CreateInvoiceModal({
   const total = calculateTotal();
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] pointer-events-auto" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto z-[10000] relative">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-[9999] pointer-events-auto" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-theme-surface rounded-lg shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto z-[10000] relative">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
-          <h2 className="text-xl font-bold text-gray-900">Create Invoice</h2>
+        <div className="flex items-center justify-between p-6 border-b border-theme-border sticky top-0 bg-theme-surface z-10">
+          <h2 className="text-xl font-bold text-theme-text-primary">Create Invoice</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition"
+            className="text-theme-text-secondary hover:text-theme-text-primary transition"
             disabled={isSubmitting}
           >
             <X className="w-6 h-6" />
@@ -241,13 +241,13 @@ export default function CreateInvoiceModal({
           )}
 
           {/* Customer Information */}
-          <div className="mb-6 pb-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="mb-6 pb-6 border-b border-theme-border">
+            <h3 className="text-lg font-semibold text-theme-text-primary mb-4">
               Customer Information
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">
+                <label className="block text-sm font-medium text-theme-text-primary mb-1">
                   Customer Name *
                 </label>
                 <input
@@ -256,10 +256,10 @@ export default function CreateInvoiceModal({
                   value={formData.customerName}
                   onChange={handleInputChange}
                   placeholder="Acme Corporation"
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-theme-text-primary ${
                     errors.customerName
                       ? "border-red-300 focus:ring-red-500"
-                      : "border-gray-300 focus:ring-blue-500"
+                      : "border-theme-border focus:ring-theme-accent"
                   }`}
                   disabled={isSubmitting}
                 />
@@ -270,7 +270,7 @@ export default function CreateInvoiceModal({
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">
+                <label className="block text-sm font-medium text-theme-text-primary mb-1">
                   Customer Code
                 </label>
                 <input
@@ -279,7 +279,7 @@ export default function CreateInvoiceModal({
                   value={formData.customerCode}
                   onChange={handleInputChange}
                   placeholder="CUST-001"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                   disabled={isSubmitting}
                 />
               </div>
@@ -287,13 +287,13 @@ export default function CreateInvoiceModal({
           </div>
 
           {/* Invoice Details */}
-          <div className="mb-6 pb-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="mb-6 pb-6 border-b border-theme-border">
+            <h3 className="text-lg font-semibold text-theme-text-primary mb-4">
               Invoice Details
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">
+                <label className="block text-sm font-medium text-theme-text-primary mb-1">
                   Invoice Number *
                 </label>
                 <input
@@ -302,10 +302,10 @@ export default function CreateInvoiceModal({
                   value={formData.invoiceNumber}
                   onChange={handleInputChange}
                   placeholder="INV-2024-001"
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-theme-text-primary ${
                     errors.invoiceNumber
                       ? "border-red-300 focus:ring-red-500"
-                      : "border-gray-300 focus:ring-blue-500"
+                      : "border-theme-border focus:ring-theme-accent"
                   }`}
                   disabled={isSubmitting}
                 />
@@ -316,7 +316,7 @@ export default function CreateInvoiceModal({
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">
+                <label className="block text-sm font-medium text-theme-text-primary mb-1">
                   Purchase Order
                 </label>
                 <input
@@ -325,12 +325,12 @@ export default function CreateInvoiceModal({
                   value={formData.purchaseOrder}
                   onChange={handleInputChange}
                   placeholder="PO-12345"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">
+                <label className="block text-sm font-medium text-theme-text-primary mb-1">
                   Issued Date *
                 </label>
                 <input
@@ -338,10 +338,10 @@ export default function CreateInvoiceModal({
                   name="issuedDate"
                   value={formData.issuedDate}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-theme-text-primary ${
                     errors.issuedDate
                       ? "border-red-300 focus:ring-red-500"
-                      : "border-gray-300 focus:ring-blue-500"
+                      : "border-theme-border focus:ring-theme-accent"
                   }`}
                   disabled={isSubmitting}
                 />
@@ -352,7 +352,7 @@ export default function CreateInvoiceModal({
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">
+                <label className="block text-sm font-medium text-theme-text-primary mb-1">
                   Due Date *
                 </label>
                 <input
@@ -360,10 +360,10 @@ export default function CreateInvoiceModal({
                   name="dueDate"
                   value={formData.dueDate}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-theme-text-primary ${
                     errors.dueDate
                       ? "border-red-300 focus:ring-red-500"
-                      : "border-gray-300 focus:ring-blue-500"
+                      : "border-theme-border focus:ring-theme-accent"
                   }`}
                   disabled={isSubmitting}
                 />
@@ -374,14 +374,14 @@ export default function CreateInvoiceModal({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">
+                <label className="block text-sm font-medium text-theme-text-primary mb-1">
                   Currency
                 </label>
                 <select
                   name="currency"
                   value={formData.currency}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                   disabled={isSubmitting}
                 >
                   <option value="₦">Nigerian Naira (₦)</option>
@@ -391,14 +391,14 @@ export default function CreateInvoiceModal({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">
+                <label className="block text-sm font-medium text-theme-text-primary mb-1">
                   Status
                 </label>
                 <select
                   name="status"
                   value={formData.status}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                   disabled={isSubmitting}
                 >
                   <option value="draft">Draft</option>
@@ -412,8 +412,8 @@ export default function CreateInvoiceModal({
           </div>
 
           {/* Line Items */}
-          <div className="mb-6 pb-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="mb-6 pb-6 border-b border-theme-border">
+            <h3 className="text-lg font-semibold text-theme-text-primary mb-4">
               Line Items
             </h3>
             {errors.lineItems && (
@@ -422,33 +422,33 @@ export default function CreateInvoiceModal({
                 <p className="text-sm text-red-800">{errors.lineItems}</p>
               </div>
             )}
-            <div className="overflow-x-auto border border-gray-200 rounded-lg mb-4">
+            <div className="overflow-x-auto border border-theme-border rounded-lg mb-4">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50">
+                <thead className="bg-theme-muted">
                   <tr>
-                    <th className="px-4 py-2 text-left font-semibold text-gray-900">
+                    <th className="px-4 py-2 text-left font-semibold text-theme-text-primary">
                       Description
                     </th>
-                    <th className="px-4 py-2 text-right font-semibold text-gray-900">
+                    <th className="px-4 py-2 text-right font-semibold text-theme-text-primary">
                       Qty
                     </th>
-                    <th className="px-4 py-2 text-right font-semibold text-gray-900">
+                    <th className="px-4 py-2 text-right font-semibold text-theme-text-primary">
                       Unit Price
                     </th>
-                    <th className="px-4 py-2 text-right font-semibold text-gray-900">
+                    <th className="px-4 py-2 text-right font-semibold text-theme-text-primary">
                       Tax %
                     </th>
-                    <th className="px-4 py-2 text-right font-semibold text-gray-900">
+                    <th className="px-4 py-2 text-right font-semibold text-theme-text-primary">
                       Amount
                     </th>
-                    <th className="px-4 py-2 text-center font-semibold text-gray-900">
+                    <th className="px-4 py-2 text-center font-semibold text-theme-text-primary">
                       Action
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {lineItems.map((item) => (
-                    <tr key={item.id} className="border-t border-gray-200">
+                    <tr key={item.id} className="border-t border-theme-border">
                       <td className="px-4 py-3">
                         <input
                           type="text"
@@ -457,7 +457,7 @@ export default function CreateInvoiceModal({
                             handleLineItemChange(item.id, "description", e.target.value)
                           }
                           placeholder="Service or item description"
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1 border border-theme-border rounded focus:outline-none focus:ring-1 focus:ring-theme-accent"
                           disabled={isSubmitting}
                         />
                       </td>
@@ -469,7 +469,7 @@ export default function CreateInvoiceModal({
                             handleLineItemChange(item.id, "quantity", e.target.value)
                           }
                           min="0"
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-right"
+                          className="w-full px-2 py-1 border border-theme-border rounded focus:outline-none focus:ring-1 focus:ring-theme-accent text-right"
                           disabled={isSubmitting}
                         />
                       </td>
@@ -482,7 +482,7 @@ export default function CreateInvoiceModal({
                           }
                           min="0"
                           step="0.01"
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-right"
+                          className="w-full px-2 py-1 border border-theme-border rounded focus:outline-none focus:ring-1 focus:ring-theme-accent text-right"
                           disabled={isSubmitting}
                         />
                       </td>
@@ -495,11 +495,11 @@ export default function CreateInvoiceModal({
                           }
                           min="0"
                           max="100"
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-right"
+                          className="w-full px-2 py-1 border border-theme-border rounded focus:outline-none focus:ring-1 focus:ring-theme-accent text-right"
                           disabled={isSubmitting}
                         />
                       </td>
-                      <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                      <td className="px-4 py-3 text-right font-semibold text-theme-text-primary">
                         {formData.currency}{" "}
                         {calculateLineItemAmount(item).toFixed(2)}
                       </td>
@@ -523,7 +523,7 @@ export default function CreateInvoiceModal({
               type="button"
               onClick={addLineItem}
               disabled={isSubmitting}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-theme-accent hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus className="w-4 h-4" />
               Add Line Item
@@ -531,11 +531,11 @@ export default function CreateInvoiceModal({
           </div>
 
           {/* Summary */}
-          <div className="mb-6 pb-6 border-b border-gray-200 flex justify-end">
+          <div className="mb-6 pb-6 border-b border-theme-border flex justify-end">
             <div className="w-full md:w-64">
               <div className="flex justify-between mb-2">
-                <span className="text-gray-600">Subtotal:</span>
-                <span className="font-medium text-gray-900">
+                <span className="text-theme-text-secondary">Subtotal:</span>
+                <span className="font-medium text-theme-text-primary">
                   {formData.currency}{" "}
                   {lineItems
                     .reduce(
@@ -547,8 +547,8 @@ export default function CreateInvoiceModal({
                 </span>
               </div>
               <div className="flex justify-between mb-3">
-                <span className="text-gray-600">Tax:</span>
-                <span className="font-medium text-gray-900">
+                <span className="text-theme-text-secondary">Tax:</span>
+                <span className="font-medium text-theme-text-primary">
                   {formData.currency}{" "}
                   {lineItems
                     .reduce(
@@ -564,9 +564,9 @@ export default function CreateInvoiceModal({
                     .toFixed(2)}
                 </span>
               </div>
-              <div className="border-t border-gray-300 pt-3 flex justify-between">
-                <span className="font-semibold text-gray-900">Total:</span>
-                <span className="text-lg font-bold text-blue-600">
+              <div className="border-t border-theme-border pt-3 flex justify-between">
+                <span className="font-semibold text-theme-text-primary">Total:</span>
+                <span className="text-lg font-bold text-theme-accent">
                   {formData.currency} {total.toFixed(2)}
                 </span>
               </div>
@@ -577,7 +577,7 @@ export default function CreateInvoiceModal({
           <div className="mb-6">
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">
+                <label className="block text-sm font-medium text-theme-text-primary mb-1">
                   Payment Terms
                 </label>
                 <input
@@ -586,12 +586,12 @@ export default function CreateInvoiceModal({
                   value={formData.paymentTerms}
                   onChange={handleInputChange}
                   placeholder="Net 30"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">
+                <label className="block text-sm font-medium text-theme-text-primary mb-1">
                   Tags (comma-separated)
                 </label>
                 <input
@@ -600,12 +600,12 @@ export default function CreateInvoiceModal({
                   value={formData.tags}
                   onChange={handleInputChange}
                   placeholder="urgent, client1, project-x"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">
+                <label className="block text-sm font-medium text-theme-text-primary mb-1">
                   Notes
                 </label>
                 <textarea
@@ -614,7 +614,7 @@ export default function CreateInvoiceModal({
                   onChange={handleInputChange}
                   placeholder="Add any additional notes or payment instructions..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                  className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                   disabled={isSubmitting}
                 />
               </div>
@@ -622,18 +622,18 @@ export default function CreateInvoiceModal({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+          <div className="flex justify-end gap-3 pt-6 border-t border-theme-border">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
               disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Creating..." : "Create Invoice"}

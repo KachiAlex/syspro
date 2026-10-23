@@ -242,12 +242,12 @@ export function SubmitExpenseModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+      <div className="w-full max-w-md rounded-xl bg-theme-surface shadow-xl border border-theme-border max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 sticky top-0 bg-white">
-          <h2 className="text-lg font-semibold text-black">Submit Expense</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-theme-text-tertiary">
+        <div className="flex items-center justify-between border-b border-theme-border px-6 py-4 sticky top-0 bg-theme-surface">
+          <h2 className="text-lg font-semibold text-theme-text-primary">Submit Expense</h2>
+          <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-tertiary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -261,14 +261,14 @@ export function SubmitExpenseModal({
           )}
 
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-black mb-2">
+            <label htmlFor="category" className="block text-sm font-medium text-theme-text-primary mb-2">
               Category
             </label>
             <select
               id="category"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value, otherCategoryDetail: "" })}
-              className="w-full rounded-lg border border-slate-200 bg-white text-black px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-theme-border bg-theme-surface text-theme-text-primary px-3 py-2 text-sm"
               disabled={loading}
             >
               {CATEGORY_GROUPS.map((grp) => (
@@ -283,7 +283,7 @@ export function SubmitExpenseModal({
 
           {formData.category === "cat_other" && (
             <div>
-              <label htmlFor="otherCategoryDetail" className="block text-sm font-medium text-black mb-2">
+              <label htmlFor="otherCategoryDetail" className="block text-sm font-medium text-theme-text-primary mb-2">
                 Specify Category
               </label>
               <input
@@ -292,7 +292,7 @@ export function SubmitExpenseModal({
                 value={formData.otherCategoryDetail}
                 onChange={(e) => setFormData({ ...formData, otherCategoryDetail: e.target.value })}
                 placeholder="Enter expense category details..."
-                className={`w-full rounded-lg border px-3 py-2 text-sm bg-white text-black ${ errors.otherCategoryDetail ? "border-red-300 bg-red-50" : "border-slate-200 bg-white" }`}
+                className={`w-full rounded-lg border px-3 py-2 text-sm bg-theme-surface text-theme-text-primary ${ errors.otherCategoryDetail ? "border-red-300 bg-red-50" : "border-theme-border bg-theme-surface" }`}
                 disabled={loading}
               />
               {errors.otherCategoryDetail && <p className="text-xs text-red-600 mt-1">{errors.otherCategoryDetail}</p>}
@@ -300,11 +300,11 @@ export function SubmitExpenseModal({
           )}
 
           <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-black mb-2">
+            <label htmlFor="amount" className="block text-sm font-medium text-theme-text-primary mb-2">
               Amount
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">₦</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-theme-text-secondary">₦</span>
               <input
                 id="amount"
                 type="text"
@@ -312,7 +312,7 @@ export function SubmitExpenseModal({
                 value={formData.amount}
                 onChange={handleAmountChange}
                 placeholder="0"
-                className={`w-full rounded-lg border pl-7 pr-3 py-2 text-sm bg-white text-black ${ errors.amount ? "border-red-300 bg-red-50" : "border-slate-200" }`}
+                className={`w-full rounded-lg border pl-7 pr-3 py-2 text-sm bg-theme-surface text-theme-text-primary ${ errors.amount ? "border-red-300 bg-red-50" : "border-theme-border" }`}
                 disabled={loading}
               />
             </div>
@@ -320,7 +320,7 @@ export function SubmitExpenseModal({
           </div>
 
           <div>
-            <label htmlFor="date" className="block text-sm font-medium text-black mb-2">
+            <label htmlFor="date" className="block text-sm font-medium text-theme-text-primary mb-2">
               Date
             </label>
             <input
@@ -328,14 +328,14 @@ export function SubmitExpenseModal({
               type="date"
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className={`w-full rounded-lg border px-3 py-2 text-sm bg-white text-black ${ errors.date ? "border-red-300 bg-red-50" : "border-slate-200" }`}
+              className={`w-full rounded-lg border px-3 py-2 text-sm bg-theme-surface text-theme-text-primary ${ errors.date ? "border-red-300 bg-red-50" : "border-theme-border" }`}
               disabled={loading}
             />
             {errors.date && <p className="text-xs text-red-600 mt-1">{errors.date}</p>}
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-black mb-2">
+            <label htmlFor="description" className="block text-sm font-medium text-theme-text-primary mb-2">
               Description
             </label>
             <textarea
@@ -344,7 +344,7 @@ export function SubmitExpenseModal({
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="What was this expense for?"
               rows={3}
-              className={`w-full rounded-lg border px-3 py-2 text-sm bg-white text-black ${ errors.description ? "border-red-300 bg-red-50" : "border-slate-200" }`}
+              className={`w-full rounded-lg border px-3 py-2 text-sm bg-theme-surface text-theme-text-primary ${ errors.description ? "border-red-300 bg-red-50" : "border-theme-border" }`}
               disabled={loading}
             />
             {errors.description && <p className="text-xs text-red-600 mt-1">{errors.description}</p>}
@@ -360,7 +360,7 @@ export function SubmitExpenseModal({
                   setFormData({ ...formData, receipt: e.target.checked });
                   if (!e.target.checked) setReceiptFile(null);
                 }}
-                className="bg-white rounded border-slate-200 text-black"
+                className="bg-theme-surface rounded border-theme-border text-theme-text-primary"
                 disabled={loading}
               />
               <label htmlFor="receipt" className="text-sm text-theme-text-tertiary">
@@ -375,14 +375,14 @@ export function SubmitExpenseModal({
                   type="file"
                   accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
                   onChange={handleFileChange}
-                  className="bg-white hidden text-black"
+                  className="bg-theme-surface hidden text-theme-text-primary"
                 />
                 {!receiptFile ? (
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className={`w-full flex items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-3 text-sm transition ${
-                      errors.receipt ? "border-red-300 bg-red-50 text-red-600" : "border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-theme-text-tertiary"
+                      errors.receipt ? "border-red-300 bg-red-50 text-red-600" : "border-theme-border hover:border-theme-accent hover:bg-theme-muted text-theme-text-tertiary"
                     }`}
                     disabled={loading}
                   >
@@ -390,13 +390,13 @@ export function SubmitExpenseModal({
                     Click to upload receipt
                   </button>
                 ) : (
-                  <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-gray-100 px-3 py-2">
-                    <FileText className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                  <div className="flex items-center gap-2 rounded-lg border border-theme-border bg-theme-muted px-3 py-2">
+                    <FileText className="w-4 h-4 text-theme-accent flex-shrink-0" />
                     <span className="text-sm text-theme-text-tertiary truncate flex-1">{receiptFile.name}</span>
                     <button
                       type="button"
                       onClick={() => { setReceiptFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
-                      className="text-gray-500 hover:text-red-600 flex-shrink-0"
+                      className="text-theme-text-secondary hover:text-red-600 flex-shrink-0"
                       disabled={loading}
                     >
                       <X className="w-4 h-4" />
@@ -410,18 +410,18 @@ export function SubmitExpenseModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4 flex gap-3 sticky bottom-0 bg-white">
+        <div className="border-t border-theme-border px-6 py-4 flex gap-3 sticky bottom-0 bg-theme-surface">
           <button
             onClick={onClose}
             disabled={loading}
-            className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-black hover:bg-gray-100 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-black hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-accent-hover disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -472,16 +472,16 @@ export function ViewExpenseModal({
     approved: "bg-green-50 text-green-600",
     rejected: "bg-red-50 text-red-600",
     pending: "bg-amber-50 text-amber-600",
-    reimbursed: "bg-blue-50 text-blue-600",
+    reimbursed: "bg-blue-50 text-theme-accent",
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+      <div className="w-full max-w-md rounded-xl bg-theme-surface shadow-xl border border-theme-border max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-black">Expense #{expense.id}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-theme-text-tertiary">
+        <div className="flex items-center justify-between border-b border-theme-border px-6 py-4">
+          <h2 className="text-lg font-semibold text-theme-text-primary">Expense #{expense.id}</h2>
+          <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-tertiary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -490,8 +490,8 @@ export function ViewExpenseModal({
         <div className="space-y-6 px-6 py-6">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-gray-500">Status</span>
-              <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusColor[expense.status.toLowerCase()] || "bg-gray-100 text-theme-text-tertiary"}`}>
+              <span className="text-xs font-medium text-theme-text-secondary">Status</span>
+              <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusColor[expense.status.toLowerCase()] || "bg-theme-muted text-theme-text-tertiary"}`}>
                 {expense.status}
               </span>
             </div>
@@ -499,55 +499,55 @@ export function ViewExpenseModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-xs font-medium text-gray-500">Category</p>
-              <p className="text-sm font-semibold text-black mt-1 capitalize">{expense.category}</p>
+              <p className="text-xs font-medium text-theme-text-secondary">Category</p>
+              <p className="text-sm font-semibold text-theme-text-primary mt-1 capitalize">{expense.category}</p>
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500">Amount</p>
-              <p className="text-sm font-semibold text-black mt-1">₦{expense.amount.toLocaleString()}</p>
+              <p className="text-xs font-medium text-theme-text-secondary">Amount</p>
+              <p className="text-sm font-semibold text-theme-text-primary mt-1">₦{expense.amount.toLocaleString()}</p>
             </div>
           </div>
 
           {expense.employee && (
             <div>
-              <p className="text-xs font-medium text-gray-500">Employee</p>
+              <p className="text-xs font-medium text-theme-text-secondary">Employee</p>
               <p className="text-sm text-theme-text-tertiary mt-1">{expense.employee}</p>
             </div>
           )}
 
           {expense.submittedDate && (
             <div>
-              <p className="text-xs font-medium text-gray-500">Submitted</p>
+              <p className="text-xs font-medium text-theme-text-secondary">Submitted</p>
               <p className="text-sm text-theme-text-tertiary mt-1">{new Date(expense.submittedDate).toLocaleDateString()}</p>
             </div>
           )}
 
           <div>
-            <p className="text-xs font-medium text-gray-500">Description</p>
+            <p className="text-xs font-medium text-theme-text-secondary">Description</p>
             <p className="text-sm text-theme-text-tertiary mt-1">{expense.description}</p>
           </div>
 
           {expense.notes && (
             <div className="rounded-lg bg-blue-50 p-3">
-              <p className="text-xs font-medium text-black">Approver Notes</p>
-              <p className="text-sm text-blue-600 mt-1">{expense.notes}</p>
+              <p className="text-xs font-medium text-theme-text-primary">Approver Notes</p>
+              <p className="text-sm text-theme-accent mt-1">{expense.notes}</p>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4 space-y-3 sticky bottom-0 bg-white">
+        <div className="border-t border-theme-border px-6 py-4 space-y-3 sticky bottom-0 bg-theme-surface">
           {expense.status === "pending" && (
             <div className="flex gap-2">
               <button
                 onClick={onReject}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-gray-100"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-muted"
               >
                 Reject
               </button>
               <button
                 onClick={onApprove}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-gray-100"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-muted"
               >
                 <Check className="w-4 h-4" />
                 Approve
@@ -557,14 +557,14 @@ export function ViewExpenseModal({
           {onEdit && expense.status === "draft" && (
             <button
               onClick={onEdit}
-              className="w-full rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-black hover:bg-gray-100"
+              className="w-full rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted"
             >
               Edit
             </button>
           )}
           <button
             onClick={onClose}
-            className="w-full rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-black hover:bg-gray-100"
+            className="w-full rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted"
           >
             Close
           </button>
@@ -593,12 +593,12 @@ export function BulkActionsModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl border border-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+      <div className="w-full max-w-md rounded-xl bg-theme-surface shadow-xl border border-theme-border">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-black">Bulk Actions</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-theme-text-tertiary">
+        <div className="flex items-center justify-between border-b border-theme-border px-6 py-4">
+          <h2 className="text-lg font-semibold text-theme-text-primary">Bulk Actions</h2>
+          <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-tertiary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -609,7 +609,7 @@ export function BulkActionsModal({
             You have selected <strong>{count}</strong> expense{count !== 1 ? "s" : ""}. Choose an action:
           </p>
 
-          <div className="rounded-lg bg-blue-50 p-3 text-sm text-black">
+          <div className="rounded-lg bg-blue-50 p-3 text-sm text-theme-text-primary">
             <p className="font-medium">Bulk operations will:</p>
             <ul className="list-disc list-inside mt-2 space-y-1 text-xs">
               <li>Apply the same action to all selected expenses</li>
@@ -620,11 +620,11 @@ export function BulkActionsModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4 flex gap-3">
+        <div className="border-t border-theme-border px-6 py-4 flex gap-3">
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-black hover:bg-gray-100 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted disabled:opacity-50"
           >
             Cancel
           </button>
@@ -638,7 +638,7 @@ export function BulkActionsModal({
           <button
             onClick={onApproveAll}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-black hover:bg-green-700 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-green-700 disabled:opacity-50"
           >
             {isLoading ? "Processing..." : "Approve All"}
           </button>
@@ -665,12 +665,12 @@ export function ExportExpensesModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl border border-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+      <div className="w-full max-w-md rounded-xl bg-theme-surface shadow-xl border border-theme-border">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-black">Export Expenses</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-theme-text-tertiary">
+        <div className="flex items-center justify-between border-b border-theme-border px-6 py-4">
+          <h2 className="text-lg font-semibold text-theme-text-primary">Export Expenses</h2>
+          <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-tertiary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -678,14 +678,14 @@ export function ExportExpensesModal({
         {/* Content */}
         <div className="space-y-4 px-6 py-6">
           <div>
-            <label htmlFor="format" className="block text-sm font-medium text-black mb-2">
+            <label htmlFor="format" className="block text-sm font-medium text-theme-text-primary mb-2">
               Format
             </label>
             <select
               id="format"
               value={format}
               onChange={(e) => setFormat(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white text-black px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-theme-border bg-theme-surface text-theme-text-primary px-3 py-2 text-sm"
             >
               <option value="csv">CSV</option>
               <option value="excel">Excel</option>
@@ -693,7 +693,7 @@ export function ExportExpensesModal({
             </select>
           </div>
 
-          <div className="rounded-lg bg-blue-50 p-3 text-sm text-black">
+          <div className="rounded-lg bg-blue-50 p-3 text-sm text-theme-text-primary">
             <p className="font-medium">The export will include:</p>
             <ul className="list-disc list-inside mt-2 space-y-1 text-xs">
               <li>All selected expenses</li>
@@ -704,18 +704,18 @@ export function ExportExpensesModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4 flex gap-3">
+        <div className="border-t border-theme-border px-6 py-4 flex gap-3">
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-black hover:bg-gray-100 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={() => onExport(format)}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-black hover:bg-blue-700 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-accent-hover disabled:opacity-50"
           >
             {isLoading ? "Exporting..." : "Export"}
           </button>

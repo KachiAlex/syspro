@@ -42,14 +42,14 @@ export default function BillDrawer({ bill, onClose, onPayment }: BillDrawerProps
 
   const getStatusColor = (status: string) => {
     const colors = {
-      draft: "bg-gray-100 text-gray-900",
+      draft: "bg-theme-muted text-theme-text-primary",
       open: "bg-blue-100 text-blue-800",
       partially_paid: "bg-yellow-100 text-yellow-800",
       paid: "bg-green-100 text-green-800",
       overdue: "bg-red-100 text-red-800",
-      cancelled: "bg-gray-100 text-gray-900"
+      cancelled: "bg-theme-muted text-theme-text-primary"
     };
-    return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-900";
+    return colors[status as keyof typeof colors] || "bg-theme-muted text-theme-text-primary";
   };
 
   const handleMakePayment = () => {
@@ -59,8 +59,8 @@ export default function BillDrawer({ bill, onClose, onPayment }: BillDrawerProps
   };
 
   return (
-    <aside className="fixed right-6 top-24 w-96 bg-white shadow-lg rounded-lg max-h-[80vh] overflow-y-auto">
-      <div className="sticky top-0 bg-white border-b px-6 py-4">
+    <aside className="fixed right-6 top-24 w-96 bg-theme-surface shadow-lg rounded-lg max-h-[80vh] overflow-y-auto">
+      <div className="sticky top-0 bg-theme-surface border-b px-6 py-4">
         <div className="flex justify-between items-start">
           <div>
             <h4 className="text-lg font-semibold">{bill.billNumber}</h4>
@@ -68,7 +68,7 @@ export default function BillDrawer({ bill, onClose, onPayment }: BillDrawerProps
               {bill.status?.replace("_", " ")}
             </span>
           </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
+          <button onClick={onClose} className="text-theme-text-tertiary hover:text-theme-text-primary">
             ✕
           </button>
         </div>
@@ -77,25 +77,25 @@ export default function BillDrawer({ bill, onClose, onPayment }: BillDrawerProps
       <div className="p-6">
         {/* Bill Details */}
         <div className="mb-6">
-          <h5 className="font-medium text-sm text-gray-900 mb-3">Bill Details</h5>
+          <h5 className="font-medium text-sm text-theme-text-primary mb-3">Bill Details</h5>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500">Vendor ID:</span>
+              <span className="text-theme-text-secondary">Vendor ID:</span>
               <span className="font-medium">{bill.vendorId}</span>
             </div>
             {bill.poId && (
               <div className="flex justify-between">
-                <span className="text-gray-500">PO Reference:</span>
+                <span className="text-theme-text-secondary">PO Reference:</span>
                 <span className="font-medium">{bill.poId}</span>
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-gray-500">Bill Date:</span>
+              <span className="text-theme-text-secondary">Bill Date:</span>
               <span>{format(new Date(bill.billDate), "MMM dd, yyyy")}</span>
             </div>
             {bill.dueDate && (
               <div className="flex justify-between">
-                <span className="text-gray-500">Due Date:</span>
+                <span className="text-theme-text-secondary">Due Date:</span>
                 <span>{format(new Date(bill.dueDate), "MMM dd, yyyy")}</span>
               </div>
             )}
@@ -104,12 +104,12 @@ export default function BillDrawer({ bill, onClose, onPayment }: BillDrawerProps
 
         {/* Line Items */}
         <div className="mb-6">
-          <h5 className="font-medium text-sm text-gray-900 mb-3">Line Items</h5>
+          <h5 className="font-medium text-sm text-theme-text-primary mb-3">Line Items</h5>
           <div className="space-y-3">
             {bill.items.map((item) => (
               <div key={item.id} className="border-b pb-3">
                 <div className="text-sm font-medium">{item.description}</div>
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-theme-text-secondary mt-1">
                   {item.quantity} × {bill.currency} {item.unitPrice.toLocaleString()}
                   {item.taxRate && ` (${item.taxRate}% tax)`}
                 </div>
@@ -123,14 +123,14 @@ export default function BillDrawer({ bill, onClose, onPayment }: BillDrawerProps
 
         {/* Totals */}
         <div className="mb-6">
-          <h5 className="font-medium text-sm text-gray-900 mb-3">Totals</h5>
+          <h5 className="font-medium text-sm text-theme-text-primary mb-3">Totals</h5>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500">Subtotal:</span>
+              <span className="text-theme-text-secondary">Subtotal:</span>
               <span>{bill.currency} {bill.subtotal.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Taxes:</span>
+              <span className="text-theme-text-secondary">Taxes:</span>
               <span>{bill.currency} {bill.taxes.toLocaleString()}</span>
             </div>
             <div className="flex justify-between font-semibold text-base border-t pt-2">
@@ -138,7 +138,7 @@ export default function BillDrawer({ bill, onClose, onPayment }: BillDrawerProps
               <span>{bill.currency} {bill.total.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Balance Due:</span>
+              <span className="text-theme-text-secondary">Balance Due:</span>
               <span className="font-semibold">{bill.currency} {bill.balanceDue.toLocaleString()}</span>
             </div>
           </div>
@@ -149,12 +149,12 @@ export default function BillDrawer({ bill, onClose, onPayment }: BillDrawerProps
           <div className="space-y-2">
             <button
               onClick={handleMakePayment}
-              className="w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-full bg-theme-accent px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-theme-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent disabled:cursor-not-allowed disabled:opacity-50"
               disabled={loading}
             >
               {loading ? "Processing..." : "Make Payment"}
             </button>
-            <button className="w-full rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300">
+            <button className="w-full rounded-full border border-theme-border bg-theme-surface px-4 py-2 text-sm font-semibold text-theme-text-secondary transition hover:border-theme-border hover:text-theme-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300">
               Edit Bill
             </button>
           </div>

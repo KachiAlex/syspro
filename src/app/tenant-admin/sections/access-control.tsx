@@ -242,12 +242,12 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">People & Access</p>
-            <h2 className="text-2xl font-semibold text-gray-900">Team Permissions</h2>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">People & Access</p>
+            <h2 className="text-2xl font-semibold text-theme-text-primary">Team Permissions</h2>
+            <p className="mt-2 text-sm text-theme-text-secondary">
               Define what team members can do in different areas of the system. Assign roles to control access to CRM, Finance, People Management, Projects, and more.
             </p>
           </div>
@@ -259,7 +259,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
               setSelectedModules([]);
             }}
             disabled={!canCreate || permissions.loading}
-            className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+            className="whitespace-nowrap rounded-full bg-theme-accent px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-theme-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent disabled:cursor-not-allowed disabled:opacity-50"
             title={!canCreate ? "You don't have permission to create roles" : undefined}
           >
             {showCreateForm ? "Cancel" : "+ Create Role"}
@@ -286,7 +286,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
         {showCreateForm && (
           <form className="mt-6 space-y-6 border-t pt-6" onSubmit={handleCreate}>
             <div>
-              <h3 className="mb-4 text-base font-semibold text-gray-900">Step 1: Start with a template (optional)</h3>
+              <h3 className="mb-4 text-base font-semibold text-theme-text-primary">Step 1: Start with a template (optional)</h3>
               <div className="grid gap-3 md:grid-cols-2">
                 {ROLE_TEMPLATES.map((template) => (
                   <button
@@ -296,18 +296,18 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
                     className={`rounded-lg border-2 p-3 text-left transition-all ${
                       selectedTemplate === template.id
                         ? `${template.color} border-current shadow-md`
-                        : "border-slate-200 hover:border-slate-300"
+                        : "border-theme-border hover:border-theme-border"
                     }`}
                   >
-                    <p className="font-semibold text-gray-900">{template.name}</p>
-                    <p className="text-xs text-slate-600">{template.description}</p>
+                    <p className="font-semibold text-theme-text-primary">{template.name}</p>
+                    <p className="text-xs text-theme-text-secondary">{template.description}</p>
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="border-t pt-4">
-              <h3 className="mb-4 text-base font-semibold text-gray-900">Step 2: Role details</h3>
+              <h3 className="mb-4 text-base font-semibold text-theme-text-primary">Step 2: Role details</h3>
               <TextInput
                 label="Role Name"
                 placeholder="e.g., Sales Manager, Finance Lead"
@@ -319,8 +319,8 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
             </div>
 
             <div className="border-t pt-4">
-              <h3 className="mb-4 text-base font-semibold text-gray-900">Step 3: Choose permissions for each area</h3>
-              <p className="mb-4 text-sm text-slate-600">
+              <h3 className="mb-4 text-base font-semibold text-theme-text-primary">Step 3: Choose permissions for each area</h3>
+              <p className="mb-4 text-sm text-theme-text-secondary">
                 {selectedTemplate
                   ? "Customize the template below or keep these settings"
                   : "Select what this role can do in each area of the system"}
@@ -331,13 +331,13 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
                   const info = MODULE_INFO[mod];
                   const selected = selectedModules.find((m) => m.module === mod);
                   return (
-                    <div key={mod} className="rounded-lg border border-slate-200 p-4">
+                    <div key={mod} className="rounded-lg border border-theme-border p-4">
                       <div className="mb-3 flex items-start justify-between">
                         <div>
-                          <p className="font-semibold text-gray-900">
+                          <p className="font-semibold text-theme-text-primary">
                             {info.icon} {info.label}
                           </p>
-                          <p className="text-xs text-slate-600">{info.description}</p>
+                          <p className="text-xs text-theme-text-secondary">{info.description}</p>
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-4">
@@ -346,30 +346,30 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
                             type="checkbox"
                             checked={selected?.read ?? false}
                             onChange={() => toggleModulePermission(mod, "read")}
-                            className="bg-white h-4 w-4 rounded border-slate-300 text-black"
+                            className="bg-theme-surface h-4 w-4 rounded border-theme-border text-theme-text-primary"
                           />
-                          <span className="text-sm font-medium text-slate-700">View</span>
-                          <span className="text-xs text-slate-500">(read-only)</span>
+                          <span className="text-sm font-medium text-theme-text-primary">View</span>
+                          <span className="text-xs text-theme-text-tertiary">(read-only)</span>
                         </label>
                         <label className="inline-flex items-center gap-2">
                           <input
                             type="checkbox"
                             checked={selected?.write ?? false}
                             onChange={() => toggleModulePermission(mod, "write")}
-                            className="bg-white h-4 w-4 rounded border-slate-300 text-black"
+                            className="bg-theme-surface h-4 w-4 rounded border-theme-border text-theme-text-primary"
                           />
-                          <span className="text-sm font-medium text-slate-700">Edit</span>
-                          <span className="text-xs text-slate-500">(create & modify)</span>
+                          <span className="text-sm font-medium text-theme-text-primary">Edit</span>
+                          <span className="text-xs text-theme-text-tertiary">(create & modify)</span>
                         </label>
                         <label className="inline-flex items-center gap-2">
                           <input
                             type="checkbox"
                             checked={selected?.admin ?? false}
                             onChange={() => toggleModulePermission(mod, "admin")}
-                            className="bg-white h-4 w-4 rounded border-slate-300 text-black"
+                            className="bg-theme-surface h-4 w-4 rounded border-theme-border text-theme-text-primary"
                           />
-                          <span className="text-sm font-medium text-slate-700">Manage</span>
-                          <span className="text-xs text-slate-500">(admin access)</span>
+                          <span className="text-sm font-medium text-theme-text-primary">Manage</span>
+                          <span className="text-xs text-theme-text-tertiary">(admin access)</span>
                         </label>
                       </div>
                     </div>
@@ -390,7 +390,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
                   setSelectedModules([]);
                   setSelectedTemplate(null);
                 }}
-                className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-full border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted"
               >
                 Cancel
               </button>
@@ -400,31 +400,31 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
       </div>
 
       {/* Existing Roles Section */}
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="mb-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Current Roles</p>
-          <h3 className="text-lg font-semibold text-gray-900">Manage your team roles</h3>
+          <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Current Roles</p>
+          <h3 className="text-lg font-semibold text-theme-text-primary">Manage your team roles</h3>
         </div>
 
         {loading ? (
-          <div className="rounded-lg bg-slate-50 p-4 text-center text-sm text-slate-600">
-            <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900"></div>
+          <div className="rounded-lg bg-theme-muted p-4 text-center text-sm text-theme-text-secondary">
+            <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-theme-border border-t-slate-900"></div>
             <p className="mt-2">Loading roles…</p>
           </div>
         ) : (accessControls ?? []).length === 0 ? (
           <div className="rounded-lg bg-blue-50 p-4 text-center text-sm">
-            <p className="font-medium text-gray-900">No roles created yet</p>
+            <p className="font-medium text-theme-text-primary">No roles created yet</p>
             <p className="mt-1 text-blue-700">Create your first role to define team permissions</p>
           </div>
         ) : (
           <div className="space-y-3">
             {accessControls.map((ac) => (
-              <div key={ac.id} className={`rounded-lg border transition-all ${editingId === ac.id ? "bg-slate-50 ring-2 ring-blue-200" : "border-slate-200 hover:border-slate-300"}`}>
+              <div key={ac.id} className={`rounded-lg border transition-all ${editingId === ac.id ? "bg-theme-muted ring-2 ring-blue-200" : "border-theme-border hover:border-theme-border"}`}>
                 {editingId === ac.id ? (
                   <div className="p-4 space-y-4">
                     <div>
-                      <p className="font-semibold text-gray-900 mb-2">Edit: {ac.roleName}</p>
-                      <p className="text-xs text-slate-600 mb-3">Update what this role can access</p>
+                      <p className="font-semibold text-theme-text-primary mb-2">Edit: {ac.roleName}</p>
+                      <p className="text-xs text-theme-text-secondary mb-3">Update what this role can access</p>
                     </div>
 
                     <div className="space-y-3">
@@ -432,35 +432,35 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
                         const info = MODULE_INFO[mod];
                         const selected = editModules.find((m) => m.module === mod);
                         return (
-                          <div key={mod} className="rounded-lg border border-slate-200 bg-theme-muted p-3">
-                            <p className="mb-2 text-xs font-semibold text-slate-700">{info.icon} {info.label}</p>
+                          <div key={mod} className="rounded-lg border border-theme-border bg-theme-muted p-3">
+                            <p className="mb-2 text-xs font-semibold text-theme-text-primary">{info.icon} {info.label}</p>
                             <div className="flex flex-wrap gap-3">
                               <label className="inline-flex items-center gap-2">
                                 <input
                                   type="checkbox"
                                   checked={selected?.read ?? false}
                                   onChange={() => toggleEditModulePermission(mod, "read")}
-                                  className="bg-white h-4 w-4 rounded border-slate-300 text-black"
+                                  className="bg-theme-surface h-4 w-4 rounded border-theme-border text-theme-text-primary"
                                 />
-                                <span className="text-xs text-slate-700">View</span>
+                                <span className="text-xs text-theme-text-primary">View</span>
                               </label>
                               <label className="inline-flex items-center gap-2">
                                 <input
                                   type="checkbox"
                                   checked={selected?.write ?? false}
                                   onChange={() => toggleEditModulePermission(mod, "write")}
-                                  className="bg-white h-4 w-4 rounded border-slate-300 text-black"
+                                  className="bg-theme-surface h-4 w-4 rounded border-theme-border text-theme-text-primary"
                                 />
-                                <span className="text-xs text-slate-700">Edit</span>
+                                <span className="text-xs text-theme-text-primary">Edit</span>
                               </label>
                               <label className="inline-flex items-center gap-2">
                                 <input
                                   type="checkbox"
                                   checked={selected?.admin ?? false}
                                   onChange={() => toggleEditModulePermission(mod, "admin")}
-                                  className="bg-white h-4 w-4 rounded border-slate-300 text-black"
+                                  className="bg-theme-surface h-4 w-4 rounded border-theme-border text-theme-text-primary"
                                 />
-                                <span className="text-xs text-slate-700">Manage</span>
+                                <span className="text-xs text-theme-text-primary">Manage</span>
                               </label>
                             </div>
                           </div>
@@ -477,7 +477,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
                       </button>
                       <button
                         onClick={cancelEdit}
-                        className="rounded-full border border-slate-300 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                        className="rounded-full border border-theme-border px-4 py-2 text-xs font-medium text-theme-text-primary hover:bg-theme-muted"
                       >
                         Cancel
                       </button>
@@ -487,7 +487,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900">{ac.roleName}</h4>
+                        <h4 className="font-semibold text-theme-text-primary">{ac.roleName}</h4>
                         <div className="mt-3 grid gap-2 md:grid-cols-2">
                           {ac.moduleAccess.map((ma) => {
                             const info = MODULE_INFO[ma.module];
@@ -500,10 +500,10 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
                               .join(", ");
                             return (
                               <div key={ma.module} className="inline-block">
-                                <p className="text-xs font-medium text-slate-700">
+                                <p className="text-xs font-medium text-theme-text-primary">
                                   {info.icon} {info.label}
                                 </p>
-                                <p className="text-xs text-slate-500">{perms || "No access"}</p>
+                                <p className="text-xs text-theme-text-tertiary">{perms || "No access"}</p>
                               </div>
                             );
                           })}
@@ -512,7 +512,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
                       <div className="flex gap-2">
                         <button
                           onClick={() => startEdit(ac)}
-                          className="rounded-full border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50"
+                          className="rounded-full border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-theme-muted"
                         >
                           Edit
                         </button>
@@ -533,23 +533,23 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
       </div>
 
       {/* Permission Guide */}
-      <div className="rounded-3xl border border-slate-100 bg-gradient-to-br from-blue-50 to-slate-50 p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-gradient-to-br from-blue-50 to-slate-50 p-6 shadow-sm">
         <div className="mb-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Quick Reference</p>
-          <h3 className="text-lg font-semibold text-gray-900">Understanding Permissions</h3>
+          <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Quick Reference</p>
+          <h3 className="text-lg font-semibold text-theme-text-primary">Understanding Permissions</h3>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-lg bg-theme-muted p-3">
-            <p className="font-semibold text-gray-900">👁️ View</p>
-            <p className="mt-1 text-xs text-slate-600">Can see and read information in this area</p>
+            <p className="font-semibold text-theme-text-primary">👁️ View</p>
+            <p className="mt-1 text-xs text-theme-text-secondary">Can see and read information in this area</p>
           </div>
           <div className="rounded-lg bg-theme-muted p-3">
             <p className="font-semibold text-green-900">✏️ Edit</p>
-            <p className="mt-1 text-xs text-slate-600">Can create new records and modify existing ones</p>
+            <p className="mt-1 text-xs text-theme-text-secondary">Can create new records and modify existing ones</p>
           </div>
           <div className="rounded-lg bg-theme-muted p-3">
             <p className="font-semibold text-purple-900">⚙️ Manage</p>
-            <p className="mt-1 text-xs text-slate-600">Full admin access including deletion and configuration</p>
+            <p className="mt-1 text-xs text-theme-text-secondary">Full admin access including deletion and configuration</p>
           </div>
         </div>
       </div>

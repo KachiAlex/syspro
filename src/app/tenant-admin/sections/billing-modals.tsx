@@ -43,18 +43,18 @@ function EInvoicePanel({ invoiceId }: { invoiceId: string }) {
   if (!loaded) return null;
 
   return (
-    <div className="rounded-lg border border-slate-200 p-4">
+    <div className="rounded-lg border border-theme-border p-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+        <p className="text-xs font-medium text-theme-text-tertiary flex items-center gap-1.5">
           <FileCheck2 className="w-4 h-4" /> E-Invoice (FIRS)
         </p>
-        {busy && <Loader2 className="w-4 h-4 animate-spin text-slate-400" />}
+        {busy && <Loader2 className="w-4 h-4 animate-spin text-theme-text-secondary" />}
       </div>
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
       {submission ? (
         <div className="mt-2 space-y-1 text-sm">
-          <p className="font-mono text-xs text-slate-700 break-all">IRN: {submission.irn}</p>
-          <p className="text-xs text-slate-600">
+          <p className="font-mono text-xs text-theme-text-primary break-all">IRN: {submission.irn}</p>
+          <p className="text-xs text-theme-text-secondary">
             {submission.provider} · {new Date(submission.submittedAt).toLocaleString()}
           </p>
           <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -68,14 +68,14 @@ function EInvoicePanel({ invoiceId }: { invoiceId: string }) {
           )}
           {submission.status !== "accepted" && (
             <button onClick={() => void submit(true)} disabled={busy}
-              className="block mt-2 text-xs font-medium text-blue-600 hover:underline disabled:opacity-50">
+              className="block mt-2 text-xs font-medium text-theme-accent hover:underline disabled:opacity-50">
               Resubmit
             </button>
           )}
         </div>
       ) : (
         <button onClick={() => void submit(false)} disabled={busy}
-          className="mt-2 rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700 disabled:opacity-50">
+          className="mt-2 rounded-lg bg-theme-muted px-3 py-1.5 text-xs font-medium text-theme-text-primary hover:bg-theme-elevated disabled:opacity-50">
           Submit to FIRS
         </button>
       )}
@@ -96,12 +96,12 @@ export function ViewSubscriptionModal({
   if (!isOpen || !subscription) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+      <div className="w-full max-w-md rounded-xl bg-theme-surface shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">Subscription Details</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
+        <div className="flex items-center justify-between border-b border-theme-border px-6 py-4">
+          <h2 className="text-lg font-semibold text-theme-text-primary">Subscription Details</h2>
+          <button onClick={onClose} className="text-theme-text-tertiary hover:text-theme-text-primary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -109,43 +109,43 @@ export function ViewSubscriptionModal({
         {/* Content */}
         <div className="space-y-6 px-6 py-4">
           <div>
-            <p className="text-xs font-medium text-slate-500">Plan</p>
-            <p className="text-lg font-semibold text-gray-900 mt-1">{subscription.plan}</p>
+            <p className="text-xs font-medium text-theme-text-tertiary">Plan</p>
+            <p className="text-lg font-semibold text-theme-text-primary mt-1">{subscription.plan}</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-xs font-medium text-slate-500">Status</p>
+              <p className="text-xs font-medium text-theme-text-tertiary">Status</p>
               <div className="mt-1 inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
                 {subscription.status}
               </div>
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-500">Seats</p>
-              <p className="text-lg font-semibold text-gray-900 mt-1">{subscription.seats ?? 1}</p>
+              <p className="text-xs font-medium text-theme-text-tertiary">Seats</p>
+              <p className="text-lg font-semibold text-theme-text-primary mt-1">{subscription.seats ?? 1}</p>
             </div>
           </div>
 
           {subscription.price && (
             <div>
-              <p className="text-xs font-medium text-slate-500">Monthly Price</p>
-              <p className="text-lg font-semibold text-gray-900 mt-1">₦{subscription.price.toLocaleString()}</p>
+              <p className="text-xs font-medium text-theme-text-tertiary">Monthly Price</p>
+              <p className="text-lg font-semibold text-theme-text-primary mt-1">₦{subscription.price.toLocaleString()}</p>
             </div>
           )}
 
           <div>
-            <p className="text-xs font-medium text-slate-500">Next Billing Date</p>
-            <p className="text-sm text-slate-600 mt-1">
+            <p className="text-xs font-medium text-theme-text-tertiary">Next Billing Date</p>
+            <p className="text-sm text-theme-text-secondary mt-1">
               {subscription.nextBillingDate ? new Date(subscription.nextBillingDate).toLocaleDateString() : "—"}
             </p>
           </div>
 
           {subscription.features && subscription.features.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-slate-500 mb-2">Features</p>
+              <p className="text-xs font-medium text-theme-text-tertiary mb-2">Features</p>
               <ul className="space-y-2">
                 {subscription.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-center gap-2 text-sm text-slate-600">
+                  <li key={idx} className="flex items-center gap-2 text-sm text-theme-text-secondary">
                     <span className="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
                     {feature}
                   </li>
@@ -156,10 +156,10 @@ export function ViewSubscriptionModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4">
+        <div className="border-t border-theme-border px-6 py-4">
           <button
             onClick={onClose}
-            className="w-full rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-slate-200"
+            className="w-full rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-elevated"
           >
             Close
           </button>
@@ -186,12 +186,12 @@ export function CancelSubscriptionModal({
   if (!isOpen || !subscription) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+      <div className="w-full max-w-md rounded-xl bg-theme-surface shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">Cancel Subscription</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
+        <div className="flex items-center justify-between border-b border-theme-border px-6 py-4">
+          <h2 className="text-lg font-semibold text-theme-text-primary">Cancel Subscription</h2>
+          <button onClick={onClose} className="text-theme-text-tertiary hover:text-theme-text-primary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -201,8 +201,8 @@ export function CancelSubscriptionModal({
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-gray-900">Are you sure?</p>
-              <p className="text-sm text-slate-600 mt-1">
+              <p className="font-semibold text-theme-text-primary">Are you sure?</p>
+              <p className="text-sm text-theme-text-secondary mt-1">
                 Your <strong>{subscription.plan}</strong> subscription will be cancelled at the end of the billing period ({new Date(subscription.nextBillingDate || "").toLocaleDateString()}).
               </p>
             </div>
@@ -214,18 +214,18 @@ export function CancelSubscriptionModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4 flex gap-3">
+        <div className="border-t border-theme-border px-6 py-4 flex gap-3">
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-slate-200 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-elevated disabled:opacity-50"
           >
             Keep Subscription
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-rose-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-rose-700 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>
@@ -267,31 +267,31 @@ export function UpgradeSubscriptionModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overflow-y-auto">
-      <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl m-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay overflow-y-auto">
+      <div className="w-full max-w-2xl rounded-xl bg-theme-surface shadow-xl m-4">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">Upgrade Subscription</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
+        <div className="flex items-center justify-between border-b border-theme-border px-6 py-4">
+          <h2 className="text-lg font-semibold text-theme-text-primary">Upgrade Subscription</h2>
+          <button onClick={onClose} className="text-theme-text-tertiary hover:text-theme-text-primary">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
         <div className="space-y-4 px-6 py-6">
-          <p className="text-sm text-slate-600">Choose a plan that fits your growing needs.</p>
+          <p className="text-sm text-theme-text-secondary">Choose a plan that fits your growing needs.</p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {availablePlans.map((plan) => (
-              <div key={plan.id} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white transition-all duration-200">
-                <h3 className="font-semibold text-gray-900">{plan.name}</h3>
-                <p className="text-2xl font-bold text-gray-900 mt-2">₦{plan.price}</p>
-                <p className="text-xs text-slate-600">/month</p>
+              <div key={plan.id} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface transition-all duration-200">
+                <h3 className="font-semibold text-theme-text-primary">{plan.name}</h3>
+                <p className="text-2xl font-bold text-theme-text-primary mt-2">₦{plan.price}</p>
+                <p className="text-xs text-theme-text-secondary">/month</p>
 
                 <ul className="space-y-2 mt-4">
                   {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-sm text-slate-600">
-                      <span className="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+                    <li key={idx} className="flex items-center gap-2 text-sm text-theme-text-secondary">
+                      <span className="w-1.5 h-1.5 bg-theme-accent rounded-full"></span>
                       {feature}
                     </li>
                   ))}
@@ -300,7 +300,7 @@ export function UpgradeSubscriptionModal({
                 <button
                   onClick={() => onUpgrade(plan.name)}
                   disabled={isLoading}
-                  className="w-full mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-blue-700 disabled:opacity-50"
+                  className="w-full mt-4 rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-accent-hover disabled:opacity-50"
                 >
                   {isLoading ? "Upgrading..." : "Select Plan"}
                 </button>
@@ -310,10 +310,10 @@ export function UpgradeSubscriptionModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4">
+        <div className="border-t border-theme-border px-6 py-4">
           <button
             onClick={onClose}
-            className="w-full rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-slate-200"
+            className="w-full rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-elevated"
           >
             Close
           </button>
@@ -349,17 +349,17 @@ export function ViewInvoiceModal({
   const total = parseFloat(invoice.amount);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overflow-y-auto">
-      <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl m-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay overflow-y-auto">
+      <div className="w-full max-w-2xl rounded-xl bg-theme-surface shadow-xl m-4">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-theme-border px-6 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Invoice {invoice.id}</h2>
-            <p className="text-sm text-slate-600 mt-1">
+            <h2 className="text-lg font-semibold text-theme-text-primary">Invoice {invoice.id}</h2>
+            <p className="text-sm text-theme-text-secondary mt-1">
               Issued: {invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString() : "—"}
             </p>
           </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
+          <button onClick={onClose} className="text-theme-text-tertiary hover:text-theme-text-primary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -380,27 +380,27 @@ export function ViewInvoiceModal({
           {/* Details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-xs font-medium text-slate-500">Bill To</p>
-              <p className="text-sm font-semibold text-gray-900 mt-1">{invoice.customerName || "—"}</p>
+              <p className="text-xs font-medium text-theme-text-tertiary">Bill To</p>
+              <p className="text-sm font-semibold text-theme-text-primary mt-1">{invoice.customerName || "—"}</p>
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-500">Due Date</p>
-              <p className="text-sm text-slate-600 mt-1">{new Date(invoice.dueDate).toLocaleDateString()}</p>
+              <p className="text-xs font-medium text-theme-text-tertiary">Due Date</p>
+              <p className="text-sm text-theme-text-secondary mt-1">{new Date(invoice.dueDate).toLocaleDateString()}</p>
             </div>
           </div>
 
           {/* Items */}
           {invoice.items && invoice.items.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-slate-500 mb-3">Line Items</p>
-              <div className="space-y-2 border-t border-b border-slate-200 py-3">
+              <p className="text-xs font-medium text-theme-text-tertiary mb-3">Line Items</p>
+              <div className="space-y-2 border-t border-b border-theme-border py-3">
                 {invoice.items.map((item, idx) => (
                   <div key={idx} className="flex justify-between text-sm">
                     <div>
-                      <p className="font-medium text-gray-900">{item.description}</p>
-                      <p className="text-xs text-slate-600">{item.quantity} x ₦{item.unitPrice.toLocaleString()}</p>
+                      <p className="font-medium text-theme-text-primary">{item.description}</p>
+                      <p className="text-xs text-theme-text-secondary">{item.quantity} x ₦{item.unitPrice.toLocaleString()}</p>
                     </div>
-                    <p className="font-semibold text-gray-900">₦{(item.quantity * item.unitPrice).toLocaleString()}</p>
+                    <p className="font-semibold text-theme-text-primary">₦{(item.quantity * item.unitPrice).toLocaleString()}</p>
                   </div>
                 ))}
               </div>
@@ -408,17 +408,17 @@ export function ViewInvoiceModal({
           )}
 
           {/* Total */}
-          <div className="rounded-lg bg-slate-50 p-4">
+          <div className="rounded-lg bg-theme-muted p-4">
             <div className="flex justify-between">
-              <p className="font-semibold text-gray-900">Total</p>
-              <p className="text-lg font-bold text-gray-900">₦{total.toLocaleString()}</p>
+              <p className="font-semibold text-theme-text-primary">Total</p>
+              <p className="text-lg font-bold text-theme-text-primary">₦{total.toLocaleString()}</p>
             </div>
           </div>
 
           {invoice.description && (
             <div>
-              <p className="text-xs font-medium text-slate-500">Notes</p>
-              <p className="text-sm text-slate-600 mt-1">{invoice.description}</p>
+              <p className="text-xs font-medium text-theme-text-tertiary">Notes</p>
+              <p className="text-sm text-theme-text-secondary mt-1">{invoice.description}</p>
             </div>
           )}
 
@@ -428,18 +428,18 @@ export function ViewInvoiceModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 px-6 py-4 space-y-3">
+        <div className="border-t border-theme-border px-6 py-4 space-y-3">
           {onDownload && (
             <button
               onClick={onDownload}
-              className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-blue-700"
+              className="w-full rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-accent-hover"
             >
               Download PDF
             </button>
           )}
           <button
             onClick={onClose}
-            className="w-full rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-slate-200"
+            className="w-full rounded-lg bg-theme-muted px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-elevated"
           >
             Close
           </button>

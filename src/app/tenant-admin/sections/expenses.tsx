@@ -27,7 +27,7 @@ type Expense = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: "bg-slate-100 text-slate-800",
+  draft: "bg-theme-muted text-theme-text-primary",
   submitted: "bg-blue-500/10 text-blue-400",
   approved: "bg-green-500/10 text-green-400",
   rejected: "bg-red-500/10 text-red-400",
@@ -342,7 +342,7 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
         <div>
           <h2 className="text-2xl font-bold text-theme-text-primary">Expense Management</h2>
           {lastRefreshed && (
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-theme-text-tertiary mt-1">
               Last updated: {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </p>
           )}
@@ -350,7 +350,7 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
         <button
           onClick={handleRefreshExpenses}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-theme-border rounded-lg text-theme-text-primary hover:bg-theme-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -359,32 +359,32 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
-          <p className="text-sm text-slate-600">Total Expenses</p>
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-4">
+          <p className="text-sm text-theme-text-secondary">Total Expenses</p>
           <p className="mt-2 text-2xl font-bold text-theme-text-primary">₦{totalAmount.toLocaleString()}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
-          <p className="text-sm text-slate-600">Pending Approval</p>
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-4">
+          <p className="text-sm text-theme-text-secondary">Pending Approval</p>
           <p className="mt-2 text-2xl font-bold text-orange-600">{pendingCount}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
-          <p className="text-sm text-slate-600">Approved</p>
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-4">
+          <p className="text-sm text-theme-text-secondary">Approved</p>
           <p className="mt-2 text-2xl font-bold text-green-400">{expenses.filter((e) => e.status === "approved").length}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
-          <p className="text-sm text-slate-600">Rejected</p>
+        <div className="rounded-lg border border-theme-border bg-theme-muted p-4">
+          <p className="text-sm text-theme-text-secondary">Rejected</p>
           <p className="mt-2 text-2xl font-bold text-red-400">{expenses.filter((e) => e.status === "rejected").length}</p>
         </div>
       </div>
 
       {/* Filters and Actions */}
-      <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-4">
         <div className="space-y-4">
           <div className="flex flex-col md:flex-row gap-4">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-theme-bg rounded-lg border border-theme-border px-3 py-2 text-sm text-white"
+              className="bg-theme-bg rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
             >
               <option value="all">All Status</option>
               <option value="draft">Draft</option>
@@ -396,7 +396,7 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="bg-theme-bg rounded-lg border border-theme-border px-3 py-2 text-sm text-white"
+              className="bg-theme-bg rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
             >
               <option value="all">All Categories</option>
               <option value="travel">Travel</option>
@@ -411,28 +411,28 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
               placeholder="Search expenses..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-white flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="bg-theme-surface flex-1 rounded-lg border border-theme-border px-3 py-2 text-sm"
             />
           </div>
           <div className="flex gap-2 justify-end">
             {selectedExpenses.size > 0 && (
               <button
                 onClick={() => setShowBulkActions(true)}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-lg border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted"
               >
                 Bulk Actions ({selectedExpenses.size})
               </button>
             )}
             <button
               onClick={() => setShowExportExpenses(true)}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+              className="rounded-lg border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
               Export
             </button>
             <button
               onClick={() => setShowSubmitExpense(true)}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 flex items-center gap-2"
+              className="rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-white hover:bg-theme-accent-hover flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Submit Expense
@@ -442,26 +442,26 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
       </div>
 
       {/* Expenses Table */}
-      <div className="rounded-lg border border-slate-200 bg-theme-muted overflow-hidden">
+      <div className="rounded-lg border border-theme-border bg-theme-muted overflow-hidden">
         {loading ? (
           <div className="p-6 space-y-3">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg animate-pulse">
-                <div className="w-4 h-4 bg-slate-300 rounded"></div>
+              <div key={i} className="flex items-center gap-4 p-4 bg-theme-muted rounded-lg animate-pulse">
+                <div className="w-4 h-4 bg-theme-muted rounded"></div>
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-slate-300 rounded w-24"></div>
-                  <div className="h-3 bg-slate-300 rounded w-32"></div>
+                  <div className="h-4 bg-theme-muted rounded w-24"></div>
+                  <div className="h-3 bg-theme-muted rounded w-32"></div>
                 </div>
-                <div className="h-4 bg-slate-300 rounded w-20"></div>
-                <div className="h-4 bg-slate-300 rounded w-16"></div>
+                <div className="h-4 bg-theme-muted rounded w-20"></div>
+                <div className="h-4 bg-theme-muted rounded w-16"></div>
               </div>
             ))}
           </div>
         ) : filteredExpenses.length === 0 ? (
           <div className="p-12 text-center">
-            <Receipt className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-600 font-medium mb-2">No expenses found</p>
-            <p className="text-sm text-slate-500 mb-4">
+            <Receipt className="w-12 h-12 text-theme-text-primary mx-auto mb-4" />
+            <p className="text-theme-text-secondary font-medium mb-2">No expenses found</p>
+            <p className="text-sm text-theme-text-tertiary mb-4">
               {searchQuery || statusFilter !== "all" || categoryFilter !== "all"
                 ? "Try adjusting your filters or search query"
                 : "Submit your first expense to get started"}
@@ -469,7 +469,7 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
             {!searchQuery && statusFilter === "all" && categoryFilter === "all" && (
               <button
                 onClick={() => setShowSubmitExpense(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Submit Expense
@@ -479,7 +479,7 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-theme-muted border-b border-theme-border">
                 <tr>
                   <th className="px-4 py-3">
                     <input
@@ -492,20 +492,20 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
                           setSelectedExpenses(new Set());
                         }
                       }}
-                      className="bg-white rounded border-slate-300 text-black"
+                      className="bg-theme-surface rounded border-theme-border text-theme-text-primary"
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Category</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Employee</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">ID</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Category</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Employee</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-theme-border">
                 {filteredExpenses.map((expense) => (
-                <tr key={expense.id} className="hover:bg-slate-50">
+                <tr key={expense.id} className="hover:bg-theme-muted">
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
@@ -519,13 +519,13 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
                         }
                         setSelectedExpenses(newSelected);
                       }}
-                      className="bg-white rounded border-slate-300 text-black"
+                      className="bg-theme-surface rounded border-theme-border text-theme-text-primary"
                     />
                   </td>
                   <td className="px-4 py-3 text-sm font-medium text-theme-text-primary">{expense.id}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600 capitalize">{expense.category}</td>
+                  <td className="px-4 py-3 text-sm text-theme-text-secondary capitalize">{expense.category}</td>
                   <td className="px-4 py-3 text-sm font-semibold text-theme-text-primary">₦{expense.amount.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{expense.employee}</td>
+                  <td className="px-4 py-3 text-sm text-theme-text-secondary">{expense.employee}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[expense.status] || "bg-theme-border"}`}>
                       {expense.status}
@@ -535,13 +535,13 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
                     <div className="flex gap-1">
                       <button
                         onClick={() => handleViewExpense(expense)}
-                        className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-50"
+                        className="rounded-lg border border-theme-border p-1.5 text-theme-text-secondary hover:bg-theme-muted"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteExpense(expense.id)}
-                        className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-50"
+                        className="rounded-lg border border-theme-border p-1.5 text-theme-text-secondary hover:bg-theme-muted"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

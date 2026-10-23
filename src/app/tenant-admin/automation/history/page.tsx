@@ -67,7 +67,7 @@ export default function HistoryPage() {
       case 'success': return 'bg-green-100 text-green-800';
       case 'failed': return 'bg-red-100 text-red-800';
       case 'running': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-900';
+      default: return 'bg-theme-muted text-theme-text-primary';
     }
   };
 
@@ -75,8 +75,8 @@ export default function HistoryPage() {
     switch (status) {
       case 'success': return <CheckCircle className="w-4 h-4 text-green-600" />;
       case 'failed': return <XCircle className="w-4 h-4 text-red-600" />;
-      case 'running': return <Clock className="w-4 h-4 text-blue-600 animate-spin" />;
-      default: return <AlertCircle className="w-4 h-4 text-gray-600" />;
+      case 'running': return <Clock className="w-4 h-4 text-theme-accent animate-spin" />;
+      default: return <AlertCircle className="w-4 h-4 text-theme-text-secondary" />;
     }
   };
 
@@ -84,7 +84,7 @@ export default function HistoryPage() {
     switch (type) {
       case 'workflow': return <div className="w-2 h-2 bg-purple-500 rounded-full" />;
       case 'rule': return <div className="w-2 h-2 bg-blue-500 rounded-full" />;
-      default: return <div className="w-2 h-2 bg-gray-500 rounded-full" />;
+      default: return <div className="w-2 h-2 bg-theme-muted rounded-full" />;
     }
   };
 
@@ -104,16 +104,16 @@ export default function HistoryPage() {
   return (
     <>
       {/* Horizontal Navigation Tabs */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-theme-surface border-b border-theme-border">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div>
               <h1 className="text-2xl font-bold text-theme-text-primary">History</h1>
-              <p className="text-sm text-gray-600 mt-1">View execution history and performance analytics</p>
+              <p className="text-sm text-theme-text-secondary mt-1">View execution history and performance analytics</p>
             </div>
             <Link
               href="/tenant-admin/automation"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted"
             >
               ← Back to Overview
             </Link>
@@ -131,15 +131,15 @@ export default function HistoryPage() {
                 href={tab.href}
                 className={`flex items-center gap-2 px-1 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   tab.id === 'history' 
-                    ? 'border-blue-500 text-blue-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-theme-accent text-theme-accent' 
+                    : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary hover:border-theme-border'
                 }`}
               >
-                <tab.icon className={`w-4 h-4 ${tab.id === 'history' ? 'text-blue-600' : 'text-theme-text-tertiary'}`} />
+                <tab.icon className={`w-4 h-4 ${tab.id === 'history' ? 'text-theme-accent' : 'text-theme-text-tertiary'}`} />
                 <span>{tab.name}</span>
                 {tab.count && (
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                    tab.id === 'history' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-900'
+                    tab.id === 'history' ? 'bg-blue-100 text-blue-700' : 'bg-theme-muted text-theme-text-primary'
                   }`}>
                     {tab.count}
                   </span>
@@ -155,19 +155,19 @@ export default function HistoryPage() {
         <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+            <div className="bg-theme-surface rounded-lg border border-theme-border p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Executions</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">{executions.length}</p>
+                  <p className="text-sm font-medium text-theme-text-secondary">Total Executions</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-theme-text-primary mt-2">{executions.length}</p>
                 </div>
-                <Clock className="w-8 h-8 sm:w-12 sm:h-12 text-blue-500" />
+                <Clock className="w-8 h-8 sm:w-12 sm:h-12 text-theme-accent" />
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+            <div className="bg-theme-surface rounded-lg border border-theme-border p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Successful</p>
+                  <p className="text-sm font-medium text-theme-text-secondary">Successful</p>
                   <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-2">{executions.filter(e => e.status === 'success').length}</p>
                 </div>
                 <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-500" />
@@ -175,46 +175,46 @@ export default function HistoryPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+          <div className="bg-theme-surface rounded-lg border border-theme-border p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-medium text-gray-900">Populate history</p>
-                <p className="text-sm text-gray-500">Emit a sample event to see how rules are matched and logged.</p>
+                <p className="text-sm font-medium text-theme-text-primary">Populate history</p>
+                <p className="text-sm text-theme-text-secondary">Emit a sample event to see how rules are matched and logged.</p>
               </div>
               <button
                 onClick={runTestEvent}
                 disabled={publishing}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-white hover:bg-theme-accent-hover disabled:opacity-50"
               >
                 {publishing ? 'Emitting...' : 'Emit sample event'}
               </button>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="bg-theme-surface rounded-lg border border-theme-border overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-theme-muted border-b border-theme-border">
                   <tr>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Execution</th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Execution</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Type</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Status</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Duration</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-theme-border">
                   {filteredExecutions.map((execution) => (
-                    <tr key={execution.id} className="hover:bg-gray-50">
+                    <tr key={execution.id} className="hover:bg-theme-muted">
                       <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           {getTypeIcon(execution.type)}
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{execution.name}</p>
+                            <p className="text-sm font-medium text-theme-text-primary">{execution.name}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900 capitalize">{execution.type}</span>
+                        <span className="text-sm text-theme-text-primary capitalize">{execution.type}</span>
                       </td>
                       <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
@@ -224,7 +224,7 @@ export default function HistoryPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-theme-text-primary">
                         {execution.duration}
                       </td>
                     </tr>

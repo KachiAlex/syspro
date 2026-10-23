@@ -103,7 +103,7 @@ export default function WarehousesPage() {
           <WarehouseIcon className="h-6 w-6 text-sky-400" />
           <div>
             <h1 className="text-xl font-semibold">Warehouses &amp; Stock Locations</h1>
-            <p className="text-sm text-slate-400">Stock locations, per-warehouse balances, landed cost vouchers, and till registers</p>
+            <p className="text-sm text-theme-text-secondary">Stock locations, per-warehouse balances, landed cost vouchers, and till registers</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -131,21 +131,21 @@ export default function WarehousesPage() {
       {error && <div className="flex items-center gap-2 rounded bg-rose-500/10 px-4 py-3 text-rose-400"><AlertCircle className="h-4 w-4" />{error}</div>}
       {msg && <div className="rounded bg-emerald-500/10 px-4 py-3 text-emerald-400">{msg}</div>}
 
-      <div className="flex gap-1 border-b border-slate-800">
+      <div className="flex gap-1 border-b border-theme-border">
         {TABS.map(([key, label, Icon]) => (
           <button key={key} onClick={() => setTab(key)}
             className={`flex items-center gap-1.5 px-4 py-2 text-sm border-b-2 -mb-px ${
-              tab === key ? "border-sky-400 text-sky-400" : "border-transparent text-slate-400 hover:text-slate-200"}`}>
+              tab === key ? "border-sky-400 text-sky-400" : "border-transparent text-theme-text-secondary hover:text-theme-text-primary"}`}>
             <Icon className="h-3.5 w-3.5" /> {label}
           </button>
         ))}
       </div>
-      {loading && <Loader2 className="h-5 w-5 animate-spin text-slate-400" />}
+      {loading && <Loader2 className="h-5 w-5 animate-spin text-theme-text-secondary" />}
 
       {tab === "warehouses" && (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs text-slate-400">
+            <tr className="text-left text-xs text-theme-text-secondary">
               {["Code", "Name", "Type", "Parent", "Branch", "Status", ""].map((h) => (
                 <th key={h} className="px-3 py-2">{h}</th>
               ))}
@@ -153,18 +153,18 @@ export default function WarehousesPage() {
           </thead>
           <tbody>
             {warehouses.map((w) => (
-              <tr key={w.id} className="border-t border-slate-800">
+              <tr key={w.id} className="border-t border-theme-border">
                 <td className="px-3 py-2 font-mono text-xs">{w.code}</td>
-                <td className="px-3 py-2">{w.name}{w.is_group && <span className="ml-2 text-xs text-slate-500">(group)</span>}</td>
-                <td className="px-3 py-2 capitalize text-slate-400">{w.type}</td>
-                <td className="px-3 py-2 text-slate-400">
+                <td className="px-3 py-2">{w.name}{w.is_group && <span className="ml-2 text-xs text-theme-text-tertiary">(group)</span>}</td>
+                <td className="px-3 py-2 capitalize text-theme-text-secondary">{w.type}</td>
+                <td className="px-3 py-2 text-theme-text-secondary">
                   {warehouses.find((p) => p.id === w.parent_warehouse_id)?.name ?? "—"}
                 </td>
-                <td className="px-3 py-2 text-slate-400">
+                <td className="px-3 py-2 text-theme-text-secondary">
                   {branches.find((b) => b.id === w.branch_id)?.name ?? w.branch_id ?? "—"}
                 </td>
                 <td className="px-3 py-2">
-                  <span className={`rounded px-2 py-0.5 text-xs ${w.status === "active" ? "bg-emerald-500/15 text-emerald-400" : "bg-slate-500/15 text-slate-400"}`}>
+                  <span className={`rounded px-2 py-0.5 text-xs ${w.status === "active" ? "bg-emerald-500/15 text-emerald-400" : "bg-theme-muted/15 text-theme-text-secondary"}`}>
                     {w.status}
                   </span>
                 </td>
@@ -180,7 +180,7 @@ export default function WarehousesPage() {
               </tr>
             ))}
             {warehouses.length === 0 && !loading && (
-              <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-500">No warehouses — create your first stock location.</td></tr>
+              <tr><td colSpan={7} className="px-3 py-6 text-center text-theme-text-tertiary">No warehouses — create your first stock location.</td></tr>
             )}
           </tbody>
         </table>
@@ -188,14 +188,14 @@ export default function WarehousesPage() {
 
       {tab === "stock" && (
         <div className="space-y-3">
-          <select className="rounded bg-slate-800 px-3 py-1.5 text-sm"
+          <select className="rounded bg-theme-muted px-3 py-1.5 text-sm"
             value={stockFilter} onChange={(e) => setStockFilter(e.target.value)}>
             <option value="">All warehouses</option>
             {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
           </select>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-slate-400">
+              <tr className="text-left text-xs text-theme-text-secondary">
                 {["SKU", "Warehouse", "Qty", "Value"].map((h) => (
                   <th key={h} className="px-3 py-2">{h}</th>
                 ))}
@@ -203,15 +203,15 @@ export default function WarehousesPage() {
             </thead>
             <tbody>
               {balances.map((b, i) => (
-                <tr key={i} className="border-t border-slate-800">
+                <tr key={i} className="border-t border-theme-border">
                   <td className="px-3 py-2 font-mono text-xs">{b.productSku}</td>
-                  <td className="px-3 py-2">{b.warehouseName} <span className="text-xs text-slate-500">({b.warehouseCode})</span></td>
+                  <td className="px-3 py-2">{b.warehouseName} <span className="text-xs text-theme-text-tertiary">({b.warehouseCode})</span></td>
                   <td className={`px-3 py-2 ${b.quantity < 0 ? "text-rose-400" : ""}`}>{b.quantity}</td>
                   <td className="px-3 py-2">{fmt(b.value)}</td>
                 </tr>
               ))}
               {balances.length === 0 && !loading && (
-                <tr><td colSpan={4} className="px-3 py-6 text-center text-slate-500">No stock balances</td></tr>
+                <tr><td colSpan={4} className="px-3 py-6 text-center text-theme-text-tertiary">No stock balances</td></tr>
               )}
             </tbody>
           </table>
@@ -221,7 +221,7 @@ export default function WarehousesPage() {
       {tab === "landed" && (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs text-slate-400">
+            <tr className="text-left text-xs text-theme-text-secondary">
               {["Reference", "Charge", "Amount", "Allocation", "Items", "Status", "Posted"].map((h) => (
                 <th key={h} className="px-3 py-2">{h}</th>
               ))}
@@ -229,22 +229,22 @@ export default function WarehousesPage() {
           </thead>
           <tbody>
             {vouchers.map((v) => (
-              <tr key={v.id} className="border-t border-slate-800">
+              <tr key={v.id} className="border-t border-theme-border">
                 <td className="px-3 py-2 font-mono text-xs">{v.referenceId}</td>
                 <td className="px-3 py-2 capitalize">{v.chargeType.replace(/_/g, " ")}</td>
                 <td className="px-3 py-2">{fmt(v.totalAmount)}</td>
-                <td className="px-3 py-2 text-slate-400">{v.allocationMethod}</td>
-                <td className="px-3 py-2 text-slate-400">{v.allocations?.length ?? 0} sku(s)</td>
+                <td className="px-3 py-2 text-theme-text-secondary">{v.allocationMethod}</td>
+                <td className="px-3 py-2 text-theme-text-secondary">{v.allocations?.length ?? 0} sku(s)</td>
                 <td className="px-3 py-2">
-                  <span className={`rounded px-2 py-0.5 text-xs ${v.status === "posted" ? "bg-emerald-500/15 text-emerald-400" : "bg-slate-500/15 text-slate-400"}`}>
+                  <span className={`rounded px-2 py-0.5 text-xs ${v.status === "posted" ? "bg-emerald-500/15 text-emerald-400" : "bg-theme-muted/15 text-theme-text-secondary"}`}>
                     {v.status}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-slate-400">{String(v.createdAt).slice(0, 10)}</td>
+                <td className="px-3 py-2 text-theme-text-secondary">{String(v.createdAt).slice(0, 10)}</td>
               </tr>
             ))}
             {vouchers.length === 0 && !loading && (
-              <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-500">
+              <tr><td colSpan={7} className="px-3 py-6 text-center text-theme-text-tertiary">
                 No landed-cost vouchers — allocate freight/customs onto received stock.
               </td></tr>
             )}
@@ -255,7 +255,7 @@ export default function WarehousesPage() {
       {tab === "registers" && (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs text-slate-400">
+            <tr className="text-left text-xs text-theme-text-secondary">
               {["Code", "Name", "Warehouse", "Status", ""].map((h) => (
                 <th key={h} className="px-3 py-2">{h}</th>
               ))}
@@ -263,14 +263,14 @@ export default function WarehousesPage() {
           </thead>
           <tbody>
             {registers.map((r) => (
-              <tr key={r.id} className="border-t border-slate-800">
+              <tr key={r.id} className="border-t border-theme-border">
                 <td className="px-3 py-2 font-mono">{r.code}</td>
                 <td className="px-3 py-2">{r.name}</td>
-                <td className="px-3 py-2 text-slate-400">
+                <td className="px-3 py-2 text-theme-text-secondary">
                   {warehouses.find((w) => w.id === r.warehouseId)?.name ?? "—"}
                 </td>
                 <td className="px-3 py-2">
-                  <span className={`rounded px-2 py-0.5 text-xs ${r.isActive ? "bg-emerald-500/15 text-emerald-400" : "bg-slate-500/15 text-slate-400"}`}>
+                  <span className={`rounded px-2 py-0.5 text-xs ${r.isActive ? "bg-emerald-500/15 text-emerald-400" : "bg-theme-muted/15 text-theme-text-secondary"}`}>
                     {r.isActive ? "active" : "inactive"}
                   </span>
                 </td>
@@ -284,7 +284,7 @@ export default function WarehousesPage() {
               </tr>
             ))}
             {registers.length === 0 && !loading && (
-              <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">
+              <tr><td colSpan={5} className="px-3 py-6 text-center text-theme-text-tertiary">
                 No registers — create one per till to scope shifts and receipt sequences.
               </td></tr>
             )}
@@ -293,35 +293,35 @@ export default function WarehousesPage() {
       )}
 
       {showWh && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-5 space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+          <div className="w-full max-w-md rounded-lg border border-theme-border bg-theme-surface p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">New warehouse</h2>
               <button onClick={() => setShowWh(false)}><X className="h-4 w-4" /></button>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <input className="rounded bg-slate-800 px-3 py-2 text-sm" placeholder="Name"
+              <input className="rounded bg-theme-muted px-3 py-2 text-sm" placeholder="Name"
                 value={whForm.name} onChange={(e) => setWhForm({ ...whForm, name: e.target.value })} />
-              <input className="rounded bg-slate-800 px-3 py-2 text-sm uppercase" placeholder="Code"
+              <input className="rounded bg-theme-muted px-3 py-2 text-sm uppercase" placeholder="Code"
                 value={whForm.code} onChange={(e) => setWhForm({ ...whForm, code: e.target.value.toUpperCase() })} />
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <label className="text-xs text-slate-400">Type
-                <select className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Type
+                <select className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={whForm.type} onChange={(e) => setWhForm({ ...whForm, type: e.target.value })}>
                   <option value="warehouse">Warehouse</option><option value="transit">Transit</option>
                 </select>
               </label>
-              <label className="text-xs text-slate-400">Branch
-                <select className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Branch
+                <select className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={whForm.branchId} onChange={(e) => setWhForm({ ...whForm, branchId: e.target.value })}>
                   <option value="">None</option>
                   {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
               </label>
             </div>
-            <label className="block text-xs text-slate-400">Parent warehouse (optional)
-              <select className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+            <label className="block text-xs text-theme-text-secondary">Parent warehouse (optional)
+              <select className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                 value={whForm.parentWarehouseId} onChange={(e) => setWhForm({ ...whForm, parentWarehouseId: e.target.value })}>
                 <option value="">None</option>
                 {warehouses.filter((w) => w.is_group || !w.parent_warehouse_id).map((w) => (
@@ -349,53 +349,53 @@ export default function WarehousesPage() {
       )}
 
       {showLc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-5 space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+          <div className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-lg border border-theme-border bg-theme-surface p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">New landed-cost voucher</h2>
               <button onClick={() => setShowLc(false)}><X className="h-4 w-4" /></button>
             </div>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-theme-text-secondary">
               Allocates freight/customs onto received items — inventory value rises and a payable posts to GL.
             </p>
             <div className="grid grid-cols-2 gap-2">
-              <input className="rounded bg-slate-800 px-3 py-2 text-sm" placeholder="Reference (PO / bill / GRN id)"
+              <input className="rounded bg-theme-muted px-3 py-2 text-sm" placeholder="Reference (PO / bill / GRN id)"
                 value={lcForm.referenceId} onChange={(e) => setLcForm({ ...lcForm, referenceId: e.target.value })} />
-              <label className="text-xs text-slate-400">Charge type
-                <select className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Charge type
+                <select className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={lcForm.chargeType} onChange={(e) => setLcForm({ ...lcForm, chargeType: e.target.value })}>
                   <option value="freight">Freight</option><option value="customs_duty">Customs duty</option>
                   <option value="insurance">Insurance</option><option value="other">Other</option>
                 </select>
               </label>
-              <label className="text-xs text-slate-400">Total amount
-                <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Total amount
+                <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={lcForm.totalAmount} onChange={(e) => setLcForm({ ...lcForm, totalAmount: e.target.value })} />
               </label>
-              <label className="text-xs text-slate-400">Allocate by
-                <select className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Allocate by
+                <select className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={lcForm.allocationMethod} onChange={(e) => setLcForm({ ...lcForm, allocationMethod: e.target.value })}>
                   <option value="value">Item value</option><option value="quantity">Quantity</option>
                   <option value="manual">Manual amounts</option>
                 </select>
               </label>
             </div>
-            <h3 className="text-xs font-semibold text-slate-300">Items received</h3>
+            <h3 className="text-xs font-semibold text-theme-text-primary">Items received</h3>
             {lcItems.map((it, i) => (
               <div key={i} className="grid grid-cols-[1fr_64px_96px_96px_24px] gap-2 items-center">
-                <input className="rounded bg-slate-800 px-2 py-2 text-sm" placeholder="SKU"
+                <input className="rounded bg-theme-muted px-2 py-2 text-sm" placeholder="SKU"
                   value={it.sku} onChange={(e) => {
                     const ls = [...lcItems]; ls[i] = { ...it, sku: e.target.value }; setLcItems(ls);
                   }} />
-                <input type="number" className="rounded bg-slate-800 px-2 py-2 text-sm" placeholder="Qty"
+                <input type="number" className="rounded bg-theme-muted px-2 py-2 text-sm" placeholder="Qty"
                   value={it.quantity} onChange={(e) => {
                     const ls = [...lcItems]; ls[i] = { ...it, quantity: e.target.value }; setLcItems(ls);
                   }} />
-                <input type="number" className="rounded bg-slate-800 px-2 py-2 text-sm" placeholder="Unit cost"
+                <input type="number" className="rounded bg-theme-muted px-2 py-2 text-sm" placeholder="Unit cost"
                   value={it.unitCost} onChange={(e) => {
                     const ls = [...lcItems]; ls[i] = { ...it, unitCost: e.target.value }; setLcItems(ls);
                   }} />
-                <input type="number" className="rounded bg-slate-800 px-2 py-2 text-sm"
+                <input type="number" className="rounded bg-theme-muted px-2 py-2 text-sm"
                   placeholder={lcForm.allocationMethod === "manual" ? "Allocated" : "auto"}
                   disabled={lcForm.allocationMethod !== "manual"}
                   value={it.allocatedAmount} onChange={(e) => {
@@ -432,20 +432,20 @@ export default function WarehousesPage() {
       )}
 
       {showReg && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-sm rounded-lg border border-slate-700 bg-slate-900 p-5 space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
+          <div className="w-full max-w-sm rounded-lg border border-theme-border bg-theme-surface p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">New POS register</h2>
               <button onClick={() => setShowReg(false)}><X className="h-4 w-4" /></button>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <input className="rounded bg-slate-800 px-3 py-2 text-sm uppercase" placeholder="Code (TILL-2)"
+              <input className="rounded bg-theme-muted px-3 py-2 text-sm uppercase" placeholder="Code (TILL-2)"
                 value={regForm.code} onChange={(e) => setRegForm({ ...regForm, code: e.target.value.toUpperCase() })} />
-              <input className="rounded bg-slate-800 px-3 py-2 text-sm" placeholder="Name"
+              <input className="rounded bg-theme-muted px-3 py-2 text-sm" placeholder="Name"
                 value={regForm.name} onChange={(e) => setRegForm({ ...regForm, name: e.target.value })} />
             </div>
-            <label className="block text-xs text-slate-400">Warehouse (optional)
-              <select className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+            <label className="block text-xs text-theme-text-secondary">Warehouse (optional)
+              <select className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                 value={regForm.warehouseId} onChange={(e) => setRegForm({ ...regForm, warehouseId: e.target.value })}>
                 <option value="">Default</option>
                 {warehouses.filter((w) => !w.is_group).map((w) => (

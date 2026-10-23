@@ -26,8 +26,8 @@ interface VendorPayment {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: "bg-slate-100 text-gray-900",
-  posted: "bg-blue-100 text-gray-900",
+  draft: "bg-theme-muted text-theme-text-primary",
+  posted: "bg-blue-100 text-theme-text-primary",
   reconciled: "bg-green-100 text-green-900",
   cancelled: "bg-rose-100 text-rose-900"
 };
@@ -103,9 +103,9 @@ export default function VendorPaymentsWorkspace() {
   if (loading) {
     return (
       <div className="p-6">
-        <div className="rounded-lg bg-slate-50 p-8 text-center">
-          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900"></div>
-          <p className="mt-3 text-slate-600">Loading payments…</p>
+        <div className="rounded-lg bg-theme-muted p-8 text-center">
+          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-theme-border border-t-slate-900"></div>
+          <p className="mt-3 text-theme-text-secondary">Loading payments…</p>
         </div>
       </div>
     );
@@ -119,26 +119,26 @@ export default function VendorPaymentsWorkspace() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Financial Management</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Financial Management</p>
           <h1 className="text-2xl font-semibold text-theme-text-primary">Vendor Payments</h1>
-          <p className="mt-1 text-sm text-slate-600">Track and manage all vendor payments and reconciliations</p>
+          <p className="mt-1 text-sm text-theme-text-secondary">Track and manage all vendor payments and reconciliations</p>
         </div>
         <button 
           onClick={() => setShowCreateModal(true)}
-          className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="whitespace-nowrap rounded-full bg-theme-accent px-4 py-2 text-sm font-medium text-white hover:bg-theme-accent-hover"
         >
           + New Payment
         </button>
       </div>
 
       {/* Filters */}
-      <div className="rounded-2xl border border-slate-100 bg-white p-6">
-        <p className="mb-4 text-sm font-semibold text-gray-900">Filters</p>
+      <div className="rounded-2xl border border-theme-border bg-theme-surface p-6">
+        <p className="mb-4 text-sm font-semibold text-theme-text-primary">Filters</p>
         <div className="grid grid-cols-3 gap-4">
           <select
             value={filters.status}
             onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-            className="bg-blue-50 rounded-lg border border-blue-200 px-3 py-2 text-sm text-blue-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            className="bg-blue-50 rounded-lg border border-blue-200 px-3 py-2 text-sm text-blue-700 focus:ring-2 focus:ring-theme-accent focus:border-theme-accent outline-none"
           >
             <option value="">All Status</option>
             <option value="draft">Draft</option>
@@ -150,7 +150,7 @@ export default function VendorPaymentsWorkspace() {
           <select
             value={filters.method}
             onChange={(e) => setFilters({ ...filters, method: e.target.value })}
-            className="bg-blue-50 rounded-lg border border-blue-200 px-3 py-2 text-sm text-blue-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            className="bg-blue-50 rounded-lg border border-blue-200 px-3 py-2 text-sm text-blue-700 focus:ring-2 focus:ring-theme-accent focus:border-theme-accent outline-none"
           >
             <option value="">All Methods</option>
             <option value="bank_transfer">Bank Transfer</option>
@@ -164,56 +164,56 @@ export default function VendorPaymentsWorkspace() {
             placeholder="Search vendor…"
             value={filters.vendorId}
             onChange={(e) => setFilters({ ...filters, vendorId: e.target.value })}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="rounded-lg border border-theme-border px-3 py-2 text-sm"
           />
         </div>
       </div>
 
       {/* Payments List */}
-      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+      <div className="rounded-2xl border border-theme-border bg-theme-surface shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="border-b border-slate-100 bg-slate-50">
+            <thead className="border-b border-theme-border bg-theme-muted">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Payment</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Method</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Applied</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Unapplied</th>
-                <th className="px-6 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">Payment</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">Method</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">Amount</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">Applied</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">Unapplied</th>
+                <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-theme-text-secondary uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-theme-border">
               {payments.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center">
                     <div className="rounded-lg bg-blue-50 p-4 text-sm">
-                      <p className="font-medium text-gray-900">No payments yet</p>
+                      <p className="font-medium text-theme-text-primary">No payments yet</p>
                       <p className="mt-1 text-blue-700">Create your first payment to get started</p>
                     </div>
                   </td>
                 </tr>
               ) : (
                 payments.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 text-sm font-semibold text-gray-900">
+                  <tr key={payment.id} className="hover:bg-theme-muted">
+                    <td className="px-6 py-4 text-sm font-semibold text-theme-text-primary">
                       {payment.paymentNumber}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-6 py-4 text-sm text-theme-text-secondary">
                       {getMethodLabel(payment.method)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-6 py-4 text-sm text-theme-text-secondary">
                       {format(new Date(payment.paymentDate), "MMM dd, yyyy")}
                     </td>
-                    <td className="px-6 py-4 text-right text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 text-right text-sm font-medium text-theme-text-primary">
                       {payment.currency} {payment.amount.toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 text-right text-sm text-slate-600">
+                    <td className="px-6 py-4 text-right text-sm text-theme-text-secondary">
                       {payment.currency} {payment.appliedAmount.toLocaleString()}
                     </td>
-                    <td className={`px-6 py-4 text-right text-sm font-medium ${payment.unappliedAmount > 0 ? "text-amber-600" : "text-slate-600"}`}>
+                    <td className={`px-6 py-4 text-right text-sm font-medium ${payment.unappliedAmount > 0 ? "text-amber-600" : "text-theme-text-secondary"}`}>
                       {payment.currency} {payment.unappliedAmount.toLocaleString()}
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -225,7 +225,7 @@ export default function VendorPaymentsWorkspace() {
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => setViewPayment(payment)}
-                          className="text-blue-600 hover:text-gray-700"
+                          className="text-theme-accent hover:text-theme-text-primary"
                         >
                           View
                         </button>
@@ -311,24 +311,24 @@ export default function VendorPaymentsWorkspace() {
 
       {/* View Payment Modal */}
       {viewPayment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={(e) => { if (e.target === e.currentTarget) setViewPayment(null); }}>
-          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">Payment Details</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay" onClick={(e) => { if (e.target === e.currentTarget) setViewPayment(null); }}>
+          <div className="w-full max-w-lg rounded-xl bg-theme-surface p-6 shadow-xl">
+            <h3 className="mb-4 text-lg font-semibold text-theme-text-primary">Payment Details</h3>
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between"><span className="text-slate-500">Payment Number:</span><span className="font-medium">{viewPayment.paymentNumber}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Vendor ID:</span><span className="font-medium">{viewPayment.vendorId}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Method:</span><span className="font-medium">{getMethodLabel(viewPayment.method)}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Date:</span><span className="font-medium">{format(new Date(viewPayment.paymentDate), "MMM dd, yyyy")}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Amount:</span><span className="font-medium">{viewPayment.currency} {viewPayment.amount.toLocaleString()}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Applied:</span><span className="font-medium">{viewPayment.currency} {viewPayment.appliedAmount.toLocaleString()}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Unapplied:</span><span className="font-medium">{viewPayment.currency} {viewPayment.unappliedAmount.toLocaleString()}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Status:</span><span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(viewPayment.status)}`}>{getStatusIcon(viewPayment.status)} {viewPayment.status}</span></div>
+              <div className="flex justify-between"><span className="text-theme-text-tertiary">Payment Number:</span><span className="font-medium">{viewPayment.paymentNumber}</span></div>
+              <div className="flex justify-between"><span className="text-theme-text-tertiary">Vendor ID:</span><span className="font-medium">{viewPayment.vendorId}</span></div>
+              <div className="flex justify-between"><span className="text-theme-text-tertiary">Method:</span><span className="font-medium">{getMethodLabel(viewPayment.method)}</span></div>
+              <div className="flex justify-between"><span className="text-theme-text-tertiary">Date:</span><span className="font-medium">{format(new Date(viewPayment.paymentDate), "MMM dd, yyyy")}</span></div>
+              <div className="flex justify-between"><span className="text-theme-text-tertiary">Amount:</span><span className="font-medium">{viewPayment.currency} {viewPayment.amount.toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-theme-text-tertiary">Applied:</span><span className="font-medium">{viewPayment.currency} {viewPayment.appliedAmount.toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-theme-text-tertiary">Unapplied:</span><span className="font-medium">{viewPayment.currency} {viewPayment.unappliedAmount.toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-theme-text-tertiary">Status:</span><span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(viewPayment.status)}`}>{getStatusIcon(viewPayment.status)} {viewPayment.status}</span></div>
               {viewPayment.applications.length > 0 && (
                 <div>
-                  <span className="text-slate-500">Applications:</span>
+                  <span className="text-theme-text-tertiary">Applications:</span>
                   <ul className="mt-1 space-y-1">
                     {viewPayment.applications.map((app) => (
-                      <li key={app.id} className="flex justify-between rounded bg-slate-50 px-2 py-1">
+                      <li key={app.id} className="flex justify-between rounded bg-theme-muted px-2 py-1">
                         <span>Bill {app.billNumber || `${app.billId.slice(0, 8)}...`}</span>
                         <span className="font-medium">{viewPayment.currency} {app.appliedAmount.toLocaleString()}</span>
                       </li>
@@ -340,7 +340,7 @@ export default function VendorPaymentsWorkspace() {
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setViewPayment(null)}
-                className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-full border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted"
               >
                 Close
               </button>
@@ -430,13 +430,13 @@ export function CreatePaymentModal({ isOpen = true, onClose, onSuccess, onError 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 pointer-events-auto" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl z-[10000] relative">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900">Create Vendor Payment</h3>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-theme-overlay pointer-events-auto" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full max-w-md rounded-3xl bg-theme-surface p-6 shadow-2xl z-[10000] relative">
+        <h3 className="mb-4 text-lg font-semibold text-theme-text-primary">Create Vendor Payment</h3>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-900">
+            <label className="mb-2 block text-sm font-medium text-theme-text-primary">
               Vendor ID
             </label>
             <input
@@ -444,19 +444,19 @@ export function CreatePaymentModal({ isOpen = true, onClose, onSuccess, onError 
               required
               value={formData.vendorId}
               onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black bg-white"
+              className="w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary bg-theme-surface"
               placeholder="Enter vendor ID"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-900">
+            <label className="mb-2 block text-sm font-medium text-theme-text-primary">
               Payment Method
             </label>
             <select
               value={formData.method}
               onChange={(e) => setFormData({ ...formData, method: e.target.value as any })}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black bg-white"
+              className="w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary bg-theme-surface"
             >
               <option value="bank_transfer">Bank Transfer</option>
               <option value="cash">Cash</option>
@@ -466,7 +466,7 @@ export function CreatePaymentModal({ isOpen = true, onClose, onSuccess, onError 
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-900">
+            <label className="mb-2 block text-sm font-medium text-theme-text-primary">
               Amount
             </label>
             <input
@@ -476,13 +476,13 @@ export function CreatePaymentModal({ isOpen = true, onClose, onSuccess, onError 
               required
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: formatAmount(e.target.value) })}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black bg-white"
+              className="w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary bg-theme-surface"
               placeholder="0.00"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-900">
+            <label className="mb-2 block text-sm font-medium text-theme-text-primary">
               Payment Date
             </label>
             <input
@@ -490,7 +490,7 @@ export function CreatePaymentModal({ isOpen = true, onClose, onSuccess, onError 
               required
               value={formData.paymentDate}
               onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black bg-white"
+              className="w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary bg-theme-surface"
             />
           </div>
 
@@ -498,14 +498,14 @@ export function CreatePaymentModal({ isOpen = true, onClose, onSuccess, onError 
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-full border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-black hover:bg-green-700 disabled:opacity-50"
+              className="rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-green-700 disabled:opacity-50"
               disabled={loading}
             >
               {loading ? "Creating..." : "Create Payment"}

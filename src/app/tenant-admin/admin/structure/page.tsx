@@ -18,12 +18,12 @@ interface OrgNode {
 function OrgNodeItem({ node, depth = 0 }: { node: OrgNode; depth?: number }) {
   return (
     <div className="mb-2" style={{ marginLeft: depth * 20 }}>
-      <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+      <div className="flex items-center justify-between p-3 bg-theme-surface border border-theme-border rounded-lg">
         <div>
-          <p className="text-sm font-medium text-gray-900">{node.name}</p>
-          <p className="text-xs text-gray-500 capitalize">{node.type} {node.status && `• ${node.status}`} {node.region && `• ${node.region}`}</p>
+          <p className="text-sm font-medium text-theme-text-primary">{node.name}</p>
+          <p className="text-xs text-theme-text-secondary capitalize">{node.type} {node.status && `• ${node.status}`} {node.region && `• ${node.region}`}</p>
         </div>
-        <div className="text-xs text-gray-600 text-right">
+        <div className="text-xs text-theme-text-secondary text-right">
           {node.manager && <p>Manager: {node.manager}</p>}
           {typeof node.headcount === "number" && <p>Headcount: {node.headcount}</p>}
         </div>

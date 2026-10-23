@@ -35,22 +35,22 @@ export default function HrEdgePage() {
     setError(""); load(); return d;
   };
 
-  const input = "rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm";
+  const input = "rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm";
   const btn = "rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium hover:bg-emerald-500";
-  const btnSm = "rounded bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700";
+  const btnSm = "rounded bg-theme-muted px-2 py-1 text-xs hover:bg-theme-elevated";
   const th = "p-3";
 
   if (!tenantSlug) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 text-slate-100">
+    <div className="min-h-screen bg-theme-bg p-6 text-theme-text-primary">
       <div className="mx-auto max-w-6xl">
         <h1 className="mb-1 text-2xl font-bold">HR Edge</h1>
-        <p className="mb-4 text-sm text-slate-400">Encashment, overtime, grievances, transfers, skills, training, staffing, tax declarations</p>
-        <div className="mb-4 flex flex-wrap gap-1 rounded-lg bg-slate-900 p-1">
+        <p className="mb-4 text-sm text-theme-text-secondary">Encashment, overtime, grievances, transfers, skills, training, staffing, tax declarations</p>
+        <div className="mb-4 flex flex-wrap gap-1 rounded-lg bg-theme-surface p-1">
           {TABS.map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`rounded-md px-3 py-1.5 text-sm capitalize ${tab === t ? "bg-slate-700" : "text-slate-400 hover:text-white"}`}>{t.replace("-", " ")}</button>
+              className={`rounded-md px-3 py-1.5 text-sm capitalize ${tab === t ? "bg-theme-elevated" : "text-theme-text-secondary hover:text-theme-text-primary"}`}>{t.replace("-", " ")}</button>
           ))}
         </div>
         {error && <div className="mb-4 rounded-lg bg-red-900/40 p-3 text-sm text-red-300">{error}<button onClick={() => setError("")} className="ml-2 underline">dismiss</button></div>}
@@ -64,11 +64,11 @@ export default function HrEdgePage() {
               <input type="number" placeholder="Rate/day" value={f.eRate ?? ""} onChange={(e) => setF({ ...f, eRate: e.target.value })} className={`${input} w-28`} />
               <button className={btn} onClick={() => post({ action: "create-encashment", employeeId: f.eEmp, leaveType: f.eType, encashableDays: Number(f.eDays), ratePerDay: Number(f.eRate) })}>Request</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Employee</th><th className={th}>Type</th><th className={th}>Days</th><th className={th}>Amount</th><th className={th}>Status</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Employee</th><th className={th}>Type</th><th className={th}>Days</th><th className={th}>Amount</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.encashments?.map((r: any) => (
-                  <tr key={r.id} className="border-t border-slate-800/50">
+                  <tr key={r.id} className="border-t border-theme-border">
                     <td className={th}>{r.employee_id}</td><td className={th}>{r.leave_type}</td>
                     <td className={th}>{r.encashable_days}</td><td className={th}>{Number(r.amount).toLocaleString()}</td>
                     <td className={th}>{r.status}</td>
@@ -78,7 +78,7 @@ export default function HrEdgePage() {
                     </td>
                   </tr>
                 ))}
-                {!data.encashments?.length && <tr><td colSpan={6} className="p-6 text-center text-slate-500">No encashments</td></tr>}
+                {!data.encashments?.length && <tr><td colSpan={6} className="p-6 text-center text-theme-text-tertiary">No encashments</td></tr>}
               </tbody>
             </table>
           </div>
@@ -93,11 +93,11 @@ export default function HrEdgePage() {
               <input type="number" step="0.1" placeholder="× rate" value={f.oMult ?? 1.5} onChange={(e) => setF({ ...f, oMult: e.target.value })} className={`${input} w-20`} />
               <button className={btn} onClick={() => post({ action: "create-overtime", employeeId: f.oEmp, workDate: f.oDate, hours: Number(f.oHours), rateMultiplier: Number(f.oMult) })}>Log</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Employee</th><th className={th}>Date</th><th className={th}>Hours</th><th className={th}>×</th><th className={th}>Status</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Employee</th><th className={th}>Date</th><th className={th}>Hours</th><th className={th}>×</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.overtime?.map((o: any) => (
-                  <tr key={o.id} className="border-t border-slate-800/50">
+                  <tr key={o.id} className="border-t border-theme-border">
                     <td className={th}>{o.employee_id}</td><td className={th}>{String(o.work_date).slice(0, 10)}</td>
                     <td className={th}>{o.hours}</td><td className={th}>{o.rate_multiplier}</td>
                     <td className={th}>{o.status}</td>
@@ -111,7 +111,7 @@ export default function HrEdgePage() {
                     </td>
                   </tr>
                 ))}
-                {!data.overtime?.length && <tr><td colSpan={6} className="p-6 text-center text-slate-500">No overtime entries</td></tr>}
+                {!data.overtime?.length && <tr><td colSpan={6} className="p-6 text-center text-theme-text-tertiary">No overtime entries</td></tr>}
               </tbody>
             </table>
           </div>
@@ -125,11 +125,11 @@ export default function HrEdgePage() {
               <input placeholder="Subject" value={f.gSub ?? ""} onChange={(e) => setF({ ...f, gSub: e.target.value })} className={`${input} flex-1`} />
               <button className={btn} onClick={() => post({ action: "create-grievance", employeeId: f.gEmp, grievanceType: f.gType, subject: f.gSub })}>Raise</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Employee</th><th className={th}>Type</th><th className={th}>Subject</th><th className={th}>Status</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Employee</th><th className={th}>Type</th><th className={th}>Subject</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.grievances?.map((g: any) => (
-                  <tr key={g.id} className="border-t border-slate-800/50">
+                  <tr key={g.id} className="border-t border-theme-border">
                     <td className={th}>{g.employee_id}</td><td className={th}>{g.grievance_type}</td>
                     <td className={th}>{g.subject}</td><td className={th}>{g.status}</td>
                     <td className={th}>
@@ -140,7 +140,7 @@ export default function HrEdgePage() {
                     </td>
                   </tr>
                 ))}
-                {!data.grievances?.length && <tr><td colSpan={5} className="p-6 text-center text-slate-500">No grievances</td></tr>}
+                {!data.grievances?.length && <tr><td colSpan={5} className="p-6 text-center text-theme-text-tertiary">No grievances</td></tr>}
               </tbody>
             </table>
           </div>
@@ -155,18 +155,18 @@ export default function HrEdgePage() {
               <input placeholder="To branch ID" value={f.trBranch ?? ""} onChange={(e) => setF({ ...f, trBranch: e.target.value })} className={input} />
               <button className={btn} onClick={() => post({ action: "create-transfer", employeeId: f.trEmp, transferDate: f.trDate, toDepartmentId: f.trDept, toBranchId: f.trBranch })}>Create</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Employee</th><th className={th}>Date</th><th className={th}>To Dept</th><th className={th}>To Branch</th><th className={th}>Status</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Employee</th><th className={th}>Date</th><th className={th}>To Dept</th><th className={th}>To Branch</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.transfers?.map((t: any) => (
-                  <tr key={t.id} className="border-t border-slate-800/50">
+                  <tr key={t.id} className="border-t border-theme-border">
                     <td className={th}>{t.employee_id}</td><td className={th}>{String(t.transfer_date).slice(0, 10)}</td>
                     <td className={th}>{t.to_department_id ?? "—"}</td><td className={th}>{t.to_branch_id ?? "—"}</td>
                     <td className={th}>{t.status}</td>
                     <td className={th}>{["draft", "approved"].includes(t.status) && <button className={btnSm} onClick={() => post({ action: "complete-transfer", id: t.id })}>Complete</button>}</td>
                   </tr>
                 ))}
-                {!data.transfers?.length && <tr><td colSpan={6} className="p-6 text-center text-slate-500">No transfers</td></tr>}
+                {!data.transfers?.length && <tr><td colSpan={6} className="p-6 text-center text-theme-text-tertiary">No transfers</td></tr>}
               </tbody>
             </table>
           </div>
@@ -182,16 +182,16 @@ export default function HrEdgePage() {
               </select>
               <button className={btn} onClick={() => post({ action: "upsert-skill", employeeId: f.sEmp, skill: f.sSkill, proficiency: f.sProf ?? 3 })}>Set</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Employee</th><th className={th}>Skill</th><th className={th}>Proficiency</th><th className={th}>Evaluated</th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Employee</th><th className={th}>Skill</th><th className={th}>Proficiency</th><th className={th}>Evaluated</th></tr></thead>
               <tbody>
                 {data.skills?.map((s: any) => (
-                  <tr key={s.id} className="border-t border-slate-800/50">
+                  <tr key={s.id} className="border-t border-theme-border">
                     <td className={th}>{s.employee_id}</td><td className={th}>{s.skill}</td>
                     <td className={th}>{"★".repeat(s.proficiency)}</td><td className={th}>{String(s.evaluated_on).slice(0, 10)}</td>
                   </tr>
                 ))}
-                {!data.skills?.length && <tr><td colSpan={4} className="p-6 text-center text-slate-500">No skill records</td></tr>}
+                {!data.skills?.length && <tr><td colSpan={4} className="p-6 text-center text-theme-text-tertiary">No skill records</td></tr>}
               </tbody>
             </table>
           </div>
@@ -202,24 +202,24 @@ export default function HrEdgePage() {
             <div className="flex flex-wrap gap-2">
               <input placeholder="Program name" value={f.tpName ?? ""} onChange={(e) => setF({ ...f, tpName: e.target.value })} className={input} />
               <button className={btn} onClick={() => post({ action: "create-program", name: f.tpName })}>Add Program</button>
-              <span className="text-slate-600">|</span>
+              <span className="text-theme-text-secondary">|</span>
               <input placeholder="Event name" value={f.teName ?? ""} onChange={(e) => setF({ ...f, teName: e.target.value })} className={input} />
               <input type="date" value={f.teDate ?? ""} onChange={(e) => setF({ ...f, teDate: e.target.value })} className={input} />
               <input placeholder="Venue" value={f.teVenue ?? ""} onChange={(e) => setF({ ...f, teVenue: e.target.value })} className={input} />
               <button className={btn} onClick={() => post({ action: "create-event", eventName: f.teName, startDate: f.teDate, venue: f.teVenue })}>Add Event</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Event</th><th className={th}>Program</th><th className={th}>Start</th><th className={th}>Status</th><th className={th}>Attendees</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Event</th><th className={th}>Program</th><th className={th}>Start</th><th className={th}>Status</th><th className={th}>Attendees</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.events?.map((e: any) => (
-                  <tr key={e.id} className="border-t border-slate-800/50">
+                  <tr key={e.id} className="border-t border-theme-border">
                     <td className={th}>{e.event_name}</td><td className={th}>{e.program_name ?? "—"}</td>
                     <td className={th}>{String(e.start_date).slice(0, 10)}</td><td className={th}>{e.status}</td>
                     <td className={th}>{(e.attendees ?? []).length}</td>
                     <td className={th}>{e.status === "scheduled" && <button className={btnSm} onClick={() => post({ action: "update-event", id: e.id, status: "completed" })}>Complete</button>}</td>
                   </tr>
                 ))}
-                {!data.events?.length && <tr><td colSpan={6} className="p-6 text-center text-slate-500">No training events</td></tr>}
+                {!data.events?.length && <tr><td colSpan={6} className="p-6 text-center text-theme-text-tertiary">No training events</td></tr>}
               </tbody>
             </table>
           </div>
@@ -232,11 +232,11 @@ export default function HrEdgePage() {
               <input placeholder='Designations JSON [{"designation":"Engineer","count":2,"estCost":500000}]' value={f.spDes ?? ""} onChange={(e) => setF({ ...f, spDes: e.target.value })} className={`${input} flex-1 font-mono`} />
               <button className={btn} onClick={() => post({ action: "create-staffing-plan", name: f.spName, designations: JSON.parse(f.spDes || "[]") })}>Create</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Plan</th><th className={th}>Roles</th><th className={th}>Est. Cost</th><th className={th}>Status</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Plan</th><th className={th}>Roles</th><th className={th}>Est. Cost</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.plans?.map((p: any) => (
-                  <tr key={p.id} className="border-t border-slate-800/50">
+                  <tr key={p.id} className="border-t border-theme-border">
                     <td className={th}>{p.name}</td><td className={th}>{(p.designations ?? []).map((d: any) => `${d.count}× ${d.designation}`).join(", ")}</td>
                     <td className={th}>{Number(p.total_estimated_cost).toLocaleString()}</td><td className={th}>{p.status}</td>
                     <td className={th}>
@@ -245,7 +245,7 @@ export default function HrEdgePage() {
                     </td>
                   </tr>
                 ))}
-                {!data.plans?.length && <tr><td colSpan={5} className="p-6 text-center text-slate-500">No staffing plans</td></tr>}
+                {!data.plans?.length && <tr><td colSpan={5} className="p-6 text-center text-theme-text-tertiary">No staffing plans</td></tr>}
               </tbody>
             </table>
           </div>
@@ -259,11 +259,11 @@ export default function HrEdgePage() {
               <input placeholder='Reliefs JSON {"rent":500000,"pension":100000}' value={f.tdReliefs ?? ""} onChange={(e) => setF({ ...f, tdReliefs: e.target.value })} className={`${input} flex-1 font-mono`} />
               <button className={btn} onClick={() => post({ action: "upsert-tax-declaration", employeeId: f.tdEmp, taxYear: Number(f.tdYear ?? new Date().getFullYear()), reliefs: JSON.parse(f.tdReliefs || "{}") })}>Submit</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Employee</th><th className={th}>Year</th><th className={th}>Declared Reliefs</th><th className={th}>Status</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Employee</th><th className={th}>Year</th><th className={th}>Declared Reliefs</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.declarations?.map((d: any) => (
-                  <tr key={d.id} className="border-t border-slate-800/50">
+                  <tr key={d.id} className="border-t border-theme-border">
                     <td className={th}>{d.employee_id}</td><td className={th}>{d.tax_year}</td>
                     <td className={th}>{Number(d.declared_amount).toLocaleString()}</td><td className={th}>{d.status}</td>
                     <td className={th}>
@@ -276,7 +276,7 @@ export default function HrEdgePage() {
                     </td>
                   </tr>
                 ))}
-                {!data.declarations?.length && <tr><td colSpan={5} className="p-6 text-center text-slate-500">No declarations</td></tr>}
+                {!data.declarations?.length && <tr><td colSpan={5} className="p-6 text-center text-theme-text-tertiary">No declarations</td></tr>}
               </tbody>
             </table>
           </div>

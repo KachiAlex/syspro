@@ -276,24 +276,24 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
       )}
 
       {/* Workflow Analytics Dashboard */}
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Dashboard</p>
-            <h2 className="text-lg font-semibold text-gray-900">Workflow Analytics</h2>
-            <p className="mt-1 text-sm text-slate-600">Monitor workflow performance and execution metrics</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Dashboard</p>
+            <h2 className="text-lg font-semibold text-theme-text-primary">Workflow Analytics</h2>
+            <p className="mt-1 text-sm text-theme-text-secondary">Monitor workflow performance and execution metrics</p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setShowAnalytics(!showAnalytics)}
-              className="whitespace-nowrap rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="whitespace-nowrap rounded-full border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted"
             >
               <Activity className="w-4 h-4 mr-2 inline" />
               {showAnalytics ? "Hide" : "Show"} Analytics
             </button>
             <button
               onClick={() => setShowTemplates(!showTemplates)}
-              className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="whitespace-nowrap rounded-full bg-theme-accent px-4 py-2 text-sm font-medium text-white hover:bg-theme-accent-hover"
             >
               <FileText className="w-4 h-4 mr-2 inline" />
               {showTemplates ? "Hide" : "Show"} Templates
@@ -303,38 +303,38 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
 
         {showAnalytics && (
           <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="rounded-lg border border-slate-200 p-4">
+            <div className="rounded-lg border border-theme-border p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600">Total Workflows</p>
-                  <p className="text-2xl font-bold text-gray-900">{workflowAnalytics.totalWorkflows}</p>
+                  <p className="text-sm text-theme-text-secondary">Total Workflows</p>
+                  <p className="text-2xl font-bold text-theme-text-primary">{workflowAnalytics.totalWorkflows}</p>
                 </div>
-                <GitBranch className="w-8 h-8 text-blue-600 opacity-20" />
+                <GitBranch className="w-8 h-8 text-theme-accent opacity-20" />
               </div>
             </div>
-            <div className="rounded-lg border border-slate-200 p-4">
+            <div className="rounded-lg border border-theme-border p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600">Active Workflows</p>
-                  <p className="text-2xl font-bold text-gray-900">{workflowAnalytics.activeWorkflows}</p>
+                  <p className="text-sm text-theme-text-secondary">Active Workflows</p>
+                  <p className="text-2xl font-bold text-theme-text-primary">{workflowAnalytics.activeWorkflows}</p>
                 </div>
                 <Play className="w-8 h-8 text-green-600 opacity-20" />
               </div>
             </div>
-            <div className="rounded-lg border border-slate-200 p-4">
+            <div className="rounded-lg border border-theme-border p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600">Total Executions</p>
-                  <p className="text-2xl font-bold text-gray-900">{workflowAnalytics.totalExecutions}</p>
+                  <p className="text-sm text-theme-text-secondary">Total Executions</p>
+                  <p className="text-2xl font-bold text-theme-text-primary">{workflowAnalytics.totalExecutions}</p>
                 </div>
                 <Timer className="w-8 h-8 text-purple-600 opacity-20" />
               </div>
             </div>
-            <div className="rounded-lg border border-slate-200 p-4">
+            <div className="rounded-lg border border-theme-border p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600">Success Rate</p>
-                  <p className="text-2xl font-bold text-gray-900">{workflowAnalytics.averageSuccessRate.toFixed(1)}%</p>
+                  <p className="text-sm text-theme-text-secondary">Success Rate</p>
+                  <p className="text-2xl font-bold text-theme-text-primary">{workflowAnalytics.averageSuccessRate.toFixed(1)}%</p>
                 </div>
                 <CheckCircle className="w-8 h-8 text-green-600 opacity-20" />
               </div>
@@ -344,21 +344,21 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
 
         {showAnalytics && (
           <div className="mt-6">
-            <h3 className="text-md font-semibold text-gray-900 mb-3">Recent Executions</h3>
+            <h3 className="text-md font-semibold text-theme-text-primary mb-3">Recent Executions</h3>
             <div className="space-y-2">
               {workflowAnalytics.recentExecutions.map((execution, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <div key={index} className="flex items-center justify-between p-3 bg-theme-muted rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className={`w-2 h-2 rounded-full ${
                       execution.status === "completed" ? "bg-green-500" : "bg-red-500"
                     }`}></div>
                     <div>
-                      <p className="font-medium text-gray-900">{execution.workflow}</p>
-                      <p className="text-sm text-slate-600">{execution.timestamp}</p>
+                      <p className="font-medium text-theme-text-primary">{execution.workflow}</p>
+                      <p className="text-sm text-theme-text-secondary">{execution.timestamp}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-sm text-slate-600">{execution.duration}</span>
+                    <span className="text-sm text-theme-text-secondary">{execution.duration}</span>
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                       execution.status === "completed" 
                         ? "bg-green-100 text-green-800" 
@@ -376,16 +376,16 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
 
       {/* Workflow Templates */}
       {showTemplates && (
-        <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Workflow Templates</h3>
+        <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Workflow Templates</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {WORKFLOW_TYPES.map((type) => (
-              <div key={type.value} className="rounded-lg border border-slate-200 p-4 hover:border-slate-300 transition-colors">
+              <div key={type.value} className="rounded-lg border border-theme-border p-4 hover:border-theme-border transition-colors">
                 <div className="flex items-center gap-3 mb-3">
-                  <type.icon className="w-6 h-6 text-blue-600" />
+                  <type.icon className="w-6 h-6 text-theme-accent" />
                   <div>
-                    <h4 className="font-medium text-gray-900">{type.label}</h4>
-                    <p className="text-sm text-slate-600">{type.description}</p>
+                    <h4 className="font-medium text-theme-text-primary">{type.label}</h4>
+                    <p className="text-sm text-theme-text-secondary">{type.description}</p>
                   </div>
                 </div>
                 <button
@@ -393,7 +393,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
                     form.setValue("type", type.value as any);
                     setShowTemplates(false);
                   }}
-                  className="w-full rounded-lg border border-blue-200 text-blue-700 px-3 py-2 text-sm hover:bg-blue-50 transition-colors"
+                  className="w-full rounded-lg border border-blue-200 text-blue-700 px-3 py-2 text-sm hover:bg-theme-muted transition-colors"
                 >
                   Use Template
                 </button>
@@ -404,12 +404,12 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
       )}
 
       {/* Create Workflow */}
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Automation</p>
-            <h2 className="text-xl font-semibold text-gray-900">Create Workflow</h2>
-            <p className="mt-1 text-sm text-slate-500">Design custom workflows for your business processes</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Automation</p>
+            <h2 className="text-xl font-semibold text-theme-text-primary">Create Workflow</h2>
+            <p className="mt-1 text-sm text-theme-text-tertiary">Design custom workflows for your business processes</p>
           </div>
         </div>
 
@@ -431,29 +431,29 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">Workflow Steps</label>
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">Workflow Steps</label>
             <div className="space-y-2">
               {(steps ?? []).map((s, idx) => (
-                <div key={idx} className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg">
-                  <div className="w-8 text-sm font-medium text-slate-600">#{idx + 1}</div>
+                <div key={idx} className="flex items-center gap-2 p-3 bg-theme-muted rounded-lg">
+                  <div className="w-8 text-sm font-medium text-theme-text-secondary">#{idx + 1}</div>
                   <input
                     value={s.title}
                     onChange={(e) => updateStep(idx, "title", e.target.value)}
                     placeholder="Step title"
-                    className="bg-white rounded-lg border border-slate-200 px-3 py-2 flex-1 text-sm"
+                    className="bg-theme-surface rounded-lg border border-theme-border px-3 py-2 flex-1 text-sm"
                   />
                   <input
                     value={s.assignee}
                     onChange={(e) => updateStep(idx, "assignee", e.target.value)}
                     placeholder="Assignee"
-                    className="bg-white w-32 rounded-lg border border-slate-200 px-2 py-2 text-sm"
+                    className="bg-theme-surface w-32 rounded-lg border border-theme-border px-2 py-2 text-sm"
                   />
                   <input
                     type="number"
                     value={s.daysAfter ?? 0}
                     onChange={(e) => updateStep(idx, "daysAfter", Number(e.target.value))}
                     placeholder="Days"
-                    className="bg-white w-16 rounded-lg border border-slate-200 px-2 py-2 text-sm"
+                    className="bg-theme-surface w-16 rounded-lg border border-theme-border px-2 py-2 text-sm"
                   />
                   <button
                     type="button"
@@ -467,7 +467,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
               <button
                 type="button"
                 onClick={addStep}
-                className="rounded-full border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
+                className="rounded-full border border-theme-border px-3 py-2 text-sm hover:bg-theme-muted"
               >
                 + Add step
               </button>
@@ -489,53 +489,53 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
       </div>
 
       {/* Active Workflows */}
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Active Workflows</p>
-            <h2 className="text-lg font-semibold text-gray-900">Workflow Management</h2>
-            <p className="mt-1 text-sm text-slate-600">Monitor and manage your automated workflows</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Active Workflows</p>
+            <h2 className="text-lg font-semibold text-theme-text-primary">Workflow Management</h2>
+            <p className="mt-1 text-sm text-theme-text-secondary">Monitor and manage your automated workflows</p>
           </div>
         </div>
         
         <div className="mt-4 space-y-4">
           {loading ? (
-            <div className="text-sm text-slate-500">Loading workflows…</div>
+            <div className="text-sm text-theme-text-tertiary">Loading workflows…</div>
           ) : (workflows ?? []).length === 0 ? (
             <div className="text-center py-8">
-              <GitBranch className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-              <p className="text-sm text-slate-500">No workflows defined yet.</p>
-              <p className="text-xs text-slate-400 mt-1">Create your first workflow to get started</p>
+              <GitBranch className="w-12 h-12 text-theme-text-secondary mx-auto mb-3" />
+              <p className="text-sm text-theme-text-tertiary">No workflows defined yet.</p>
+              <p className="text-xs text-theme-text-secondary mt-1">Create your first workflow to get started</p>
             </div>
           ) : (
             workflows.map((wf) => (
-              <div key={wf.id} className={`rounded-2xl border px-4 py-4 ${editingId === wf.id ? "bg-slate-50" : ""}`}>
+              <div key={wf.id} className={`rounded-2xl border px-4 py-4 ${editingId === wf.id ? "bg-theme-muted" : ""}`}>
                 {editingId === wf.id ? (
                   <div className="space-y-3">
                     <input 
                       value={editName} 
                       onChange={(e) => setEditName(e.target.value)} 
-                      className="bg-white rounded-lg border px-3 py-2 w-full text-black" 
+                      className="bg-theme-surface rounded-lg border px-3 py-2 w-full text-theme-text-primary" 
                     />
                     <div className="space-y-2">
                       {(editSteps ?? []).map((s, idx) => (
                         <div key={idx} className="flex items-center gap-2">
-                          <div className="w-8 text-sm text-slate-600">Step {idx + 1}</div>
+                          <div className="w-8 text-sm text-theme-text-secondary">Step {idx + 1}</div>
                           <input 
                             value={s.title} 
                             onChange={(e) => updateEditStep(idx, "title", e.target.value)} 
-                            className="bg-white rounded-lg border px-3 py-2 flex-1 text-black" 
+                            className="bg-theme-surface rounded-lg border px-3 py-2 flex-1 text-theme-text-primary" 
                           />
                           <input 
                             value={s.assignee ?? ""} 
                             onChange={(e) => updateEditStep(idx, "assignee", e.target.value)} 
-                            className="bg-white w-32 rounded-lg border px-2 py-2 text-black" 
+                            className="bg-theme-surface w-32 rounded-lg border px-2 py-2 text-theme-text-primary" 
                           />
                           <input 
                             type="number" 
                             value={s.daysAfter ?? 0} 
                             onChange={(e) => updateEditStep(idx, "daysAfter", Number(e.target.value))} 
-                            className="bg-white w-20 rounded-lg border px-2 py-2 text-black" 
+                            className="bg-theme-surface w-20 rounded-lg border px-2 py-2 text-theme-text-primary" 
                           />
                           <button 
                             type="button" 
@@ -575,18 +575,18 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
                       <div className="flex items-center gap-3">
                         <div className={`w-2 h-2 rounded-full ${
                           wf.status === "active" ? "bg-green-500" : 
-                          wf.status === "paused" ? "bg-yellow-500" : "bg-gray-500"
+                          wf.status === "paused" ? "bg-yellow-500" : "bg-theme-muted"
                         }`}></div>
                         <div>
-                          <p className="font-semibold text-gray-900">{wf.name}</p>
-                          <p className="text-xs text-slate-500 capitalize">{wf.type}</p>
+                          <p className="font-semibold text-theme-text-primary">{wf.name}</p>
+                          <p className="text-xs text-theme-text-tertiary capitalize">{wf.type}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                           wf.status === "active" ? "bg-green-100 text-green-800" :
                           wf.status === "paused" ? "bg-yellow-100 text-yellow-800" :
-                          "bg-gray-100 text-gray-900"
+                          "bg-theme-muted text-theme-text-primary"
                         }`}>
                           {wf.status}
                         </span>
@@ -594,39 +594,39 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
                           {wf.status === "active" ? (
                             <button
                               onClick={() => toggleWorkflowStatus(wf.id, "paused")}
-                              className="p-1 rounded hover:bg-slate-100"
+                              className="p-1 rounded hover:bg-theme-muted"
                               title="Pause workflow"
                             >
-                              <Pause className="w-4 h-4 text-slate-600" />
+                              <Pause className="w-4 h-4 text-theme-text-secondary" />
                             </button>
                           ) : (
                             <button
                               onClick={() => toggleWorkflowStatus(wf.id, "active")}
-                              className="p-1 rounded hover:bg-slate-100"
+                              className="p-1 rounded hover:bg-theme-muted"
                               title="Activate workflow"
                             >
-                              <Play className="w-4 h-4 text-slate-600" />
+                              <Play className="w-4 h-4 text-theme-text-secondary" />
                             </button>
                           )}
                           <button
                             onClick={() => duplicateWorkflow(wf.id)}
-                            className="p-1 rounded hover:bg-slate-100"
+                            className="p-1 rounded hover:bg-theme-muted"
                             title="Duplicate workflow"
                           >
-                            <Copy className="w-4 h-4 text-slate-600" />
+                            <Copy className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           <button 
                             onClick={() => startEdit(wf)} 
                             disabled={!canEdit || permissions.loading}
-                            className="p-1 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-1 rounded hover:bg-theme-muted disabled:opacity-50 disabled:cursor-not-allowed"
                             title={!canEdit ? "You don't have permission to edit workflows" : "Edit workflow"}
                           >
-                            <Edit className="w-4 h-4 text-slate-600" />
+                            <Edit className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           <button 
                             onClick={() => handleDelete(wf.id)} 
                             disabled={!canDelete || permissions.loading}
-                            className="p-1 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-1 rounded hover:bg-theme-muted disabled:opacity-50 disabled:cursor-not-allowed"
                             title={!canDelete ? "You don't have permission to delete workflows" : "Delete workflow"}
                           >
                             <Trash2 className="w-4 h-4 text-rose-600" />
@@ -637,30 +637,30 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
                     
                     <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       <div>
-                        <p className="text-slate-600">Steps</p>
-                        <p className="font-medium text-gray-900">{wf.steps.length} steps</p>
+                        <p className="text-theme-text-secondary">Steps</p>
+                        <p className="font-medium text-theme-text-primary">{wf.steps.length} steps</p>
                       </div>
                       <div>
-                        <p className="text-slate-600">Executions</p>
-                        <p className="font-medium text-gray-900">{wf.executionCount || 0}</p>
+                        <p className="text-theme-text-secondary">Executions</p>
+                        <p className="font-medium text-theme-text-primary">{wf.executionCount || 0}</p>
                       </div>
                       <div>
-                        <p className="text-slate-600">Success Rate</p>
-                        <p className="font-medium text-gray-900">{wf.successRate || 0}%</p>
+                        <p className="text-theme-text-secondary">Success Rate</p>
+                        <p className="font-medium text-theme-text-primary">{wf.successRate || 0}%</p>
                       </div>
                     </div>
                     
-                    <div className="mt-3 space-y-1 text-sm text-slate-600">
+                    <div className="mt-3 space-y-1 text-sm text-theme-text-secondary">
                       {wf.steps.map((s) => (
-                        <div key={s.step} className="flex items-center justify-between p-2 bg-slate-50 rounded">
+                        <div key={s.step} className="flex items-center justify-between p-2 bg-theme-muted rounded">
                           <div className="flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${
                               s.status === "completed" ? "bg-green-500" :
-                              s.status === "failed" ? "bg-red-500" : "bg-gray-400"
+                              s.status === "failed" ? "bg-red-500" : "bg-theme-muted"
                             }`}></div>
                             <span>{s.step}. {s.title}</span>
                           </div>
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs text-theme-text-tertiary">
                             {s.assignee && `${s.assignee} · `}
                             Day {s.daysAfter ?? 0}
                           </span>

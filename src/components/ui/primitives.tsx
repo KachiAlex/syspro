@@ -11,10 +11,10 @@ interface PanelProps {
 }
 
 const PANEL_VARIANTS: Record<NonNullable<PanelProps["variant"]>, string> = {
-  card: "rounded-3xl border border-slate-200/10 bg-slate-900/40 p-6 shadow-lg shadow-slate-950/30 backdrop-blur",
-  glass: "rounded-[32px] border border-slate-200/10 bg-slate-900/30 p-6 shadow-xl shadow-slate-950/40 backdrop-blur-xl",
-  frost: "rounded-[28px] border border-white/20 bg-white/10 p-6 shadow-[0_30px_60px_rgba(15,23,42,0.45)] backdrop-blur-2xl",
-  daylight: "rounded-3xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-900/10",
+  card: "rounded-3xl border border-theme-border/10 bg-theme-surface/40 p-6 shadow-lg shadow-slate-950/30 backdrop-blur",
+  glass: "rounded-[32px] border border-theme-border/10 bg-theme-surface/30 p-6 shadow-xl shadow-slate-950/40 backdrop-blur-xl",
+  frost: "rounded-[28px] border border-white/20 bg-theme-surface/10 p-6 shadow-[0_30px_60px_rgba(15,23,42,0.45)] backdrop-blur-2xl",
+  daylight: "rounded-3xl border border-theme-border bg-theme-surface p-6 shadow-lg shadow-slate-900/10",
 };
 
 export function Panel({ children, className, variant = "card" }: PanelProps) {
@@ -52,14 +52,14 @@ interface SectionHeadingProps {
 
 const SECTION_TONES = {
   light: {
-    eyebrow: "text-slate-500",
-    title: "text-slate-900",
-    description: "text-slate-600",
+    eyebrow: "text-theme-text-tertiary",
+    title: "text-theme-text-primary",
+    description: "text-theme-text-secondary",
   },
   dark: {
-    eyebrow: "text-slate-400",
+    eyebrow: "text-theme-text-secondary",
     title: "text-white",
-    description: "text-slate-400",
+    description: "text-theme-text-secondary",
   },
 } satisfies Record<NonNullable<SectionHeadingProps["tone"]>, Record<"eyebrow" | "title" | "description", string>>;
 
@@ -83,8 +83,8 @@ interface PillButtonProps {
 }
 
 const PILL_VARIANTS: Record<PillButtonVariant, string> = {
-  primary: "bg-slate-900 text-white hover:bg-slate-800",
-  secondary: "border border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700",
+  primary: "bg-theme-surface text-theme-text-primary hover:bg-theme-muted",
+  secondary: "border border-theme-border text-theme-text-tertiary hover:border-theme-border hover:text-theme-text-primary",
 };
 
 export function PillButton({ children, variant = "secondary" }: PillButtonProps) {
@@ -104,9 +104,9 @@ interface MetricStatProps {
 export function MetricStat({ label, value, helper }: MetricStatProps) {
   return (
     <div className="space-y-1">
-      <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{label}</p>
+      <p className="text-xs uppercase tracking-[0.35em] text-theme-text-secondary">{label}</p>
       <p className="text-3xl font-semibold text-white">{value}</p>
-      {helper ? <p className="text-xs text-slate-500">{helper}</p> : null}
+      {helper ? <p className="text-xs text-theme-text-tertiary">{helper}</p> : null}
     </div>
   );
 }

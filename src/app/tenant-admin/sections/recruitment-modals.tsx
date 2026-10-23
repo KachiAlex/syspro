@@ -14,7 +14,7 @@ interface BaseModalProps {
 
 function ModalOverlay({ children, onClose, title }: { children: React.ReactNode; onClose: () => void; title: string }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay backdrop-blur-sm p-4">
       <div className="bg-theme-bg rounded-xl border border-theme-border shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-theme-border">
           <h3 className="text-lg font-semibold text-theme-text-primary">{title}</h3>
@@ -41,7 +41,7 @@ function TextField({ label, value, onChange, required, type = 'text', placeholde
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-3 py-2 bg-theme-muted border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-3 py-2 bg-theme-muted border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
         required={required}
       />
     </div>
@@ -62,7 +62,7 @@ function NumberField({ label, value, onChange, required, min, placeholder }: {
         onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
         placeholder={placeholder}
         min={min}
-        className="w-full px-3 py-2 bg-theme-muted border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-3 py-2 bg-theme-muted border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
         required={required}
       />
     </div>
@@ -82,7 +82,7 @@ function TextArea({ label, value, onChange, required, rows = 3, placeholder }: {
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="w-full px-3 py-2 bg-theme-muted border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+        className="w-full px-3 py-2 bg-theme-muted border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent resize-none"
         required={required}
       />
     </div>
@@ -100,7 +100,7 @@ function SelectField({ label, value, onChange, options, required }: {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 bg-theme-muted border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-3 py-2 bg-theme-muted border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
         required={required}
       >
         {options.map((o) => (
@@ -130,15 +130,15 @@ function TagsField({ label, tags, onChange }: { label: string; tags: string[]; o
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
           placeholder="Type and press Enter"
-          className="flex-1 px-3 py-2 bg-theme-muted border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 px-3 py-2 bg-theme-muted border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
         />
-        <button type="button" onClick={addTag} className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+        <button type="button" onClick={addTag} className="px-3 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover text-sm font-medium">
           <Plus className="w-4 h-4" />
         </button>
       </div>
       <div className="flex flex-wrap gap-2 mt-2">
         {tags.map((t) => (
-          <span key={t} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20">
+          <span key={t} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-blue-500/10 text-blue-400 border border-theme-accent/20">
             {t}
             <button type="button" onClick={() => onChange(tags.filter((x) => x !== t))} className="hover:text-red-400"><X className="w-3 h-3" /></button>
           </span>
@@ -158,7 +158,7 @@ function CancelBtn({ onClose }: { onClose: () => void }) {
 
 function SubmitBtn({ label }: { label: string }) {
   return (
-    <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+    <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover">
       {label}
     </button>
   );
@@ -298,7 +298,7 @@ export function RequisitionModal({
                   type="button"
                   onClick={handleCreateDepartment}
                   disabled={creatingDept || !newDeptName.trim()}
-                  className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-theme-accent rounded-md hover:bg-theme-accent-hover disabled:opacity-50"
                 >
                   {creatingDept ? 'Creating...' : 'Create & Select'}
                 </button>

@@ -18,41 +18,41 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
   onAward
 }) => {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+    <div className="bg-theme-surface rounded-lg border border-theme-border p-6 mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Employee Directory</h3>
+        <h3 className="text-lg font-semibold text-theme-text-primary">Employee Directory</h3>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">Showing {employees.length}</span>
+          <span className="text-sm text-theme-text-secondary">Showing {employees.length}</span>
         </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-theme-muted border-b border-theme-border">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Employee</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Department</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Position</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Performance</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-theme-surface divide-y divide-theme-border">
             {employees.map((employee, index) => (
-              <tr key={index} className="hover:bg-gray-50">
+              <tr key={index} className="hover:bg-theme-muted">
                 <td className="px-4 py-3">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium mr-3">
                       {employee.name.split(' ').map(n => n[0]).join('')}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{employee.name}</p>
-                      <p className="text-sm text-gray-500">{employee.email}</p>
+                      <p className="text-sm font-medium text-theme-text-primary">{employee.name}</p>
+                      <p className="text-sm text-theme-text-secondary">{employee.email}</p>
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-900">{employee.department}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{employee.position}</td>
+                <td className="px-4 py-3 text-sm text-theme-text-primary">{employee.department}</td>
+                <td className="px-4 py-3 text-sm text-theme-text-primary">{employee.position}</td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                     employee.status === 'Active' ? 'bg-green-100 text-green-800' :
@@ -72,7 +72,7 @@ export const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                   <div className="flex items-center gap-2">
                     <button 
                       onClick={() => onView(employee)}
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-theme-accent hover:text-blue-800"
                       title="View employee"
                     >
                       <Eye className="w-4 h-4" />

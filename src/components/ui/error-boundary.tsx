@@ -65,9 +65,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                       (error ? ErrorBoundaryUtils.getErrorMessage(error) : 'Something went wrong');
 
       return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+        <div className="min-h-screen bg-theme-muted flex items-center justify-center px-4">
           <div className="max-w-lg w-full">
-            <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+            <div className="bg-theme-surface rounded-lg shadow-lg p-8 text-center">
               {/* Error Icon */}
               <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-6 ${
                 severity === 'critical' ? 'bg-red-100' :
@@ -79,25 +79,25 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   severity === 'critical' ? 'text-red-600' :
                   severity === 'high' ? 'text-orange-600' :
                   severity === 'medium' ? 'text-yellow-600' :
-                  'text-blue-600'
+                  'text-theme-accent'
                 }`} />
               </div>
 
               {/* Error Message */}
-              <h1 className="text-2xl font-bold text-slate-900 mb-2">
+              <h1 className="text-2xl font-bold text-theme-text-primary mb-2">
                 Oops! Something went wrong
               </h1>
-              <p className="text-slate-600 mb-6">
+              <p className="text-theme-text-secondary mb-6">
                 {message}
               </p>
 
               {/* Error Details (Development Only) */}
               {process.env.NODE_ENV === 'development' && error && (
                 <details className="mb-6 text-left">
-                  <summary className="cursor-pointer text-sm text-slate-500 hover:text-slate-700 mb-2">
+                  <summary className="cursor-pointer text-sm text-theme-text-tertiary hover:text-theme-text-primary mb-2">
                     Error Details (Development Only)
                   </summary>
-                  <div className="mt-2 p-3 bg-slate-100 rounded text-xs text-slate-700 overflow-auto max-h-32">
+                  <div className="mt-2 p-3 bg-theme-muted rounded text-xs text-theme-text-primary overflow-auto max-h-32">
                     <div className="font-semibold mb-1">{error.name}</div>
                     <div className="mb-2">{error.message}</div>
                     {error.stack && (
@@ -112,7 +112,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 {canRecover && this.props.showRetry !== false && (
                   <button
                     onClick={this.handleRetry}
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-theme-accent text-white rounded-lg hover:bg-theme-accent-hover transition-colors"
                   >
                     <RefreshCw className="w-4 h-4" />
                     Try Again
@@ -122,7 +122,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 {this.props.showHome !== false && (
                   <button
                     onClick={this.handleGoHome}
-                    className="flex items-center justify-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors"
                   >
                     <Home className="w-4 h-4" />
                     Go Home
@@ -131,16 +131,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </div>
 
               {/* Support Info */}
-              <div className="mt-8 pt-6 border-t border-slate-200">
-                <p className="text-sm text-slate-500">
+              <div className="mt-8 pt-6 border-t border-theme-border">
+                <p className="text-sm text-theme-text-tertiary">
                   If this problem persists, please contact our support team.
                 </p>
                 <div className="mt-2 flex justify-center gap-4 text-sm">
-                  <a href="mailto:support@pisairtel.io" className="text-blue-600 hover:text-blue-800">
+                  <a href="mailto:support@pisairtel.io" className="text-theme-accent hover:text-blue-800">
                     Email Support
                   </a>
-                  <span className="text-slate-300">•</span>
-                  <a href="/support" className="text-blue-600 hover:text-blue-800">
+                  <span className="text-theme-text-primary">•</span>
+                  <a href="/support" className="text-theme-accent hover:text-blue-800">
                     Help Center
                   </a>
                 </div>

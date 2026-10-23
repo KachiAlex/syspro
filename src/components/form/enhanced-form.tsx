@@ -49,14 +49,14 @@ export function FormField({ label, error, touched, required, helperText, classNa
   return (
     <div className={`space-y-2 ${className}`}>
       {label && (
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-theme-text-primary">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
       {children}
       {helperText && !hasError && (
-        <p className="text-xs text-slate-500">{helperText}</p>
+        <p className="text-xs text-theme-text-tertiary">{helperText}</p>
       )}
       {hasError && (
         <div className="flex items-center gap-2 text-xs text-red-600">
@@ -105,22 +105,22 @@ export function EnhancedInput({
     >
       <div className="relative">
         {leftIcon && (
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400">
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-text-secondary">
             {leftIcon}
           </div>
         )}
         <input
-          className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+          className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent transition-colors ${
             leftIcon ? "pl-10" : ""
           } ${rightIcon ? "pr-10" : ""} ${
             hasError
               ? "border-red-300 focus:ring-red-500"
-              : "border-slate-300"
+              : "border-theme-border"
           } ${className}`}
           {...props}
         />
         {rightIcon && (
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400">
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-theme-text-secondary">
             {rightIcon}
           </div>
         )}
@@ -161,10 +161,10 @@ export function EnhancedTextarea({
       className={containerClassName}
     >
       <textarea
-        className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical transition-colors ${
+        className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent resize-vertical transition-colors ${
           hasError
             ? "border-red-300 focus:ring-red-500"
-            : "border-slate-300"
+            : "border-theme-border"
         } ${className}`}
         {...props}
       />
@@ -208,10 +208,10 @@ export function EnhancedSelect({
       className={containerClassName}
     >
       <select
-        className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+        className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent transition-colors ${
           hasError
             ? "border-red-300 focus:ring-red-500"
-            : "border-slate-300"
+            : "border-theme-border"
         } ${className}`}
         {...props}
       >
@@ -260,13 +260,13 @@ export function EnhancedCheckbox({
       <div className="flex items-center">
         <input
           type="checkbox"
-          className={`w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 focus:ring-2 ${
+          className={`w-4 h-4 text-theme-accent border-theme-border rounded focus:ring-theme-accent focus:ring-2 ${
             hasError ? "border-red-300" : ""
           } ${className}`}
           {...props}
         />
         {label && (
-          <label className="ml-2 text-sm text-slate-700 cursor-pointer">
+          <label className="ml-2 text-sm text-theme-text-primary cursor-pointer">
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
           </label>
@@ -328,11 +328,11 @@ export function EnhancedRadioGroup({
               checked={value === option.value}
               onChange={(e) => onChange(e.target.value)}
               disabled={option.disabled}
-              className={`w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-2 ${
+              className={`w-4 h-4 text-theme-accent border-theme-border focus:ring-theme-accent focus:ring-2 ${
                 hasError ? "border-red-300" : ""
               }`}
             />
-            <label className="ml-2 text-sm text-slate-700 cursor-pointer">
+            <label className="ml-2 text-sm text-theme-text-primary cursor-pointer">
               {option.label}
             </label>
           </div>
@@ -382,7 +382,7 @@ export function FormSubmitButton({
     <button
       type="submit"
       disabled={disabled || isSubmitting}
-      className={`w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${className}`}
+      className={`w-full px-4 py-2 text-sm font-medium text-white bg-theme-accent border border-transparent rounded-lg hover:bg-theme-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${className}`}
       onClick={handleClick}
       {...props}
     >
@@ -474,8 +474,8 @@ export function FormProgress({ steps, className = "" }: FormProgressProps) {
                 step.completed
                   ? "bg-green-600 text-white"
                   : step.current
-                  ? "bg-blue-600 text-white"
-                  : "bg-slate-200 text-slate-600"
+                  ? "bg-theme-accent text-white"
+                  : "bg-theme-muted text-theme-text-secondary"
               }`}
             >
               {step.completed ? "✓" : index + 1}
@@ -483,7 +483,7 @@ export function FormProgress({ steps, className = "" }: FormProgressProps) {
             {index < steps.length - 1 && (
               <div
                 className={`w-12 h-1 mx-2 ${
-                  step.completed ? "bg-green-600" : "bg-slate-200"
+                  step.completed ? "bg-green-600" : "bg-theme-muted"
                 }`}
               />
             )}
@@ -495,7 +495,7 @@ export function FormProgress({ steps, className = "" }: FormProgressProps) {
           <div
             key={index}
             className={`text-xs ${
-              step.current ? "text-blue-600 font-medium" : "text-slate-600"
+              step.current ? "text-theme-accent font-medium" : "text-theme-text-secondary"
             }`}
             style={{ width: `${100 / steps.length}%` }}
           >

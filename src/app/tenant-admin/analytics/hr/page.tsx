@@ -68,23 +68,23 @@ export default function HRAnalyticsPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">HR Reports</h2>
+        <h2 className="text-2xl font-bold text-theme-text-primary">HR Reports</h2>
         <Link
           href="/tenant-admin/analytics"
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted"
         >
           ← Back to Overview
         </Link>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-900 mb-2">Period</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-2">Period</label>
             <select
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
             >
               <option>This Month</option>
               <option>Last Month</option>
@@ -93,11 +93,11 @@ export default function HRAnalyticsPage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-900 mb-2">Report Type</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-2">Report Type</label>
             <select
               value={selectedReportType}
               onChange={(e) => setSelectedReportType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
             >
               <option>All</option>
               <option>Performance</option>
@@ -107,7 +107,7 @@ export default function HRAnalyticsPage() {
             </select>
           </div>
           <div className="flex items-end">
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover">
               <Download className="w-4 h-4" />
               Generate Report
             </button>
@@ -117,11 +117,11 @@ export default function HRAnalyticsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {hrMetrics.map((metric, idx) => (
-          <div key={idx} className="bg-white rounded-lg border border-gray-200 p-6">
+          <div key={idx} className="bg-theme-surface rounded-lg border border-theme-border p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{metric.title}</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{metric.value}</p>
+                <p className="text-sm font-medium text-theme-text-secondary">{metric.title}</p>
+                <p className="text-3xl font-bold text-theme-text-primary mt-2">{metric.value}</p>
                 <p className={`text-xs mt-2 flex items-center gap-1 ${
                   metric.trend === 'up' ? 'text-green-600' : 'text-red-600'
                 }`}>
@@ -138,59 +138,59 @@ export default function HRAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Employee Performance Metrics</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Employee Performance Metrics</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">High Performers</span>
+              <span className="text-sm text-theme-text-secondary">High Performers</span>
               <span className="text-sm font-semibold text-green-600">42</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Average Rating</span>
-              <span className="text-sm font-semibold text-gray-900">4.2/5.0</span>
+              <span className="text-sm text-theme-text-secondary">Average Rating</span>
+              <span className="text-sm font-semibold text-theme-text-primary">4.2/5.0</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Goals Completed</span>
+              <span className="text-sm text-theme-text-secondary">Goals Completed</span>
               <span className="text-sm font-semibold text-green-600">87.3%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Performance Reviews</span>
-              <span className="text-sm font-semibold text-blue-600">156/156</span>
+              <span className="text-sm text-theme-text-secondary">Performance Reviews</span>
+              <span className="text-sm font-semibold text-theme-accent">156/156</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Attendance & Productivity</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Attendance & Productivity</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Attendance Rate</span>
+              <span className="text-sm text-theme-text-secondary">Attendance Rate</span>
               <span className="text-sm font-semibold text-green-600">94.2%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Punctuality Rate</span>
+              <span className="text-sm text-theme-text-secondary">Punctuality Rate</span>
               <span className="text-sm font-semibold text-green-600">91.8%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Overtime Hours</span>
+              <span className="text-sm text-theme-text-secondary">Overtime Hours</span>
               <span className="text-sm font-semibold text-amber-600">247</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Absenteeism Rate</span>
+              <span className="text-sm text-theme-text-secondary">Absenteeism Rate</span>
               <span className="text-sm font-semibold text-green-600">2.1%</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Available Reports</h3>
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Available Reports</h3>
         <div className="space-y-3">
           {hrReports.map((report) => (
-            <div key={report.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+            <div key={report.id} className="flex items-center justify-between p-4 border border-theme-border rounded-lg hover:bg-theme-muted">
               <div className="flex-1">
-                <p className="font-medium text-gray-900">{report.name}</p>
-                <p className="text-xs text-gray-600 mt-1">{report.type} • {report.date} • {report.size}</p>
+                <p className="font-medium text-theme-text-primary">{report.name}</p>
+                <p className="text-xs text-theme-text-secondary mt-1">{report.type} • {report.date} • {report.size}</p>
               </div>
               <div className="flex items-center gap-4">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -199,7 +199,7 @@ export default function HRAnalyticsPage() {
                 }`}>
                   {report.status}
                 </span>
-                <button className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover">
+                <button className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-theme-accent hover:text-theme-accent-hover">
                   <Download className="w-3 h-3" />
                   Download
                 </button>
@@ -210,67 +210,67 @@ export default function HRAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Payroll Analysis</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Payroll Analysis</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Total Payroll</span>
-              <span className="text-sm font-semibold text-gray-900">$10.7M</span>
+              <span className="text-sm text-theme-text-secondary">Total Payroll</span>
+              <span className="text-sm font-semibold text-theme-text-primary">$10.7M</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Average Salary</span>
-              <span className="text-sm font-semibold text-gray-900">$68,500</span>
+              <span className="text-sm text-theme-text-secondary">Average Salary</span>
+              <span className="text-sm font-semibold text-theme-text-primary">$68,500</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Benefits Cost</span>
-              <span className="text-sm font-semibold text-gray-900">$2.1M</span>
+              <span className="text-sm text-theme-text-secondary">Benefits Cost</span>
+              <span className="text-sm font-semibold text-theme-text-primary">$2.1M</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Payroll Growth</span>
+              <span className="text-sm text-theme-text-secondary">Payroll Growth</span>
               <span className="text-sm font-semibold text-green-600">+4.8%</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Training & Development</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Training & Development</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Training Completion</span>
+              <span className="text-sm text-theme-text-secondary">Training Completion</span>
               <span className="text-sm font-semibold text-green-600">87.3%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Training Hours</span>
-              <span className="text-sm font-semibold text-blue-600">3,842</span>
+              <span className="text-sm text-theme-text-secondary">Training Hours</span>
+              <span className="text-sm font-semibold text-theme-accent">3,842</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Certifications Earned</span>
+              <span className="text-sm text-theme-text-secondary">Certifications Earned</span>
               <span className="text-sm font-semibold text-purple-600">124</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Training ROI</span>
+              <span className="text-sm text-theme-text-secondary">Training ROI</span>
               <span className="text-sm font-semibold text-green-600">3.2x</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Workforce Demographics</h3>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Workforce Demographics</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Full-time Employees</span>
-              <span className="text-sm font-semibold text-blue-600">142</span>
+              <span className="text-sm text-theme-text-secondary">Full-time Employees</span>
+              <span className="text-sm font-semibold text-theme-accent">142</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Part-time Employees</span>
+              <span className="text-sm text-theme-text-secondary">Part-time Employees</span>
               <span className="text-sm font-semibold text-amber-600">14</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Contract Workers</span>
+              <span className="text-sm text-theme-text-secondary">Contract Workers</span>
               <span className="text-sm font-semibold text-purple-600">8</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Avg Years of Service</span>
+              <span className="text-sm text-theme-text-secondary">Avg Years of Service</span>
               <span className="text-sm font-semibold text-green-600">4.7</span>
             </div>
           </div>

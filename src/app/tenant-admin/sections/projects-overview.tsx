@@ -89,8 +89,8 @@ export default function ProjectsOverview({
       case 'active': return 'bg-blue-100 text-blue-800 border border-blue-200';
       case 'completed': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
       case 'on hold': return 'bg-amber-100 text-amber-800 border border-amber-200';
-      case 'planned': return 'bg-slate-100 text-slate-800 border border-slate-200';
-      default: return 'bg-slate-100 text-slate-800 border border-slate-200';
+      case 'planned': return 'bg-theme-muted text-theme-text-primary border border-theme-border';
+      default: return 'bg-theme-muted text-theme-text-primary border border-theme-border';
     }
   };
 
@@ -100,7 +100,7 @@ export default function ProjectsOverview({
       case 'high': return 'bg-orange-100 text-orange-800 border border-orange-200';
       case 'medium': return 'bg-blue-100 text-blue-800 border border-blue-200';
       case 'low': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
-      default: return 'bg-slate-100 text-slate-800 border border-slate-200';
+      default: return 'bg-theme-muted text-theme-text-primary border border-theme-border';
     }
   };
 
@@ -168,11 +168,11 @@ export default function ProjectsOverview({
       </div>
 
       {/* Action Buttons */}
-      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex flex-wrap gap-3">
           <button 
             onClick={onCreateClick}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-theme-accent px-4 py-2 text-sm font-semibold text-white hover:bg-theme-accent-hover transition-colors"
           >
             <Plus className="w-4 h-4" />
             Create Project
@@ -188,12 +188,12 @@ export default function ProjectsOverview({
       </div>
 
       {/* Filters */}
-      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-lg border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <select 
             value={statusFilter} 
             onChange={(e) => onStatusFilterChange(e.target.value)}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+            className="rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-theme-text-primary placeholder-theme-text-tertiary focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 transition"
           >
             <option value="">All Status</option>
             <option value="active">Active</option>
@@ -205,7 +205,7 @@ export default function ProjectsOverview({
           <select 
             value={priorityFilter} 
             onChange={(e) => onPriorityFilterChange(e.target.value)}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+            className="rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-theme-text-primary placeholder-theme-text-tertiary focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 transition"
           >
             <option value="">All Priorities</option>
             <option value="low">Low</option>
@@ -219,7 +219,7 @@ export default function ProjectsOverview({
             placeholder="Search by name or description..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+            className="flex-1 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-theme-text-primary placeholder-theme-text-tertiary focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 transition"
           />
 
           <div className="flex items-center gap-2">
@@ -229,7 +229,7 @@ export default function ProjectsOverview({
                 <span className="text-xs font-semibold text-blue-800">{filteredProjects.length} results</span>
               </div>
             )}
-            <div className="flex gap-1 rounded-lg border border-gray-300 bg-theme-muted p-1">
+            <div className="flex gap-1 rounded-lg border border-theme-border bg-theme-muted p-1">
               <button
                 onClick={() => onViewModeChange('grid')}
                 className={`p-2 rounded transition ${viewMode === 'grid' ? 'bg-blue-100 text-theme-accent' : 'text-theme-text-secondary hover:text-theme-text-secondary'}`}
@@ -254,25 +254,25 @@ export default function ProjectsOverview({
         {loading ? (
           <>
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="rounded-lg border border-gray-200 bg-theme-muted p-6 animate-pulse">
+              <div key={i} className="rounded-lg border border-theme-border bg-theme-muted p-6 animate-pulse">
                 <div className="space-y-4">
-                  <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-full"></div>
+                  <div className="h-6 bg-theme-muted rounded w-3/4"></div>
+                  <div className="h-4 bg-theme-muted rounded w-full"></div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="h-4 bg-gray-200 rounded"></div>
-                    <div className="h-4 bg-gray-200 rounded"></div>
+                    <div className="h-4 bg-theme-muted rounded"></div>
+                    <div className="h-4 bg-theme-muted rounded"></div>
                   </div>
                   <div className="flex gap-2">
-                    <div className="flex-1 h-8 bg-gray-200 rounded"></div>
-                    <div className="flex-1 h-8 bg-gray-200 rounded"></div>
+                    <div className="flex-1 h-8 bg-theme-muted rounded"></div>
+                    <div className="flex-1 h-8 bg-theme-muted rounded"></div>
                   </div>
                 </div>
               </div>
             ))}
           </>
         ) : filteredProjects.length === 0 ? (
-          <div className="col-span-full rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 mx-auto mb-4">
+          <div className="col-span-full rounded-lg border border-theme-border bg-theme-muted p-12 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-theme-muted mx-auto mb-4">
               <Briefcase className="w-8 h-8 text-theme-text-tertiary" />
             </div>
             <h3 className="text-lg font-semibold text-theme-text-primary mb-2">No projects found</h3>
@@ -284,7 +284,7 @@ export default function ProjectsOverview({
             {!searchQuery && !statusFilter && !priorityFilter && (
               <button 
                 onClick={onCreateClick}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center gap-2 rounded-lg bg-theme-accent px-4 py-2 text-sm font-semibold text-white hover:bg-theme-accent-hover transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Create Your First Project
@@ -295,7 +295,7 @@ export default function ProjectsOverview({
           filteredProjects.map(project => {
             const budgetUtilization = getBudgetUtilization(project.budgetSpent, project.budgetApproved);
             return (
-              <div key={project.id} className="group rounded-lg border border-gray-200 bg-theme-muted p-6 hover:shadow-lg transition-all shadow-sm">
+              <div key={project.id} className="group rounded-lg border border-theme-border bg-theme-muted p-6 hover:shadow-lg transition-all shadow-sm">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-theme-text-primary mb-1">{project.name}</h3>
@@ -347,7 +347,7 @@ export default function ProjectsOverview({
                   </div>
                 )}
 
-                <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <div className="mb-4 rounded-lg border border-theme-border bg-theme-muted p-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 text-sm text-theme-text-secondary">
                       <DollarSign className="w-4 h-4" />
@@ -355,7 +355,7 @@ export default function ProjectsOverview({
                     </div>
                     <span className="text-xs font-semibold text-theme-text-primary">{budgetUtilization}%</span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+                  <div className="h-2 w-full rounded-full bg-theme-muted overflow-hidden">
                     <div 
                       className={`h-full transition-all ${
                         budgetUtilization > 90 ? 'bg-red-500' : 
@@ -370,7 +370,7 @@ export default function ProjectsOverview({
                 <div className="flex gap-2">
                   <button 
                     onClick={() => onViewClick(project)}
-                    className="flex-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100 flex items-center justify-center gap-1"
+                    className="flex-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-theme-muted flex items-center justify-center gap-1"
                     title="View project details"
                   >
                     <Eye className="w-4 h-4" />

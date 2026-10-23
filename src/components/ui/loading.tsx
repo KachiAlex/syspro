@@ -36,8 +36,8 @@ export function LoadingSpinner({
   };
 
   const colorClasses = {
-    primary: "text-blue-600",
-    secondary: "text-gray-600",
+    primary: "text-theme-accent",
+    secondary: "text-theme-text-secondary",
     success: "text-green-600",
     error: "text-red-600",
     warning: "text-yellow-600"
@@ -93,11 +93,11 @@ export function Loading({
         <div className="flex items-center gap-3">
           <LoadingSpinner size={size} color="primary" />
           <div className="flex-1">
-            {message && <p className="font-medium text-gray-900">{message}</p>}
+            {message && <p className="font-medium text-theme-text-primary">{message}</p>}
             {progress !== undefined && (
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-theme-muted rounded-full h-2">
                 <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-theme-accent h-2 rounded-full transition-all duration-300"
                   style={{ width: `${Math.min(progress, 100)}%` }}
                 ></div>
               </div>
@@ -127,7 +127,7 @@ export function PageLoading({
     <div className={`flex flex-col items-center justify-center min-h-screen ${className}`}>
       {showLogo && (
         <div className="mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-16 h-16 bg-theme-accent rounded-lg flex items-center justify-center">
             <Zap className="w-8 h-8 text-white" />
           </div>
         </div>
@@ -136,8 +136,8 @@ export function PageLoading({
       <LoadingSpinner size="lg" className="mb-4" />
       
       <div className="text-center">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">{message}</h2>
-        <p className="text-gray-600">{description}</p>
+        <h2 className="text-xl font-semibold text-theme-text-primary mb-2">{message}</h2>
+        <p className="text-theme-text-secondary">{description}</p>
       </div>
     </div>
   );
@@ -160,24 +160,24 @@ export function Skeleton({
 }: SkeletonProps) {
   if (variant === "avatar") {
     return (
-      <div className={`w-10 h-10 bg-gray-200 rounded-full ${className}`}></div>
+      <div className={`w-10 h-10 bg-theme-muted rounded-full ${className}`}></div>
     );
   }
 
   if (variant === "button") {
     return (
-      <div className={`h-10 bg-gray-200 rounded-lg ${width} ${className}`}></div>
+      <div className={`h-10 bg-theme-muted rounded-lg ${width} ${className}`}></div>
     );
   }
 
   if (variant === "card") {
     return (
-      <div className={`bg-white border border-gray-200 rounded-lg p-4 ${className}`}>
-        <div className="h-4 bg-gray-200 rounded w-3/4 mb-3"></div>
+      <div className={`bg-theme-surface border border-theme-border rounded-lg p-4 ${className}`}>
+        <div className="h-4 bg-theme-muted rounded w-3/4 mb-3"></div>
         <div className="space-y-2">
-          <div className="h-3 bg-gray-200 rounded"></div>
-          <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-          <div className="h-3 bg-gray-200 rounded w-4/6"></div>
+          <div className="h-3 bg-theme-muted rounded"></div>
+          <div className="h-3 bg-theme-muted rounded w-5/6"></div>
+          <div className="h-3 bg-theme-muted rounded w-4/6"></div>
         </div>
       </div>
     );
@@ -185,16 +185,16 @@ export function Skeleton({
 
   if (variant === "table") {
     return (
-      <div className={`border border-gray-200 rounded-lg overflow-hidden ${className}`}>
-        <div className="bg-gray-50 p-4 border-b border-gray-200">
-          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+      <div className={`border border-theme-border rounded-lg overflow-hidden ${className}`}>
+        <div className="bg-theme-muted p-4 border-b border-theme-border">
+          <div className="h-4 bg-theme-muted rounded w-1/4"></div>
         </div>
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-theme-border">
           {Array.from({ length: 5 }).map((_, index) => (
             <div key={index} className="p-4">
               <div className="grid grid-cols-4 gap-4">
                 {Array.from({ length: 4 }).map((_, colIndex) => (
-                  <div key={colIndex} className="h-4 bg-gray-200 rounded"></div>
+                  <div key={colIndex} className="h-4 bg-theme-muted rounded"></div>
                 ))}
               </div>
             </div>
@@ -207,7 +207,7 @@ export function Skeleton({
   return (
     <div className={`space-y-2 ${className}`}>
       {Array.from({ length: lines }).map((_, index) => (
-        <div key={index} className={`${height} ${width} bg-gray-200 rounded animate-pulse`}></div>
+        <div key={index} className={`${height} ${width} bg-theme-muted rounded animate-pulse`}></div>
       ))}
     </div>
   );
@@ -234,30 +234,30 @@ export function LoadingState({
   const getStateIcon = () => {
     switch (state) {
       case "loading":
-        return <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />;
+        return <Loader2 className="w-8 h-8 text-theme-accent animate-spin" />;
       case "error":
         return <XCircle className="w-8 h-8 text-red-600" />;
       case "success":
         return <CheckCircle className="w-8 h-8 text-green-600" />;
       case "empty":
-        return <AlertCircle className="w-8 h-8 text-gray-400" />;
+        return <AlertCircle className="w-8 h-8 text-theme-text-tertiary" />;
       default:
-        return <AlertCircle className="w-8 h-8 text-gray-400" />;
+        return <AlertCircle className="w-8 h-8 text-theme-text-tertiary" />;
     }
   };
 
   const getStateColor = () => {
     switch (state) {
       case "loading":
-        return "text-blue-600";
+        return "text-theme-accent";
       case "error":
         return "text-red-600";
       case "success":
         return "text-green-600";
       case "empty":
-        return "text-gray-400";
+        return "text-theme-text-tertiary";
       default:
-        return "text-gray-400";
+        return "text-theme-text-tertiary";
     }
   };
 
@@ -282,18 +282,18 @@ export function LoadingState({
         {getStateIcon()}
       </div>
       
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+      <h3 className="text-lg font-semibold text-theme-text-primary mb-2">
         {getStateMessage()}
       </h3>
       
       {description && (
-        <p className="text-gray-600 mb-4">{description}</p>
+        <p className="text-theme-text-secondary mb-4">{description}</p>
       )}
       
       {action && (
         <button
           onClick={action.onClick}
-          className="px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors"
         >
           {action.label}
         </button>
@@ -409,8 +409,8 @@ export function Progress({
   };
 
   const colorClasses = {
-    primary: "bg-blue-600",
-    secondary: "bg-gray-600",
+    primary: "bg-theme-accent",
+    secondary: "bg-theme-elevated",
     success: "bg-green-600",
     warning: "bg-yellow-600",
     error: "bg-red-600"
@@ -419,12 +419,12 @@ export function Progress({
   return (
     <div className={`w-full ${className}`}>
       {showLabel && (
-        <div className="flex justify-between text-sm text-gray-600 mb-1">
+        <div className="flex justify-between text-sm text-theme-text-secondary mb-1">
           <span>{label || "Progress"}</span>
           <span>{percentage.toFixed(0)}%</span>
         </div>
       )}
-      <div className={`w-full bg-gray-200 rounded-full ${sizeClasses[size]}`}>
+      <div className={`w-full bg-theme-muted rounded-full ${sizeClasses[size]}`}>
         <div 
           className={`${colorClasses[color]} ${sizeClasses[size]} rounded-full transition-all duration-300`}
           style={{ width: `${percentage}%` }}
@@ -451,11 +451,11 @@ export function LoadingOverlay({
 
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center ${
-      backdrop ? "bg-black bg-opacity-50" : ""
+      backdrop ? "bg-theme-overlay" : ""
     } ${className}`}>
-      <div className="bg-white rounded-lg p-6 shadow-xl">
+      <div className="bg-theme-surface rounded-lg p-6 shadow-xl">
         <LoadingSpinner size="lg" className="mb-4" />
-        <p className="text-gray-900 font-medium">{message}</p>
+        <p className="text-theme-text-primary font-medium">{message}</p>
       </div>
     </div>
   );
@@ -464,16 +464,16 @@ export function LoadingOverlay({
 // Loading states for specific contexts
 export function TableLoading({ rows = 5, columns = 4 }: { rows?: number; columns?: number }) {
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
-      <div className="bg-gray-50 p-4 border-b border-gray-200">
-        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+    <div className="border border-theme-border rounded-lg overflow-hidden">
+      <div className="bg-theme-muted p-4 border-b border-theme-border">
+        <div className="h-4 bg-theme-muted rounded w-1/4"></div>
       </div>
-      <div className="divide-y divide-gray-200">
+      <div className="divide-y divide-theme-border">
         {Array.from({ length: rows }).map((_, index) => (
           <div key={index} className="p-4">
             <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
               {Array.from({ length: columns }).map((_, colIndex) => (
-                <div key={colIndex} className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                <div key={colIndex} className="h-4 bg-theme-muted rounded animate-pulse"></div>
               ))}
             </div>
           </div>
@@ -485,7 +485,7 @@ export function TableLoading({ rows = 5, columns = 4 }: { rows?: number; columns
 
 export function CardLoading() {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
+    <div className="bg-theme-surface border border-theme-border rounded-lg p-6">
       <Skeleton lines={3} />
     </div>
   );
@@ -495,7 +495,7 @@ export function ListLoading({ items = 5 }: { items?: number }) {
   return (
     <div className="space-y-4">
       {Array.from({ length: items }).map((_, index) => (
-        <div key={index} className="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-lg">
+        <div key={index} className="flex items-center gap-4 p-4 bg-theme-surface border border-theme-border rounded-lg">
           <Skeleton variant="avatar" />
           <div className="flex-1">
             <Skeleton lines={2} />

@@ -154,12 +154,12 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">People & Access</p>
-            <h2 className="text-xl font-semibold text-gray-900">Employee assignment console</h2>
-            <p className="mt-1 text-sm text-slate-500">Manage employee records and assign to departments, branches, and regions.</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">People & Access</p>
+            <h2 className="text-xl font-semibold text-theme-text-primary">Employee assignment console</h2>
+            <p className="mt-1 text-sm text-theme-text-tertiary">Manage employee records and assign to departments, branches, and regions.</p>
           </div>
         </div>
 
@@ -169,7 +169,7 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
               <input
                 {...form.getFieldProps("name")}
                 placeholder="Full name"
-                className={`bg-white w-full rounded-lg border px-3 py-2 ${form.errorMap.name ? "border-rose-300" : "border-slate-200"} text-black`}
+                className={`bg-theme-surface w-full rounded-lg border px-3 py-2 ${form.errorMap.name ? "border-rose-300" : "border-theme-border"} text-theme-text-primary`}
               />
               {form.errorMap.name && <p className="mt-1 text-xs text-rose-600">{form.errorMap.name}</p>}
             </div>
@@ -178,7 +178,7 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
                 {...form.getFieldProps("email")}
                 placeholder="Email"
                 type="email"
-                className={`bg-white w-full rounded-lg border px-3 py-2 ${form.errorMap.email ? "border-rose-300" : "border-slate-200"} text-black`}
+                className={`bg-theme-surface w-full rounded-lg border px-3 py-2 ${form.errorMap.email ? "border-rose-300" : "border-theme-border"} text-theme-text-primary`}
               />
               {form.errorMap.email && <p className="mt-1 text-xs text-rose-600">{form.errorMap.email}</p>}
             </div>
@@ -188,25 +188,25 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
               value={form.values.department}
               onChange={(e) => form.setValue("department", e.target.value)}
               placeholder="Department"
-              className="bg-white rounded-lg border px-3 py-2 text-black"
+              className="bg-theme-surface rounded-lg border px-3 py-2 text-theme-text-primary"
             />
             <input
               value={form.values.branch}
               onChange={(e) => form.setValue("branch", e.target.value)}
               placeholder="Branch"
-              className="bg-white rounded-lg border px-3 py-2 text-black"
+              className="bg-theme-surface rounded-lg border px-3 py-2 text-theme-text-primary"
             />
             <input
               value={form.values.region}
               onChange={(e) => form.setValue("region", e.target.value)}
               placeholder="Region"
-              className="bg-white rounded-lg border px-3 py-2 text-black"
+              className="bg-theme-surface rounded-lg border px-3 py-2 text-theme-text-primary"
             />
           </div>
           <button
             type="submit"
             disabled={form.isSubmitting || !canCreate || permissions.loading}
-            className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full bg-theme-surface px-4 py-2 text-sm font-semibold text-theme-text-primary transition hover:bg-theme-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-border disabled:cursor-not-allowed disabled:opacity-50"
             title={!canCreate ? "You don't have permission to create employees" : undefined}
           >
             {form.isSubmitting ? "Adding..." : "Add employee"}
@@ -216,15 +216,15 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
         </form>
       </div>
 
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Employee roster</p>
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
+        <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Employee roster</p>
         <div className="mt-4 overflow-auto">
           {loading ? (
-            <div className="text-sm text-slate-500">Loading employees…</div>
+            <div className="text-sm text-theme-text-tertiary">Loading employees…</div>
           ) : (
-            <table className="w-full text-left text-sm text-slate-600">
+            <table className="w-full text-left text-sm text-theme-text-secondary">
               <thead>
-                <tr className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                <tr className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">
                   <th className="pb-2">Name</th>
                   <th className="pb-2">Email</th>
                   <th className="pb-2">Department</th>
@@ -237,28 +237,28 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
               <tbody>
                 {(employees ?? []).map((emp) => (
                   editingId === emp.id ? (
-                    <tr key={emp.id} className="border-t border-slate-100 bg-slate-50">
+                    <tr key={emp.id} className="border-t border-theme-border bg-theme-muted">
                       <td className="py-3 font-semibold">{emp.name}</td>
                       <td>{emp.email}</td>
                       <td>
                         <input
                           value={editForm.department}
                           onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
-                          className="bg-white rounded-lg border px-2 py-1 w-full text-black"
+                          className="bg-theme-surface rounded-lg border px-2 py-1 w-full text-theme-text-primary"
                         />
                       </td>
                       <td>
                         <input
                           value={editForm.branch}
                           onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
-                          className="bg-white rounded-lg border px-2 py-1 w-full text-black"
+                          className="bg-theme-surface rounded-lg border px-2 py-1 w-full text-theme-text-primary"
                         />
                       </td>
                       <td>
                         <input
                           value={editForm.region}
                           onChange={(e) => setEditForm({ ...editForm, region: e.target.value })}
-                          className="bg-white rounded-lg border px-2 py-1 w-full text-black"
+                          className="bg-theme-surface rounded-lg border px-2 py-1 w-full text-theme-text-primary"
                         />
                       </td>
                       <td className="text-xs">{emp.status}</td>
@@ -268,14 +268,14 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
                       </td>
                     </tr>
                   ) : (
-                    <tr key={emp.id} className="border-t border-slate-100">
-                      <td className="py-3 font-semibold text-gray-900">{emp.name}</td>
+                    <tr key={emp.id} className="border-t border-theme-border">
+                      <td className="py-3 font-semibold text-theme-text-primary">{emp.name}</td>
                       <td>{emp.email}</td>
                       <td>{emp.department ?? "—"}</td>
                       <td>{emp.branch ?? "—"}</td>
                       <td>{emp.region ?? "—"}</td>
                       <td>
-                        <span className={`text-xs font-semibold rounded-full px-2 py-1 ${emp.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-600"}`}>{emp.status}</span>
+                        <span className={`text-xs font-semibold rounded-full px-2 py-1 ${emp.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-theme-muted text-theme-text-secondary"}`}>{emp.status}</span>
                       </td>
                       <td className="flex gap-2">
                         <button 
@@ -300,7 +300,7 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
                 ))}
                 {(employees ?? []).length === 0 && (
                   <tr>
-                    <td colSpan={7} className="py-4 text-sm text-slate-500">No employees yet.</td>
+                    <td colSpan={7} className="py-4 text-sm text-theme-text-tertiary">No employees yet.</td>
                   </tr>
                 )}
               </tbody>

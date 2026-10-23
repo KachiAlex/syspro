@@ -4,7 +4,7 @@ import React from "react";
 
 function SkeletonCard() {
   return (
-    <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6 animate-pulse">
+    <div className="bg-theme-muted rounded-xl border border-[rgba(255,255,255,0.07)] p-6 animate-pulse">
       <div className="flex items-center justify-between">
         <div className="flex-1 space-y-3">
           <div className="h-3 w-20 bg-[rgba(255,255,255,0.07)] rounded" />
@@ -47,7 +47,7 @@ export function DashboardSkeleton({
         ))}
       </div>
       {showTable && (
-        <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
+        <div className="bg-theme-muted rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
           <div className="h-5 w-32 bg-[rgba(255,255,255,0.07)] rounded mb-4 animate-pulse" />
           <div className="divide-y divide-[rgba(255,255,255,0.07)]">
             {Array.from({ length: rows }).map((_, i) => (

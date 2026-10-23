@@ -104,13 +104,13 @@ export default function TeamDataPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Team Data Management</h2>
-          <p className="text-gray-600">Manage team members, data submissions, and analytics</p>
+          <h2 className="text-2xl font-bold text-theme-text-primary">Team Data Management</h2>
+          <p className="text-theme-text-secondary">Manage team members, data submissions, and analytics</p>
         </div>
         <div className="flex gap-3">
           <Link
             href="/tenant-admin"
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted"
           >
             ← Back to Dashboard
           </Link>
@@ -118,15 +118,15 @@ export default function TeamDataPage() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="border-b border-gray-200">
+      <div className="bg-theme-surface rounded-lg border border-theme-border">
+        <div className="border-b border-theme-border">
           <nav className="flex -mb-px">
             <button
               onClick={() => setActiveTab('overview')}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'overview'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-theme-accent text-theme-accent'
+                  : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
               }`}
             >
               <BarChart3 className="w-4 h-4 inline mr-2" />
@@ -136,8 +136,8 @@ export default function TeamDataPage() {
               onClick={() => setActiveTab('team')}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'team'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-theme-accent text-theme-accent'
+                  : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
               }`}
             >
               <Users className="w-4 h-4 inline mr-2" />
@@ -147,8 +147,8 @@ export default function TeamDataPage() {
               onClick={() => setActiveTab('submissions')}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'submissions'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-theme-accent text-theme-accent'
+                  : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
               }`}
             >
               <Activity className="w-4 h-4 inline mr-2" />
@@ -158,8 +158,8 @@ export default function TeamDataPage() {
               onClick={() => setActiveTab('analytics')}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'analytics'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-theme-accent text-theme-accent'
+                  : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
               }`}
             >
               <Award className="w-4 h-4 inline mr-2" />
@@ -174,41 +174,41 @@ export default function TeamDataPage() {
             <div className="space-y-6">
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">Team Members</p>
-                      <p className="text-2xl font-bold text-gray-900">{stats.totalMembers}</p>
+                      <p className="text-sm text-theme-text-secondary">Team Members</p>
+                      <p className="text-2xl font-bold text-theme-text-primary">{stats.totalMembers}</p>
                       <p className="text-xs text-green-600">{stats.activeMembers} active</p>
                     </div>
-                    <Users className="w-8 h-8 text-blue-600" />
+                    <Users className="w-8 h-8 text-theme-accent" />
                   </div>
                 </div>
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">Total Submissions</p>
-                      <p className="text-2xl font-bold text-gray-900">{stats.totalSubmissions}</p>
-                      <p className="text-xs text-gray-500">This month</p>
+                      <p className="text-sm text-theme-text-secondary">Total Submissions</p>
+                      <p className="text-2xl font-bold text-theme-text-primary">{stats.totalSubmissions}</p>
+                      <p className="text-xs text-theme-text-secondary">This month</p>
                     </div>
                     <Activity className="w-8 h-8 text-green-600" />
                   </div>
                 </div>
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">Avg Quality Score</p>
-                      <p className="text-2xl font-bold text-gray-900">{stats.avgQuality}</p>
+                      <p className="text-sm text-theme-text-secondary">Avg Quality Score</p>
+                      <p className="text-2xl font-bold text-theme-text-primary">{stats.avgQuality}</p>
                       <p className="text-xs text-green-600">+2.3% vs last month</p>
                     </div>
                     <Award className="w-8 h-8 text-purple-600" />
                   </div>
                 </div>
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="bg-theme-surface rounded-lg border border-theme-border p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">Data Sources</p>
-                      <p className="text-2xl font-bold text-gray-900">12</p>
+                      <p className="text-sm text-theme-text-secondary">Data Sources</p>
+                      <p className="text-2xl font-bold text-theme-text-primary">12</p>
                       <p className="text-xs text-green-600">3 active</p>
                     </div>
                     <Settings className="w-8 h-8 text-orange-600" />
@@ -218,41 +218,41 @@ export default function TeamDataPage() {
 
               {/* Top Performers */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performers</h3>
+                <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+                  <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Top Performers</h3>
                   <div className="space-y-3">
                     {topPerformers.map((performer, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div key={index} className="flex items-center justify-between p-3 bg-theme-muted rounded-lg">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                             <span className="text-sm font-medium text-blue-800">{index + 1}</span>
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">{performer.name}</p>
-                            <p className="text-sm text-gray-600">{performer.department}</p>
+                            <p className="font-medium text-theme-text-primary">{performer.name}</p>
+                            <p className="text-sm text-theme-text-secondary">{performer.department}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold text-gray-900">{performer.score}</p>
-                          <p className="text-sm text-gray-600">{performer.submissions} submissions</p>
+                          <p className="font-semibold text-theme-text-primary">{performer.score}</p>
+                          <p className="text-sm text-theme-text-secondary">{performer.submissions} submissions</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Department Performance</h3>
+                <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+                  <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Department Performance</h3>
                   <div className="space-y-3">
                     {departmentStats.map((dept, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div key={index} className="flex items-center justify-between p-3 bg-theme-muted rounded-lg">
                         <div>
-                          <p className="font-medium text-gray-900">{dept.name}</p>
-                          <p className="text-sm text-gray-600">{dept.members} members</p>
+                          <p className="font-medium text-theme-text-primary">{dept.name}</p>
+                          <p className="text-sm text-theme-text-secondary">{dept.members} members</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold text-gray-900">{dept.submissions} submissions</p>
-                          <p className="text-sm text-gray-600">Quality: {dept.avgQuality.toFixed(1)}</p>
+                          <p className="font-semibold text-theme-text-primary">{dept.submissions} submissions</p>
+                          <p className="text-sm text-theme-text-secondary">Quality: {dept.avgQuality.toFixed(1)}</p>
                         </div>
                       </div>
                     ))}
@@ -261,32 +261,32 @@ export default function TeamDataPage() {
               </div>
 
               {/* Recent Activity */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+              <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+                <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Recent Activity</h3>
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3 p-3 bg-theme-muted rounded-lg">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <div className="flex-1">
-                      <p className="text-sm text-gray-900">John Smith submitted sales data for March</p>
-                      <p className="text-xs text-gray-500">2 hours ago</p>
+                      <p className="text-sm text-theme-text-primary">John Smith submitted sales data for March</p>
+                      <p className="text-xs text-theme-text-secondary">2 hours ago</p>
                     </div>
                     <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">Approved</span>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3 p-3 bg-theme-muted rounded-lg">
                     <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                     <div className="flex-1">
-                      <p className="text-sm text-gray-900">Jane Doe submitted financial data for Q1</p>
-                      <p className="text-xs text-gray-500">4 hours ago</p>
+                      <p className="text-sm text-theme-text-primary">Jane Doe submitted financial data for Q1</p>
+                      <p className="text-xs text-theme-text-secondary">4 hours ago</p>
                     </div>
                     <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">Under Review</span>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3 p-3 bg-theme-muted rounded-lg">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <div className="flex-1">
-                      <p className="text-sm text-gray-900">Mike Johnson configured new data source</p>
-                      <p className="text-xs text-gray-500">1 day ago</p>
+                      <p className="text-sm text-theme-text-primary">Mike Johnson configured new data source</p>
+                      <p className="text-xs text-theme-text-secondary">1 day ago</p>
                     </div>
-                    <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">System</span>
+                    <span className="text-xs text-theme-accent bg-blue-100 px-2 py-1 rounded">System</span>
                   </div>
                 </div>
               </div>
@@ -315,44 +315,44 @@ export default function TeamDataPage() {
           {activeTab === 'analytics' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">Total Submissions</h4>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalSubmissions}</p>
+                <div className="bg-theme-muted rounded-lg p-4">
+                  <h4 className="font-medium text-theme-text-primary mb-2">Total Submissions</h4>
+                  <p className="text-2xl font-bold text-theme-text-primary">{stats.totalSubmissions}</p>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">Avg Quality Score</h4>
-                  <p className="text-2xl font-bold text-gray-900">{stats.avgQuality}</p>
+                <div className="bg-theme-muted rounded-lg p-4">
+                  <h4 className="font-medium text-theme-text-primary mb-2">Avg Quality Score</h4>
+                  <p className="text-2xl font-bold text-theme-text-primary">{stats.avgQuality}</p>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">Top Performer</h4>
-                  <p className="text-xl font-bold text-gray-900">{topPerformers[0]?.name || 'N/A'}</p>
-                  <p className="text-sm text-gray-600">Score: {topPerformers[0]?.score || 0}</p>
+                <div className="bg-theme-muted rounded-lg p-4">
+                  <h4 className="font-medium text-theme-text-primary mb-2">Top Performer</h4>
+                  <p className="text-xl font-bold text-theme-text-primary">{topPerformers[0]?.name || 'N/A'}</p>
+                  <p className="text-sm text-theme-text-secondary">Score: {topPerformers[0]?.score || 0}</p>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performers</h3>
+                <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Top Performers</h3>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                  <table className="min-w-full bg-theme-surface border border-theme-border rounded-lg">
                     <thead>
-                      <tr className="bg-gray-50">
-                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
-                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Department</th>
-                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Submissions</th>
-                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Quality Score</th>
+                      <tr className="bg-theme-muted">
+                        <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Name</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Department</th>
+                        <th className="px-4 py-2 text-right text-sm font-medium text-theme-text-primary">Submissions</th>
+                        <th className="px-4 py-2 text-right text-sm font-medium text-theme-text-primary">Quality Score</th>
                       </tr>
                     </thead>
                     <tbody>
                       {topPerformers.map((p, idx) => (
                         <tr key={idx} className="border-t">
-                          <td className="px-4 py-2 text-sm text-gray-900">{p.name}</td>
-                          <td className="px-4 py-2 text-sm text-gray-600 capitalize">{p.department}</td>
-                          <td className="px-4 py-2 text-sm text-gray-900 text-right">{p.submissions}</td>
-                          <td className="px-4 py-2 text-sm text-gray-900 text-right">{p.score.toFixed(1)}</td>
+                          <td className="px-4 py-2 text-sm text-theme-text-primary">{p.name}</td>
+                          <td className="px-4 py-2 text-sm text-theme-text-secondary capitalize">{p.department}</td>
+                          <td className="px-4 py-2 text-sm text-theme-text-primary text-right">{p.submissions}</td>
+                          <td className="px-4 py-2 text-sm text-theme-text-primary text-right">{p.score.toFixed(1)}</td>
                         </tr>
                       ))}
                       {topPerformers.length === 0 && (
-                        <tr><td colSpan={4} className="px-4 py-6 text-center text-sm text-gray-500">No analytics data available</td></tr>
+                        <tr><td colSpan={4} className="px-4 py-6 text-center text-sm text-theme-text-secondary">No analytics data available</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -360,24 +360,24 @@ export default function TeamDataPage() {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Department Breakdown</h3>
+                <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Department Breakdown</h3>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                  <table className="min-w-full bg-theme-surface border border-theme-border rounded-lg">
                     <thead>
-                      <tr className="bg-gray-50">
-                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Department</th>
-                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Members</th>
-                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Submissions</th>
-                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Avg Quality</th>
+                      <tr className="bg-theme-muted">
+                        <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Department</th>
+                        <th className="px-4 py-2 text-right text-sm font-medium text-theme-text-primary">Members</th>
+                        <th className="px-4 py-2 text-right text-sm font-medium text-theme-text-primary">Submissions</th>
+                        <th className="px-4 py-2 text-right text-sm font-medium text-theme-text-primary">Avg Quality</th>
                       </tr>
                     </thead>
                     <tbody>
                       {departmentStats.map((dept) => (
                         <tr key={dept.name} className="border-t">
-                          <td className="px-4 py-2 text-sm text-gray-900">{dept.name}</td>
-                          <td className="px-4 py-2 text-sm text-gray-900 text-right">{dept.members}</td>
-                          <td className="px-4 py-2 text-sm text-gray-900 text-right">{dept.submissions}</td>
-                          <td className="px-4 py-2 text-sm text-gray-900 text-right">{dept.avgQuality.toFixed(1)}</td>
+                          <td className="px-4 py-2 text-sm text-theme-text-primary">{dept.name}</td>
+                          <td className="px-4 py-2 text-sm text-theme-text-primary text-right">{dept.members}</td>
+                          <td className="px-4 py-2 text-sm text-theme-text-primary text-right">{dept.submissions}</td>
+                          <td className="px-4 py-2 text-sm text-theme-text-primary text-right">{dept.avgQuality.toFixed(1)}</td>
                         </tr>
                       ))}
                     </tbody>

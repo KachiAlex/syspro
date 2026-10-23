@@ -41,22 +41,22 @@ export default function PoliciesPage() {
       {!loading && !error && rules.length === 0 && <p>No policies found.</p>}
       {!loading && rules.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+          <table className="min-w-full bg-theme-surface border border-theme-border rounded-lg">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Event Type</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Description</th>
+              <tr className="bg-theme-muted">
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Name</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Event Type</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Status</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Description</th>
               </tr>
             </thead>
             <tbody>
               {rules.map((rule) => (
-                <tr key={rule.id} className="border-t border-gray-100">
-                  <td className="px-4 py-2 text-sm text-gray-900 font-medium">{rule.name}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{rule.eventType}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{rule.enabled ? "Enabled" : "Disabled"}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{rule.description || "—"}</td>
+                <tr key={rule.id} className="border-t border-theme-border">
+                  <td className="px-4 py-2 text-sm text-theme-text-primary font-medium">{rule.name}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{rule.eventType}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{rule.enabled ? "Enabled" : "Disabled"}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{rule.description || "—"}</td>
                 </tr>
               ))}
             </tbody>

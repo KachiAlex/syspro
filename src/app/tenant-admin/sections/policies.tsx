@@ -78,38 +78,38 @@ export default function PoliciesSection({ tenantSlug }: { tenantSlug: string }) 
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Policies</p>
-            <h2 className="text-xl font-semibold text-gray-900">Central rules</h2>
-            <p className="mt-1 text-sm text-slate-500">Define attendance, finance, SLA, and approval thresholds with versioning.</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Policies</p>
+            <h2 className="text-xl font-semibold text-theme-text-primary">Central rules</h2>
+            <p className="mt-1 text-sm text-theme-text-tertiary">Define attendance, finance, SLA, and approval thresholds with versioning.</p>
           </div>
-          <button onClick={load} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50" disabled={loading}>
+          <button onClick={load} className="inline-flex items-center gap-2 rounded-full border border-theme-border px-3 py-2 text-sm text-theme-text-primary hover:bg-theme-muted" disabled={loading}>
             <RefreshCcw className="h-4 w-4" /> Refresh
           </button>
         </div>
         <form className="mt-4 space-y-3" onSubmit={handleCreate}>
           <div className="grid gap-3 md:grid-cols-3">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Key</label>
-              <input value={form.key} onChange={(e) => setForm((p) => ({ ...p, key: e.target.value }))} required className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="attendance.rules" />
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Key</label>
+              <input value={form.key} onChange={(e) => setForm((p) => ({ ...p, key: e.target.value }))} required className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm" placeholder="attendance.rules" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Name</label>
-              <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Name</label>
+              <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Category</label>
-              <input value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))} className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="attendance / finance / sla" />
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Category</label>
+              <input value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))} className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm" placeholder="attendance / finance / sla" />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">Document (JSON)</label>
-            <textarea value={form.document} onChange={(e) => setForm((p) => ({ ...p, document: e.target.value }))} className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-xs" rows={4} />
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">Document (JSON)</label>
+            <textarea value={form.document} onChange={(e) => setForm((p) => ({ ...p, document: e.target.value }))} className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 font-mono text-xs" rows={4} />
           </div>
           <div className="flex gap-3">
-            <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-slate-800">
+            <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-full bg-theme-surface px-4 py-2 text-sm font-medium text-theme-text-primary shadow-sm hover:bg-theme-muted">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />} Create policy
             </button>
             {error && <span className="text-sm text-rose-600">{error}</span>}
@@ -117,40 +117,40 @@ export default function PoliciesSection({ tenantSlug }: { tenantSlug: string }) 
         </form>
       </div>
 
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Catalog</p>
-            <h3 className="text-lg font-semibold text-gray-900">Policies</h3>
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Catalog</p>
+            <h3 className="text-lg font-semibold text-theme-text-primary">Policies</h3>
           </div>
         </div>
         {loading ? (
-          <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading policies…</div>
+          <div className="flex items-center gap-2 text-sm text-theme-text-tertiary"><Loader2 className="h-4 w-4 animate-spin" /> Loading policies…</div>
         ) : policies.length === 0 ? (
-          <div className="text-sm text-slate-500">No policies yet. Create one above.</div>
+          <div className="text-sm text-theme-text-tertiary">No policies yet. Create one above.</div>
         ) : (
           <div className="space-y-3">
             {policies.map((p) => (
-              <div key={p.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+              <div key={p.id} className="rounded-2xl border border-theme-border bg-theme-muted p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">{p.name}</p>
-                    <p className="text-xs text-slate-500">{p.key} · {p.category || "Uncategorized"}</p>
+                    <p className="text-sm font-semibold text-theme-text-primary">{p.name}</p>
+                    <p className="text-xs text-theme-text-tertiary">{p.key} · {p.category || "Uncategorized"}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-700">{p.status}</span>
+                    <span className="rounded-full bg-theme-surface/5 px-3 py-1 text-xs font-medium text-theme-text-primary">{p.status}</span>
                     {p.status !== "published" && (
-                      <button onClick={() => publish(p)} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-theme-muted">Publish</button>
+                      <button onClick={() => publish(p)} className="rounded-full border border-theme-border px-3 py-1 text-xs text-theme-text-primary hover:bg-theme-muted">Publish</button>
                     )}
                   </div>
                 </div>
                 {p.versions && p.versions.length > 0 && (
-                  <div className="mt-3 rounded-xl bg-theme-muted p-3 text-xs text-slate-700">
-                    <div className="mb-1 text-[11px] uppercase tracking-[0.2em] text-slate-400">Versions</div>
+                  <div className="mt-3 rounded-xl bg-theme-muted p-3 text-xs text-theme-text-primary">
+                    <div className="mb-1 text-[11px] uppercase tracking-[0.2em] text-theme-text-secondary">Versions</div>
                     {p.versions.map((v) => (
-                      <div key={v.id} className="flex items-center justify-between border-b border-slate-100 py-1 last:border-0">
+                      <div key={v.id} className="flex items-center justify-between border-b border-theme-border py-1 last:border-0">
                         <span>v{v.version}</span>
-                        <span className="text-slate-500">{v.effectiveAt || "draft"}</span>
+                        <span className="text-theme-text-tertiary">{v.effectiveAt || "draft"}</span>
                       </div>
                     ))}
                   </div>

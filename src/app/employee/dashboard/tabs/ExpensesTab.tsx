@@ -90,7 +90,7 @@ export function ExpensesTab({ profile }: { profile: EmployeeProfile }) {
   const approvedCount = expenses.filter(e => e.status === 'approved').length;
 
   if (loading) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-blue-600 animate-spin" /></div>;
+    return <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-theme-accent animate-spin" /></div>;
   }
 
   return (
@@ -98,12 +98,12 @@ export function ExpensesTab({ profile }: { profile: EmployeeProfile }) {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Expense Requests</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Submit and track your expense reimbursements</p>
+          <h2 className="text-xl font-bold text-theme-text-primary">Expense Requests</h2>
+          <p className="text-sm text-theme-text-secondary mt-0.5">Submit and track your expense reimbursements</p>
         </div>
         <button
           onClick={() => setShowSubmit(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-theme-accent text-white rounded-lg text-sm font-medium hover:bg-theme-accent-hover transition-colors"
         >
           <Plus className="w-4 h-4" />
           New Expense
@@ -112,47 +112,47 @@ export function ExpensesTab({ profile }: { profile: EmployeeProfile }) {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 mb-2">
+        <div className="bg-theme-surface rounded-xl border border-theme-border p-4">
+          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium bg-theme-muted text-theme-text-primary mb-2">
             <Receipt className="w-4 h-4" /> Total
           </div>
-          <p className="text-2xl font-bold text-gray-900">{expenses.length}</p>
+          <p className="text-2xl font-bold text-theme-text-primary">{expenses.length}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="bg-theme-surface rounded-xl border border-theme-border p-4">
           <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium bg-amber-100 text-amber-700 mb-2">
             <Clock className="w-4 h-4" /> Pending
           </div>
-          <p className="text-2xl font-bold text-gray-900">{pendingCount}</p>
+          <p className="text-2xl font-bold text-theme-text-primary">{pendingCount}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="bg-theme-surface rounded-xl border border-theme-border p-4">
           <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium bg-green-100 text-green-700 mb-2">
             <CheckCircle className="w-4 h-4" /> Approved
           </div>
-          <p className="text-2xl font-bold text-gray-900">{approvedCount}</p>
+          <p className="text-2xl font-bold text-theme-text-primary">{approvedCount}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="bg-theme-surface rounded-xl border border-theme-border p-4">
           <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 mb-2">
             <DollarSign className="w-4 h-4" /> Total Amount
           </div>
-          <p className="text-2xl font-bold text-gray-900">₦{totalAmount.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-theme-text-primary">₦{totalAmount.toLocaleString()}</p>
         </div>
       </div>
 
       {/* Pending approvals (HOD only) */}
       {canApprove && pendingApprovals.length > 0 && (
         <div>
-          <h3 className="text-sm font-bold text-gray-900 mb-3">Pending Approvals ({pendingApprovals.length})</h3>
+          <h3 className="text-sm font-bold text-theme-text-primary mb-3">Pending Approvals ({pendingApprovals.length})</h3>
           <div className="space-y-2">
             {pendingApprovals.map(exp => (
-              <div key={exp.id} className="bg-white rounded-xl border border-amber-200 p-4">
+              <div key={exp.id} className="bg-theme-surface rounded-xl border border-amber-200 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <h4 className="font-semibold text-gray-900 text-sm">{exp.category}</h4>
-                      <span className="text-xs text-gray-500">by {exp.employee_name}</span>
+                      <h4 className="font-semibold text-theme-text-primary text-sm">{exp.category}</h4>
+                      <span className="text-xs text-theme-text-secondary">by {exp.employee_name}</span>
                     </div>
-                    <p className="text-sm text-gray-600">{exp.description}</p>
-                    <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
+                    <p className="text-sm text-theme-text-secondary">{exp.description}</p>
+                    <div className="flex items-center gap-3 mt-1.5 text-xs text-theme-text-tertiary">
                       <span>₦{Number(exp.amount).toLocaleString()}</span>
                       <span>{exp.date}</span>
                     </div>
@@ -185,7 +185,7 @@ export function ExpensesTab({ profile }: { profile: EmployeeProfile }) {
             key={s}
             onClick={() => setFilterStatus(s)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
-              filterStatus === s ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              filterStatus === s ? 'bg-theme-accent text-white' : 'bg-theme-muted text-theme-text-secondary hover:bg-theme-muted'
             }`}
           >
             {s}
@@ -201,35 +201,35 @@ export function ExpensesTab({ profile }: { profile: EmployeeProfile }) {
 
       {/* Expense list */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
-          <Receipt className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">No expense requests yet. Submit one to get started.</p>
+        <div className="text-center py-16 bg-theme-muted rounded-xl border border-theme-border">
+          <Receipt className="w-10 h-10 text-theme-text-secondary mx-auto mb-3" />
+          <p className="text-theme-text-secondary text-sm">No expense requests yet. Submit one to get started.</p>
         </div>
       ) : (
         <div className="space-y-2">
           {filtered.map(exp => {
             const cfg = STATUS_CONFIG[exp.status] || STATUS_CONFIG.pending;
             return (
-              <div key={exp.id} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+              <div key={exp.id} className="bg-theme-surface rounded-xl border border-theme-border p-4 hover:shadow-sm transition-shadow">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <h4 className="font-semibold text-gray-900 text-sm">{exp.category}</h4>
+                      <h4 className="font-semibold text-theme-text-primary text-sm">{exp.category}</h4>
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${cfg.color}`}>
                         {cfg.icon} {cfg.label}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600">{exp.description}</p>
+                    <p className="text-sm text-theme-text-secondary">{exp.description}</p>
                     {exp.approver_comment && (
-                      <p className="text-xs text-gray-500 mt-1.5 italic">&quot;{exp.approver_comment}&quot;</p>
+                      <p className="text-xs text-theme-text-secondary mt-1.5 italic">&quot;{exp.approver_comment}&quot;</p>
                     )}
-                    <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
-                      <span className="font-medium text-gray-700">₦{Number(exp.amount).toLocaleString()}</span>
+                    <div className="flex items-center gap-3 mt-1.5 text-xs text-theme-text-tertiary">
+                      <span className="font-medium text-theme-text-primary">₦{Number(exp.amount).toLocaleString()}</span>
                       <span>{exp.date}</span>
                       {exp.approver_name && <span>Reviewed by: {exp.approver_name}</span>}
                     </div>
                     {exp.receipt_url && (
-                      <a href={exp.receipt_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-xs text-blue-600 font-medium hover:text-blue-700">
+                      <a href={exp.receipt_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-xs text-theme-accent font-medium hover:text-blue-700">
                         <ExternalLink className="w-3 h-3" /> View attachment
                       </a>
                     )}
@@ -357,11 +357,11 @@ function SubmitExpenseModal({ onClose, onSubmitted }: { onClose: () => void; onS
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5 border-b border-gray-100">
-          <h3 className="font-bold text-gray-900">New Expense Request</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="w-5 h-5 text-gray-500" /></button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay p-4" onClick={onClose}>
+      <div className="bg-theme-surface rounded-2xl shadow-xl max-w-md w-full" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-theme-border">
+          <h3 className="font-bold text-theme-text-primary">New Expense Request</h3>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-theme-muted"><X className="w-5 h-5 text-theme-text-secondary" /></button>
         </div>
 
         <div className="p-5 space-y-4">
@@ -372,11 +372,11 @@ function SubmitExpenseModal({ onClose, onSubmitted }: { onClose: () => void; onS
           )}
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Category *</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-1.5">Category *</label>
             <select
               value={category}
               onChange={e => setCategory(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 rounded-lg border border-theme-border text-sm focus:ring-2 focus:ring-theme-accent focus:border-transparent"
             >
               <option value="">Select category...</option>
               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -384,77 +384,77 @@ function SubmitExpenseModal({ onClose, onSubmitted }: { onClose: () => void; onS
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">Description *</label>
+            <label className="block text-xs font-medium text-theme-text-primary mb-1.5">Description *</label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
               rows={2}
               placeholder="Describe the expense..."
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 rounded-lg border border-theme-border text-sm focus:ring-2 focus:ring-theme-accent focus:border-transparent resize-none"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Amount (₦) *</label>
+              <label className="block text-xs font-medium text-theme-text-primary mb-1.5">Amount (₦) *</label>
               <input
                 type="number"
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 rounded-lg border border-theme-border text-sm focus:ring-2 focus:ring-theme-accent focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Date *</label>
+              <label className="block text-xs font-medium text-theme-text-primary mb-1.5">Date *</label>
               <input
                 type="date"
                 value={date}
                 onChange={e => setDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 rounded-lg border border-theme-border text-sm focus:ring-2 focus:ring-theme-accent focus:border-transparent"
               />
             </div>
           </div>
 
           {/* Attachment */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">
-              Attachment <span className="text-gray-400 font-normal">(optional — receipt or justification)</span>
+            <label className="block text-xs font-medium text-theme-text-primary mb-1.5">
+              Attachment <span className="text-theme-text-tertiary font-normal">(optional — receipt or justification)</span>
             </label>
             {!attachment ? (
-              <label className="flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-colors">
-                <Upload className="w-5 h-5 text-gray-400" />
-                <span className="text-sm text-gray-500">Click to upload receipt (PDF, JPEG, PNG, WebP — max 10MB)</span>
+              <label className="flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-theme-border rounded-lg cursor-pointer hover:border-theme-accent hover:bg-theme-muted/30 transition-colors">
+                <Upload className="w-5 h-5 text-theme-text-tertiary" />
+                <span className="text-sm text-theme-text-secondary">Click to upload receipt (PDF, JPEG, PNG, WebP — max 10MB)</span>
                 <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={handleFileSelect} />
               </label>
             ) : (
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50">
-                <FileText className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                <span className="text-sm text-gray-700 truncate flex-1">{attachment.name}</span>
-                <span className="text-xs text-gray-400 flex-shrink-0">{(attachment.size / 1024).toFixed(0)} KB</span>
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-theme-border bg-theme-muted">
+                <FileText className="w-4 h-4 text-theme-accent flex-shrink-0" />
+                <span className="text-sm text-theme-text-primary truncate flex-1">{attachment.name}</span>
+                <span className="text-xs text-theme-text-tertiary flex-shrink-0">{(attachment.size / 1024).toFixed(0)} KB</span>
                 {attachmentUrl && <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />}
                 <button
                   onClick={() => { setAttachment(null); setAttachmentUrl(null); }}
-                  className="p-1 rounded text-gray-400 hover:bg-gray-200 hover:text-red-600 flex-shrink-0"
+                  className="p-1 rounded text-theme-text-tertiary hover:bg-theme-muted hover:text-red-600 flex-shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
             )}
             {uploading && (
-              <p className="text-xs text-blue-600 mt-1.5 flex items-center gap-1">
+              <p className="text-xs text-theme-accent mt-1.5 flex items-center gap-1">
                 <Loader2 className="w-3 h-3 animate-spin" /> Uploading attachment...
               </p>
             )}
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 p-5 border-t border-gray-100">
-          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">Cancel</button>
+        <div className="flex items-center justify-end gap-2 p-5 border-t border-theme-border">
+          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-theme-text-secondary rounded-lg hover:bg-theme-muted">Cancel</button>
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-theme-accent text-white rounded-lg text-sm font-medium hover:bg-theme-accent-hover disabled:opacity-50"
           >
             {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
             Submit

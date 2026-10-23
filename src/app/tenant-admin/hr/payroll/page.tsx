@@ -430,19 +430,19 @@ export default function PayrollPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Payroll Management</h2>
-          <p className="text-sm text-gray-500 mt-1">Configure, calculate and process payroll</p>
+          <h2 className="text-2xl font-bold text-theme-text-primary">Payroll Management</h2>
+          <p className="text-sm text-theme-text-secondary mt-1">Configure, calculate and process payroll</p>
         </div>
         <div className="flex items-center gap-2">
           <input
             type="month"
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            className="px-3 py-2 border border-theme-border rounded-lg text-sm"
           />
           <button
             onClick={() => setShowConfig((s) => !s)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted"
           >
             <Settings className="w-4 h-4" />
             Configuration
@@ -453,7 +453,7 @@ export default function PayrollPage() {
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors border ${
               editMode
                 ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                : 'bg-theme-surface text-theme-text-primary border-theme-border hover:bg-theme-muted'
             }`}
           >
             <Pencil className="w-4 h-4" />
@@ -465,7 +465,7 @@ export default function PayrollPage() {
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
               processed
                 ? 'bg-green-600 hover:bg-green-700'
-                : 'bg-blue-600 hover:bg-blue-700'
+                : 'bg-theme-accent hover:bg-theme-accent-hover'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {processed ? (
@@ -489,14 +489,14 @@ export default function PayrollPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-theme-border">
         <nav className="flex gap-6">
           <button
             onClick={() => setActiveTab('current')}
             className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'current'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-theme-accent text-theme-accent'
+                : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
             }`}
           >
             Current Payroll
@@ -505,8 +505,8 @@ export default function PayrollPage() {
             onClick={() => setActiveTab('history')}
             className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'history'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-theme-accent text-theme-accent'
+                : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
             }`}
           >
             <History className="w-4 h-4 inline mr-1" />
@@ -516,8 +516,8 @@ export default function PayrollPage() {
             onClick={() => setActiveTab('adjustments')}
             className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'adjustments'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-theme-accent text-theme-accent'
+                : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
             }`}
           >
             <Calculator className="w-4 h-4 inline mr-1" />
@@ -593,9 +593,9 @@ export default function PayrollPage() {
           )}
 
       {showConfig && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Calculator className="w-5 h-5 text-blue-600" />
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4 flex items-center gap-2">
+            <Calculator className="w-5 h-5 text-theme-accent" />
             Payroll Configuration
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -608,9 +608,9 @@ export default function PayrollPage() {
               { label: 'Meal Allowance', key: 'mealAllowance' as const },
             ].map((field) => (
               <div key={field.key}>
-                <label className="block text-xs font-medium text-gray-700 mb-1">{field.label}</label>
+                <label className="block text-xs font-medium text-theme-text-primary mb-1">{field.label}</label>
                 <div className="flex items-center gap-2">
-                  {field.key.includes('Rate') ? null : <span className="text-sm text-gray-500">{sym}</span>}
+                  {field.key.includes('Rate') ? null : <span className="text-sm text-theme-text-secondary">{sym}</span>}
                   <input
                     type="number"
                     value={config[field.key]}
@@ -620,9 +620,9 @@ export default function PayrollPage() {
                         [field.key]: parseFloat(e.target.value) || 0,
                       }))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm"
                   />
-                  {field.key.includes('Rate') ? <span className="text-sm text-gray-500">%</span> : null}
+                  {field.key.includes('Rate') ? <span className="text-sm text-theme-text-secondary">%</span> : null}
                 </div>
               </div>
             ))}
@@ -630,7 +630,7 @@ export default function PayrollPage() {
           <div className="flex items-center gap-2 mt-4">
             <button
               onClick={() => { setConfig(defaultConfig); setProcessed(false); }}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center gap-2 px-4 py-2 text-sm text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted"
             >
               <RotateCcw className="w-4 h-4" />
               Reset Defaults
@@ -642,83 +642,83 @@ export default function PayrollPage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm font-medium text-gray-600 mb-2">Total Net Pay</p>
-          <p className="text-3xl font-bold text-gray-900">{formatMoney(totals.totalNet)}</p>
-          <p className="text-xs text-gray-500 mt-2">{selectedMonth} • {totals.count} employees</p>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <p className="text-sm font-medium text-theme-text-secondary mb-2">Total Net Pay</p>
+          <p className="text-3xl font-bold text-theme-text-primary">{formatMoney(totals.totalNet)}</p>
+          <p className="text-xs text-theme-text-secondary mt-2">{selectedMonth} • {totals.count} employees</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm font-medium text-gray-600 mb-2">Base Salary Total</p>
-          <p className="text-3xl font-bold text-gray-900">{formatMoney(totals.totalBase)}</p>
-          <p className="text-xs text-gray-500 mt-2">Before allowances & deductions</p>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <p className="text-sm font-medium text-theme-text-secondary mb-2">Base Salary Total</p>
+          <p className="text-3xl font-bold text-theme-text-primary">{formatMoney(totals.totalBase)}</p>
+          <p className="text-xs text-theme-text-secondary mt-2">Before allowances & deductions</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm font-medium text-gray-600 mb-2">Average Salary</p>
-          <p className="text-3xl font-bold text-gray-900">{formatMoney(totals.avgSalary)}</p>
-          <p className="text-xs text-gray-500 mt-2">Per employee</p>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <p className="text-sm font-medium text-theme-text-secondary mb-2">Average Salary</p>
+          <p className="text-3xl font-bold text-theme-text-primary">{formatMoney(totals.avgSalary)}</p>
+          <p className="text-xs text-theme-text-secondary mt-2">Per employee</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <p className="text-sm font-medium text-gray-600 mb-2">Total Deductions</p>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <p className="text-sm font-medium text-theme-text-secondary mb-2">Total Deductions</p>
           <p className="text-3xl font-bold text-red-600">{formatMoney(totals.totalDeductions)}</p>
-          <p className="text-xs text-gray-500 mt-2">Tax, pension & insurance</p>
+          <p className="text-xs text-theme-text-secondary mt-2">Tax, pension & insurance</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-5">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <span className="text-sm font-medium text-theme-text-primary flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" />
               Base Salary
             </span>
-            <span className="text-sm font-semibold text-gray-900">{formatMoney(totals.totalBase)}</span>
+            <span className="text-sm font-semibold text-theme-text-primary">{formatMoney(totals.totalBase)}</span>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-2 mt-3">
+          <div className="w-full bg-theme-muted rounded-full h-2 mt-3">
             <div
               className="bg-blue-500 h-2 rounded-full transition-all"
               style={{ width: `${totals.totalNet ? Math.min((totals.totalBase / totals.totalNet) * 100, 100) : 0}%` }}
             />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-5">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <span className="text-sm font-medium text-theme-text-primary flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" />
               Allowances
             </span>
-            <span className="text-sm font-semibold text-gray-900">{formatMoney(totals.totalAllowances)}</span>
+            <span className="text-sm font-semibold text-theme-text-primary">{formatMoney(totals.totalAllowances)}</span>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-2 mt-3">
+          <div className="w-full bg-theme-muted rounded-full h-2 mt-3">
             <div
               className="bg-green-500 h-2 rounded-full transition-all"
               style={{ width: `${totals.totalNet ? Math.min((totals.totalAllowances / totals.totalNet) * 100, 100) : 0}%` }}
             />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-5">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <span className="text-sm font-medium text-theme-text-primary flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block" />
               Bonuses
             </span>
-            <span className="text-sm font-semibold text-gray-900">{formatMoney(totals.totalBonus)}</span>
+            <span className="text-sm font-semibold text-theme-text-primary">{formatMoney(totals.totalBonus)}</span>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-2 mt-3">
+          <div className="w-full bg-theme-muted rounded-full h-2 mt-3">
             <div
               className="bg-purple-500 h-2 rounded-full transition-all"
               style={{ width: `${totals.totalNet ? Math.min((totals.totalBonus / totals.totalNet) * 100, 100) : 0}%` }}
             />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-5">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <span className="text-sm font-medium text-theme-text-primary flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block" />
               Custom Deductions
             </span>
-            <span className="text-sm font-semibold text-gray-900">{formatMoney(totals.totalCustomDeductions)}</span>
+            <span className="text-sm font-semibold text-theme-text-primary">{formatMoney(totals.totalCustomDeductions)}</span>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-2 mt-3">
+          <div className="w-full bg-theme-muted rounded-full h-2 mt-3">
             <div
               className="bg-orange-500 h-2 rounded-full transition-all"
               style={{ width: `${totals.totalNet ? Math.min((totals.totalCustomDeductions / totals.totalNet) * 100, 100) : 0}%` }}
@@ -727,63 +727,63 @@ export default function PayrollPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <Users className="w-5 h-5 text-blue-600" />
+      <div className="bg-theme-surface rounded-lg border border-theme-border overflow-hidden">
+        <div className="px-6 py-4 border-b border-theme-border flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-theme-text-primary flex items-center gap-2">
+            <Users className="w-5 h-5 text-theme-accent" />
             Employee Payroll
           </h3>
-          <span className="text-xs text-gray-500">{totals.count} employees | Page {page} of {totalPages}</span>
+          <span className="text-xs text-theme-text-secondary">{totals.count} employees | Page {page} of {totalPages}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1000px]">
-            <thead className="bg-gray-50">
+            <thead className="bg-theme-muted">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[180px]">Employee</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[120px]">Department</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[110px]">Base Salary</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[100px]">Allowances</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[90px]">Bonus</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[90px]">Custom Ded.</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[80px]">Tax</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[90px]">Deductions</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[110px]">Net Pay</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[80px]">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap min-w-[180px]">Employee</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap min-w-[120px]">Department</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-theme-text-primary whitespace-nowrap min-w-[110px]">Base Salary</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-theme-text-primary whitespace-nowrap min-w-[100px]">Allowances</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-theme-text-primary whitespace-nowrap min-w-[90px]">Bonus</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-theme-text-primary whitespace-nowrap min-w-[90px]">Custom Ded.</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-theme-text-primary whitespace-nowrap min-w-[80px]">Tax</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-theme-text-primary whitespace-nowrap min-w-[90px]">Deductions</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-theme-text-primary whitespace-nowrap min-w-[110px]">Net Pay</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-theme-text-primary whitespace-nowrap min-w-[80px]">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-theme-border">
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center text-sm text-gray-500">
+                  <td colSpan={10} className="px-4 py-8 text-center text-sm text-theme-text-secondary">
                     Loading employees...
                   </td>
                 </tr>
               ) : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center text-sm text-gray-500">
+                  <td colSpan={10} className="px-4 py-8 text-center text-sm text-theme-text-secondary">
                     No employees found. Add employees in the Staff tab first.
                   </td>
                 </tr>
               ) : (
                 paginated.map((emp) => (
-                  <tr key={emp.id} className="hover:bg-gray-50">
+                  <tr key={emp.id} className="hover:bg-theme-muted">
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{emp.name}</p>
-                        <p className="text-xs text-gray-500">{emp.position}</p>
+                        <p className="text-sm font-medium text-theme-text-primary">{emp.name}</p>
+                        <p className="text-xs text-theme-text-secondary">{emp.position}</p>
                         {emp.adjustmentReason && (
                           <p className="text-xs text-amber-600 mt-0.5">{emp.adjustmentReason}</p>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{emp.department}</td>
+                    <td className="px-4 py-3 text-sm text-theme-text-secondary whitespace-nowrap">{emp.department}</td>
                     <td className="px-4 py-3 text-sm text-right whitespace-nowrap">
                       {editMode ? (
                         <input
                           type="number"
                           value={emp.baseSalary || ''}
                           onChange={(e) => updateBaseSalary(emp.id, parseFloat(e.target.value) || 0)}
-                          className="w-24 px-2 py-1 text-sm text-right border border-gray-300 rounded-lg"
+                          className="w-24 px-2 py-1 text-sm text-right border border-theme-border rounded-lg"
                         />
                       ) : (
                         <span className="font-medium">{formatMoney(emp.baseSalary)}</span>
@@ -796,7 +796,7 @@ export default function PayrollPage() {
                         value={emp.bonus || ''}
                         onChange={(e) => updateBonus(emp.id, parseFloat(e.target.value) || 0)}
                         placeholder="0"
-                        className="w-20 px-2 py-1 text-sm text-right border border-gray-300 rounded-lg"
+                        className="w-20 px-2 py-1 text-sm text-right border border-theme-border rounded-lg"
                       />
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
@@ -814,7 +814,7 @@ export default function PayrollPage() {
                             value={emp.adjustmentReason}
                             onChange={(e) => updateAdjustmentReason(emp.id, e.target.value)}
                             placeholder="Reason"
-                            className="w-20 px-2 py-0.5 text-xs text-right border border-gray-200 rounded"
+                            className="w-20 px-2 py-0.5 text-xs text-right border border-theme-border rounded"
                           />
                         </div>
                       ) : (
@@ -823,7 +823,7 @@ export default function PayrollPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-right text-red-600 whitespace-nowrap">{formatMoney(emp.tax)}</td>
                     <td className="px-4 py-3 text-sm text-right text-red-600 whitespace-nowrap">{formatMoney(emp.deductions)}</td>
-                    <td className="px-4 py-3 text-sm text-right font-bold text-gray-900 whitespace-nowrap">{formatMoney(emp.netPay)}</td>
+                    <td className="px-4 py-3 text-sm text-right font-bold text-theme-text-primary whitespace-nowrap">{formatMoney(emp.netPay)}</td>
                     <td className="px-4 py-3 text-center whitespace-nowrap">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -831,7 +831,7 @@ export default function PayrollPage() {
                             ? 'bg-green-100 text-green-800'
                             : emp.status === 'On Leave'
                             ? 'bg-amber-100 text-amber-800'
-                            : 'bg-gray-100 text-gray-800'
+                            : 'bg-theme-muted text-theme-text-primary'
                         }`}
                       >
                         {emp.status}
@@ -841,9 +841,9 @@ export default function PayrollPage() {
                 ))
               )}
             </tbody>
-            <tfoot className="bg-gray-50 border-t border-gray-200">
+            <tfoot className="bg-theme-muted border-t border-theme-border">
               <tr>
-                <td className="px-4 py-3 text-sm font-semibold text-gray-900 whitespace-nowrap" colSpan={2}>
+                <td className="px-4 py-3 text-sm font-semibold text-theme-text-primary whitespace-nowrap" colSpan={2}>
                   Totals
                 </td>
                 <td className="px-4 py-3 text-sm text-right font-semibold whitespace-nowrap">{formatMoney(totals.totalBase)}</td>
@@ -862,7 +862,7 @@ export default function PayrollPage() {
                 <td className="px-4 py-3 text-sm text-right font-semibold text-red-600 whitespace-nowrap">
                   {formatMoney(totals.totalDeductions)}
                 </td>
-                <td className="px-4 py-3 text-sm text-right font-bold text-gray-900 whitespace-nowrap">
+                <td className="px-4 py-3 text-sm text-right font-bold text-theme-text-primary whitespace-nowrap">
                   {formatMoney(totals.totalNet)}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap" />
@@ -872,26 +872,26 @@ export default function PayrollPage() {
         </div>
         {/* Pagination */}
         {computed.length > pageSize && (
-          <div className="px-6 py-3 border-t border-gray-200 flex items-center justify-between">
-            <p className="text-xs text-gray-500">
+          <div className="px-6 py-3 border-t border-theme-border flex items-center justify-between">
+            <p className="text-xs text-theme-text-secondary">
               Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, computed.length)} of {computed.length} employees
             </p>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Previous
               </button>
-              <span className="text-sm text-gray-600 px-2">
+              <span className="text-sm text-theme-text-secondary px-2">
                 {page} / {totalPages}
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
                 <ChevronRight className="w-4 h-4" />
@@ -902,10 +902,10 @@ export default function PayrollPage() {
       </div>
 
       {/* Staged Adjustments Panel */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <Calculator className="w-5 h-5 text-blue-600" />
+      <div className="bg-theme-surface rounded-lg border border-theme-border overflow-hidden">
+        <div className="px-6 py-4 border-b border-theme-border flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-theme-text-primary flex items-center gap-2">
+            <Calculator className="w-5 h-5 text-theme-accent" />
             Staged Adjustments
             {pendingAdjustments.length > 0 && (
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
@@ -915,7 +915,7 @@ export default function PayrollPage() {
           </h3>
           <button
             onClick={() => setShowAdjustmentForm((s) => !s)}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-theme-muted"
           >
             {showAdjustmentForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
             {showAdjustmentForm ? 'Cancel' : 'Stage Adjustment'}
@@ -932,28 +932,28 @@ export default function PayrollPage() {
 
         <div className="overflow-x-auto">
           {pendingAdjustments.length === 0 ? (
-            <div className="px-6 py-8 text-center text-sm text-gray-500">
+            <div className="px-6 py-8 text-center text-sm text-theme-text-secondary">
               No staged adjustments for {selectedMonth}. Click &quot;Stage Adjustment&quot; to add one.
             </div>
           ) : (
             <table className="w-full min-w-[700px]">
-              <thead className="bg-gray-50">
+              <thead className="bg-theme-muted">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Employee</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Category</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap">Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Reason</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900 whitespace-nowrap">Status</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900 whitespace-nowrap">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Employee</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Category</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-theme-text-primary whitespace-nowrap">Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Reason</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-theme-text-primary whitespace-nowrap">Status</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-theme-text-primary whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-theme-border">
                 {pendingAdjustments.map((adj) => {
                   const emp = employees.find((e) => e.id === adj.employeeId);
                   return (
-                    <tr key={adj.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{emp?.name ?? adj.employeeId}</td>
+                    <tr key={adj.id} className="hover:bg-theme-muted">
+                      <td className="px-4 py-3 text-sm text-theme-text-primary whitespace-nowrap">{emp?.name ?? adj.employeeId}</td>
                       <td className="px-4 py-3 text-sm whitespace-nowrap">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                           adj.type === 'increment' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -961,9 +961,9 @@ export default function PayrollPage() {
                           {adj.type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap capitalize">{adj.category?.replace('_', ' ')}</td>
+                      <td className="px-4 py-3 text-sm text-theme-text-secondary whitespace-nowrap capitalize">{adj.category?.replace('_', ' ')}</td>
                       <td className="px-4 py-3 text-sm text-right font-medium whitespace-nowrap">{formatMoney(adj.amount)}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{adj.reason ?? '-'}</td>
+                      <td className="px-4 py-3 text-sm text-theme-text-secondary whitespace-nowrap">{adj.reason ?? '-'}</td>
                       <td className="px-4 py-3 text-center whitespace-nowrap">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                           {adj.status}
@@ -980,7 +980,7 @@ export default function PayrollPage() {
                           </button>
                           <button
                             onClick={() => handleRejectAdjustment(adj.id)}
-                            className="text-gray-500 hover:text-gray-700 text-xs font-medium"
+                            className="text-theme-text-secondary hover:text-theme-text-primary text-xs font-medium"
                             title="Reject"
                           >
                             Reject
@@ -1005,24 +1005,24 @@ export default function PayrollPage() {
 
           {/* Department Cost Attribution */}
           {deptCosts.length > 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Department Cost Attribution</h3>
+            <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+              <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Department Cost Attribution</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {deptCosts.map((dept) => (
-                  <div key={dept.name} className="border border-gray-200 rounded-lg p-4">
+                  <div key={dept.name} className="border border-theme-border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-900">{dept.name}</span>
-                      <span className="text-xs text-gray-500">{dept.count} emp</span>
+                      <span className="text-sm font-medium text-theme-text-primary">{dept.name}</span>
+                      <span className="text-xs text-theme-text-secondary">{dept.count} emp</span>
                     </div>
-                    <p className="text-lg font-bold text-gray-900">{formatMoney(dept.net)}</p>
-                    <p className="text-xs text-gray-500">Net payroll cost</p>
-                    <div className="mt-2 w-full bg-gray-100 rounded-full h-1.5">
+                    <p className="text-lg font-bold text-theme-text-primary">{formatMoney(dept.net)}</p>
+                    <p className="text-xs text-theme-text-secondary">Net payroll cost</p>
+                    <div className="mt-2 w-full bg-theme-muted rounded-full h-1.5">
                       <div
                         className="bg-blue-500 h-1.5 rounded-full"
                         style={{ width: `${totals.totalNet ? (dept.net / totals.totalNet) * 100 : 0}%` }}
                       />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-theme-text-secondary mt-1">
                       {totals.totalNet ? ((dept.net / totals.totalNet) * 100).toFixed(1) : 0}% of total
                     </p>
                   </div>
@@ -1032,9 +1032,9 @@ export default function PayrollPage() {
           )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-blue-600" />
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h4 className="font-semibold text-theme-text-primary mb-4 flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-theme-accent" />
             Deductions Breakdown
           </h4>
           <div className="space-y-3">
@@ -1055,10 +1055,10 @@ export default function PayrollPage() {
                 amount: (totals.totalBase + totals.totalAllowances + totals.totalBonus) * (config.healthInsuranceRate / 100),
               },
             ].map((item) => (
-              <div key={item.name} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+              <div key={item.name} className="flex items-center justify-between p-3 border border-theme-border rounded-lg">
                 <div>
-                  <p className="font-medium text-gray-900">{item.name}</p>
-                  <p className="text-xs text-gray-600">{item.rate}% of gross</p>
+                  <p className="font-medium text-theme-text-primary">{item.name}</p>
+                  <p className="text-xs text-theme-text-secondary">{item.rate}% of gross</p>
                 </div>
                 <span className="font-semibold text-red-600">-{formatMoney(item.amount)}</span>
               </div>
@@ -1066,8 +1066,8 @@ export default function PayrollPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h4 className="font-semibold text-theme-text-primary mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-green-600" />
             Allowances Breakdown
           </h4>
@@ -1077,10 +1077,10 @@ export default function PayrollPage() {
               { name: 'Housing', amount: config.housingAllowance * totals.count },
               { name: 'Meal', amount: config.mealAllowance * totals.count },
             ].map((item) => (
-              <div key={item.name} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+              <div key={item.name} className="flex items-center justify-between p-3 border border-theme-border rounded-lg">
                 <div>
-                  <p className="font-medium text-gray-900">{item.name}</p>
-                  <p className="text-xs text-gray-600">{sym}{item.amount / (totals.count || 1)} per employee</p>
+                  <p className="font-medium text-theme-text-primary">{item.name}</p>
+                  <p className="text-xs text-theme-text-secondary">{sym}{item.amount / (totals.count || 1)} per employee</p>
                 </div>
                 <span className="font-semibold text-green-600">+{formatMoney(item.amount)}</span>
               </div>
@@ -1092,39 +1092,39 @@ export default function PayrollPage() {
       )}
 
       {activeTab === 'history' && (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <History className="w-5 h-5 text-blue-600" />
+        <div className="bg-theme-surface rounded-lg border border-theme-border overflow-hidden">
+          <div className="px-6 py-4 border-b border-theme-border">
+            <h3 className="text-lg font-semibold text-theme-text-primary flex items-center gap-2">
+              <History className="w-5 h-5 text-theme-accent" />
               Payroll Run History
             </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-theme-muted">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Period</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Gross</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Deductions</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Net Pay</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900">Status</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900">Anomalies</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900">Compliance</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Date</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900">Action</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary">Period</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-theme-text-primary">Gross</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-theme-text-primary">Deductions</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-theme-text-primary">Net Pay</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-theme-text-primary">Status</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-theme-text-primary">Anomalies</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-theme-text-primary">Compliance</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary">Date</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-theme-text-primary">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-theme-border">
                 {payrollRuns.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-500">
+                    <td colSpan={9} className="px-4 py-8 text-center text-sm text-theme-text-secondary">
                       No payroll runs yet. Process your first payroll to see history here.
                     </td>
                   </tr>
                 ) : (
                   payrollRuns.map((run) => (
-                    <tr key={run.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{run.period}</td>
+                    <tr key={run.id} className="hover:bg-theme-muted">
+                      <td className="px-4 py-3 text-sm font-medium text-theme-text-primary">{run.period}</td>
                       <td className="px-4 py-3 text-sm text-right">{formatMoney(run.totalGross)}</td>
                       <td className="px-4 py-3 text-sm text-right text-red-600">-{formatMoney(run.totalDeductions)}</td>
                       <td className="px-4 py-3 text-sm text-right font-bold">{formatMoney(run.totalNet)}</td>
@@ -1134,7 +1134,7 @@ export default function PayrollPage() {
                             ? 'bg-green-100 text-green-800'
                             : run.status === 'processing'
                             ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
+                            : 'bg-theme-muted text-theme-text-primary'
                         }`}>
                           {run.status}
                         </span>
@@ -1165,7 +1165,7 @@ export default function PayrollPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">
+                      <td className="px-4 py-3 text-xs text-theme-text-secondary">
                         {new Date(run.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -1183,7 +1183,7 @@ export default function PayrollPage() {
                             <button
                               onClick={() => handleRunAction(run.id, 'pay')}
                               disabled={runActionLoading === run.id}
-                              className="text-blue-600 hover:text-blue-800 text-sm font-medium disabled:opacity-50"
+                              className="text-theme-accent hover:text-blue-800 text-sm font-medium disabled:opacity-50"
                             >
                               Pay
                             </button>
@@ -1200,7 +1200,7 @@ export default function PayrollPage() {
                           {run.status !== 'draft' && run.status !== 'cancelled' && (
                             <a
                               href={`/api/tenant/payroll/runs/${run.id}/payout?tenantSlug=${encodeURIComponent(tenantSlug)}`}
-                              className="text-gray-600 hover:text-gray-800 text-sm font-medium"
+                              className="text-theme-text-secondary hover:text-theme-text-primary text-sm font-medium"
                               title="Download bank payout file"
                             >
                               <Download className="w-4 h-4 inline mr-1" />
@@ -1219,17 +1219,17 @@ export default function PayrollPage() {
       )}
 
       {activeTab === 'adjustments' && (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Calculator className="w-5 h-5 text-blue-600" />
+        <div className="bg-theme-surface rounded-lg border border-theme-border overflow-hidden">
+          <div className="px-6 py-4 border-b border-theme-border flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-theme-text-primary flex items-center gap-2">
+              <Calculator className="w-5 h-5 text-theme-accent" />
               Adjustment Audit Trail
             </h3>
             <div className="flex items-center gap-2">
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                className="px-3 py-1.5 border border-theme-border rounded-lg text-sm"
               >
                 {Array.from({ length: 12 }, (_, i) => {
                   const d = new Date();
@@ -1242,32 +1242,32 @@ export default function PayrollPage() {
           </div>
           <div className="overflow-x-auto">
             {adjustments.length === 0 ? (
-              <div className="px-6 py-8 text-center text-sm text-gray-500">
+              <div className="px-6 py-8 text-center text-sm text-theme-text-secondary">
                 No adjustments found for {selectedMonth}.
               </div>
             ) : (
               <table className="w-full min-w-[800px]">
-                <thead className="bg-gray-50">
+                <thead className="bg-theme-muted">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Date</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Employee</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Type</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Category</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap">Amount</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Reason</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900 whitespace-nowrap">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Applied</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Employee</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Type</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Category</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-theme-text-primary whitespace-nowrap">Amount</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Reason</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-theme-text-primary whitespace-nowrap">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary whitespace-nowrap">Applied</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-theme-border">
                   {adjustments.map((adj) => {
                     const emp = employees.find((e) => e.id === adj.employeeId);
                     return (
-                      <tr key={adj.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                      <tr key={adj.id} className="hover:bg-theme-muted">
+                        <td className="px-4 py-3 text-xs text-theme-text-secondary whitespace-nowrap">
                           {new Date(adj.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{emp?.name ?? adj.employeeId}</td>
+                        <td className="px-4 py-3 text-sm text-theme-text-primary whitespace-nowrap">{emp?.name ?? adj.employeeId}</td>
                         <td className="px-4 py-3 text-sm whitespace-nowrap">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                             adj.type === 'increment' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -1275,21 +1275,21 @@ export default function PayrollPage() {
                             {adj.type}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap capitalize">{adj.category?.replace('_', ' ')}</td>
+                        <td className="px-4 py-3 text-sm text-theme-text-secondary whitespace-nowrap capitalize">{adj.category?.replace('_', ' ')}</td>
                         <td className="px-4 py-3 text-sm text-right font-medium whitespace-nowrap">{formatMoney(adj.amount)}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{adj.reason ?? '-'}</td>
+                        <td className="px-4 py-3 text-sm text-theme-text-secondary whitespace-nowrap">{adj.reason ?? '-'}</td>
                         <td className="px-4 py-3 text-center whitespace-nowrap">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                             adj.status === 'applied'
                               ? 'bg-green-100 text-green-800'
                               : adj.status === 'rejected'
-                              ? 'bg-gray-100 text-gray-800'
+                              ? 'bg-theme-muted text-theme-text-primary'
                               : 'bg-amber-100 text-amber-800'
                           }`}>
                             {adj.status}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                        <td className="px-4 py-3 text-xs text-theme-text-secondary whitespace-nowrap">
                           {adj.appliedAt ? new Date(adj.appliedAt).toLocaleDateString() : '-'}
                         </td>
                       </tr>
@@ -1345,15 +1345,15 @@ function AdjustmentForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+    <form onSubmit={handleSubmit} className="px-6 py-4 border-b border-theme-border bg-theme-muted">
       <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
         <div className="md:col-span-2">
-          <label className="block text-xs font-medium text-gray-700 mb-1">Employee</label>
+          <label className="block text-xs font-medium text-theme-text-primary mb-1">Employee</label>
           <select
             value={employeeId}
             onChange={(e) => setEmployeeId(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm"
           >
             <option value="">Select employee...</option>
             {employees.map((emp) => (
@@ -1362,7 +1362,7 @@ function AdjustmentForm({
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
+          <label className="block text-xs font-medium text-theme-text-primary mb-1">Type</label>
           <select
             value={type}
             onChange={(e) => {
@@ -1370,18 +1370,18 @@ function AdjustmentForm({
               setType(t);
               setCategory(categoriesByType[t][0]);
             }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm"
           >
             <option value="increment">Increment</option>
             <option value="deduction">Deduction</option>
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
+          <label className="block text-xs font-medium text-theme-text-primary mb-1">Category</label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as typeof category)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm"
           >
             {categoriesByType[type].map((c) => (
               <option key={c} value={c}>{c.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}</option>
@@ -1389,7 +1389,7 @@ function AdjustmentForm({
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Amount</label>
+          <label className="block text-xs font-medium text-theme-text-primary mb-1">Amount</label>
           <input
             type="number"
             value={amount}
@@ -1397,11 +1397,11 @@ function AdjustmentForm({
             placeholder="0"
             required
             min={0}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm"
           />
         </div>
         <div className="md:col-span-2">
-          <label className="block text-xs font-medium text-gray-700 mb-1">Reason</label>
+          <label className="block text-xs font-medium text-theme-text-primary mb-1">Reason</label>
           <div className="flex gap-2">
             <input
               type="text"
@@ -1409,18 +1409,18 @@ function AdjustmentForm({
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. Performance bonus, Lateness fine..."
               required
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              className="flex-1 px-3 py-2 border border-theme-border rounded-lg text-sm"
             />
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              className="px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover"
             >
               Stage
             </button>
             <button
               type="button"
               onClick={onCancel}
-              className="px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="px-3 py-2 text-sm text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted"
             >
               <X className="w-4 h-4" />
             </button>
@@ -1513,21 +1513,21 @@ function StatutorySettings({ tenantSlug, sym }: { tenantSlug: string; sym: strin
     }
   };
 
-  if (loading) return <div className="mt-6 text-sm text-gray-500">Loading statutory settings…</div>;
+  if (loading) return <div className="mt-6 text-sm text-theme-text-secondary">Loading statutory settings…</div>;
 
   return (
-    <div className="mt-6 border-t border-gray-200 pt-6">
-      <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+    <div className="mt-6 border-t border-theme-border pt-6">
+      <h4 className="text-sm font-semibold text-theme-text-primary mb-3 flex items-center gap-2">
         <ShieldCheck className="w-4 h-4 text-emerald-600" />
         Statutory Deductions (per-tenant)
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Preset</label>
+          <label className="block text-xs font-medium text-theme-text-primary mb-1">Preset</label>
           <select
             value={preset}
             onChange={(e) => applyPreset(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm"
           >
             <option value="">Custom…</option>
             {Object.entries(presetKeys).map(([k, p]) => (
@@ -1536,31 +1536,31 @@ function StatutorySettings({ tenantSlug, sym }: { tenantSlug: string; sym: strin
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Country Code</label>
+          <label className="block text-xs font-medium text-theme-text-primary mb-1">Country Code</label>
           <input
             type="text"
             value={countryCode}
             onChange={(e) => setCountryCode(e.target.value.toUpperCase().slice(0, 2))}
             placeholder="NG"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm"
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Pension — Employee %</label>
+          <label className="block text-xs font-medium text-theme-text-primary mb-1">Pension — Employee %</label>
           <input
             type="number"
             value={pensionEmployee}
             onChange={(e) => setPensionEmployee(parseFloat(e.target.value) || 0)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm"
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Pension — Employer %</label>
+          <label className="block text-xs font-medium text-theme-text-primary mb-1">Pension — Employer %</label>
           <input
             type="number"
             value={pensionEmployer}
             onChange={(e) => setPensionEmployer(parseFloat(e.target.value) || 0)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm"
           />
         </div>
       </div>
@@ -1568,16 +1568,16 @@ function StatutorySettings({ tenantSlug, sym }: { tenantSlug: string; sym: strin
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-medium text-gray-700">Tax Bands (monthly gross)</label>
+            <label className="text-xs font-medium text-theme-text-primary">Tax Bands (monthly gross)</label>
             <button
               type="button"
               onClick={() => setBands((b) => [...b, { upTo: null, rate: 0 }])}
-              className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+              className="text-xs text-theme-accent hover:text-blue-800 font-medium"
             >
               + Add band
             </button>
           </div>
-          {bands.length === 0 && <p className="text-xs text-gray-500">No tax bands — no income tax applied.</p>}
+          {bands.length === 0 && <p className="text-xs text-theme-text-secondary">No tax bands — no income tax applied.</p>}
           {bands.map((band, i) => (
             <div key={i} className="flex items-center gap-2 mb-2">
               <input
@@ -1585,16 +1585,16 @@ function StatutorySettings({ tenantSlug, sym }: { tenantSlug: string; sym: strin
                 placeholder="Up to (∞ if empty)"
                 value={band.upTo ?? ''}
                 onChange={(e) => setBands((b) => b.map((x, j) => j === i ? { ...x, upTo: e.target.value === '' ? null : parseFloat(e.target.value) } : x))}
-                className="w-40 px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                className="w-40 px-3 py-1.5 border border-theme-border rounded-lg text-sm"
               />
-              <span className="text-xs text-gray-500">@</span>
+              <span className="text-xs text-theme-text-secondary">@</span>
               <input
                 type="number"
                 value={band.rate}
                 onChange={(e) => setBands((b) => b.map((x, j) => j === i ? { ...x, rate: parseFloat(e.target.value) || 0 } : x))}
-                className="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                className="w-20 px-3 py-1.5 border border-theme-border rounded-lg text-sm"
               />
-              <span className="text-xs text-gray-500">%</span>
+              <span className="text-xs text-theme-text-secondary">%</span>
               <button type="button" onClick={() => setBands((b) => b.filter((_, j) => j !== i))} className="text-red-500">
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -1603,16 +1603,16 @@ function StatutorySettings({ tenantSlug, sym }: { tenantSlug: string; sym: strin
         </div>
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-medium text-gray-700">Other Statutory Deductions</label>
+            <label className="text-xs font-medium text-theme-text-primary">Other Statutory Deductions</label>
             <button
               type="button"
               onClick={() => setLines((l) => [...l, { name: '', type: 'percent_of_gross', amount: 0 }])}
-              className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+              className="text-xs text-theme-accent hover:text-blue-800 font-medium"
             >
               + Add deduction
             </button>
           </div>
-          {lines.length === 0 && <p className="text-xs text-gray-500">None configured.</p>}
+          {lines.length === 0 && <p className="text-xs text-theme-text-secondary">None configured.</p>}
           {lines.map((line, i) => (
             <div key={i} className="flex items-center gap-2 mb-2">
               <input
@@ -1620,12 +1620,12 @@ function StatutorySettings({ tenantSlug, sym }: { tenantSlug: string; sym: strin
                 placeholder="Name (e.g. NHIS)"
                 value={line.name}
                 onChange={(e) => setLines((l) => l.map((x, j) => j === i ? { ...x, name: e.target.value } : x))}
-                className="w-36 px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                className="w-36 px-3 py-1.5 border border-theme-border rounded-lg text-sm"
               />
               <select
                 value={line.type}
                 onChange={(e) => setLines((l) => l.map((x, j) => j === i ? { ...x, type: e.target.value as StatutoryLine['type'] } : x))}
-                className="px-2 py-1.5 border border-gray-300 rounded-lg text-sm"
+                className="px-2 py-1.5 border border-theme-border rounded-lg text-sm"
               >                <option value="percent_of_gross">% gross</option>
                 <option value="fixed">{sym} fixed</option>
               </select>
@@ -1633,7 +1633,7 @@ function StatutorySettings({ tenantSlug, sym }: { tenantSlug: string; sym: strin
                 type="number"
                 value={line.amount}
                 onChange={(e) => setLines((l) => l.map((x, j) => j === i ? { ...x, amount: parseFloat(e.target.value) || 0 } : x))}
-                className="w-24 px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                className="w-24 px-3 py-1.5 border border-theme-border rounded-lg text-sm"
               />
               <button type="button" onClick={() => setLines((l) => l.filter((_, j) => j !== i))} className="text-red-500">
                 <Trash2 className="w-4 h-4" />
@@ -1652,7 +1652,7 @@ function StatutorySettings({ tenantSlug, sym }: { tenantSlug: string; sym: strin
         >
           {saving ? 'Saving…' : 'Save Statutory Settings'}
         </button>
-        {message && <p className="text-xs text-gray-600">{message}</p>}
+        {message && <p className="text-xs text-theme-text-secondary">{message}</p>}
       </div>
     </div>
   );

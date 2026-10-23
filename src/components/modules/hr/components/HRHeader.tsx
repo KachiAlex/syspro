@@ -13,8 +13,8 @@ export const HRHeader: React.FC<HRHeaderProps> = ({
 }) => {
   return (
     <div className="mb-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">{title}</h2>
-      <p className="text-gray-600">{subtitle}</p>
+      <h2 className="text-2xl font-bold text-theme-text-primary mb-2">{title}</h2>
+      <p className="text-theme-text-secondary">{subtitle}</p>
     </div>
   );
 };

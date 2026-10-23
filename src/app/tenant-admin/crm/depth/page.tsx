@@ -39,22 +39,22 @@ export default function CrmDepthPage() {
     setError(""); load();
   };
 
-  const input = "rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm";
+  const input = "rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm";
   const btn = "rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium hover:bg-emerald-500 disabled:opacity-50";
-  const btnSm = "rounded bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700";
+  const btnSm = "rounded bg-theme-muted px-2 py-1 text-xs hover:bg-theme-elevated";
   const th = "p-3";
 
   if (!tenantSlug) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 text-slate-100">
+    <div className="min-h-screen bg-theme-bg p-6 text-theme-text-primary">
       <div className="mx-auto max-w-6xl">
         <h1 className="mb-1 text-2xl font-bold">CRM Depth</h1>
-        <p className="mb-4 text-sm text-slate-400">Prospects, contracts, configurable sales stages, email campaigns</p>
-        <div className="mb-4 flex gap-1 rounded-lg bg-slate-900 p-1">
+        <p className="mb-4 text-sm text-theme-text-secondary">Prospects, contracts, configurable sales stages, email campaigns</p>
+        <div className="mb-4 flex gap-1 rounded-lg bg-theme-surface p-1">
           {TABS.map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`rounded-md px-3 py-1.5 text-sm capitalize ${tab === t ? "bg-slate-700" : "text-slate-400 hover:text-white"}`}>{t}</button>
+              className={`rounded-md px-3 py-1.5 text-sm capitalize ${tab === t ? "bg-theme-elevated" : "text-theme-text-secondary hover:text-theme-text-primary"}`}>{t}</button>
           ))}
         </div>
         {error && <div className="mb-4 rounded-lg bg-red-900/40 p-3 text-sm text-red-300">{error}<button onClick={() => setError("")} className="ml-2 underline">dismiss</button></div>}
@@ -68,18 +68,18 @@ export default function CrmDepthPage() {
               <input placeholder="Industry" value={f.pIndustry ?? ""} onChange={(e) => setF({ ...f, pIndustry: e.target.value })} className={input} />
               <button className={btn} onClick={() => post({ action: "create-prospect", name: f.pName, companyName: f.pCompany, email: f.pEmail, industry: f.pIndustry })}>Add Prospect</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Name</th><th className={th}>Company</th><th className={th}>Email</th><th className={th}>Industry</th><th className={th}>Status</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Name</th><th className={th}>Company</th><th className={th}>Email</th><th className={th}>Industry</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.prospects?.map((p: any) => (
-                  <tr key={p.id} className="border-t border-slate-800/50">
+                  <tr key={p.id} className="border-t border-theme-border">
                     <td className={th}>{p.name}</td><td className={th}>{p.company_name ?? "—"}</td>
                     <td className={th}>{p.email ?? "—"}</td><td className={th}>{p.industry ?? "—"}</td>
                     <td className={th}>{p.status}</td>
                     <td className={th}>{p.status === "open" && <button className={btnSm} onClick={() => post({ action: "convert-prospect", prospectId: p.id })}>→ Lead</button>}</td>
                   </tr>
                 ))}
-                {!data.prospects?.length && <tr><td colSpan={6} className="p-6 text-center text-slate-500">No prospects</td></tr>}
+                {!data.prospects?.length && <tr><td colSpan={6} className="p-6 text-center text-theme-text-tertiary">No prospects</td></tr>}
               </tbody>
             </table>
           </div>
@@ -94,11 +94,11 @@ export default function CrmDepthPage() {
               <input type="date" value={f.cEnd ?? ""} onChange={(e) => setF({ ...f, cEnd: e.target.value })} className={input} title="End date" />
               <button className={btn} onClick={() => post({ action: "create-contract", customerId: f.cCust, customerName: f.cName, contractValue: Number(f.cValue ?? 0), endDate: f.cEnd || null })}>New Contract</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Contract</th><th className={th}>Customer</th><th className={th}>Value</th><th className={th}>End</th><th className={th}>Status</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Contract</th><th className={th}>Customer</th><th className={th}>Value</th><th className={th}>End</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.contracts?.map((c: any) => (
-                  <tr key={c.id} className="border-t border-slate-800/50">
+                  <tr key={c.id} className="border-t border-theme-border">
                     <td className={`${th} font-mono`}>{c.contract_number}</td><td className={th}>{c.customer_name}</td>
                     <td className={th}>{c.contract_value ? `${c.currency} ${Number(c.contract_value).toLocaleString()}` : "—"}</td>
                     <td className={th}>{c.end_date ? String(c.end_date).slice(0, 10) : "—"}</td><td className={th}>{c.status}</td>
@@ -110,7 +110,7 @@ export default function CrmDepthPage() {
                     </td>
                   </tr>
                 ))}
-                {!data.contracts?.length && <tr><td colSpan={6} className="p-6 text-center text-slate-500">No contracts</td></tr>}
+                {!data.contracts?.length && <tr><td colSpan={6} className="p-6 text-center text-theme-text-tertiary">No contracts</td></tr>}
               </tbody>
             </table>
           </div>
@@ -129,11 +129,11 @@ export default function CrmDepthPage() {
               <input type="number" placeholder="Prob %" value={f.sProb ?? ""} onChange={(e) => setF({ ...f, sProb: e.target.value })} className={`${input} w-24`} />
               <button className={btn} onClick={() => post({ action: "upsert-sales-stage", name: f.sName, sequence: Number(f.sSeq ?? 0), probability: Number(f.sProb ?? 0) })}>Save Stage</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Seq</th><th className={th}>Stage</th><th className={th}>Probability</th><th className={th}>Type</th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Seq</th><th className={th}>Stage</th><th className={th}>Probability</th><th className={th}>Type</th></tr></thead>
               <tbody>
                 {data.stages?.map((s: any) => (
-                  <tr key={s.id} className="border-t border-slate-800/50">
+                  <tr key={s.id} className="border-t border-theme-border">
                     <td className={th}>{s.sequence}</td><td className={th}>{s.name}</td><td className={th}>{s.probability}%</td>
                     <td className={th}>{s.is_won ? "Won" : s.is_lost ? "Lost" : "Open"}</td>
                   </tr>
@@ -145,7 +145,7 @@ export default function CrmDepthPage() {
 
         {tab === "campaigns" && (
           <div className="space-y-4">
-            <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+            <div className="rounded-xl border border-theme-border bg-theme-surface p-4">
               <div className="mb-2 flex flex-wrap gap-2">
                 <input placeholder="Campaign name" value={f.campName ?? ""} onChange={(e) => setF({ ...f, campName: e.target.value })} className={input} />
                 <input placeholder="Subject" value={f.campSubj ?? ""} onChange={(e) => setF({ ...f, campSubj: e.target.value })} className={input} />
@@ -155,20 +155,20 @@ export default function CrmDepthPage() {
                   emails: [{ delayDays: 0, subject: f.campSubj, bodyHtml: f.campBody }],
                 })}>Create</button>
               </div>
-              <p className="text-xs text-slate-500">Single-email starter — extend via API for multi-step drips</p>
+              <p className="text-xs text-theme-text-tertiary">Single-email starter — extend via API for multi-step drips</p>
             </div>
             {data.campaigns?.map((c: any) => (
-              <div key={c.id} className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900 p-4">
-                <div><b>{c.name}</b> <span className="ml-2 text-xs text-slate-400">{c.active_enrollments} enrolled</span></div>
+              <div key={c.id} className="flex items-center justify-between rounded-xl border border-theme-border bg-theme-surface p-4">
+                <div><b>{c.name}</b> <span className="ml-2 text-xs text-theme-text-secondary">{c.active_enrollments} enrolled</span></div>
                 <div className="flex gap-2">
-                  <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs">{c.status}</span>
+                  <span className="rounded-full bg-theme-elevated px-2 py-0.5 text-xs">{c.status}</span>
                   {c.status !== "active" && <button className={btnSm} onClick={() => post({ action: "campaign-status", campaignId: c.id, status: "active" })}>Activate</button>}
                   {c.status === "active" && <button className={btnSm} onClick={() => post({ action: "campaign-status", campaignId: c.id, status: "paused" })}>Pause</button>}
                   <button className={btnSm} onClick={() => post({ action: "process-sends" })}>Send Due</button>
                 </div>
               </div>
             ))}
-            {!data.campaigns?.length && <p className="text-sm text-slate-500">No campaigns</p>}
+            {!data.campaigns?.length && <p className="text-sm text-theme-text-tertiary">No campaigns</p>}
           </div>
         )}
       </div>

@@ -26,28 +26,28 @@ export const HRAnalytics: React.FC<HRAnalyticsProps> = ({
 }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Department Distribution</h3>
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Department Distribution</h3>
         <div className="space-y-3">
           {departmentData.map((d, i) => (
             <div key={i} className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-900 w-24">{d.dept}</span>
-              <div className="flex-1 bg-gray-200 rounded-full h-2">
+              <span className="text-sm font-medium text-theme-text-primary w-24">{d.dept}</span>
+              <div className="flex-1 bg-theme-muted rounded-full h-2">
                 <div className="h-2 rounded-full bg-blue-500" style={{ width: `${d.pct}%` }}></div>
               </div>
-              <span className="text-sm text-gray-600 w-8 text-right">{d.count}</span>
+              <span className="text-sm text-theme-text-secondary w-8 text-right">{d.count}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Payroll Summary</h3>
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Payroll Summary</h3>
         <div className="grid grid-cols-2 gap-4">
           {payrollData.map((p, i) => (
             <div key={i} className={`text-center p-4 ${p.bgColor} rounded-lg`}>
               <p className={`text-2xl font-bold ${p.textColor}`}>{p.amount}</p>
-              <p className="text-sm text-gray-600">{p.label}</p>
+              <p className="text-sm text-theme-text-secondary">{p.label}</p>
             </div>
           ))}
         </div>

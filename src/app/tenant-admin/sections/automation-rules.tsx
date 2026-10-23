@@ -251,22 +251,22 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Automation</p>
-            <h2 className="text-xl font-semibold text-gray-900">Rules</h2>
-            <p className="mt-1 text-sm text-slate-500">Event triggers with conditional logic and cross-module actions.</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Automation</p>
+            <h2 className="text-xl font-semibold text-theme-text-primary">Rules</h2>
+            <p className="mt-1 text-sm text-theme-text-tertiary">Event triggers with conditional logic and cross-module actions.</p>
           </div>
-          <button onClick={load} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50" disabled={loading}>
+          <button onClick={load} className="inline-flex items-center gap-2 rounded-full border border-theme-border px-3 py-2 text-sm text-theme-text-primary hover:bg-theme-muted" disabled={loading}>
             <RefreshCcw className="h-4 w-4" /> Refresh
           </button>
         </div>
 
         <form className="mt-4 space-y-4" onSubmit={handleCreate}>
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">Start from a template</label>
-            <select value={selectedTemplate} onChange={(e) => applyTemplate(Number(e.target.value))} className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">Start from a template</label>
+            <select value={selectedTemplate} onChange={(e) => applyTemplate(Number(e.target.value))} className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm">
               {TEMPLATES.map((t, i) => (
                 <option key={i} value={i}>{t.label}</option>
               ))}
@@ -274,12 +274,12 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Rule name</label>
-              <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Rule name</label>
+              <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Event trigger</label>
-              <select value={form.eventType} onChange={(e) => setForm((p) => ({ ...p, eventType: e.target.value }))} required className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Event trigger</label>
+              <select value={form.eventType} onChange={(e) => setForm((p) => ({ ...p, eventType: e.target.value }))} required className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm">
                 <option value="">Select a trigger</option>
                 {Object.entries(groupedTriggers).map(([module, items]) => (
                   <optgroup key={module} label={module}>
@@ -294,45 +294,45 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">Description</label>
-            <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" rows={2} />
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">Description</label>
+            <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 text-sm" rows={2} />
           </div>
           <div className="space-y-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <label className="block text-sm font-medium text-gray-900 mb-3">Condition</label>
+            <div className="rounded-xl border border-theme-border bg-theme-surface p-4">
+              <label className="block text-sm font-medium text-theme-text-primary mb-3">Condition</label>
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Operator</label>
-                  <select value={form.condition.op} onChange={(e) => updateCondition({ op: e.target.value, value: "" })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                  <label className="block text-xs text-theme-text-secondary mb-1">Operator</label>
+                  <select value={form.condition.op} onChange={(e) => updateCondition({ op: e.target.value, value: "" })} className="w-full rounded-lg border border-theme-border px-3 py-2 text-sm">
                     {["exists", "missing", "eq", "neq", "gt", "gte", "lt", "lte", "includes", "excludes"].map((op) => (
                       <option key={op} value={op}>{op}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Field path</label>
-                  <input value={form.condition.field} onChange={(e) => updateCondition({ field: e.target.value })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="payload.id" />
+                  <label className="block text-xs text-theme-text-secondary mb-1">Field path</label>
+                  <input value={form.condition.field} onChange={(e) => updateCondition({ field: e.target.value })} className="w-full rounded-lg border border-theme-border px-3 py-2 text-sm" placeholder="payload.id" />
                 </div>
                 {needsValueOps.includes(form.condition.op) && (
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">Value</label>
-                    <input value={String(form.condition.value ?? "")} onChange={(e) => updateCondition({ value: e.target.value })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="value to compare" />
+                    <label className="block text-xs text-theme-text-secondary mb-1">Value</label>
+                    <input value={String(form.condition.value ?? "")} onChange={(e) => updateCondition({ value: e.target.value })} className="w-full rounded-lg border border-theme-border px-3 py-2 text-sm" placeholder="value to compare" />
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <div className="rounded-xl border border-theme-border bg-theme-surface p-4">
               <div className="flex items-center justify-between mb-3">
-                <label className="block text-sm font-medium text-gray-900">Actions</label>
-                <button type="button" onClick={addAction} className="text-xs text-blue-600 hover:text-blue-700">+ Add action</button>
+                <label className="block text-sm font-medium text-theme-text-primary">Actions</label>
+                <button type="button" onClick={addAction} className="text-xs text-theme-accent hover:text-blue-700">+ Add action</button>
               </div>
               <div className="space-y-3">
                 {form.actions.map((action, i) => (
-                  <div key={i} className="grid gap-3 md:grid-cols-3 items-end rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <div key={i} className="grid gap-3 md:grid-cols-3 items-end rounded-lg border border-theme-border bg-theme-muted p-3">
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Action type</label>
-                      <select value={action.type} onChange={(e) => updateAction(i, { type: e.target.value, params: {} })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                      <label className="block text-xs text-theme-text-secondary mb-1">Action type</label>
+                      <select value={action.type} onChange={(e) => updateAction(i, { type: e.target.value, params: {} })} className="w-full rounded-lg border border-theme-border px-3 py-2 text-sm">
                         <option value="notify">Notify</option>
                         <option value="webhook">Webhook</option>
                         <option value="email">Email</option>
@@ -342,15 +342,15 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
                     {action.type === "notify" || action.type === "email" ? (
                       <>
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">Title</label>
-                          <input value={action.params?.title || ""} onChange={(e) => updateAction(i, { params: { ...action.params, title: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Notification title" />
+                          <label className="block text-xs text-theme-text-secondary mb-1">Title</label>
+                          <input value={action.params?.title || ""} onChange={(e) => updateAction(i, { params: { ...action.params, title: e.target.value } })} className="w-full rounded-lg border border-theme-border px-3 py-2 text-sm" placeholder="Notification title" />
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">Message</label>
-                          <input value={action.params?.message || ""} onChange={(e) => updateAction(i, { params: { ...action.params, message: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Message body" />
+                          <label className="block text-xs text-theme-text-secondary mb-1">Message</label>
+                          <input value={action.params?.message || ""} onChange={(e) => updateAction(i, { params: { ...action.params, message: e.target.value } })} className="w-full rounded-lg border border-theme-border px-3 py-2 text-sm" placeholder="Message body" />
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">Recipient</label>
+                          <label className="block text-xs text-theme-text-secondary mb-1">Recipient</label>
                           <select
                             value={String(action.params?.broadcast) === "true" ? "broadcast" : action.params?.role ? "role" : action.params?.employeeId ? "employeeId" : "actor"}
                             onChange={(e) => {
@@ -366,7 +366,7 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
                                 },
                               });
                             }}
-                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                            className="w-full rounded-lg border border-theme-border px-3 py-2 text-sm"
                           >
                             <option value="actor">Event actor</option>
                             <option value="role">Role…</option>
@@ -376,7 +376,7 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
                         </div>
                         {(action.params?.role !== undefined || action.params?.employeeId !== undefined) && (
                           <div>
-                            <label className="block text-xs text-gray-500 mb-1">
+                            <label className="block text-xs text-theme-text-secondary mb-1">
                               {action.params?.role !== undefined ? "Role" : "Employee ID"}
                             </label>
                             <input
@@ -386,7 +386,7 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
                                   ? { ...action.params, role: e.target.value }
                                   : { ...action.params, employeeId: e.target.value },
                               })}
-                              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                              className="w-full rounded-lg border border-theme-border px-3 py-2 text-sm"
                               placeholder={action.params?.role !== undefined ? "admin" : "emp_..."}
                             />
                           </div>
@@ -394,18 +394,18 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
                       </>
                     ) : action.type === "webhook" ? (
                       <div className="md:col-span-2">
-                        <label className="block text-xs text-gray-500 mb-1">URL</label>
-                        <input value={action.params?.url || ""} onChange={(e) => updateAction(i, { params: { ...action.params, url: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="https://..." />
+                        <label className="block text-xs text-theme-text-secondary mb-1">URL</label>
+                        <input value={action.params?.url || ""} onChange={(e) => updateAction(i, { params: { ...action.params, url: e.target.value } })} className="w-full rounded-lg border border-theme-border px-3 py-2 text-sm" placeholder="https://..." />
                       </div>
                     ) : action.type === "task" ? (
                       <>
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">Title</label>
-                          <input value={action.params?.title || ""} onChange={(e) => updateAction(i, { params: { ...action.params, title: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Task title" />
+                          <label className="block text-xs text-theme-text-secondary mb-1">Title</label>
+                          <input value={action.params?.title || ""} onChange={(e) => updateAction(i, { params: { ...action.params, title: e.target.value } })} className="w-full rounded-lg border border-theme-border px-3 py-2 text-sm" placeholder="Task title" />
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">Employee ID</label>
-                          <input value={action.params?.employeeId || ""} onChange={(e) => updateAction(i, { params: { ...action.params, employeeId: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="emp_... (blank = event payload employeeId)" />
+                          <label className="block text-xs text-theme-text-secondary mb-1">Employee ID</label>
+                          <input value={action.params?.employeeId || ""} onChange={(e) => updateAction(i, { params: { ...action.params, employeeId: e.target.value } })} className="w-full rounded-lg border border-theme-border px-3 py-2 text-sm" placeholder="emp_... (blank = event payload employeeId)" />
                         </div>
                       </>
                     ) : null}
@@ -417,29 +417,29 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
               </div>
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
-            <label className="block text-sm font-medium text-gray-900 mb-2">Live preview</label>
+          <div className="rounded-xl border border-theme-border bg-theme-surface p-4">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">Live preview</label>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Sample payload (JSON)</label>
-                <textarea value={previewPayload} onChange={(e) => setPreviewPayload(e.target.value)} className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-xs" rows={5} />
+                <label className="block text-xs text-theme-text-secondary mb-1">Sample payload (JSON)</label>
+                <textarea value={previewPayload} onChange={(e) => setPreviewPayload(e.target.value)} className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 font-mono text-xs" rows={5} />
                 {previewResult.error && <p className="mt-1 text-xs text-rose-600">{previewResult.error}</p>}
               </div>
-              <div className="rounded-lg bg-slate-50 p-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400 mb-2">Result</p>
+              <div className="rounded-lg bg-theme-muted p-3">
+                <p className="text-xs uppercase tracking-[0.2em] text-theme-text-secondary mb-2">Result</p>
                 {previewResult.error ? (
-                  <p className="text-sm text-slate-600">Fix the payload JSON to see the preview.</p>
+                  <p className="text-sm text-theme-text-secondary">Fix the payload JSON to see the preview.</p>
                 ) : (
                   <>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-theme-text-primary">
                       {previewResult.matched ? "Matched" : "Skipped"}
                     </p>
                     {previewResult.matched && (
                       <div className="mt-2">
-                        <p className="text-xs text-slate-500">Actions that would run:</p>
-                        <ul className="mt-1 space-y-1 text-xs text-slate-700">
+                        <p className="text-xs text-theme-text-tertiary">Actions that would run:</p>
+                        <ul className="mt-1 space-y-1 text-xs text-theme-text-primary">
                           {previewResult.actions.map((action, i) => (
-                            <li key={i} className="rounded bg-white border border-slate-100 px-2 py-1">{action.type}: {JSON.stringify(action.params)}</li>
+                            <li key={i} className="rounded bg-theme-surface border border-theme-border px-2 py-1">{action.type}: {JSON.stringify(action.params)}</li>
                           ))}
                         </ul>
                       </div>
@@ -454,7 +454,7 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-full bg-theme-surface px-4 py-2 text-sm font-semibold text-theme-text-primary shadow-sm transition hover:bg-theme-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-border disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />} Create rule
             </button>
@@ -463,43 +463,43 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
         </form>
       </div>
 
-      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-theme-border bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Rulebook</p>
-            <h3 className="text-lg font-semibold text-gray-900">Configured rules</h3>
+            <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">Rulebook</p>
+            <h3 className="text-lg font-semibold text-theme-text-primary">Configured rules</h3>
           </div>
         </div>
         {loading ? (
-          <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading rules…</div>
+          <div className="flex items-center gap-2 text-sm text-theme-text-tertiary"><Loader2 className="h-4 w-4 animate-spin" /> Loading rules…</div>
         ) : rules.length === 0 ? (
-          <div className="text-sm text-slate-500">No rules yet. Create your first automation above.</div>
+          <div className="text-sm text-theme-text-tertiary">No rules yet. Create your first automation above.</div>
         ) : (
           <div className="space-y-3">
             {rules.map((rule) => (
-              <div key={rule.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+              <div key={rule.id} className="rounded-2xl border border-theme-border bg-theme-muted p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">{rule.name}</p>
-                    <p className="text-xs text-slate-500">{rule.eventType}</p>
+                    <p className="text-sm font-semibold text-theme-text-primary">{rule.name}</p>
+                    <p className="text-xs text-theme-text-tertiary">{rule.eventType}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => simulate(rule)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-theme-muted">
+                    <button onClick={() => simulate(rule)} className="inline-flex items-center gap-2 rounded-full border border-theme-border px-3 py-1 text-xs text-theme-text-primary hover:bg-theme-muted">
                       <Play className="h-3 w-3" /> Simulate
                     </button>
-                    <button onClick={() => toggleRule(rule)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-theme-muted">
-                      {rule.enabled ? <ToggleRight className="h-4 w-4 text-emerald-500" /> : <ToggleLeft className="h-4 w-4 text-slate-400" />} {rule.enabled ? "Enabled" : "Disabled"}
+                    <button onClick={() => toggleRule(rule)} className="inline-flex items-center gap-2 rounded-full border border-theme-border px-3 py-1 text-xs text-theme-text-primary hover:bg-theme-muted">
+                      {rule.enabled ? <ToggleRight className="h-4 w-4 text-emerald-500" /> : <ToggleLeft className="h-4 w-4 text-theme-text-secondary" />} {rule.enabled ? "Enabled" : "Disabled"}
                     </button>
                   </div>
                 </div>
-                {rule.description && <p className="mt-2 text-sm text-slate-600">{rule.description}</p>}
+                {rule.description && <p className="mt-2 text-sm text-theme-text-secondary">{rule.description}</p>}
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  <div className="rounded-xl bg-theme-muted p-3 text-xs text-slate-700">
-                    <div className="mb-1 text-[11px] uppercase tracking-[0.2em] text-slate-400">Condition</div>
+                  <div className="rounded-xl bg-theme-muted p-3 text-xs text-theme-text-primary">
+                    <div className="mb-1 text-[11px] uppercase tracking-[0.2em] text-theme-text-secondary">Condition</div>
                     <pre className="whitespace-pre-wrap break-all">{JSON.stringify(rule.condition, null, 2)}</pre>
                   </div>
-                  <div className="rounded-xl bg-theme-muted p-3 text-xs text-slate-700">
-                    <div className="mb-1 text-[11px] uppercase tracking-[0.2em] text-slate-400">Actions</div>
+                  <div className="rounded-xl bg-theme-muted p-3 text-xs text-theme-text-primary">
+                    <div className="mb-1 text-[11px] uppercase tracking-[0.2em] text-theme-text-secondary">Actions</div>
                     <pre className="whitespace-pre-wrap break-all">{JSON.stringify(rule.actions, null, 2)}</pre>
                   </div>
                 </div>
@@ -509,37 +509,37 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
         )}
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           {simResult && (
-            <div className="rounded-2xl border border-slate-200 bg-theme-muted p-4 text-sm text-slate-800">
+            <div className="rounded-2xl border border-theme-border bg-theme-muted p-4 text-sm text-theme-text-primary">
               <div className="flex items-center justify-between">
-                <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Simulation</div>
-                <button onClick={loadAudits} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50" disabled={auditLoading}>
+                <div className="text-xs uppercase tracking-[0.2em] text-theme-text-tertiary">Simulation</div>
+                <button onClick={loadAudits} className="inline-flex items-center gap-2 rounded-full border border-theme-border px-2 py-1 text-[11px] text-theme-text-primary hover:bg-theme-muted" disabled={auditLoading}>
                   {auditLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCcw className="h-3 w-3" />} Audits
                 </button>
               </div>
               <div className="font-semibold">{simResult.rule}</div>
-              <pre className="mt-2 whitespace-pre-wrap break-all text-xs text-slate-700">{JSON.stringify(simResult.result, null, 2)}</pre>
+              <pre className="mt-2 whitespace-pre-wrap break-all text-xs text-theme-text-primary">{JSON.stringify(simResult.result, null, 2)}</pre>
             </div>
           )}
-          <div className="rounded-2xl border border-slate-200 bg-theme-muted p-4 text-sm text-slate-800">
+          <div className="rounded-2xl border border-theme-border bg-theme-muted p-4 text-sm text-theme-text-primary">
             <div className="flex items-center justify-between">
-              <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Audit log</div>
-              <button onClick={loadAudits} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50" disabled={auditLoading}>
+              <div className="text-xs uppercase tracking-[0.2em] text-theme-text-tertiary">Audit log</div>
+              <button onClick={loadAudits} className="inline-flex items-center gap-2 rounded-full border border-theme-border px-2 py-1 text-[11px] text-theme-text-primary hover:bg-theme-muted" disabled={auditLoading}>
                 {auditLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCcw className="h-3 w-3" />} Refresh
               </button>
             </div>
             {auditError && <div className="mt-2 text-xs text-rose-600">{auditError}</div>}
             {audits.length === 0 && !auditLoading ? (
-              <p className="mt-2 text-xs text-slate-600">No audits yet. Run a simulation or trigger an event.</p>
+              <p className="mt-2 text-xs text-theme-text-secondary">No audits yet. Run a simulation or trigger an event.</p>
             ) : (
               <div className="mt-2 space-y-2">
                 {audits.map((audit) => (
-                  <div key={audit.id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                    <div className="flex items-center justify-between text-[11px] text-slate-500">
+                  <div key={audit.id} className="rounded-xl border border-theme-border bg-theme-muted p-3">
+                    <div className="flex items-center justify-between text-[11px] text-theme-text-tertiary">
                       <span>{audit.triggerEvent}</span>
                       <span>{audit.createdAt}</span>
                     </div>
-                    <div className="text-sm font-semibold text-gray-900">{audit.matched ? "Matched" : "Skipped"}</div>
-                    {audit.result && <pre className="mt-1 whitespace-pre-wrap break-all text-xs text-slate-700">{JSON.stringify(audit.result, null, 2)}</pre>}
+                    <div className="text-sm font-semibold text-theme-text-primary">{audit.matched ? "Matched" : "Skipped"}</div>
+                    {audit.result && <pre className="mt-1 whitespace-pre-wrap break-all text-xs text-theme-text-primary">{JSON.stringify(audit.result, null, 2)}</pre>}
                   </div>
                 ))}
               </div>

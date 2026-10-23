@@ -43,7 +43,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const borderMap = {
     success: "border-green-500/20",
     error: "border-red-500/20",
-    info: "border-blue-500/20",
+    info: "border-theme-accent/20",
   };
 
   return (
@@ -53,15 +53,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto flex items-center gap-3 px-4 py-3 bg-[#111827] border ${borderMap[t.type]} rounded-xl shadow-lg min-w-[280px] max-w-sm animate-in slide-in-from-right fade-in`}
+            className={`pointer-events-auto flex items-center gap-3 px-4 py-3 bg-theme-muted border ${borderMap[t.type]} rounded-xl shadow-lg min-w-[280px] max-w-sm animate-in slide-in-from-right fade-in`}
           >
             {iconMap[t.type]}
-            <p className="text-sm text-[#F8FAFC] flex-1">{t.message}</p>
+            <p className="text-sm text-theme-text-primary flex-1">{t.message}</p>
             <button
               onClick={() => removeToast(t.id)}
               className="p-1 hover:bg-[rgba(255,255,255,0.05)] rounded transition-colors"
             >
-              <X className="w-4 h-4 text-[#64748B]" />
+              <X className="w-4 h-4 text-theme-text-tertiary" />
             </button>
           </div>
         ))}

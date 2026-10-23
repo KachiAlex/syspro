@@ -5,7 +5,7 @@ import { useTenantContext } from "@/components/tenant-admin/tenant-context";
 import { AlertCircle, CheckCircle2, Plus, Search } from "lucide-react";
 
 const fmt = (n: number) => `₦${Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
-const inputCls = "rounded bg-slate-800 px-3 py-2 text-sm w-full";
+const inputCls = "rounded bg-theme-muted px-3 py-2 text-sm w-full";
 const btnCls = "flex items-center gap-1.5 rounded bg-sky-600 px-3 py-1.5 text-sm hover:bg-sky-500 disabled:opacity-50";
 
 export default function LoyaltyPage() {
@@ -50,7 +50,7 @@ export default function LoyaltyPage() {
     <div className="p-6 space-y-5">
       <div>
         <h1 className="text-xl font-semibold">Loyalty Programs</h1>
-        <p className="text-sm text-slate-400">Invoice-side earn &amp; redeem — shares one points wallet with POS loyalty.</p>
+        <p className="text-sm text-theme-text-secondary">Invoice-side earn &amp; redeem — shares one points wallet with POS loyalty.</p>
       </div>
 
       {error && <div className="flex items-center gap-2 rounded bg-rose-500/10 px-4 py-3 text-rose-400"><AlertCircle className="h-4 w-4" />{error}</div>}
@@ -60,21 +60,21 @@ export default function LoyaltyPage() {
         <div className="space-y-3">
           <div className="font-medium text-sm">Programs</div>
           <table className="w-full text-sm">
-            <thead><tr className="text-left text-slate-400 border-b border-slate-800">
+            <thead><tr className="text-left text-theme-text-secondary border-b border-theme-border">
               <th className="py-2 pr-3">Name</th><th className="py-2 pr-3 text-right">Earn</th><th className="py-2 text-right">Redeem Value</th>
             </tr></thead>
             <tbody>
               {programs.map((p) => (
-                <tr key={p.id} className="border-b border-slate-800/60">
+                <tr key={p.id} className="border-b border-theme-border/60">
                   <td className="py-2 pr-3">{p.name}{p.active ? "" : " (inactive)"}</td>
                   <td className="py-2 pr-3 text-right">{p.earn_rate} pts/₦</td>
                   <td className="py-2 text-right">{fmt(p.redeem_value)}/pt</td>
                 </tr>
               ))}
-              {!programs.length && <tr><td colSpan={3} className="py-4 text-center text-slate-500">No programs</td></tr>}
+              {!programs.length && <tr><td colSpan={3} className="py-4 text-center text-theme-text-tertiary">No programs</td></tr>}
             </tbody>
           </table>
-          <div className="rounded border border-slate-800 p-4 space-y-3">
+          <div className="rounded border border-theme-border p-4 space-y-3">
             <div className="font-medium text-sm">New Program</div>
             <div className="grid gap-2 sm:grid-cols-2">
               <input className={inputCls} placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -107,7 +107,7 @@ export default function LoyaltyPage() {
             <button className={btnCls} disabled={!lookup} onClick={checkBalance}><Search className="h-3.5 w-3.5" /> Check</button>
           </div>
           {balance && (
-            <div className="rounded border border-slate-800 p-3 text-sm">
+            <div className="rounded border border-theme-border p-3 text-sm">
               {balance.error ? <span className="text-rose-400">{balance.error}</span> : (
                 <>{balance.points?.toLocaleString()} points ≈ {fmt(balance.redeemValue)}</>
               )}
@@ -135,7 +135,7 @@ export default function LoyaltyPage() {
               Redeem
             </button>
           </div>
-          {txnResult && <pre className="rounded bg-slate-800 p-3 text-xs overflow-auto">{JSON.stringify(txnResult, null, 2)}</pre>}
+          {txnResult && <pre className="rounded bg-theme-muted p-3 text-xs overflow-auto">{JSON.stringify(txnResult, null, 2)}</pre>}
         </div>
       </div>
     </div>

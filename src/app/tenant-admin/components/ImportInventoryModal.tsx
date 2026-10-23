@@ -202,17 +202,17 @@ export default function ImportInventoryModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Import Inventory</h2>
+        <div className="flex items-center justify-between p-6 border-b border-theme-border">
+          <h2 className="text-xl font-bold text-theme-text-primary">Import Inventory</h2>
           <button
             onClick={() => {
               reset();
               onClose();
             }}
-            className="text-gray-500 hover:text-gray-700 transition"
+            className="text-theme-text-secondary hover:text-theme-text-primary transition"
             disabled={step === "importing"}
           >
             <X className="w-6 h-6" />
@@ -232,10 +232,10 @@ export default function ImportInventoryModal({
 
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  <h3 className="text-lg font-semibold text-theme-text-primary mb-3">
                     Upload CSV File
                   </h3>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-sm text-theme-text-secondary mb-4">
                     Import multiple inventory items at once. Required columns:{" "}
                     <span className="font-medium">name, sku, category</span>.
                     Optional: quantity, unitPrice, salePrice, reorderLevel,
@@ -245,13 +245,13 @@ export default function ImportInventoryModal({
 
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition"
+                    className="border-2 border-dashed border-theme-border rounded-lg p-8 text-center cursor-pointer hover:border-theme-accent hover:bg-theme-muted transition"
                   >
-                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-sm font-medium text-gray-900">
+                    <FileText className="w-12 h-12 text-theme-text-tertiary mx-auto mb-3" />
+                    <p className="text-sm font-medium text-theme-text-primary">
                       Click to select or drag and drop
                     </p>
-                    <p className="text-xs text-gray-600 mt-1">CSV files only</p>
+                    <p className="text-xs text-theme-text-secondary mt-1">CSV files only</p>
                   </div>
                   <input
                     ref={fileInputRef}
@@ -264,7 +264,7 @@ export default function ImportInventoryModal({
 
                 {/* Sample Template */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">
+                  <h4 className="font-semibold text-theme-text-primary mb-2">
                     Need a template?
                   </h4>
                   <p className="text-sm text-blue-800 mb-3">
@@ -273,7 +273,7 @@ export default function ImportInventoryModal({
                   </p>
                   <button
                     onClick={downloadSample}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors text-sm font-medium"
                   >
                     <Download className="w-4 h-4" />
                     Download Template
@@ -298,10 +298,10 @@ export default function ImportInventoryModal({
           {step === "preview" && (
             <div>
               <div className="mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-theme-text-primary mb-2">
                   Preview ({items.length} items)
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-theme-text-secondary">
                   Review the items that will be imported. Existing SKUs will be
                   updated rather than duplicated.
                 </p>
@@ -326,29 +326,29 @@ export default function ImportInventoryModal({
                 </div>
               )}
 
-              <div className="overflow-x-auto border border-gray-200 rounded-lg mb-4">
+              <div className="overflow-x-auto border border-theme-border rounded-lg mb-4">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-theme-muted">
                     <tr>
-                      <th className="px-4 py-2 text-left font-semibold text-gray-900">SKU</th>
-                      <th className="px-4 py-2 text-left font-semibold text-gray-900">Name</th>
-                      <th className="px-4 py-2 text-left font-semibold text-gray-900">Category</th>
-                      <th className="px-4 py-2 text-right font-semibold text-gray-900">Qty</th>
-                      <th className="px-4 py-2 text-right font-semibold text-gray-900">Unit Price</th>
-                      <th className="px-4 py-2 text-right font-semibold text-gray-900">Reorder</th>
-                      <th className="px-4 py-2 text-left font-semibold text-gray-900">Location</th>
+                      <th className="px-4 py-2 text-left font-semibold text-theme-text-primary">SKU</th>
+                      <th className="px-4 py-2 text-left font-semibold text-theme-text-primary">Name</th>
+                      <th className="px-4 py-2 text-left font-semibold text-theme-text-primary">Category</th>
+                      <th className="px-4 py-2 text-right font-semibold text-theme-text-primary">Qty</th>
+                      <th className="px-4 py-2 text-right font-semibold text-theme-text-primary">Unit Price</th>
+                      <th className="px-4 py-2 text-right font-semibold text-theme-text-primary">Reorder</th>
+                      <th className="px-4 py-2 text-left font-semibold text-theme-text-primary">Location</th>
                     </tr>
                   </thead>
                   <tbody>
                     {items.slice(0, 10).map((item, index) => (
-                      <tr key={index} className="border-t border-gray-200 hover:bg-gray-50">
-                        <td className="px-4 py-3 text-gray-900 font-medium">{item.sku}</td>
-                        <td className="px-4 py-3 text-gray-900">{item.name}</td>
-                        <td className="px-4 py-3 text-gray-600">{item.category}</td>
-                        <td className="px-4 py-3 text-right text-gray-900">{item.quantity}</td>
-                        <td className="px-4 py-3 text-right text-gray-600">{item.unitPrice.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right text-gray-600">{item.reorderLevel}</td>
-                        <td className="px-4 py-3 text-gray-600">{item.location}</td>
+                      <tr key={index} className="border-t border-theme-border hover:bg-theme-muted">
+                        <td className="px-4 py-3 text-theme-text-primary font-medium">{item.sku}</td>
+                        <td className="px-4 py-3 text-theme-text-primary">{item.name}</td>
+                        <td className="px-4 py-3 text-theme-text-secondary">{item.category}</td>
+                        <td className="px-4 py-3 text-right text-theme-text-primary">{item.quantity}</td>
+                        <td className="px-4 py-3 text-right text-theme-text-secondary">{item.unitPrice.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right text-theme-text-secondary">{item.reorderLevel}</td>
+                        <td className="px-4 py-3 text-theme-text-secondary">{item.location}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -356,12 +356,12 @@ export default function ImportInventoryModal({
               </div>
 
               {items.length > 10 && (
-                <p className="text-xs text-gray-600 mb-4">
+                <p className="text-xs text-theme-text-secondary mb-4">
                   Showing 10 of {items.length} items...
                 </p>
               )}
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+              <div className="flex justify-end gap-3 pt-4 border-t border-theme-border">
                 <button
                   onClick={() => {
                     setStep("upload");
@@ -370,13 +370,13 @@ export default function ImportInventoryModal({
                     setError("");
                     setRowErrors([]);
                   }}
-                  className="px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleImport}
-                  className="px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  className="px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors font-medium"
                 >
                   Import {items.length} Items
                 </button>
@@ -389,8 +389,8 @@ export default function ImportInventoryModal({
               <div className="animate-spin mb-4">
                 <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full"></div>
               </div>
-              <p className="text-gray-900 font-medium">Importing items...</p>
-              <p className="text-sm text-gray-600 mt-2">
+              <p className="text-theme-text-primary font-medium">Importing items...</p>
+              <p className="text-sm text-theme-text-secondary mt-2">
                 Please wait while we import {items.length} items
               </p>
             </div>
@@ -399,7 +399,7 @@ export default function ImportInventoryModal({
           {successMessage && (
             <div className="flex flex-col items-center justify-center py-8">
               <CheckCircle className="w-12 h-12 text-green-600 mb-3" />
-              <p className="text-gray-900 font-medium">{successMessage}</p>
+              <p className="text-theme-text-primary font-medium">{successMessage}</p>
             </div>
           )}
         </div>

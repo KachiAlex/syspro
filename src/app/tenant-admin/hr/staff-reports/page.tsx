@@ -202,8 +202,8 @@ export default function ReportsPage() {
     if (!content?.trim()) return null;
     return (
       <div className="mb-4">
-        <h5 className="text-sm font-semibold text-gray-900 mb-1">{label}</h5>
-        <div className="text-sm text-gray-700 whitespace-pre-line">{content}</div>
+        <h5 className="text-sm font-semibold text-theme-text-primary mb-1">{label}</h5>
+        <div className="text-sm text-theme-text-primary whitespace-pre-line">{content}</div>
       </div>
     );
   };
@@ -211,8 +211,8 @@ export default function ReportsPage() {
   if (loading) {
     return (
       <div className="p-6 space-y-6">
-        <h2 className="text-2xl font-bold text-gray-900">HR Reports & Analytics</h2>
-        <div className="text-center py-12 text-gray-500">Loading reports data...</div>
+        <h2 className="text-2xl font-bold text-theme-text-primary">HR Reports & Analytics</h2>
+        <div className="text-center py-12 text-theme-text-secondary">Loading reports data...</div>
       </div>
     );
   }
@@ -220,11 +220,11 @@ export default function ReportsPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">HR Reports & Analytics</h2>
+        <h2 className="text-2xl font-bold text-theme-text-primary">HR Reports & Analytics</h2>
         <button
           onClick={loadData}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -232,78 +232,78 @@ export default function ReportsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h4 className="font-semibold text-gray-900 mb-4">Total Employees</h4>
-          <p className="text-3xl font-bold text-gray-900">{employees.length}</p>
-          <p className="text-xs text-gray-600 mt-2">Active workforce</p>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h4 className="font-semibold text-theme-text-primary mb-4">Total Employees</h4>
+          <p className="text-3xl font-bold text-theme-text-primary">{employees.length}</p>
+          <p className="text-xs text-theme-text-secondary mt-2">Active workforce</p>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h4 className="font-semibold text-gray-900 mb-4">Active</h4>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h4 className="font-semibold text-theme-text-primary mb-4">Active</h4>
           <p className="text-3xl font-bold text-green-600">{employees.filter(e => e.status === 'Active').length}</p>
-          <p className="text-xs text-gray-600 mt-2">Currently working</p>
+          <p className="text-xs text-theme-text-secondary mt-2">Currently working</p>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h4 className="font-semibold text-gray-900 mb-4">On Leave</h4>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h4 className="font-semibold text-theme-text-primary mb-4">On Leave</h4>
           <p className="text-3xl font-bold text-amber-600">{employees.filter(e => e.status === 'On Leave').length}</p>
-          <p className="text-xs text-gray-600 mt-2">Temporary absence</p>
+          <p className="text-xs text-theme-text-secondary mt-2">Temporary absence</p>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h4 className="font-semibold text-gray-900 mb-4">Departments</h4>
-          <p className="text-3xl font-bold text-blue-600">{new Set(employees.map(e => e.department)).size}</p>
-          <p className="text-xs text-gray-600 mt-2">Organizational units</p>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h4 className="font-semibold text-theme-text-primary mb-4">Departments</h4>
+          <p className="text-3xl font-bold text-theme-accent">{new Set(employees.map(e => e.department)).size}</p>
+          <p className="text-xs text-theme-text-secondary mt-2">Organizational units</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h4 className="font-semibold text-gray-900 mb-4">Salary Distribution</h4>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h4 className="font-semibold text-theme-text-primary mb-4">Salary Distribution</h4>
           {salaryData.length > 0 ? (
             <div className="space-y-3">
               {salaryData.map((item) => (
                 <div key={item.label}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-gray-600">{item.label}</span>
-                    <span className="text-sm font-semibold text-gray-900">{item.count} ({item.percentage}%)</span>
+                    <span className="text-sm text-theme-text-secondary">{item.label}</span>
+                    <span className="text-sm font-semibold text-theme-text-primary">{item.count} ({item.percentage}%)</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${item.percentage}%` }} />
+                  <div className="w-full bg-theme-muted rounded-full h-2">
+                    <div className="bg-theme-accent h-2 rounded-full" style={{ width: `${item.percentage}%` }} />
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-600">No salary data available.</p>
+            <p className="text-sm text-theme-text-secondary">No salary data available.</p>
           )}
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h4 className="font-semibold text-gray-900 mb-4">Department Breakdown</h4>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h4 className="font-semibold text-theme-text-primary mb-4">Department Breakdown</h4>
           {departmentData.length > 0 ? (
             <div className="space-y-3">
               {departmentData.map((item) => (
                 <div key={item.dept}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-gray-600">{item.dept}</span>
-                    <span className="text-sm font-semibold text-gray-900">{item.count} ({item.percentage}%)</span>
+                    <span className="text-sm text-theme-text-secondary">{item.dept}</span>
+                    <span className="text-sm font-semibold text-theme-text-primary">{item.count} ({item.percentage}%)</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-theme-muted rounded-full h-2">
                     <div className="bg-green-600 h-2 rounded-full" style={{ width: `${item.percentage}%` }} />
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-600">No department data available.</p>
+            <p className="text-sm text-theme-text-secondary">No department data available.</p>
           )}
         </div>
       </div>
 
       {appraisalAggregate && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h4 className="font-semibold text-gray-900 mb-4">Collective Productivity Appraisal</h4>
+        <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
+          <h4 className="font-semibold text-theme-text-primary mb-4">Collective Productivity Appraisal</h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 text-center">
               <div className="text-xs text-emerald-700">Avg Overall Score</div>
@@ -322,24 +322,24 @@ export default function ReportsPage() {
               <div className="text-2xl font-bold text-emerald-800">{appraisalAggregate.avgQuality}%</div>
             </div>
           </div>
-          <p className="text-sm text-gray-600 mt-3">Based on {appraisalAggregate.count} submitted reports with appraisals.</p>
+          <p className="text-sm text-theme-text-secondary mt-3">Based on {appraisalAggregate.count} submitted reports with appraisals.</p>
         </div>
       )}
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <h4 className="font-semibold text-gray-900">Incoming Staff Reports</h4>
+          <h4 className="font-semibold text-theme-text-primary">Incoming Staff Reports</h4>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowTemplateModal(true)}
-              className="px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100"
+              className="px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-theme-muted"
             >
               Manage Templates
             </button>
             <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
           >
             <option value="all">All Statuses</option>
             {STATUS_OPTIONS.map((o) => (
@@ -349,7 +349,7 @@ export default function ReportsPage() {
           <select
             value={filterApprover}
             onChange={(e) => setFilterApprover(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
           >
             <option value="all">All Sources</option>
             <option value="hr_admin">HOD Reports</option>
@@ -364,28 +364,28 @@ export default function ReportsPage() {
             {filteredReports.map((report) => {
               const submitter = employeeMap.get(report.employeeId);
               return (
-                <div key={report.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                <div key={report.id} className="border border-theme-border rounded-lg overflow-hidden">
                   <div className="flex flex-col md:flex-row md:items-center justify-between p-4 gap-4">
                     <div>
-                      <p className="font-medium text-gray-900">{report.title || `${report.reportType} Report`}</p>
-                      <p className="text-xs text-gray-600 mt-1">
+                      <p className="font-medium text-theme-text-primary">{report.title || `${report.reportType} Report`}</p>
+                      <p className="text-xs text-theme-text-secondary mt-1">
                         Submitted by <span className="font-medium">{submitter?.name || report.employeeId}</span>
                         {' • '}{report.department || submitter?.department || 'Unknown department'}
                         {' • '}{new Date(report.submittedAt).toLocaleDateString()}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-theme-text-secondary mt-1">
                         HOD: {report.headOfDepartment || 'Not set'}
                         {report.teamMembers?.length > 0 && ` • Tagged: ${report.teamMembers.join(', ')}`}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
                       {updatingId === report.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+                        <Loader2 className="w-4 h-4 animate-spin text-theme-text-secondary" />
                       ) : (
                         <select
                           value={report.status}
                           onChange={(e) => handleStatusChange(report.id, e.target.value as StaffReport['status'])}
-                          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="px-3 py-1.5 text-sm border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent"
                         >
                           {STATUS_OPTIONS.map((o) => (
                             <option key={o.value} value={o.value}>{o.label}</option>
@@ -395,7 +395,7 @@ export default function ReportsPage() {
                       {statusBadge(report.status)}
                       <button
                         onClick={() => setSelectedReport(report)}
-                        className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                        className="p-2 text-theme-text-secondary hover:text-theme-accent hover:bg-theme-muted rounded-lg"
                         title="View report"
                       >
                         <Eye className="w-4 h-4" />
@@ -407,34 +407,34 @@ export default function ReportsPage() {
             })}
           </div>
         ) : (
-          <p className="text-sm text-gray-600">No staff reports submitted yet.</p>
+          <p className="text-sm text-theme-text-secondary">No staff reports submitted yet.</p>
         )}
       </div>
 
       {selectedReport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-gray-200 shadow-xl">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay p-4">
+          <div className="bg-theme-surface w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-theme-border shadow-xl">
+            <div className="flex items-center justify-between p-6 border-b border-theme-border">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">{selectedReport.title || `${selectedReport.reportType} Report`}</h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <h3 className="text-lg font-semibold text-theme-text-primary">{selectedReport.title || `${selectedReport.reportType} Report`}</h3>
+                <p className="text-sm text-theme-text-secondary mt-1">
                   {employeeMap.get(selectedReport.employeeId)?.name || selectedReport.employeeId} • {new Date(selectedReport.submittedAt).toLocaleString()}
                 </p>
               </div>
-              <button onClick={() => setSelectedReport(null)} className="text-gray-500 hover:text-gray-900">
+              <button onClick={() => setSelectedReport(null)} className="text-theme-text-secondary hover:text-theme-text-primary">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6">
               {(selectedReport.status === 'pending' || selectedReport.status === 'under_review') && (
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <h5 className="text-sm font-semibold text-gray-900 mb-2">HOD Review</h5>
+                <div className="mb-6 p-4 bg-theme-muted rounded-lg border border-theme-border">
+                  <h5 className="text-sm font-semibold text-theme-text-primary mb-2">HOD Review</h5>
                   <textarea
                     value={reviewComment}
                     onChange={(e) => setReviewComment(e.target.value)}
                     placeholder="Optional comment or reason for rejection..."
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+                    className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent mb-3"
                   />
                   <div className="flex flex-wrap gap-2">
                     <button
@@ -479,20 +479,20 @@ export default function ReportsPage() {
                 <div className="mb-6 p-4 bg-emerald-50 rounded-lg border border-emerald-100">
                   <h5 className="text-sm font-semibold text-emerald-900 mb-3">AI Productivity Appraisal</h5>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                    <div className="bg-white p-2 rounded border border-emerald-100 text-center">
-                      <div className="text-xs text-gray-500">Overall</div>
+                    <div className="bg-theme-surface p-2 rounded border border-emerald-100 text-center">
+                      <div className="text-xs text-theme-text-secondary">Overall</div>
                       <div className="text-lg font-bold text-emerald-700">{selectedReport.appraisal.overallScore}</div>
                     </div>
-                    <div className="bg-white p-2 rounded border border-emerald-100 text-center">
-                      <div className="text-xs text-gray-500">Completion</div>
+                    <div className="bg-theme-surface p-2 rounded border border-emerald-100 text-center">
+                      <div className="text-xs text-theme-text-secondary">Completion</div>
                       <div className="text-lg font-bold text-emerald-700">{selectedReport.appraisal.taskCompletionRate}%</div>
                     </div>
-                    <div className="bg-white p-2 rounded border border-emerald-100 text-center">
-                      <div className="text-xs text-gray-500">Coverage</div>
+                    <div className="bg-theme-surface p-2 rounded border border-emerald-100 text-center">
+                      <div className="text-xs text-theme-text-secondary">Coverage</div>
                       <div className="text-lg font-bold text-emerald-700">{selectedReport.appraisal.reportCoverage}%</div>
                     </div>
-                    <div className="bg-white p-2 rounded border border-emerald-100 text-center">
-                      <div className="text-xs text-gray-500">Quality</div>
+                    <div className="bg-theme-surface p-2 rounded border border-emerald-100 text-center">
+                      <div className="text-xs text-theme-text-secondary">Quality</div>
                       <div className="text-lg font-bold text-emerald-700">{selectedReport.appraisal.qualityScore}%</div>
                     </div>
                   </div>
@@ -521,16 +521,16 @@ export default function ReportsPage() {
               {renderSection('Challenges', selectedReport.challenges)}
               {renderSection('Additional Notes', selectedReport.additionalNotes)}
               {selectedReport.rawTranscript && (
-                <div className="mt-6 pt-4 border-t border-gray-200">
-                  <h5 className="text-sm font-semibold text-gray-900 mb-2">Original Transcript</h5>
-                  <p className="text-sm text-gray-600 italic">{selectedReport.rawTranscript}</p>
+                <div className="mt-6 pt-4 border-t border-theme-border">
+                  <h5 className="text-sm font-semibold text-theme-text-primary mb-2">Original Transcript</h5>
+                  <p className="text-sm text-theme-text-secondary italic">{selectedReport.rawTranscript}</p>
                 </div>
               )}
             </div>
-            <div className="flex justify-end p-6 border-t border-gray-200">
+            <div className="flex justify-end p-6 border-t border-theme-border">
               <button
                 onClick={() => setSelectedReport(null)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                className="px-4 py-2 text-sm font-medium text-theme-text-primary hover:text-theme-text-primary"
               >
                 Close
               </button>

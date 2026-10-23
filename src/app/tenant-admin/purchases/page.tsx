@@ -46,24 +46,24 @@ export default function PurchasesPage() {
       {!loading && !error && orders.length === 0 && <p>No purchase orders found.</p>}
       {!loading && orders.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+          <table className="min-w-full bg-theme-surface border border-theme-border rounded-lg">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">PO Number</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Vendor</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
-                <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Total</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date</th>
+              <tr className="bg-theme-muted">
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">PO Number</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Vendor</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Status</th>
+                <th className="px-4 py-2 text-right text-sm font-medium text-theme-text-primary">Total</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-theme-text-primary">Date</th>
               </tr>
             </thead>
             <tbody>
               {orders.map((order) => (
-                <tr key={order.id} className="border-t border-gray-100">
-                  <td className="px-4 py-2 text-sm text-gray-900">{order.poNumber}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{order.vendor}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{order.status}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900 text-right">${order.total.toLocaleString()}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900">{new Date(order.orderDate).toLocaleDateString()}</td>
+                <tr key={order.id} className="border-t border-theme-border">
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{order.poNumber}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{order.vendor}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{order.status}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary text-right">${order.total.toLocaleString()}</td>
+                  <td className="px-4 py-2 text-sm text-theme-text-primary">{new Date(order.orderDate).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>

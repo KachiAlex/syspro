@@ -269,7 +269,7 @@ export function AppraisalTab({ profile }: { profile: EmployeeProfile }) {
 
   const scoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600 bg-green-50';
-    if (score >= 60) return 'text-blue-600 bg-blue-50';
+    if (score >= 60) return 'text-theme-accent bg-blue-50';
     if (score >= 40) return 'text-amber-600 bg-amber-50';
     return 'text-red-600 bg-red-50';
   };
@@ -283,14 +283,14 @@ export function AppraisalTab({ profile }: { profile: EmployeeProfile }) {
   };
 
   const trendIcon = (delta: number | null) => {
-    if (delta === null) return <Minus className="w-4 h-4 text-gray-400" />;
+    if (delta === null) return <Minus className="w-4 h-4 text-theme-text-tertiary" />;
     if (delta > 0) return <ArrowUpRight className="w-4 h-4 text-green-600" />;
     if (delta < 0) return <ArrowDownRight className="w-4 h-4 text-red-600" />;
-    return <Minus className="w-4 h-4 text-gray-400" />;
+    return <Minus className="w-4 h-4 text-theme-text-tertiary" />;
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 text-blue-600 animate-spin" /></div>;
+    return <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 text-theme-accent animate-spin" /></div>;
   }
 
   const tabs = [
@@ -306,18 +306,18 @@ export function AppraisalTab({ profile }: { profile: EmployeeProfile }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-theme-text-primary flex items-center gap-2">
             <Brain className="w-5 h-5 text-purple-600" />
             AI Performance Appraisal
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">Unified AI-driven performance analysis with KPI scoring, report quality, attendance, peer feedback & goal alignment</p>
+          <p className="text-sm text-theme-text-secondary mt-0.5">Unified AI-driven performance analysis with KPI scoring, report quality, attendance, peer feedback & goal alignment</p>
         </div>
         {appraisal && (
           <div className="flex items-center gap-2">
-            <button onClick={handleShare} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
+            <button onClick={handleShare} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted">
               <Share2 className="w-4 h-4" /> Share
             </button>
-            <button onClick={handleExportPDF} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
+            <button onClick={handleExportPDF} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-theme-text-primary bg-theme-surface border border-theme-border rounded-lg hover:bg-theme-muted">
               <Download className="w-4 h-4" /> Export
             </button>
           </div>
@@ -337,10 +337,10 @@ export function AppraisalTab({ profile }: { profile: EmployeeProfile }) {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl border border-gray-200 p-4">
+        <div className="bg-theme-surface rounded-2xl border border-theme-border p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900">Select Employee</h3>
-            <select value={period} onChange={(e) => { setPeriod(e.target.value); if (selectedId) loadAppraisalData(selectedId); }} className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white">
+            <h3 className="text-sm font-semibold text-theme-text-primary">Select Employee</h3>
+            <select value={period} onChange={(e) => { setPeriod(e.target.value); if (selectedId) loadAppraisalData(selectedId); }} className="text-xs border border-theme-border rounded-lg px-2 py-1 bg-theme-surface">
               <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
               <option value="quarterly">Quarterly</option>
@@ -349,18 +349,18 @@ export function AppraisalTab({ profile }: { profile: EmployeeProfile }) {
           </div>
           <div className="space-y-1 max-h-[500px] overflow-y-auto">
             {employees.length === 0 ? (
-              <p className="text-xs text-gray-400 py-4 text-center">No employees found</p>
+              <p className="text-xs text-theme-text-tertiary py-4 text-center">No employees found</p>
             ) : employees.map(emp => (
               <button key={emp.id} onClick={() => handleSelect(emp.id)}
-                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors ${selectedId === emp.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-700'}`}>
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                  <User className="w-4 h-4 text-gray-400" />
+                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors ${selectedId === emp.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-theme-muted text-theme-text-primary'}`}>
+                <div className="w-8 h-8 rounded-full bg-theme-muted flex items-center justify-center flex-shrink-0">
+                  <User className="w-4 h-4 text-theme-text-tertiary" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">{emp.name}</p>
-                  <p className="text-xs text-gray-400 truncate">{emp.job_title || emp.role}</p>
+                  <p className="text-xs text-theme-text-tertiary truncate">{emp.job_title || emp.role}</p>
                 </div>
-                {selectedId === emp.id && <ChevronRight className="w-4 h-4 text-blue-600 flex-shrink-0" />}
+                {selectedId === emp.id && <ChevronRight className="w-4 h-4 text-theme-accent flex-shrink-0" />}
               </button>
             ))}
           </div>
@@ -368,24 +368,24 @@ export function AppraisalTab({ profile }: { profile: EmployeeProfile }) {
 
         <div className="lg:col-span-2 space-y-4">
           {!selectedId ? (
-            <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-              <Award className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm font-medium text-gray-600">Select an employee to begin</p>
-              <p className="text-xs text-gray-400 mt-1">AI appraisal uses KPIs, tasks, reports, attendance, peer feedback & goals</p>
+            <div className="bg-theme-surface rounded-2xl border border-theme-border p-12 text-center">
+              <Award className="w-12 h-12 text-theme-text-secondary mx-auto mb-3" />
+              <p className="text-sm font-medium text-theme-text-secondary">Select an employee to begin</p>
+              <p className="text-xs text-theme-text-tertiary mt-1">AI appraisal uses KPIs, tasks, reports, attendance, peer feedback & goals</p>
             </div>
           ) : !appraisalData ? (
-            <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-              <Loader2 className="w-6 h-6 text-blue-600 animate-spin mx-auto" />
-              <p className="text-sm text-gray-500 mt-2">Loading employee data...</p>
+            <div className="bg-theme-surface rounded-2xl border border-theme-border p-12 text-center">
+              <Loader2 className="w-6 h-6 text-theme-accent animate-spin mx-auto" />
+              <p className="text-sm text-theme-text-secondary mt-2">Loading employee data...</p>
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-1 bg-white rounded-xl border border-gray-200 p-1 overflow-x-auto">
+              <div className="flex items-center gap-1 bg-theme-surface rounded-xl border border-theme-border p-1 overflow-x-auto">
                 {tabs.map(tab => {
                   const Icon = tab.icon;
                   return (
                     <button key={tab.key} onClick={() => handleTabChange(tab.key)}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${activeTab === tab.key ? 'bg-purple-50 text-purple-700' : 'text-gray-600 hover:bg-gray-50'}`}>
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${activeTab === tab.key ? 'bg-purple-50 text-purple-700' : 'text-theme-text-secondary hover:bg-theme-muted'}`}>
                       <Icon className="w-4 h-4" />
                       {tab.label}
                     </button>
@@ -422,22 +422,22 @@ export function AppraisalTab({ profile }: { profile: EmployeeProfile }) {
 function MetricCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
   const colorMap: Record<string, string> = {
     green: 'bg-green-50 text-green-600', purple: 'bg-purple-50 text-purple-600',
-    blue: 'bg-blue-50 text-blue-600', indigo: 'bg-indigo-50 text-indigo-600',
+    blue: 'bg-blue-50 text-theme-accent', indigo: 'bg-indigo-50 text-indigo-600',
   };
   return (
-    <div className="rounded-xl border border-gray-200 p-3">
+    <div className="rounded-xl border border-theme-border p-3">
       <div className={`w-7 h-7 rounded-lg flex items-center justify-center mb-1.5 ${colorMap[color] || colorMap.blue}`}>{icon}</div>
-      <p className="text-lg font-bold text-gray-900">{value}</p>
-      <p className="text-[10px] text-gray-400">{label}</p>
+      <p className="text-lg font-bold text-theme-text-primary">{value}</p>
+      <p className="text-[10px] text-theme-text-tertiary">{label}</p>
     </div>
   );
 }
 
 function QuickMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-gray-50 p-2">
-      <p className="text-sm font-bold text-gray-700">{value}</p>
-      <p className="text-[10px] text-gray-400">{label}</p>
+    <div className="rounded-lg bg-theme-muted p-2">
+      <p className="text-sm font-bold text-theme-text-primary">{value}</p>
+      <p className="text-[10px] text-theme-text-tertiary">{label}</p>
     </div>
   );
 }
@@ -445,9 +445,9 @@ function QuickMetric({ label, value }: { label: string; value: string }) {
 function SliderInput({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   return (
     <div>
-      <label className="text-xs font-medium text-gray-600">{label}</label>
+      <label className="text-xs font-medium text-theme-text-secondary">{label}</label>
       <input type="range" min={1} max={100} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-purple-600 mt-1" />
-      <p className="text-xs text-gray-500 text-center">{value}/100</p>
+      <p className="text-xs text-theme-text-secondary text-center">{value}/100</p>
     </div>
   );
 }
@@ -455,9 +455,9 @@ function SliderInput({ label, value, onChange }: { label: string; value: number;
 function EmptyState({ icon: Icon, title, subtitle }: { icon: any; title: string; subtitle: string }) {
   return (
     <div className="text-center py-8">
-      <Icon className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-      <p className="text-sm font-medium text-gray-600">{title}</p>
-      <p className="text-xs text-gray-400 mt-1">{subtitle}</p>
+      <Icon className="w-10 h-10 text-theme-text-secondary mx-auto mb-2" />
+      <p className="text-sm font-medium text-theme-text-secondary">{title}</p>
+      <p className="text-xs text-theme-text-tertiary mt-1">{subtitle}</p>
     </div>
   );
 }
@@ -471,11 +471,11 @@ function AppraisalContent({ appraisalData, appraisal, generating, onGenerate, sc
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-2xl border border-gray-200 p-5">
+      <div className="bg-theme-surface rounded-2xl border border-theme-border p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="font-bold text-gray-900">{emp?.name}</h3>
-            <p className="text-xs text-gray-500">{emp?.job_title} · {emp?.role}</p>
+            <h3 className="font-bold text-theme-text-primary">{emp?.name}</h3>
+            <p className="text-xs text-theme-text-secondary">{emp?.job_title} · {emp?.role}</p>
           </div>
           <button onClick={onGenerate} disabled={generating}
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 transition-all">
@@ -502,18 +502,18 @@ function AppraisalContent({ appraisalData, appraisal, generating, onGenerate, sc
       </div>
 
       {appraisal && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
-          <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+        <div className="bg-theme-surface rounded-2xl border border-theme-border p-5 space-y-4">
+          <div className="flex items-center justify-between pb-4 border-b border-theme-border">
             <div className="flex items-center gap-3">
               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${scoreColor(appraisal.overallScore)}`}>
                 <span className="text-2xl font-bold">{appraisal.overallScore}</span>
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900">Overall Score</p>
+                <p className="text-sm font-semibold text-theme-text-primary">Overall Score</p>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${ratingColor(appraisal.rating)}`}>{appraisal.rating}</span>
                   {appraisal.trendDelta !== null && (
-                    <span className={`flex items-center gap-0.5 text-xs font-medium ${appraisal.trendDelta > 0 ? 'text-green-600' : appraisal.trendDelta < 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                    <span className={`flex items-center gap-0.5 text-xs font-medium ${appraisal.trendDelta > 0 ? 'text-green-600' : appraisal.trendDelta < 0 ? 'text-red-600' : 'text-theme-text-tertiary'}`}>
                       {trendIcon(appraisal.trendDelta)} {appraisal.trendDelta > 0 ? '+' : ''}{appraisal.trendDelta} vs last
                     </span>
                   )}
@@ -521,21 +521,21 @@ function AppraisalContent({ appraisalData, appraisal, generating, onGenerate, sc
               </div>
             </div>
             <div className="text-right">
-              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${appraisal.generatedBy === 'hybrid' ? 'bg-purple-100 text-purple-700' : appraisal.generatedBy === 'ai' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${appraisal.generatedBy === 'hybrid' ? 'bg-purple-100 text-purple-700' : appraisal.generatedBy === 'ai' ? 'bg-blue-100 text-blue-700' : 'bg-theme-muted text-theme-text-secondary'}`}>
                 {appraisal.generatedBy === 'hybrid' ? 'AI + Metrics' : appraisal.generatedBy === 'ai' ? 'AI' : 'Metrics Only'}
               </span>
-              {appraisal.percentileRank !== null && <p className="text-xs text-gray-400 mt-1">Top {100 - appraisal.percentileRank}% in dept</p>}
+              {appraisal.percentileRank !== null && <p className="text-xs text-theme-text-tertiary mt-1">Top {100 - appraisal.percentileRank}% in dept</p>}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {Object.entries(appraisal.categories).map(([key, cat]: [string, any]) => (
-              <div key={key} className="rounded-xl border border-gray-200 p-3">
+              <div key={key} className="rounded-xl border border-theme-border p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-semibold text-gray-700 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
+                  <p className="text-xs font-semibold text-theme-text-primary capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
                   <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${scoreColor(cat.score)}`}>{cat.score}</span>
                 </div>
-                <p className="text-xs text-gray-500">{cat.summary}</p>
+                <p className="text-xs text-theme-text-secondary">{cat.summary}</p>
               </div>
             ))}
           </div>
@@ -556,7 +556,7 @@ function AppraisalContent({ appraisalData, appraisal, generating, onGenerate, sc
               <p className="text-sm font-semibold text-green-700 mb-2 flex items-center gap-1"><CheckCircle className="w-4 h-4" /> Strengths</p>
               <ul className="space-y-1">
                 {appraisal.strengths.map((s: string, i: number) => (
-                  <li key={i} className="text-xs text-gray-600 flex items-start gap-2"><span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />{s}</li>
+                  <li key={i} className="text-xs text-theme-text-secondary flex items-start gap-2"><span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />{s}</li>
                 ))}
               </ul>
             </div>
@@ -567,7 +567,7 @@ function AppraisalContent({ appraisalData, appraisal, generating, onGenerate, sc
               <p className="text-sm font-semibold text-amber-700 mb-2 flex items-center gap-1"><TrendingUp className="w-4 h-4" /> Areas for Improvement</p>
               <ul className="space-y-1">
                 {appraisal.improvements.map((s: string, i: number) => (
-                  <li key={i} className="text-xs text-gray-600 flex items-start gap-2"><span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 flex-shrink-0" />{s}</li>
+                  <li key={i} className="text-xs text-theme-text-secondary flex items-start gap-2"><span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 flex-shrink-0" />{s}</li>
                 ))}
               </ul>
             </div>
@@ -584,9 +584,9 @@ function AppraisalContent({ appraisalData, appraisal, generating, onGenerate, sc
             <div className="rounded-xl bg-blue-50 border border-blue-200 p-3">
               <p className="text-xs font-semibold text-blue-700 mb-2 flex items-center gap-1"><Users className="w-4 h-4" /> Peer Feedback Summary</p>
               <div className="grid grid-cols-3 gap-2 text-center">
-                <div><p className="text-lg font-bold text-blue-700">{appraisal.peerFeedback.averageRating}/5</p><p className="text-[10px] text-gray-400">Avg Rating</p></div>
-                <div><p className="text-lg font-bold text-blue-700">{appraisal.peerFeedback.collaborationScore}</p><p className="text-[10px] text-gray-400">Collaboration</p></div>
-                <div><p className="text-lg font-bold text-blue-700">{appraisal.peerFeedback.reliabilityScore}</p><p className="text-[10px] text-gray-400">Reliability</p></div>
+                <div><p className="text-lg font-bold text-blue-700">{appraisal.peerFeedback.averageRating}/5</p><p className="text-[10px] text-theme-text-tertiary">Avg Rating</p></div>
+                <div><p className="text-lg font-bold text-blue-700">{appraisal.peerFeedback.collaborationScore}</p><p className="text-[10px] text-theme-text-tertiary">Collaboration</p></div>
+                <div><p className="text-lg font-bold text-blue-700">{appraisal.peerFeedback.reliabilityScore}</p><p className="text-[10px] text-theme-text-tertiary">Reliability</p></div>
               </div>
             </div>
           )}
@@ -595,9 +595,9 @@ function AppraisalContent({ appraisalData, appraisal, generating, onGenerate, sc
             <div className="rounded-xl bg-indigo-50 border border-indigo-200 p-3">
               <p className="text-xs font-semibold text-indigo-700 mb-2 flex items-center gap-1"><Flag className="w-4 h-4" /> Goal Alignment</p>
               <div className="grid grid-cols-3 gap-2 text-center">
-                <div><p className="text-lg font-bold text-indigo-700">{appraisal.goalAlignment.achievedGoals}</p><p className="text-[10px] text-gray-400">Achieved</p></div>
-                <div><p className="text-lg font-bold text-indigo-700">{appraisal.goalAlignment.inProgressGoals}</p><p className="text-[10px] text-gray-400">In Progress</p></div>
-                <div><p className="text-lg font-bold text-indigo-700">{appraisal.goalAlignment.goalCompletionRate}%</p><p className="text-[10px] text-gray-400">Completion</p></div>
+                <div><p className="text-lg font-bold text-indigo-700">{appraisal.goalAlignment.achievedGoals}</p><p className="text-[10px] text-theme-text-tertiary">Achieved</p></div>
+                <div><p className="text-lg font-bold text-indigo-700">{appraisal.goalAlignment.inProgressGoals}</p><p className="text-[10px] text-theme-text-tertiary">In Progress</p></div>
+                <div><p className="text-lg font-bold text-indigo-700">{appraisal.goalAlignment.goalCompletionRate}%</p><p className="text-[10px] text-theme-text-tertiary">Completion</p></div>
               </div>
             </div>
           )}
@@ -609,7 +609,7 @@ function AppraisalContent({ appraisalData, appraisal, generating, onGenerate, sc
 
 function HistoryContent({ history, scoreColor, trendIcon }: any) {
   if (history.length === 0) {
-    return <div className="bg-white rounded-2xl border border-gray-200 p-5"><EmptyState icon={History} title="No appraisal history" subtitle="Generate an appraisal to start tracking performance over time" /></div>;
+    return <div className="bg-theme-surface rounded-2xl border border-theme-border p-5"><EmptyState icon={History} title="No appraisal history" subtitle="Generate an appraisal to start tracking performance over time" /></div>;
   }
   const scores = history.map((h: HistoryItem) => h.overallScore).reverse();
   const maxScore = Math.max(...scores, 100);
@@ -617,15 +617,15 @@ function HistoryContent({ history, scoreColor, trendIcon }: any) {
   const range = maxScore - minScore || 1;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
-      <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><History className="w-4 h-4 text-purple-600" /> Appraisal History ({history.length})</h3>
+    <div className="bg-theme-surface rounded-2xl border border-theme-border p-5 space-y-4">
+      <h3 className="text-sm font-semibold text-theme-text-primary flex items-center gap-2"><History className="w-4 h-4 text-purple-600" /> Appraisal History ({history.length})</h3>
       {scores.length >= 2 && (
         <div className="relative h-32 flex items-end gap-2 px-2">
           {scores.map((score: number, i: number) => {
             const heightPct = ((score - minScore) / range) * 80 + 20;
             return (
               <div key={i} className="flex-1 flex flex-col items-center justify-end">
-                <span className="text-[10px] font-medium text-gray-600 mb-1">{score}</span>
+                <span className="text-[10px] font-medium text-theme-text-secondary mb-1">{score}</span>
                 <div className={`w-full rounded-t-md ${score >= 80 ? 'bg-green-400' : score >= 60 ? 'bg-blue-400' : score >= 40 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ height: `${heightPct}%` }} />
               </div>
             );
@@ -634,20 +634,20 @@ function HistoryContent({ history, scoreColor, trendIcon }: any) {
       )}
       <div className="space-y-2">
         {history.map((item: HistoryItem) => (
-          <div key={item.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-200">
+          <div key={item.id} className="flex items-center justify-between p-3 rounded-xl border border-theme-border">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${scoreColor(item.overallScore)}`}><span className="text-sm font-bold">{item.overallScore}</span></div>
               <div>
-                <p className="text-sm font-medium text-gray-900 capitalize">{item.period}</p>
-                <p className="text-xs text-gray-400">{new Date(item.generatedAt).toLocaleDateString()}</p>
+                <p className="text-sm font-medium text-theme-text-primary capitalize">{item.period}</p>
+                <p className="text-xs text-theme-text-tertiary">{new Date(item.generatedAt).toLocaleDateString()}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-xs font-medium text-gray-600">{item.rating}</span>
+              <span className="text-xs font-medium text-theme-text-secondary">{item.rating}</span>
               {item.trendDelta !== null && (
-                <span className={`flex items-center gap-0.5 text-xs ${item.trendDelta > 0 ? 'text-green-600' : item.trendDelta < 0 ? 'text-red-600' : 'text-gray-400'}`}>{trendIcon(item.trendDelta)}{item.trendDelta > 0 ? '+' : ''}{item.trendDelta}</span>
+                <span className={`flex items-center gap-0.5 text-xs ${item.trendDelta > 0 ? 'text-green-600' : item.trendDelta < 0 ? 'text-red-600' : 'text-theme-text-tertiary'}`}>{trendIcon(item.trendDelta)}{item.trendDelta > 0 ? '+' : ''}{item.trendDelta}</span>
               )}
-              <span className={`text-[10px] px-2 py-0.5 rounded-full ${item.generatedBy === 'hybrid' ? 'bg-purple-100 text-purple-600' : item.generatedBy === 'ai' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>{item.generatedBy}</span>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full ${item.generatedBy === 'hybrid' ? 'bg-purple-100 text-purple-600' : item.generatedBy === 'ai' ? 'bg-blue-100 text-theme-accent' : 'bg-theme-muted text-theme-text-secondary'}`}>{item.generatedBy}</span>
             </div>
           </div>
         ))}
@@ -659,28 +659,28 @@ function HistoryContent({ history, scoreColor, trendIcon }: any) {
 function BenchmarkContent({ benchmark, appraisal, scoreColor, onReload }: any) {
   if (!benchmark) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 p-5">
+      <div className="bg-theme-surface rounded-2xl border border-theme-border p-5">
         <EmptyState icon={BarChart3} title="No benchmark data" subtitle="Generate appraisals for department members to see benchmarks" />
-        <button onClick={onReload} className="mt-3 text-sm text-blue-600 hover:underline">Retry</button>
+        <button onClick={onReload} className="mt-3 text-sm text-theme-accent hover:underline">Retry</button>
       </div>
     );
   }
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
-      <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><BarChart3 className="w-4 h-4 text-purple-600" /> Department Benchmark</h3>
+    <div className="bg-theme-surface rounded-2xl border border-theme-border p-5 space-y-4">
+      <h3 className="text-sm font-semibold text-theme-text-primary flex items-center gap-2"><BarChart3 className="w-4 h-4 text-purple-600" /> Department Benchmark</h3>
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl border border-gray-200 p-3 text-center"><p className="text-2xl font-bold text-gray-900">{benchmark.departmentAverage ?? '—'}</p><p className="text-xs text-gray-400">Dept Average</p></div>
-        <div className="rounded-xl border border-gray-200 p-3 text-center"><p className="text-2xl font-bold text-gray-900">{benchmark.percentileRank !== null ? `${benchmark.percentileRank}%` : '—'}</p><p className="text-xs text-gray-400">Percentile Rank</p></div>
-        <div className="rounded-xl border border-gray-200 p-3 text-center"><p className="text-2xl font-bold text-gray-900">{benchmark.peerCount}</p><p className="text-xs text-gray-400">Peers</p></div>
+        <div className="rounded-xl border border-theme-border p-3 text-center"><p className="text-2xl font-bold text-theme-text-primary">{benchmark.departmentAverage ?? '—'}</p><p className="text-xs text-theme-text-tertiary">Dept Average</p></div>
+        <div className="rounded-xl border border-theme-border p-3 text-center"><p className="text-2xl font-bold text-theme-text-primary">{benchmark.percentileRank !== null ? `${benchmark.percentileRank}%` : '—'}</p><p className="text-xs text-theme-text-tertiary">Percentile Rank</p></div>
+        <div className="rounded-xl border border-theme-border p-3 text-center"><p className="text-2xl font-bold text-theme-text-primary">{benchmark.peerCount}</p><p className="text-xs text-theme-text-tertiary">Peers</p></div>
       </div>
       {benchmark.peerScores?.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-gray-700">Peer Comparison</p>
+          <p className="text-xs font-semibold text-theme-text-primary">Peer Comparison</p>
           {benchmark.peerScores.map((peer: any) => (
-            <div key={peer.employeeId} className="flex items-center gap-3 p-2 rounded-lg border border-gray-100">
+            <div key={peer.employeeId} className="flex items-center gap-3 p-2 rounded-lg border border-theme-border">
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${scoreColor(peer.score)}`}><span className="text-xs font-bold">{peer.score}</span></div>
-              <span className="text-sm text-gray-700 flex-1">Employee</span>
-              <span className="text-xs text-gray-400">{peer.rating}</span>
+              <span className="text-sm text-theme-text-primary flex-1">Employee</span>
+              <span className="text-xs text-theme-text-tertiary">{peer.rating}</span>
             </div>
           ))}
         </div>
@@ -689,12 +689,12 @@ function BenchmarkContent({ benchmark, appraisal, scoreColor, onReload }: any) {
         <div className="rounded-xl bg-purple-50 border border-purple-200 p-4">
           <p className="text-xs font-semibold text-purple-700 mb-2">You vs Department</p>
           <div className="flex items-center gap-4">
-            <div className="text-center"><p className="text-3xl font-bold text-purple-700">{appraisal.overallScore}</p><p className="text-[10px] text-gray-400">Your Score</p></div>
-            <div className="text-2xl text-gray-300">vs</div>
-            <div className="text-center"><p className="text-3xl font-bold text-gray-500">{benchmark.departmentAverage}</p><p className="text-[10px] text-gray-400">Dept Average</p></div>
+            <div className="text-center"><p className="text-3xl font-bold text-purple-700">{appraisal.overallScore}</p><p className="text-[10px] text-theme-text-tertiary">Your Score</p></div>
+            <div className="text-2xl text-theme-text-secondary">vs</div>
+            <div className="text-center"><p className="text-3xl font-bold text-theme-text-secondary">{benchmark.departmentAverage}</p><p className="text-[10px] text-theme-text-tertiary">Dept Average</p></div>
             <div className="ml-auto text-right">
               <p className={`text-2xl font-bold ${appraisal.overallScore > benchmark.departmentAverage ? 'text-green-600' : 'text-red-600'}`}>{appraisal.overallScore > benchmark.departmentAverage ? '+' : ''}{appraisal.overallScore - benchmark.departmentAverage}</p>
-              <p className="text-[10px] text-gray-400">Difference</p>
+              <p className="text-[10px] text-theme-text-tertiary">Difference</p>
             </div>
           </div>
         </div>
@@ -705,9 +705,9 @@ function BenchmarkContent({ benchmark, appraisal, scoreColor, onReload }: any) {
 
 function PeerFeedbackContent({ feedback, showForm, setShowForm, employeeId, onSubmitted }: any) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
+    <div className="bg-theme-surface rounded-2xl border border-theme-border p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-purple-600" /> Peer Feedback ({feedback.length})</h3>
+        <h3 className="text-sm font-semibold text-theme-text-primary flex items-center gap-2"><MessageSquare className="w-4 h-4 text-purple-600" /> Peer Feedback ({feedback.length})</h3>
         <button onClick={() => setShowForm(!showForm)} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-700 bg-purple-50 rounded-lg hover:bg-purple-100"><Plus className="w-4 h-4" /> Add Review</button>
       </div>
       {showForm && <PeerFeedbackForm employeeId={employeeId} onSubmitted={onSubmitted} onCancel={() => setShowForm(false)} />}
@@ -716,17 +716,17 @@ function PeerFeedbackContent({ feedback, showForm, setShowForm, employeeId, onSu
       ) : (
         <div className="space-y-3">
           {feedback.map((fb: PeerFeedback) => (
-            <div key={fb.id} className="rounded-xl border border-gray-200 p-3">
+            <div key={fb.id} className="rounded-xl border border-theme-border p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-0.5">
-                    {[1, 2, 3, 4, 5].map(i => (<Star key={i} className={`w-3.5 h-3.5 ${i <= fb.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200'}`} />))}
+                    {[1, 2, 3, 4, 5].map(i => (<Star key={i} className={`w-3.5 h-3.5 ${i <= fb.rating ? 'text-amber-400 fill-amber-400' : 'text-theme-text-primary'}`} />))}
                   </div>
-                  <span className="text-xs text-gray-500">{fb.isAnonymous ? 'Anonymous' : fb.reviewerName || 'Reviewer'} · {fb.reviewerRole}</span>
+                  <span className="text-xs text-theme-text-secondary">{fb.isAnonymous ? 'Anonymous' : fb.reviewerName || 'Reviewer'} · {fb.reviewerRole}</span>
                 </div>
-                <span className="text-xs text-gray-400">{new Date(fb.createdAt).toLocaleDateString()}</span>
+                <span className="text-xs text-theme-text-tertiary">{new Date(fb.createdAt).toLocaleDateString()}</span>
               </div>
-              {fb.comments && <p className="text-sm text-gray-600 mb-2">{fb.comments}</p>}
+              {fb.comments && <p className="text-sm text-theme-text-secondary mb-2">{fb.comments}</p>}
               {fb.strengths?.length > 0 && (<div className="flex flex-wrap gap-1 mb-1">{fb.strengths.map((s, i) => (<span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-green-50 text-green-700">{s}</span>))}</div>)}
               {fb.improvements?.length > 0 && (<div className="flex flex-wrap gap-1">{fb.improvements.map((s, i) => (<span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">{s}</span>))}</div>)}
             </div>
@@ -769,12 +769,12 @@ function PeerFeedbackForm({ employeeId, onSubmitted, onCancel }: any) {
     <div className="rounded-xl border border-purple-200 bg-purple-50 p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold text-purple-900">Peer Review</h4>
-        <button onClick={onCancel} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
+        <button onClick={onCancel} className="text-theme-text-tertiary hover:text-theme-text-secondary"><X className="w-4 h-4" /></button>
       </div>
       <div>
-        <label className="text-xs font-medium text-gray-600">Overall Rating</label>
+        <label className="text-xs font-medium text-theme-text-secondary">Overall Rating</label>
         <div className="flex items-center gap-1 mt-1">
-          {[1, 2, 3, 4, 5].map(i => (<button key={i} onClick={() => setRating(i)}><Star className={`w-6 h-6 ${i <= rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200'}`} /></button>))}
+          {[1, 2, 3, 4, 5].map(i => (<button key={i} onClick={() => setRating(i)}><Star className={`w-6 h-6 ${i <= rating ? 'text-amber-400 fill-amber-400' : 'text-theme-text-primary'}`} /></button>))}
         </div>
       </div>
       <div className="grid grid-cols-3 gap-3">
@@ -783,18 +783,18 @@ function PeerFeedbackForm({ employeeId, onSubmitted, onCancel }: any) {
         <SliderInput label="Reliability" value={reliability} onChange={setReliability} />
       </div>
       <div>
-        <label className="text-xs font-medium text-gray-600">Strengths (comma-separated)</label>
-        <input value={strengths} onChange={(e) => setStrengths(e.target.value)} placeholder="e.g., Team player, Problem solver" className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+        <label className="text-xs font-medium text-theme-text-secondary">Strengths (comma-separated)</label>
+        <input value={strengths} onChange={(e) => setStrengths(e.target.value)} placeholder="e.g., Team player, Problem solver" className="mt-1 w-full px-3 py-2 text-sm border border-theme-border rounded-lg" />
       </div>
       <div>
-        <label className="text-xs font-medium text-gray-600">Areas for Improvement (comma-separated)</label>
-        <input value={improvements} onChange={(e) => setImprovements(e.target.value)} placeholder="e.g., Time management, Documentation" className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+        <label className="text-xs font-medium text-theme-text-secondary">Areas for Improvement (comma-separated)</label>
+        <input value={improvements} onChange={(e) => setImprovements(e.target.value)} placeholder="e.g., Time management, Documentation" className="mt-1 w-full px-3 py-2 text-sm border border-theme-border rounded-lg" />
       </div>
       <div>
-        <label className="text-xs font-medium text-gray-600">Comments</label>
-        <textarea value={comments} onChange={(e) => setComments(e.target.value)} rows={3} className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+        <label className="text-xs font-medium text-theme-text-secondary">Comments</label>
+        <textarea value={comments} onChange={(e) => setComments(e.target.value)} rows={3} className="mt-1 w-full px-3 py-2 text-sm border border-theme-border rounded-lg" />
       </div>
-      <label className="flex items-center gap-2 text-xs text-gray-600"><input type="checkbox" checked={isAnonymous} onChange={(e) => setIsAnonymous(e.target.checked)} /> Submit anonymously</label>
+      <label className="flex items-center gap-2 text-xs text-theme-text-secondary"><input type="checkbox" checked={isAnonymous} onChange={(e) => setIsAnonymous(e.target.checked)} /> Submit anonymously</label>
       <button onClick={handleSubmit} disabled={submitting} className="w-full py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50">{submitting ? 'Submitting...' : 'Submit Review'}</button>
     </div>
   );
@@ -828,31 +828,31 @@ function GoalsContent({ goals, showForm, setShowForm, employeeId, onSubmitted }:
   };
 
   const statusColors: Record<string, string> = {
-    not_started: 'bg-gray-100 text-gray-600', in_progress: 'bg-blue-100 text-blue-700',
+    not_started: 'bg-theme-muted text-theme-text-secondary', in_progress: 'bg-blue-100 text-blue-700',
     on_track: 'bg-green-100 text-green-700', ahead: 'bg-emerald-100 text-emerald-700',
     behind: 'bg-amber-100 text-amber-700', achieved: 'bg-green-200 text-green-800',
     completed: 'bg-green-200 text-green-800', cancelled: 'bg-red-100 text-red-700',
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
+    <div className="bg-theme-surface rounded-2xl border border-theme-border p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Flag className="w-4 h-4 text-purple-600" /> Goals & OKRs ({goals.length})</h3>
+        <h3 className="text-sm font-semibold text-theme-text-primary flex items-center gap-2"><Flag className="w-4 h-4 text-purple-600" /> Goals & OKRs ({goals.length})</h3>
         <button onClick={() => setShowForm(!showForm)} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-700 bg-purple-50 rounded-lg hover:bg-purple-100"><Plus className="w-4 h-4" /> Add Goal</button>
       </div>
       {showForm && (
         <div className="rounded-xl border border-purple-200 bg-purple-50 p-4 space-y-3">
-          <input value={newGoal.title} onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })} placeholder="Goal title (e.g., Increase sales by 20%)" className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" />
-          <textarea value={newGoal.description} onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value })} placeholder="Description..." rows={2} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+          <input value={newGoal.title} onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })} placeholder="Goal title (e.g., Increase sales by 20%)" className="w-full px-3 py-2 text-sm border border-theme-border rounded-lg" />
+          <textarea value={newGoal.description} onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value })} placeholder="Description..." rows={2} className="w-full px-3 py-2 text-sm border border-theme-border rounded-lg" />
           <div className="grid grid-cols-2 gap-3">
-            <select value={newGoal.priority} onChange={(e) => setNewGoal({ ...newGoal, priority: e.target.value })} className="px-3 py-2 text-sm border border-gray-200 rounded-lg">
+            <select value={newGoal.priority} onChange={(e) => setNewGoal({ ...newGoal, priority: e.target.value })} className="px-3 py-2 text-sm border border-theme-border rounded-lg">
               <option value="low">Low Priority</option><option value="medium">Medium Priority</option><option value="high">High Priority</option><option value="critical">Critical</option>
             </select>
-            <input type="date" value={newGoal.dueDate} onChange={(e) => setNewGoal({ ...newGoal, dueDate: e.target.value })} className="px-3 py-2 text-sm border border-gray-200 rounded-lg" />
+            <input type="date" value={newGoal.dueDate} onChange={(e) => setNewGoal({ ...newGoal, dueDate: e.target.value })} className="px-3 py-2 text-sm border border-theme-border rounded-lg" />
           </div>
           <div className="flex items-center gap-2">
             <button onClick={handleSubmit} disabled={submitting || !newGoal.title} className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50">{submitting ? 'Creating...' : 'Create Goal'}</button>
-            <button onClick={() => setShowForm(false)} className="px-4 py-2 text-sm text-gray-600">Cancel</button>
+            <button onClick={() => setShowForm(false)} className="px-4 py-2 text-sm text-theme-text-secondary">Cancel</button>
           </div>
         </div>
       )}
@@ -861,22 +861,22 @@ function GoalsContent({ goals, showForm, setShowForm, employeeId, onSubmitted }:
       ) : (
         <div className="space-y-2">
           {goals.map((goal: Goal) => (
-            <div key={goal.id} className="rounded-xl border border-gray-200 p-3">
+            <div key={goal.id} className="rounded-xl border border-theme-border p-3">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-sm font-medium text-gray-900">{goal.title}</p>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full ${statusColors[goal.status] || 'bg-gray-100'}`}>{goal.status?.replace(/_/g, ' ')}</span>
+                <p className="text-sm font-medium text-theme-text-primary">{goal.title}</p>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full ${statusColors[goal.status] || 'bg-theme-muted'}`}>{goal.status?.replace(/_/g, ' ')}</span>
               </div>
-              {goal.description && <p className="text-xs text-gray-500 mb-2">{goal.description}</p>}
+              {goal.description && <p className="text-xs text-theme-text-secondary mb-2">{goal.description}</p>}
               <div className="flex items-center gap-3">
                 {goal.targetValue > 0 && (
                   <div className="flex-1">
-                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-theme-muted rounded-full overflow-hidden">
                       <div className="h-full bg-purple-500 rounded-full" style={{ width: `${Math.min(100, (goal.actualValue / goal.targetValue) * 100)}%` }} />
                     </div>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{goal.actualValue}/{goal.targetValue}</p>
+                    <p className="text-[10px] text-theme-text-tertiary mt-0.5">{goal.actualValue}/{goal.targetValue}</p>
                   </div>
                 )}
-                <select value={goal.status} onChange={(e) => handleStatusUpdate(goal.id, e.target.value)} className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white">
+                <select value={goal.status} onChange={(e) => handleStatusUpdate(goal.id, e.target.value)} className="text-xs border border-theme-border rounded-lg px-2 py-1 bg-theme-surface">
                   <option value="not_started">Not Started</option><option value="in_progress">In Progress</option><option value="on_track">On Track</option>
                   <option value="ahead">Ahead</option><option value="behind">Behind</option><option value="achieved">Achieved</option>
                   <option value="completed">Completed</option><option value="cancelled">Cancelled</option>
@@ -913,31 +913,31 @@ function ConfigContent({ config, onSave }: any) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-5">
-      <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Settings className="w-4 h-4 text-purple-600" /> Appraisal Configuration</h3>
+    <div className="bg-theme-surface rounded-2xl border border-theme-border p-5 space-y-5">
+      <h3 className="text-sm font-semibold text-theme-text-primary flex items-center gap-2"><Settings className="w-4 h-4 text-purple-600" /> Appraisal Configuration</h3>
       <div>
-        <p className="text-xs font-semibold text-gray-700 mb-3">Category Weights (should total 100)</p>
+        <p className="text-xs font-semibold text-theme-text-primary mb-3">Category Weights (should total 100)</p>
         <div className="space-y-3">
           {Object.entries(weights).map(([key, value]) => (
             <div key={key} className="flex items-center gap-3">
-              <label className="text-xs text-gray-600 w-32 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</label>
+              <label className="text-xs text-theme-text-secondary w-32 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</label>
               <input type="range" min={0} max={50} value={value as number} onChange={(e) => setWeights({ ...weights, [key]: Number(e.target.value) })} className="flex-1 accent-purple-600" />
-              <span className="text-xs font-medium text-gray-700 w-8 text-right">{value}%</span>
+              <span className="text-xs font-medium text-theme-text-primary w-8 text-right">{value}%</span>
             </div>
           ))}
         </div>
-        <p className="text-xs text-gray-400 mt-2">Total: {Object.values(weights).reduce((a, b) => a + (b as number), 0)}%</p>
+        <p className="text-xs text-theme-text-tertiary mt-2">Total: {Object.values(weights).reduce((a, b) => a + (b as number), 0)}%</p>
       </div>
-      <div className="flex items-center justify-between p-3 rounded-xl border border-gray-200">
-        <div><p className="text-sm font-medium text-gray-900">Use AI Enhancement</p><p className="text-xs text-gray-400">Uses Groq AI for qualitative analysis on top of deterministic metrics</p></div>
-        <button onClick={() => setUseAI(!useAI)} className={`relative w-11 h-6 rounded-full transition-colors ${useAI ? 'bg-purple-600' : 'bg-gray-200'}`}><span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${useAI ? 'translate-x-5' : ''}`} /></button>
+      <div className="flex items-center justify-between p-3 rounded-xl border border-theme-border">
+        <div><p className="text-sm font-medium text-theme-text-primary">Use AI Enhancement</p><p className="text-xs text-theme-text-tertiary">Uses Groq AI for qualitative analysis on top of deterministic metrics</p></div>
+        <button onClick={() => setUseAI(!useAI)} className={`relative w-11 h-6 rounded-full transition-colors ${useAI ? 'bg-purple-600' : 'bg-theme-muted'}`}><span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-theme-surface rounded-full transition-transform ${useAI ? 'translate-x-5' : ''}`} /></button>
       </div>
-      <div className="flex items-center justify-between p-3 rounded-xl border border-gray-200">
-        <div><p className="text-sm font-medium text-gray-900">Auto-Generate Appraisals</p><p className="text-xs text-gray-400">Automatically generate appraisals for all active employees</p></div>
-        <button onClick={() => setAutoGenerate(!autoGenerate)} className={`relative w-11 h-6 rounded-full transition-colors ${autoGenerate ? 'bg-purple-600' : 'bg-gray-200'}`}><span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${autoGenerate ? 'translate-x-5' : ''}`} /></button>
+      <div className="flex items-center justify-between p-3 rounded-xl border border-theme-border">
+        <div><p className="text-sm font-medium text-theme-text-primary">Auto-Generate Appraisals</p><p className="text-xs text-theme-text-tertiary">Automatically generate appraisals for all active employees</p></div>
+        <button onClick={() => setAutoGenerate(!autoGenerate)} className={`relative w-11 h-6 rounded-full transition-colors ${autoGenerate ? 'bg-purple-600' : 'bg-theme-muted'}`}><span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-theme-surface rounded-full transition-transform ${autoGenerate ? 'translate-x-5' : ''}`} /></button>
       </div>
       {autoGenerate && (
-        <select value={autoGenerateFrequency} onChange={(e) => setAutoGenerateFrequency(e.target.value)} className="px-3 py-2 text-sm border border-gray-200 rounded-lg">
+        <select value={autoGenerateFrequency} onChange={(e) => setAutoGenerateFrequency(e.target.value)} className="px-3 py-2 text-sm border border-theme-border rounded-lg">
           <option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="annual">Annual</option>
         </select>
       )}

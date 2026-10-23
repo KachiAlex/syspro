@@ -8,11 +8,11 @@ export function SiteFooter() {
         <PisairtelLogo size={26} />
         <span className="font-jakarta text-[15px] font-extrabold" style={{ background: 'linear-gradient(90deg,#F8FAFC,#94A3B8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Pisairtel ERP</span>
       </div>
-      <span className="text-xs text-[#64748B]">© 2026 Pisairtel ERP. Built for SMEs.</span>
+      <span className="text-xs text-theme-text-tertiary">© 2026 Pisairtel ERP. Built for SMEs.</span>
       <div className="flex gap-[22px]">
-        <Link href="/privacy" className="text-xs text-[#64748B] cursor-pointer hover:text-[#94A3B8] transition-colors">Privacy</Link>
-        <Link href="/terms" className="text-xs text-[#64748B] cursor-pointer hover:text-[#94A3B8] transition-colors">Terms</Link>
-        <Link href="/support" className="text-xs text-[#64748B] cursor-pointer hover:text-[#94A3B8] transition-colors">Support</Link>
+        <Link href="/privacy" className="text-xs text-theme-text-tertiary cursor-pointer hover:text-theme-text-secondary transition-colors">Privacy</Link>
+        <Link href="/terms" className="text-xs text-theme-text-tertiary cursor-pointer hover:text-theme-text-secondary transition-colors">Terms</Link>
+        <Link href="/support" className="text-xs text-theme-text-tertiary cursor-pointer hover:text-theme-text-secondary transition-colors">Support</Link>
       </div>
     </footer>
   );

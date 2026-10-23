@@ -145,13 +145,13 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Create Project Report</h2>
+    <div className="fixed inset-0 bg-theme-overlay flex items-center justify-center z-50">
+      <div className="bg-theme-surface rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-theme-surface border-b border-theme-border p-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-theme-text-primary">Create Project Report</h2>
           <button 
             onClick={onClose} 
-            className="text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-theme-text-secondary hover:text-theme-text-primary transition-colors"
             disabled={loading}
           >
             <X className="w-6 h-6" />
@@ -170,7 +170,7 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 <FileText className="w-4 h-4 inline mr-1" />
                 Report Title *
               </label>
@@ -178,8 +178,8 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
                 type="text"
                 value={formData.reportTitle}
                 onChange={(e) => setFormData(prev => ({ ...prev, reportTitle: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                  errors.reportTitle ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                  errors.reportTitle ? 'border-red-500' : 'border-theme-border'
                 }`}
                 placeholder="Enter report title"
                 disabled={loading}
@@ -190,7 +190,7 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 Report Type
               </label>
               <select
@@ -199,7 +199,7 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
                   ...prev, 
                   reportType: e.target.value as 'summary' | 'performance' | 'financial' | 'risk'
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                 disabled={loading}
               >
                 <option value="summary">Summary Report</option>
@@ -210,7 +210,7 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">
                 <Calendar className="w-4 h-4 inline mr-1" />
                 Date Range *
               </label>
@@ -222,8 +222,8 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
                     ...prev, 
                     dateRange: { ...prev.dateRange, start: e.target.value }
                   }))}
-                  className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                    errors.dateRange ? 'border-red-500' : 'border-gray-300'
+                  className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                    errors.dateRange ? 'border-red-500' : 'border-theme-border'
                   }`}
                   disabled={loading}
                 />
@@ -234,8 +234,8 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
                     ...prev, 
                     dateRange: { ...prev.dateRange, end: e.target.value }
                   }))}
-                  className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                    errors.dateRange ? 'border-red-500' : 'border-gray-300'
+                  className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary ${
+                    errors.dateRange ? 'border-red-500' : 'border-theme-border'
                   }`}
                   min={formData.dateRange.start}
                   disabled={loading}
@@ -248,21 +248,21 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               <BarChart3 className="w-4 h-4 inline mr-1" />
               Select Projects *
             </label>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-40 overflow-y-auto border border-theme-border rounded-lg p-3">
               {projects.map((project) => (
-                <label key={project.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                <label key={project.id} className="flex items-center gap-2 cursor-pointer hover:bg-theme-muted p-1 rounded">
                   <input
                     type="checkbox"
                     checked={formData.projectIds.includes(project.id)}
                     onChange={() => toggleProjectSelection(project.id)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-theme-border text-theme-accent focus:ring-theme-accent"
                     disabled={loading}
                   />
-                  <span className="text-sm text-gray-900">{project.name}</span>
+                  <span className="text-sm text-theme-text-primary">{project.name}</span>
                 </label>
               ))}
             </div>
@@ -272,24 +272,24 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               <TrendingUp className="w-4 h-4 inline mr-1" />
               Key Metrics *
             </label>
             <div className="space-y-3">
               {formData.metrics.map((metric, index) => (
-                <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                <div key={index} className="flex items-center gap-2 p-3 bg-theme-muted rounded-lg">
                   <div className="flex-1">
-                    <div className="font-medium text-gray-900">{metric.name}</div>
-                    <div className="text-sm text-gray-600">{metric.value}</div>
+                    <div className="font-medium text-theme-text-primary">{metric.name}</div>
+                    <div className="text-sm text-theme-text-secondary">{metric.value}</div>
                     {metric.description && (
-                      <div className="text-xs text-gray-500 mt-1">{metric.description}</div>
+                      <div className="text-xs text-theme-text-secondary mt-1">{metric.description}</div>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
                     {metric.trend === 'up' && <TrendingUp className="w-4 h-4 text-green-600" />}
                     {metric.trend === 'down' && <TrendingUp className="w-4 h-4 text-red-600 rotate-180" />}
-                    {metric.trend === 'stable' && <div className="w-4 h-4 bg-gray-400 rounded-full" />}
+                    {metric.trend === 'stable' && <div className="w-4 h-4 bg-theme-muted rounded-full" />}
                     <button
                       type="button"
                       onClick={() => removeMetric(index)}
@@ -302,13 +302,13 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
                 </div>
               ))}
               
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-2 p-3 border border-gray-200 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-2 p-3 border border-theme-border rounded-lg">
                 <input
                   type="text"
                   placeholder="Metric name"
                   value={newMetric.name}
                   onChange={(e) => setNewMetric(prev => ({ ...prev, name: e.target.value }))}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="px-2 py-1 border border-theme-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   disabled={loading}
                 />
                 <input
@@ -316,7 +316,7 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
                   placeholder="Value"
                   value={newMetric.value}
                   onChange={(e) => setNewMetric(prev => ({ ...prev, value: e.target.value }))}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="px-2 py-1 border border-theme-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   disabled={loading}
                 />
                 <select
@@ -325,7 +325,7 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
                     ...prev, 
                     trend: e.target.value as 'up' | 'down' | 'stable'
                   }))}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="px-2 py-1 border border-theme-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   disabled={loading}
                 >
                   <option value="up">Up</option>
@@ -337,13 +337,13 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
                   placeholder="Description (optional)"
                   value={newMetric.description}
                   onChange={(e) => setNewMetric(prev => ({ ...prev, description: e.target.value }))}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="px-2 py-1 border border-theme-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={addMetric}
-                  className="px-3 py-1 bg-blue-600 text-black rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+                  className="px-3 py-1 bg-theme-accent text-theme-text-primary rounded text-sm hover:bg-theme-accent-hover disabled:opacity-50"
                   disabled={loading || !newMetric.name.trim() || !newMetric.value.trim()}
                 >
                   Add
@@ -356,35 +356,35 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">
               <Send className="w-4 h-4 inline mr-1" />
               Send To (Superiors/Management)
             </label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-theme-border rounded-lg p-3">
               {availableRecipients.map((recipient) => (
-                <label key={recipient.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                <label key={recipient.id} className="flex items-center gap-2 cursor-pointer hover:bg-theme-muted p-1 rounded">
                   <input
                     type="checkbox"
                     checked={formData.recipients.includes(recipient.id)}
                     onChange={() => toggleRecipientSelection(recipient.id)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-theme-border text-theme-accent focus:ring-theme-accent"
                     disabled={loading}
                   />
                   <div>
-                    <div className="text-sm text-gray-900">{recipient.name}</div>
-                    <div className="text-xs text-gray-500">{recipient.role}</div>
+                    <div className="text-sm text-theme-text-primary">{recipient.name}</div>
+                    <div className="text-xs text-theme-text-secondary">{recipient.role}</div>
                   </div>
                 </label>
               ))}
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="bg-theme-muted rounded-lg p-4">
+            <div className="flex items-center gap-2 text-sm text-theme-text-secondary">
               <Users className="w-4 h-4" />
               <span>Created by: <strong>{currentUser}</strong></span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+            <div className="flex items-center gap-2 text-sm text-theme-text-secondary mt-1">
               <Calendar className="w-4 h-4" />
               <span>Date: {new Date().toLocaleDateString()}</span>
             </div>
@@ -394,14 +394,14 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-muted transition-colors disabled:opacity-50"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-theme-accent text-theme-text-primary rounded-lg hover:bg-theme-accent-hover transition-colors disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Creating...' : 'Create Report'}

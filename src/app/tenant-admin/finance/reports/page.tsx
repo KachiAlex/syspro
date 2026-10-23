@@ -273,7 +273,7 @@ export default function FinanceReportsPage() {
   }, [saved]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-theme-muted p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {alert && (
           <div className={`p-4 rounded-lg border ${alert.type === "success" ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800"}`}>
@@ -285,19 +285,19 @@ export default function FinanceReportsPage() {
         )}
 
         <div>
-          <h1 className="text-3xl font-bold text-black">Financial Reports</h1>
-          <p className="text-black mt-1">Run canonical reports, save filter combinations, export to CSV</p>
+          <h1 className="text-3xl font-bold text-theme-text-primary">Financial Reports</h1>
+          <p className="text-theme-text-primary mt-1">Run canonical reports, save filter combinations, export to CSV</p>
         </div>
 
         {/* Report runner */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-theme-surface rounded-lg shadow-sm border border-theme-border p-6">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-black mb-2">Report</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Report</label>
               <select
                 value={reportKey}
                 onChange={(e) => { setReportKey(e.target.value); setResult(null); }}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent"
               >
                 {GROUP_ORDER.map((g) => (
                   <optgroup key={g} label={g}>
@@ -312,30 +312,30 @@ export default function FinanceReportsPage() {
             {def.dateMode === "range" && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-black mb-2">From</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">From</label>
                   <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    className="w-full px-4 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-black mb-2">To</label>
+                  <label className="block text-sm font-medium text-theme-text-primary mb-2">To</label>
                   <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    className="w-full px-4 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent" />
                 </div>
               </>
             )}
             {def.dateMode === "asOf" && (
               <div>
-                <label className="block text-sm font-medium text-black mb-2">As of</label>
+                <label className="block text-sm font-medium text-theme-text-primary mb-2">As of</label>
                 <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full px-4 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent" />
               </div>
             )}
             {def.dateMode === "none" && <div className="md:col-span-2" />}
 
             <div>
-              <label className="block text-sm font-medium text-black mb-2">Branch</label>
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Branch</label>
               <select value={branchId} onChange={(e) => setBranchId(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="w-full px-4 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent">
                 <option value="">All branches</option>
                 {branches.map((b) => (
                   <option key={b.id} value={b.id}>{b.name} ({b.code})</option>
@@ -348,14 +348,14 @@ export default function FinanceReportsPage() {
             <button
               onClick={() => runReport(def, currentConfig())}
               disabled={running}
-              className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="flex items-center gap-2 bg-theme-accent text-white px-5 py-2 rounded-lg hover:bg-theme-accent-hover disabled:opacity-50"
             >
               <Play className="h-4 w-4" />
               {running ? "Running…" : "Run"}
             </button>
             <button
               onClick={() => downloadCsv(def, currentConfig())}
-              className="flex items-center gap-2 bg-gray-100 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-200"
+              className="flex items-center gap-2 bg-theme-muted text-theme-text-primary px-4 py-2 rounded-lg hover:bg-theme-muted"
             >
               <Download className="h-4 w-4" />
               CSV
@@ -365,7 +365,7 @@ export default function FinanceReportsPage() {
                 value={saveName}
                 onChange={(e) => setSaveName(e.target.value)}
                 placeholder="Save as…"
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-theme-border rounded-lg text-sm w-52 focus:outline-none focus:ring-2 focus:ring-theme-accent"
               />
               <button
                 onClick={saveReport}
@@ -381,62 +381,62 @@ export default function FinanceReportsPage() {
 
         {/* Results */}
         {result && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-x-auto">
-            <h2 className="text-xl font-bold text-black mb-4">{def.label}</h2>
+          <div className="bg-theme-surface rounded-lg shadow-sm border border-theme-border p-6 overflow-x-auto">
+            <h2 className="text-xl font-bold text-theme-text-primary mb-4">{def.label}</h2>
             {tableRows && tableRows.length > 0 ? (
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200">
+                  <tr className="border-b border-theme-border">
                     {tableCols.map((c) => (
-                      <th key={c} className="text-left py-2 pr-4 font-semibold text-gray-700 whitespace-nowrap">{c}</th>
+                      <th key={c} className="text-left py-2 pr-4 font-semibold text-theme-text-primary whitespace-nowrap">{c}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {tableRows.slice(0, 500).map((row, i) => (
-                    <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
+                    <tr key={i} className="border-b border-theme-border hover:bg-theme-muted">
                       {tableCols.map((c) => (
-                        <td key={c} className="py-2 pr-4 text-gray-900 whitespace-nowrap">{cellValue(row[c])}</td>
+                        <td key={c} className="py-2 pr-4 text-theme-text-primary whitespace-nowrap">{cellValue(row[c])}</td>
                       ))}
                     </tr>
                   ))}
                 </tbody>
               </table>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <FileText className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+              <div className="text-center py-8 text-theme-text-secondary">
+                <FileText className="h-10 w-10 text-theme-text-secondary mx-auto mb-3" />
                 Report returned no tabular rows. Try CSV export for the full payload.
               </div>
             )}
             {tableRows && tableRows.length > 500 && (
-              <p className="text-xs text-gray-500 mt-3">Showing first 500 of {tableRows.length} rows — export CSV for the full set.</p>
+              <p className="text-xs text-theme-text-secondary mt-3">Showing first 500 of {tableRows.length} rows — export CSV for the full set.</p>
             )}
           </div>
         )}
 
         {/* Saved reports */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold text-black mb-4">Saved Reports</h2>
+        <div className="bg-theme-surface rounded-lg shadow-sm border border-theme-border p-6">
+          <h2 className="text-xl font-bold text-theme-text-primary mb-4">Saved Reports</h2>
           {groupedSaved.length === 0 ? (
-            <p className="text-sm text-gray-500">No saved reports yet. Configure filters above and click “Save view”.</p>
+            <p className="text-sm text-theme-text-secondary">No saved reports yet. Configure filters above and click “Save view”.</p>
           ) : (
             <div className="space-y-6">
               {groupedSaved.map(({ group, items }) => (
                 <div key={group}>
-                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">{group}</h3>
-                  <div className="divide-y divide-gray-100">
+                  <h3 className="text-sm font-semibold text-theme-text-secondary uppercase tracking-wide mb-2">{group}</h3>
+                  <div className="divide-y divide-theme-border">
                     {items.map((sr) => (
                       <div key={sr.id} className="flex items-center justify-between py-3">
                         <div>
-                          <p className="font-medium text-gray-900">{sr.name}</p>
-                          <p className="text-xs text-gray-500">
+                          <p className="font-medium text-theme-text-primary">{sr.name}</p>
+                          <p className="text-xs text-theme-text-secondary">
                             {REPORT_DEFS.find((r) => r.key === sr.reportKey)?.label ?? sr.reportKey}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => runSaved(sr)}
-                            className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
+                            className="flex items-center gap-1 px-3 py-1.5 text-sm text-theme-accent hover:bg-theme-muted rounded-lg"
                           >
                             <Play className="h-3.5 w-3.5" /> Run
                           </button>
@@ -454,7 +454,7 @@ export default function FinanceReportsPage() {
                                 });
                               }
                             }}
-                            className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
+                            className="flex items-center gap-1 px-3 py-1.5 text-sm text-theme-text-secondary hover:bg-theme-muted rounded-lg"
                           >
                             <Download className="h-3.5 w-3.5" /> CSV
                           </button>
