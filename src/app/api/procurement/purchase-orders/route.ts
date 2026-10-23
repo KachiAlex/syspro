@@ -9,7 +9,7 @@ import {
   type PurchaseOrder,
 } from "@/lib/finance/purchase-orders";
 
-import { requireModuleAccess } from "@/lib/api-auth";
+import { requireModuleAccess, requireDocAccess } from "@/lib/api-auth";
 
 // Map the canonical finance-layer PO into the shape the procurement
 // workspace renders (camelCase, poNumber/vendorId/deliveryDate).
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    const _scope = await requireModuleAccess(request, "finance", "write");
+    const _scope = await requireDocAccess(request, "purchase_order", "create", "finance", "write");
     if (!_scope.ok) return _scope.response;
 
   try {

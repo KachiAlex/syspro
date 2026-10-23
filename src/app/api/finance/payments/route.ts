@@ -4,7 +4,7 @@ import { z } from "zod";
 import { createPayment, listPayments } from "@/lib/finance/db";
 import { writeFinanceEvent } from "@/lib/finance/events";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { requireModuleGate } from "@/lib/api-auth";
+import { requireModuleGate, requireDocGate } from "@/lib/api-auth";
 
 const paymentCreateSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const gate = await requireModuleGate(request, "finance", "write");
+  const gate = await requireDocGate(request, "payment_entry", "submit", "finance", "write");
   if (gate) return gate;
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {

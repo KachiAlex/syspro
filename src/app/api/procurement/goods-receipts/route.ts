@@ -6,7 +6,7 @@ import { getPagination } from "@/lib/pagination";
 import { createJournalEntry } from "@/lib/finance/accounting";
 import { randomUUID } from "crypto";
 
-import { requireModuleAccess } from "@/lib/api-auth";
+import { requireModuleAccess, requireDocAccess } from "@/lib/api-auth";
 async function ensureGoodsReceiptTables() {
   await db.query(`
     create table if not exists procurement_goods_receipts (
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    const _scope = await requireModuleAccess(request, "finance", "write");
+    const _scope = await requireDocAccess(request, "goods_receipt", "submit", "finance", "write");
     if (!_scope.ok) return _scope.response;
 
   try {

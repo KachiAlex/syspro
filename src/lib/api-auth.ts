@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "./session";
 import { validateTenantAccess, type SessionUser } from "./auth-helpers";
 import { db, sql as SQL } from "./sql-client";
-import { getTenantUserPermissions } from "./tenant-admin/permissions";
+import { getTenantUserPermissions, getTenantUserPermissionKeys, hasDocAccess, type DocAction } from "./tenant-admin/permissions";
 import { meterApiCall, usageModuleFromPath } from "./tenant-usage";
 import { cached } from "./cache";
 
@@ -396,6 +396,45 @@ export async function recordBelongsToTenant(
  * matches the authenticated session tenant (skipped for superadmin).
  * Returns a 404-shaped response when the record is missing/foreign.
  */
+/**
+ * Document-action gate layered on requireModuleAccess (ERPNext-style
+ * doc.submit/doc.approve control). Runs the module gate first, then enforces
+ * doc.<docType>.<action> keys when the user's roles define any for that
+ * docType. DocTypes with no configured keys stay module-governed — existing
+ * deployments are unaffected until doc keys are assigned to a role.
+ */
+export async function requireDocAccess(
+  request: Req,
+  docType: string,
+  action: DocAction,
+  module: GovernedModule = "finance",
+  level: ModuleAccessLevel = "write"
+): Promise<AuthResult> {
+  const scope = await requireModuleAccess(request, module, level);
+  if (!scope.ok) return scope;
+  const user = scope.user;
+  if (user.roleId === "superadmin") return scope;
+  const tenant = (await resolveRequestedTenant(request)) || user.tenantSlug;
+  if (!tenant) return scope;
+  const keys = await getTenantUserPermissionKeys(tenant, user.id);
+  if (!hasDocAccess(keys, docType, action)) {
+    return forbidden(`Missing permission: doc.${docType}.${action}`);
+  }
+  return scope;
+}
+
+/** requireDocGate — same contract as requireModuleGate (null = pass). */
+export async function requireDocGate(
+  request: Req,
+  docType: string,
+  action: DocAction,
+  module: GovernedModule = "finance",
+  level: ModuleAccessLevel = "write"
+): Promise<NextResponse | null> {
+  const res = await requireDocAccess(request, docType, action, module, level);
+  return res.ok ? null : res.response;
+}
+
 export async function requireRecordTenant(
   table: string,
   id: string,

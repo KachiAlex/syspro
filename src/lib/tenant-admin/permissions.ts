@@ -72,6 +72,57 @@ export async function getTenantUserPermissions(
   });
 }
 
+/** Raw permission keys for a user — includes doc.* keys the module-level
+ *  flattening discards. Same cache lifetime as getTenantUserPermissions. */
+export async function getTenantUserPermissionKeys(
+  tenantSlug: string,
+  userId: string
+): Promise<string[]> {
+  const cacheKey = `permkeys:${tenantSlug}:${userId}`;
+  return cached(cacheKey, 30_000, async () => {
+    try {
+      await ensurePermissionsTables();
+      const rows = await sql`
+        SELECT DISTINCT unnest(r.permissions) as key
+        FROM admin_user_roles ur
+        JOIN admin_roles r ON r.id = ur.role_id
+        WHERE ur.tenant_slug = ${tenantSlug} AND ur.user_id = ${userId} AND r.permissions IS NOT NULL
+      `;
+      return (Array.isArray(rows) ? (rows as any[]).map((r) => r.key) : [])
+        .filter((k): k is string => typeof k === "string" && k.length > 0);
+    } catch (error) {
+      console.error("Permission-key lookup failed for", tenantSlug, userId, error);
+      return [];
+    }
+  });
+}
+
+/**
+ * Document-level permission model (ERPNext/Venditium-style).
+ * Keys: "doc.<docType>.<action>" — e.g. doc.bill.submit, doc.journal_entry.approve.
+ * Stored in admin_roles.permissions alongside module keys; assigned via the
+ * existing /api/tenant/roles API (permissions: string[]).
+ *
+ * Semantics (backward compatible):
+ *  - "all" or doc.* or doc.<docType>.*  → all actions on that docType
+ *  - no doc.<docType>.* keys at all      → module-level fallback (unchanged)
+ *  - some doc.<docType> keys, not this   → denied
+ */
+export const DOC_TYPES = [
+  "journal_entry", "bill", "invoice", "payment_entry", "purchase_order",
+  "goods_receipt", "sales_order", "pos_sale", "expense_claim",
+  "payroll_run", "production_order", "stock_adjustment", "credit_note",
+] as const;
+export type DocType = (typeof DOC_TYPES)[number];
+export type DocAction = "read" | "create" | "edit" | "submit" | "approve" | "cancel" | "delete" | "refund";
+
+export function hasDocAccess(keys: string[], docType: string, action: DocAction): boolean {
+  if (keys.includes("all") || keys.includes("doc.*") || keys.includes(`doc.${docType}.*`)) return true;
+  const docKeys = keys.filter((k) => k.startsWith(`doc.${docType}.`));
+  if (docKeys.length === 0) return true; // docType unrestricted → module level governs
+  return docKeys.includes(`doc.${docType}.${action}`);
+}
+
 /**
  * Invalidate cached permissions for a tenant (call when permissions change).
  */

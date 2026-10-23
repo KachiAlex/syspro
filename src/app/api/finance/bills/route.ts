@@ -14,7 +14,7 @@ import {
 import { writeFinanceEvent } from "@/lib/finance/events";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
-import { requireModuleAccess } from "@/lib/api-auth";
+import { requireModuleAccess, requireDocAccess } from "@/lib/api-auth";
 
 const billListSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
   try {
     // enforce tenant context for bill create/maintenance
     const _ctx = validateTenantContext(request, "write");
-    const _gate = await requireModuleAccess(request, "finance", "write");
+    const _gate = await requireDocAccess(request, "bill", "submit", "finance", "write");
     if (!_gate.ok) return _gate.response;
     const body = await request.json();
     

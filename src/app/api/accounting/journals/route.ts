@@ -11,7 +11,7 @@ import {
   reverseJournalEntry,
 } from "@/lib/accounting/db";
 
-import { requireModuleAccess } from "@/lib/api-auth";
+import { requireModuleAccess, requireDocAccess } from "@/lib/api-auth";
 /**
  * GET /api/accounting/journals
  * List journal entries with filters
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
  * Create a new journal entry
  */
 export async function POST(request: NextRequest) {
-    const _scope = await requireModuleAccess(request, "finance", "write");
+    const _scope = await requireDocAccess(request, "journal_entry", "create", "finance", "write");
     if (!_scope.ok) return _scope.response;
 
   try {

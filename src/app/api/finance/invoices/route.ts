@@ -6,7 +6,7 @@ import { FINANCE_INVOICE_STATUSES, financeInvoiceCreateSchema } from "@/lib/fina
 import { insertFinanceInvoice, listFinanceInvoices } from "@/lib/finance/db";
 import { writeFinanceEvent } from "@/lib/finance/events";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { requireModuleGate } from "@/lib/api-auth";
+import { requireModuleGate, requireDocGate } from "@/lib/api-auth";
 
 const invoiceListSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const gate = await requireModuleGate(request, "finance", "write");
+  const gate = await requireDocGate(request, "invoice", "submit", "finance", "write");
   if (gate) return gate;
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {

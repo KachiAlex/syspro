@@ -11,6 +11,11 @@ export const dynamic = "force-dynamic";
  *   "all"                    — full admin access
  *   "<module>.read|.write"   — governed module level
  *   "dashboard:<name>"       — dashboard visibility
+ *   "doc.<docType>.<action>" — document-action gate (opt-in granularity):
+ *                              once any doc.<docType>.* key is assigned, that
+ *                              docType requires the specific action key
+ *                              (e.g. doc.bill.submit, doc.journal_entry.approve).
+ *                              DocTypes without keys stay module-governed.
  */
 
 import { NextRequest, NextResponse } from "next/server";

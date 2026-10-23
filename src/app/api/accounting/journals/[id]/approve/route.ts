@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { journalEntryApproveSchema } from "@/lib/accounting/types";
 import { postJournalEntry, reverseJournalEntry, getJournalEntry } from "@/lib/accounting/db";
 
-import { requireRecordTenant, requireModuleAccess } from "@/lib/api-auth";
+import { requireRecordTenant, requireDocAccess } from "@/lib/api-auth";
 /**
  * POST /api/accounting/journals/[id]/approve
  * Approve (post) or reject a journal entry
@@ -12,7 +12,7 @@ export async function POST(
   request: NextRequest,
   context: any
 ) {
-    const _scope = await requireModuleAccess(request, "finance", "write");
+    const _scope = await requireDocAccess(request, "journal_entry", "approve", "finance", "write");
     if (!_scope.ok) return _scope.response;
 
   const { params } = context;
