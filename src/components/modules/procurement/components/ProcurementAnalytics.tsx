@@ -10,21 +10,9 @@ interface ProcurementAnalyticsProps {
   onReject?: (approval: PendingApproval) => void;
 }
 
-const DEFAULT_PENDING: PendingApproval[] = [
-  { id: 'REQ-2024-001', priority: 'High', value: '$12,450', submitted: '2 days ago' },
-  { id: 'REQ-2024-003', priority: 'High', value: '$23,450', submitted: '3 days ago' }
-];
-
-const DEFAULT_SPENDING: DepartmentSpend[] = [
-  { dept: 'IT', spend: '$45,678', pct: 35 },
-  { dept: 'Operations', spend: '$32,450', pct: 25 },
-  { dept: 'Marketing', spend: '$23,234', pct: 18 },
-  { dept: 'HR', spend: '$15,678', pct: 12 }
-];
-
 export const ProcurementAnalytics: React.FC<ProcurementAnalyticsProps> = ({
-  pendingApprovals = DEFAULT_PENDING,
-  departmentSpends = DEFAULT_SPENDING,
+  pendingApprovals = [],
+  departmentSpends = [],
   onApprove,
   onReject
 }) => {

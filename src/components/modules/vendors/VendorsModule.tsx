@@ -19,10 +19,7 @@ interface VendorsModuleProps {
 
 export const VendorsModule: React.FC<VendorsModuleProps> = ({
   tenantSlug,
-  initialVendors = [
-    { name: 'Tech Solutions Inc', category: 'Technology', status: 'Active', rating: 4.8, spend: '$125,000' },
-    { name: 'Office Supply Co', category: 'Office Supplies', status: 'Active', rating: 4.2, spend: '$45,678' }
-  ]
+  initialVendors = []
 }) => {
   const [vendors] = React.useState<Vendor[]>(initialVendors);
   const [categoryFilter, setCategoryFilter] = React.useState('All');

@@ -19,29 +19,54 @@ const reportTabs: ReportTab[] = [
     name: 'Financial Reports',
     href: '/tenant-admin/analytics/financial',
     icon: DollarSign,
-    count: 12
   },
   {
     id: 'sales',
     name: 'Sales Reports',
     href: '/tenant-admin/analytics/sales',
     icon: TrendingUp,
-    count: 8
   },
   {
     id: 'hr',
     name: 'HR Reports',
     href: '/tenant-admin/analytics/hr',
     icon: Users,
-    count: 15
   }
 ];
+
+type MetricValue = { current: number; previous: number; growth: number; trend: string };
+
+interface OverviewData {
+  revenue: MetricValue;
+  customers: MetricValue;
+  orders: MetricValue;
+  conversion: MetricValue;
+  topProducts: { name: string; sales: number; revenue: number }[];
+}
+
+const PERIOD_DAYS: Record<string, number> = {
+  'This Month': 30,
+  'Last Month': 60,
+  'Last Quarter': 90,
+  'This Year': 365,
+};
+
+const formatCompact = (n: number) =>
+  new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+
+const trendLabel = (m?: MetricValue) => {
+  if (!m) return '—';
+  const arrow = m.growth >= 0 ? '↑' : '↓';
+  return `${arrow} ${Math.abs(m.growth).toFixed(1)}% vs prior period`;
+};
 
 export default function AnalyticsPage() {
   const { tenantSlug } = useTenantContext();
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
   const [recentReports, setRecentReports] = useState<any[]>([]);
   const [loadingReports, setLoadingReports] = useState(false);
+  const [overview, setOverview] = useState<OverviewData | null>(null);
+  const [loadingOverview, setLoadingOverview] = useState(false);
 
   useEffect(() => {
     if (!tenantSlug) return;
@@ -54,6 +79,22 @@ export default function AnalyticsPage() {
       .catch((err) => console.error('Failed to load recent reports:', err))
       .finally(() => setLoadingReports(false));
   }, [tenantSlug]);
+
+  useEffect(() => {
+    if (!tenantSlug) return;
+    const days = PERIOD_DAYS[selectedPeriod] ?? 30;
+    setLoadingOverview(true);
+    fetch(`/api/tenant/analytics?type=overview&days=${days}&tenantSlug=${encodeURIComponent(tenantSlug)}`)
+      .then((res) => res.json().catch(() => ({})))
+      .then((payload) => {
+        setOverview(payload.data ?? null);
+      })
+      .catch((err) => {
+        console.error('Failed to load analytics overview:', err);
+        setOverview(null);
+      })
+      .finally(() => setLoadingOverview(false));
+  }, [tenantSlug, selectedPeriod]);
 
   const handleDownload = (reportId: string) => {
     if (!tenantSlug || !reportId) return;
@@ -75,10 +116,6 @@ export default function AnalyticsPage() {
             <option>Last Quarter</option>
             <option>This Year</option>
           </select>
-          <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-theme-accent rounded-lg hover:bg-theme-accent-hover">
-            <Download className="w-4 h-4" />
-            Export
-          </button>
         </div>
       </div>
 
@@ -87,8 +124,10 @@ export default function AnalyticsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-theme-text-secondary">Total Revenue</p>
-              <p className="text-3xl font-bold text-green-600 mt-2">$425K</p>
-              <p className="text-xs text-green-600 mt-2">↑ 12.5% from last month</p>
+              <p className="text-3xl font-bold text-green-600 mt-2">
+                {overview ? formatCompact(overview.revenue.current) : loadingOverview ? '…' : '—'}
+              </p>
+              <p className="text-xs text-green-600 mt-2">{trendLabel(overview?.revenue)}</p>
             </div>
             <DollarSign className="w-12 h-12 text-green-500" />
           </div>
@@ -97,9 +136,11 @@ export default function AnalyticsPage() {
         <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-theme-text-secondary">Active Employees</p>
-              <p className="text-3xl font-bold text-theme-accent mt-2">156</p>
-              <p className="text-xs text-theme-accent mt-2">↑ 3.2% from last month</p>
+              <p className="text-sm font-medium text-theme-text-secondary">New Customers</p>
+              <p className="text-3xl font-bold text-theme-accent mt-2">
+                {overview ? formatCompact(overview.customers.current) : loadingOverview ? '…' : '—'}
+              </p>
+              <p className="text-xs text-theme-accent mt-2">{trendLabel(overview?.customers)}</p>
             </div>
             <Users className="w-12 h-12 text-theme-accent" />
           </div>
@@ -109,8 +150,10 @@ export default function AnalyticsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-theme-text-secondary">Total Orders</p>
-              <p className="text-3xl font-bold text-purple-600 mt-2">1,248</p>
-              <p className="text-xs text-purple-600 mt-2">↑ 8.7% from last month</p>
+              <p className="text-3xl font-bold text-purple-600 mt-2">
+                {overview ? formatCompact(overview.orders.current) : loadingOverview ? '…' : '—'}
+              </p>
+              <p className="text-xs text-purple-600 mt-2">{trendLabel(overview?.orders)}</p>
             </div>
             <BarChart3 className="w-12 h-12 text-purple-100" />
           </div>
@@ -119,9 +162,11 @@ export default function AnalyticsPage() {
         <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-theme-text-secondary">Profit Margin</p>
-              <p className="text-3xl font-bold text-amber-600 mt-2">23.4%</p>
-              <p className="text-xs text-amber-600 mt-2">↑ 2.1% from last month</p>
+              <p className="text-sm font-medium text-theme-text-secondary">Lead Conversion</p>
+              <p className="text-3xl font-bold text-amber-600 mt-2">
+                {overview ? `${overview.conversion.current}%` : loadingOverview ? '…' : '—'}
+              </p>
+              <p className="text-xs text-amber-600 mt-2">{trendLabel(overview?.conversion)}</p>
             </div>
             <TrendingUp className="w-12 h-12 text-amber-500" />
           </div>
@@ -159,16 +204,16 @@ export default function AnalyticsPage() {
               <p className="text-sm text-blue-700 mb-4">Revenue, expenses, cash flow, and financial health analysis</p>
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-theme-accent">Revenue Analysis</span>
-                  <span className="font-medium text-theme-text-primary">$425K</span>
+                  <span className="text-theme-accent">Revenue ({selectedPeriod})</span>
+                  <span className="font-medium text-theme-text-primary">
+                    {overview ? formatCompact(overview.revenue.current) : '—'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-theme-accent">Expense Tracking</span>
-                  <span className="font-medium text-theme-text-primary">$326K</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-theme-accent">Profit Margin</span>
-                  <span className="font-medium text-theme-text-primary">23.4%</span>
+                  <span className="text-theme-accent">Revenue Growth</span>
+                  <span className="font-medium text-theme-text-primary">
+                    {overview ? `${overview.revenue.growth.toFixed(1)}%` : '—'}
+                  </span>
                 </div>
               </div>
               <Link
@@ -187,16 +232,24 @@ export default function AnalyticsPage() {
               <p className="text-sm text-green-700 mb-4">Sales performance, customer acquisition, and revenue forecasting</p>
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-green-600">Total Sales</span>
-                  <span className="font-medium text-green-900">1,248</span>
+                  <span className="text-green-600">Total Orders</span>
+                  <span className="font-medium text-green-900">
+                    {overview ? formatCompact(overview.orders.current) : '—'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-green-600">Conversion Rate</span>
-                  <span className="font-medium text-green-900">18.5%</span>
+                  <span className="font-medium text-green-900">
+                    {overview ? `${overview.conversion.current}%` : '—'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-green-600">Avg Order Value</span>
-                  <span className="font-medium text-green-900">$341</span>
+                  <span className="font-medium text-green-900">
+                    {overview && overview.orders.current > 0
+                      ? formatCompact(overview.revenue.current / overview.orders.current)
+                      : '—'}
+                  </span>
                 </div>
               </div>
               <Link
@@ -213,20 +266,6 @@ export default function AnalyticsPage() {
                 <h3 className="text-lg font-semibold text-purple-900">HR Reports</h3>
               </div>
               <p className="text-sm text-purple-700 mb-4">Employee metrics, attendance, payroll, and workforce analytics</p>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-purple-600">Active Employees</span>
-                  <span className="font-medium text-purple-900">156</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-purple-600">Attendance Rate</span>
-                  <span className="font-medium text-purple-900">94.2%</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-purple-600">Training Completion</span>
-                  <span className="font-medium text-purple-900">87.3%</span>
-                </div>
-              </div>
               <Link
                 href="/tenant-admin/analytics/hr"
                 className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-700"

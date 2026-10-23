@@ -12,9 +12,9 @@ interface ProcurementHeaderProps {
 
 export const ProcurementHeader: React.FC<ProcurementHeaderProps> = ({
   totalRequisitions,
-  pendingApproval = 45,
-  monthlySpend = '$89,234',
-  activeVendors = 167
+  pendingApproval = 0,
+  monthlySpend = '—',
+  activeVendors = 0
 }) => {
   const stats = [
     { label: 'Total Requisitions', value: totalRequisitions, icon: Package, color: 'text-theme-accent' },

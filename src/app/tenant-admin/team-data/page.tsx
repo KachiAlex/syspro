@@ -263,32 +263,7 @@ export default function TeamDataPage() {
               {/* Recent Activity */}
               <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
                 <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Recent Activity</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-theme-muted rounded-lg">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm text-theme-text-primary">John Smith submitted sales data for March</p>
-                      <p className="text-xs text-theme-text-secondary">2 hours ago</p>
-                    </div>
-                    <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">Approved</span>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-theme-muted rounded-lg">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm text-theme-text-primary">Jane Doe submitted financial data for Q1</p>
-                      <p className="text-xs text-theme-text-secondary">4 hours ago</p>
-                    </div>
-                    <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">Under Review</span>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-theme-muted rounded-lg">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="text-sm text-theme-text-primary">Mike Johnson configured new data source</p>
-                      <p className="text-xs text-theme-text-secondary">1 day ago</p>
-                    </div>
-                    <span className="text-xs text-theme-accent bg-blue-100 px-2 py-1 rounded">System</span>
-                  </div>
-                </div>
+                <p className="text-sm text-theme-text-secondary">No recent activity yet. Submissions and reviews will appear here.</p>
               </div>
             </div>
           )}

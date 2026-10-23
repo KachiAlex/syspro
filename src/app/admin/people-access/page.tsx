@@ -117,9 +117,8 @@ export default function PeopleAccessPage() {
                     <td className="p-2">{u.createdAt?.slice(0,10)}</td>
                     <td className="p-2 flex gap-2">
                       {u.status === 'invited' && (
-                        <button className="text-theme-accent hover:underline" onClick={async () => {
-                          // Simulate resend invite
-                          notify(`Resent invite to ${u.email} (simulated email)`);
+                        <button className="text-theme-accent hover:underline" onClick={() => {
+                          notify(`Invite resend is not available yet — re-invite ${u.email} by adding the user again.`);
                         }}>Resend</button>
                       )}
                       {u.status !== 'inactive' && (

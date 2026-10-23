@@ -240,20 +240,24 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
     }
   }
 
-  // Mock analytics data
   const workflowAnalytics = {
     totalWorkflows: workflows.length,
     activeWorkflows: workflows.filter(w => w.status === "active").length,
     totalExecutions: workflows.reduce((sum, w) => sum + (w.executionCount || 0), 0),
-    averageSuccessRate: workflows.length > 0 
-      ? workflows.reduce((sum, w) => sum + (w.successRate || 0), 0) / workflows.length 
+    averageSuccessRate: workflows.length > 0
+      ? workflows.reduce((sum, w) => sum + (w.successRate || 0), 0) / workflows.length
       : 0,
-    recentExecutions: [
-      { workflow: "New Hire Onboarding", status: "completed", duration: "2h 15m", timestamp: "2 hours ago" },
-      { workflow: "Purchase Approval", status: "completed", duration: "45m", timestamp: "3 hours ago" },
-      { workflow: "Employee Exit", status: "failed", duration: "1h 30m", timestamp: "5 hours ago" },
-      { workflow: "Department Transfer", status: "completed", duration: "1h", timestamp: "6 hours ago" }
-    ]
+    recentExecutions: workflows
+      .filter((w) => w.lastRun)
+      .sort((a, b) => new Date(b.lastRun!).getTime() - new Date(a.lastRun!).getTime())
+      .slice(0, 5)
+      .map((w) => ({
+        workflow: w.name,
+        status: w.status,
+        successRate: w.successRate ?? 0,
+        runs: w.executionCount ?? 0,
+        timestamp: new Date(w.lastRun!).toLocaleString(),
+      })),
   };
 
   return (
@@ -346,23 +350,28 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
           <div className="mt-6">
             <h3 className="text-md font-semibold text-theme-text-primary mb-3">Recent Executions</h3>
             <div className="space-y-2">
+              {workflowAnalytics.recentExecutions.length === 0 && (
+                <p className="text-sm text-theme-text-secondary p-3">No workflow executions recorded yet.</p>
+              )}
               {workflowAnalytics.recentExecutions.map((execution, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-theme-muted rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className={`w-2 h-2 rounded-full ${
-                      execution.status === "completed" ? "bg-green-500" : "bg-red-500"
+                      execution.status === "active" ? "bg-green-500" : execution.status === "paused" ? "bg-yellow-500" : "bg-slate-400"
                     }`}></div>
                     <div>
                       <p className="font-medium text-theme-text-primary">{execution.workflow}</p>
-                      <p className="text-sm text-theme-text-secondary">{execution.timestamp}</p>
+                      <p className="text-sm text-theme-text-secondary">Last run {execution.timestamp}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-sm text-theme-text-secondary">{execution.duration}</span>
+                    <span className="text-sm text-theme-text-secondary">{execution.runs} run{execution.runs === 1 ? "" : "s"}</span>
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      execution.status === "completed" 
-                        ? "bg-green-100 text-green-800" 
-                        : "bg-red-100 text-red-800"
+                      execution.status === "active"
+                        ? "bg-green-100 text-green-800"
+                        : execution.status === "paused"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-slate-100 text-slate-800"
                     }`}>
                       {execution.status}
                     </span>

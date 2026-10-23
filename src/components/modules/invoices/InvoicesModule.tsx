@@ -14,10 +14,7 @@ interface InvoicesModuleProps {
 
 export const InvoicesModule: React.FC<InvoicesModuleProps> = ({
   tenantSlug,
-  initialInvoices = [
-    { id: 'INV-001', billId: 'BILL-001', customer: 'Tech Solutions Inc', amount: '$12,450', status: 'Sent', issueDate: '2024-03-10', dueDate: '2024-04-10' },
-    { id: 'INV-002', billId: 'BILL-002', customer: 'Office Supply Co', amount: '$3,750', status: 'Draft', issueDate: '2024-03-09', dueDate: '2024-04-09' }
-  ]
+  initialInvoices = []
 }) => {
   const [invoices] = React.useState<Invoice[]>(initialInvoices);
   const [alert, setAlert] = React.useState<AlertMessage | null>(null);

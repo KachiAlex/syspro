@@ -12,9 +12,9 @@ interface VendorsHeaderProps {
 
 export const VendorsHeader: React.FC<VendorsHeaderProps> = ({
   totalVendors,
-  activeContracts = 89,
-  avgPerformance = '4.2/5',
-  monthlySpend = '$45,678'
+  activeContracts = 0,
+  avgPerformance = '—',
+  monthlySpend = '—'
 }) => {
   const stats = [
     { label: 'Total Vendors', value: totalVendors, icon: Building, color: 'text-theme-accent' },

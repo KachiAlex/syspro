@@ -14,10 +14,7 @@ interface PurchaseOrdersModuleProps {
 
 export const PurchaseOrdersModule: React.FC<PurchaseOrdersModuleProps> = ({
   tenantSlug,
-  initialPOs = [
-    { id: 'PO-001', poNumber: 'PO-2024-001', vendor: 'Tech Solutions Inc', date: '2024-03-10', amount: '$12,450', status: 'Approved', items: 5 },
-    { id: 'PO-002', poNumber: 'PO-2024-002', vendor: 'Office Supply Co', date: '2024-03-09', amount: '$3,750', status: 'Pending', items: 3 }
-  ]
+  initialPOs = []
 }) => {
   const [purchaseOrders] = React.useState<PurchaseOrder[]>(initialPOs);
   const [alert, setAlert] = React.useState<AlertMessage | null>(null);

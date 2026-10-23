@@ -19,10 +19,7 @@ interface ProcurementModuleProps {
 
 export const ProcurementModule: React.FC<ProcurementModuleProps> = ({
   tenantSlug,
-  initialRequisitions = [
-    { id: 'REQ-2024-001', requester: 'Alex Johnson', department: 'IT', items: 3, value: '$12,450', status: 'Pending Approval' },
-    { id: 'REQ-2024-002', requester: 'Sarah Williams', department: 'Marketing', items: 5, value: '$8,750', status: 'Approved' }
-  ]
+  initialRequisitions = []
 }) => {
   const [requisitions] = React.useState<Requisition[]>(initialRequisitions);
   const [alert, setAlert] = React.useState<AlertMessage | null>(null);

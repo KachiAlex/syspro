@@ -8,10 +8,10 @@ interface MetricsGridProps {
 }
 
 const DEFAULT_METRICS: ProcurementMetrics = {
-  avgApprovalTime: '4.2 days',
-  onTimeDelivery: '87%',
-  avgOrderValue: '$2,450',
-  budgetCompliance: '94%'
+  avgApprovalTime: '—',
+  onTimeDelivery: '—',
+  avgOrderValue: '—',
+  budgetCompliance: '—'
 };
 
 export const MetricsGrid: React.FC<MetricsGridProps> = ({

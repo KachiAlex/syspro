@@ -60,7 +60,7 @@ export default function ManagerAttendanceDashboard({
           todayStatus: record.attendanceStatus,
           workMode: record.workMode,
           lastCheckIn: record.checkInTime,
-          trend: Math.random() * 10 - 5, // Simulated trend
+          trend: 0,
         }));
 
         setTeamMembers(members);

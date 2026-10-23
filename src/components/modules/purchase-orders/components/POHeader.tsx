@@ -12,9 +12,9 @@ interface POHeaderProps {
 
 export const POHeader: React.FC<POHeaderProps> = ({
   totalPOs,
-  pendingPOs = 12,
-  totalValue = '$234,567',
-  onOrder = '$89,234'
+  pendingPOs = 0,
+  totalValue = '—',
+  onOrder = '—'
 }) => {
   const stats = [
     { label: 'Total POs', value: totalPOs, icon: FileText, color: 'text-theme-accent' },

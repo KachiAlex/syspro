@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Plus, Eye, Edit, Trash2, Download, Filter, Package, AlertCircle, TrendingUp, Archive, RefreshCw } from 'lucide-react';
-import { 
-  CreateProductModal, 
-  ViewProductModal, 
+import {
+  CreateProductModal,
+  ViewProductModal,
   AdjustStockModal,
-  ImportInventoryModal 
 } from './inventory-modals';
+import ImportInventoryModal from '@/app/tenant-admin/components/ImportInventoryModal';
 
 interface Product {
   id: string;
@@ -280,10 +280,16 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
     }
   };
 
-  const handleImport = (data: any) => {
-    // Mock import functionality
-    setSuccess("Products imported successfully");
-    setShowImportModal(false);
+  const handleImport = async (items: any[]) => {
+    const res = await fetch(`/api/inventory/bulk?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items }),
+    });
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(payload.error || 'Failed to import items');
+    await loadProducts();
+    return payload;
   };
 
   const handleExport = () => {
@@ -766,10 +772,10 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
         onSubmit={handleSubmitAdjustment}
         product={selectedProduct}
       />
-      <ImportInventoryModal 
+      <ImportInventoryModal
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
-        onSubmit={handleImport}
+        onImport={handleImport}
       />
     </div>
   );

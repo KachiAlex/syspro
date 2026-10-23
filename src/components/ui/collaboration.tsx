@@ -91,59 +91,6 @@ export function CollaborationPanel({
     });
     setEvents(initialEvents);
 
-    // Simulate active users (in real app, this would come from WebSocket)
-    const mockUsers: ActiveUser[] = [
-      {
-        id: '1',
-        name: 'John Doe',
-        avatar: '/avatars/john.jpg',
-        status: 'editing',
-        lastSeen: new Date(),
-        cursor: { line: 15, column: 25 }
-      },
-      {
-        id: '2',
-        name: 'Jane Smith',
-        avatar: '/avatars/jane.jpg',
-        status: 'viewing',
-        lastSeen: new Date(Date.now() - 30000)
-      }
-    ];
-    setActiveUsers(mockUsers);
-
-    // Load mock comments
-    const mockComments: Comment[] = [
-      {
-        id: '1',
-        userId: '1',
-        userName: 'John Doe',
-        userAvatar: '/avatars/john.jpg',
-        content: 'This looks great! I think we should add more details to the requirements section.',
-        timestamp: new Date(Date.now() - 3600000),
-        replies: [
-          {
-            id: '1-1',
-            userId: '2',
-            userName: 'Jane Smith',
-            userAvatar: '/avatars/jane.jpg',
-            content: 'I agree. Let me add those details.',
-            timestamp: new Date(Date.now() - 1800000),
-            replies: []
-          }
-        ]
-      },
-      {
-        id: '2',
-        userId: '3',
-        userName: 'Bob Johnson',
-        content: 'Can we review the budget estimates? They seem a bit high.',
-        timestamp: new Date(Date.now() - 7200000),
-        isPinned: true,
-        replies: []
-      }
-    ];
-    setComments(mockComments);
-
     return unsubscribe;
   }, [resourceId, resourceType]);
 

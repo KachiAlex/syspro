@@ -10,64 +10,86 @@ interface Role {
   name: string;
   description: string;
   permissions: string[];
-  userCount: number;
   color: string;
+  isSystem: boolean;
 }
 
-const roles: Role[] = [
-  {
-    id: '1',
-    name: 'System Administrator',
-    description: 'Full system access and configuration',
-    permissions: ['Full Access', 'User Management', 'System Settings', 'Branch Management'],
-    userCount: 2,
-    color: 'bg-red-500'
-  },
-  {
-    id: '2',
-    name: 'Branch Manager',
-    description: 'Manage branch operations and staff',
-    permissions: ['Branch Management', 'User Management', 'Reporting'],
-    userCount: 5,
-    color: 'bg-blue-500'
-  },
-  {
-    id: '3',
-    name: 'Sales Manager',
-    description: 'Manage sales team and customer relationships',
-    permissions: ['Sales Management', 'Reporting', 'Customer Management'],
-    userCount: 3,
-    color: 'bg-green-500'
-  },
-  {
-    id: '4',
-    name: 'Financial Analyst',
-    description: 'Financial reporting and budget management',
-    permissions: ['Financial Reporting', 'Budget Management'],
-    userCount: 4,
-    color: 'bg-purple-500'
-  },
-  {
-    id: '5',
-    name: 'HR Manager',
-    description: 'Employee management and payroll',
-    permissions: ['HR Management', 'Payroll', 'Employee Records'],
-    userCount: 2,
-    color: 'bg-amber-500'
-  },
-  {
-    id: '6',
-    name: 'Marketing Specialist',
-    description: 'Marketing campaigns and content management',
-    permissions: ['Content Management', 'Campaign Management'],
-    userCount: 6,
-    color: 'bg-pink-500'
-  }
+const ROLE_COLORS = [
+  'bg-red-500',
+  'bg-blue-500',
+  'bg-green-500',
+  'bg-purple-500',
+  'bg-amber-500',
+  'bg-pink-500',
+  'bg-indigo-500',
+  'bg-teal-500',
 ];
 
 export default function UsersPage() {
   const { tenantSlug } = useTenantContext();
   const [activeTab, setActiveTab] = useState<'users' | 'roles'>('users');
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [rolesError, setRolesError] = useState<string | null>(null);
+  const [roleMsg, setRoleMsg] = useState<string | null>(null);
+
+  const loadRoles = useCallback(async () => {
+    if (!tenantSlug) return;
+    setRolesError(null);
+    try {
+      const res = await fetch(`/api/tenant/roles?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to load roles');
+      setRoles(
+        (payload.roles || []).map((r: any, i: number) => ({
+          id: r.id,
+          name: r.name,
+          description: r.description || '',
+          permissions: r.permissions || [],
+          color: ROLE_COLORS[i % ROLE_COLORS.length],
+          isSystem: Boolean(r.is_system),
+        }))
+      );
+    } catch (err) {
+      setRolesError(err instanceof Error ? err.message : 'Failed to load roles');
+    }
+  }, [tenantSlug]);
+
+  useEffect(() => { loadRoles(); }, [loadRoles]);
+
+  const createRole = async () => {
+    const name = window.prompt('Role name');
+    if (!name || !name.trim() || !tenantSlug) return;
+    const description = window.prompt('Description (optional)') || '';
+    setRoleMsg(null);
+    try {
+      const res = await fetch('/api/tenant/roles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantSlug, name: name.trim(), description, permissions: [] }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to create role');
+      await loadRoles();
+    } catch (err) {
+      setRoleMsg(err instanceof Error ? err.message : 'Failed to create role');
+    }
+  };
+
+  const deleteRole = async (role: Role) => {
+    if (!tenantSlug) return;
+    if (!window.confirm(`Delete role "${role.name}"? Its assignments will be removed.`)) return;
+    setRoleMsg(null);
+    try {
+      const res = await fetch(`/api/tenant/roles/${encodeURIComponent(role.id)}?tenantSlug=${encodeURIComponent(tenantSlug)}`, { method: 'DELETE' });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to delete role');
+      await loadRoles();
+    } catch (err) {
+      setRoleMsg(err instanceof Error ? err.message : 'Failed to delete role');
+    }
+  };
+
+  const allPermissions = [...new Set(roles.flatMap((r) => r.permissions))];
 
   return (
     <div className="p-6 space-y-6">
@@ -107,6 +129,11 @@ export default function UsersPage() {
 
       {activeTab === 'roles' && (
         <>
+          {(rolesError || roleMsg) && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+              {rolesError || roleMsg}
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-text-tertiary w-4 h-4" />
@@ -116,13 +143,19 @@ export default function UsersPage() {
                 className="w-full pl-10 pr-4 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
               />
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white brand-gradient rounded-lg hover:opacity-90">
+            <button
+              onClick={createRole}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white brand-gradient rounded-lg hover:opacity-90"
+            >
               <Plus className="w-4 h-4" />
               Create Role
             </button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {roles.length === 0 && !rolesError && (
+              <p className="text-sm text-theme-text-secondary col-span-full">Loading roles…</p>
+            )}
             {roles.map((role) => (
               <div key={role.id} className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -132,17 +165,17 @@ export default function UsersPage() {
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-theme-text-primary">{role.name}</h3>
-                      <span className="text-xs text-theme-text-secondary">{role.userCount} users</span>
+                      <span className="text-xs text-theme-text-secondary">{role.isSystem ? 'System role' : 'Custom role'}</span>
                     </div>
                   </div>
-                  <button className="text-theme-text-tertiary hover:text-theme-text-secondary">
-                    <Edit className="w-4 h-4" />
-                  </button>
                 </div>
-                <p className="text-sm text-theme-text-secondary mb-4">{role.description}</p>
+                <p className="text-sm text-theme-text-secondary mb-4">{role.description || 'No description'}</p>
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-theme-text-primary">Permissions:</p>
                   <div className="flex flex-wrap gap-1">
+                    {role.permissions.length === 0 && (
+                      <span className="text-xs text-theme-text-tertiary">No permissions assigned</span>
+                    )}
                     {role.permissions.map((permission, index) => (
                       <span
                         key={index}
@@ -153,13 +186,15 @@ export default function UsersPage() {
                     ))}
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-theme-border flex items-center justify-between">
-                  <button className="text-sm text-theme-accent hover:text-theme-accent-hover font-medium">
-                    Edit Role
-                  </button>
-                  <button className="text-sm text-red-600 hover:text-theme-danger font-medium">
-                    Delete
-                  </button>
+                <div className="mt-4 pt-4 border-t border-theme-border flex items-center justify-end">
+                  {!role.isSystem && (
+                    <button
+                      onClick={() => deleteRole(role)}
+                      className="text-sm text-red-600 hover:text-theme-danger font-medium"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -180,7 +215,14 @@ export default function UsersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-theme-border">
-                  {['Full Access', 'User Management', 'System Settings', 'Branch Management', 'Reporting', 'Financial Reporting', 'HR Management', 'Sales Management'].map(permission => (
+                  {allPermissions.length === 0 && (
+                    <tr>
+                      <td colSpan={roles.length + 1} className="px-4 py-6 text-sm text-theme-text-secondary text-center">
+                        No permissions defined.
+                      </td>
+                    </tr>
+                  )}
+                  {allPermissions.map(permission => (
                     <tr key={permission}>
                       <td className="px-4 py-3 text-sm text-theme-text-primary">{permission}</td>
                       {roles.map(role => (

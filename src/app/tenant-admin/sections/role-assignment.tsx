@@ -33,41 +33,6 @@ interface Role {
   color?: string;
 }
 
-const DEFAULT_ROLES = [
-  {
-    id: "admin",
-    name: "Administrator",
-    description: "Full system access",
-    color: "bg-red-50 border-red-200 text-red-900",
-    scope: "tenant",
-    permissions: [],
-  },
-  {
-    id: "manager",
-    name: "Manager",
-    description: "Write access to most modules",
-    color: "bg-purple-50 border-purple-200 text-purple-900",
-    scope: "tenant",
-    permissions: [],
-  },
-  {
-    id: "editor",
-    name: "Editor",
-    description: "Write access with restrictions",
-    color: "bg-green-50 border-green-200 text-green-900",
-    scope: "tenant",
-    permissions: [],
-  },
-  {
-    id: "viewer",
-    name: "Viewer",
-    description: "Read-only access",
-    color: "bg-blue-50 border-blue-200 text-theme-text-primary",
-    scope: "tenant",
-    permissions: [],
-  },
-];
-
 interface Props {
   tenantSlug?: string | null;
 }
@@ -76,7 +41,7 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
   const ts = tenantSlug ;
 
   const [users, setUsers] = useState<User[]>([]);
-  const [roles, setRoles] = useState<Role[]>(DEFAULT_ROLES);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [rolesLoading, setRolesLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -122,32 +87,18 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
 
       const data = await response.json();
       const customRoles = data.roles || [];
-      
-      // Merge custom roles with default roles, preferring custom roles
-      const mergedRoles = [...DEFAULT_ROLES];
-      customRoles.forEach((customRole: any) => {
-        const existingIndex = mergedRoles.findIndex(r => r.id === customRole.id);
-        if (existingIndex >= 0) {
-          // Replace default with custom
-          mergedRoles[existingIndex] = {
-            ...customRole,
-            description: customRole.name,
-            color: "bg-indigo-50 border-indigo-200 text-theme-text-primary", // Custom role color
-          };
-        } else {
-          // Add new custom role
-          mergedRoles.push({
-            ...customRole,
-            description: customRole.name,
-            color: "bg-indigo-50 border-indigo-200 text-theme-text-primary",
-          });
-        }
-      });
-      
+
+      // Roles come pre-seeded by the API (system presets + custom roles)
+      const mergedRoles: Role[] = customRoles.map((customRole: any) => ({
+        ...customRole,
+        description: customRole.description || customRole.name,
+        color: "bg-indigo-50 border-indigo-200 text-theme-text-primary",
+      }));
+
       setRoles(mergedRoles);
     } catch (error) {
       console.error("Failed to fetch roles:", error);
-      // Keep default roles on error
+      setRoles([]);
     } finally {
       setRolesLoading(false);
     }

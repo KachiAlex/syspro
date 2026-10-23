@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { FileText, Search, Filter, Download, Eye, Calendar, Clock, User, Shield, AlertTriangle, CheckCircle, XCircle, Server, Database, Mail, Settings, Users } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { FileText, Search, Download, Clock, User, Shield, AlertTriangle, CheckCircle, XCircle, Server, Database, Settings, Users } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 
 interface AuditLog {
@@ -14,129 +13,27 @@ interface AuditLog {
   resource: string;
   resourceType: string;
   ipAddress: string;
-  userAgent: string;
   status: 'success' | 'failure' | 'warning';
   details: string;
   riskLevel: 'low' | 'medium' | 'high' | 'critical';
 }
 
-const auditLogs: AuditLog[] = [
-  {
-    id: '1',
-    timestamp: '2024-04-03 14:30:15',
-    userId: '1',
-    userName: 'Sarah Johnson',
-    action: 'User Login',
-    resource: 'Admin Panel',
-    resourceType: 'System',
-    ipAddress: '192.168.1.100',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    status: 'success',
-    details: 'Successful login from corporate network',
-    riskLevel: 'low'
-  },
-  {
-    id: '2',
-    timestamp: '2024-04-03 14:25:42',
-    userId: '3',
-    userName: 'Yuki Tanaka',
-    action: 'Data Export',
-    resource: 'Sales Report Q1 2024',
-    resourceType: 'Report',
-    ipAddress: '203.45.67.89',
-    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-    status: 'success',
-    details: 'Exported 1,247 records to CSV format',
-    riskLevel: 'medium'
-  },
-  {
-    id: '3',
-    timestamp: '2024-04-03 14:20:00',
-    userId: '2',
-    userName: 'James Wilson',
-    action: 'Permission Change',
-    resource: 'Michael Chen',
-    resourceType: 'User',
-    ipAddress: '172.16.0.45',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    status: 'success',
-    details: 'Changed user role from Financial Analyst to Senior Financial Analyst',
-    riskLevel: 'high'
-  },
-  {
-    id: '4',
-    timestamp: '2024-04-03 14:15:30',
-    userId: 'unknown',
-    userName: 'Unknown User',
-    action: 'Failed Login Attempt',
-    resource: 'Admin Panel',
-    resourceType: 'System',
-    ipAddress: '198.51.100.23',
-    userAgent: 'Mozilla/5.0 (compatible; scanner/1.0)',
-    status: 'failure',
-    details: 'Failed login attempt with invalid credentials',
-    riskLevel: 'high'
-  },
-  {
-    id: '5',
-    timestamp: '2024-04-03 14:10:15',
-    userId: '5',
-    userName: 'Ahmed Hassan',
-    action: 'System Configuration',
-    resource: 'Email Settings',
-    resourceType: 'Settings',
-    ipAddress: '185.123.45.67',
-    userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36',
-    status: 'success',
-    details: 'Updated SMTP server configuration',
-    riskLevel: 'medium'
-  },
-  {
-    id: '6',
-    timestamp: '2024-04-03 14:05:00',
-    userId: '1',
-    userName: 'Sarah Johnson',
-    action: 'Database Backup',
-    resource: 'Production Database',
-    resourceType: 'Database',
-    ipAddress: '10.0.0.15',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    status: 'success',
-    details: 'Automated backup completed successfully (2.4GB)',
-    riskLevel: 'low'
-  },
-  {
-    id: '7',
-    timestamp: '2024-04-03 14:00:30',
-    userId: '4',
-    userName: 'Michael Chen',
-    action: 'Data Modification',
-    resource: 'Customer Records',
-    resourceType: 'Data',
-    ipAddress: '203.45.67.89',
-    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-    status: 'warning',
-    details: 'Bulk update of 245 customer records',
-    riskLevel: 'medium'
-  },
-  {
-    id: '8',
-    timestamp: '2024-04-03 13:55:45',
-    userId: 'system',
-    userName: 'System',
-    action: 'Security Alert',
-    resource: 'Firewall Rules',
-    resourceType: 'Security',
-    ipAddress: 'localhost',
-    userAgent: 'System Process',
-    status: 'warning',
-    details: 'Multiple failed login attempts detected from IP 198.51.100.23',
-    riskLevel: 'critical'
-  }
-];
+function inferResourceType(resource: string): string {
+  const r = (resource || '').toLowerCase();
+  if (r.includes('user') || r.includes('employee') || r.includes('role') || r.includes('permission')) return 'User';
+  if (r.includes('database') || r.includes('backup')) return 'Database';
+  if (r.includes('setting') || r.includes('config')) return 'Settings';
+  if (r.includes('report')) return 'Report';
+  if (r.includes('data') || r.includes('record') || r.includes('customer')) return 'Data';
+  if (r.includes('security') || r.includes('firewall') || r.includes('login') || r.includes('auth')) return 'Security';
+  return 'System';
+}
 
 export default function AuditPage() {
   const { tenantSlug } = useTenantContext();
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAction, setSelectedAction] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -144,10 +41,46 @@ export default function AuditPage() {
   const [dateRange, setDateRange] = useState('today');
   const [selectedResourceType, setSelectedResourceType] = useState('all');
 
+  useEffect(() => {
+    if (!tenantSlug) return;
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(null);
+    fetch(`/api/tenant/audit?tenantSlug=${encodeURIComponent(tenantSlug)}`)
+      .then(async (res) => {
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(payload.error || 'Failed to load audit logs');
+        const logs: AuditLog[] = (payload.logs || []).map((row: any) => ({
+          id: String(row.id),
+          timestamp: row.timestamp ? new Date(row.timestamp).toLocaleString() : '—',
+          userId: row.user || 'system',
+          userName: row.user || 'system',
+          action: row.action || 'Unknown action',
+          resource: row.resource || '—',
+          resourceType: inferResourceType(row.resource || ''),
+          ipAddress: '—',
+          status: 'success',
+          details: row.details || '',
+          riskLevel: 'low',
+        }));
+        if (!cancelled) setAuditLogs(logs);
+      })
+      .catch((err) => {
+        if (!cancelled) setLoadError(err instanceof Error ? err.message : 'Failed to load audit logs');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantSlug]);
+
   const filteredLogs = auditLogs.filter(log => {
-    const matchesSearch = log.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         log.resource.toLowerCase().includes(searchTerm.toLowerCase());
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = log.userName.toLowerCase().includes(term) ||
+                         log.action.toLowerCase().includes(term) ||
+                         log.resource.toLowerCase().includes(term);
     const matchesAction = selectedAction === 'all' || log.action === selectedAction;
     const matchesStatus = selectedStatus === 'all' || log.status === selectedStatus;
     const matchesRiskLevel = selectedRiskLevel === 'all' || log.riskLevel === selectedRiskLevel;
@@ -200,8 +133,32 @@ export default function AuditPage() {
   const resourceTypes = [...new Set(auditLogs.map(l => l.resourceType))];
   const successfulActions = auditLogs.filter(l => l.status === 'success').length;
   const failedActions = auditLogs.filter(l => l.status === 'failure').length;
-  const warningActions = auditLogs.filter(l => l.status === 'warning').length;
-  const criticalRisk = auditLogs.filter(l => l.riskLevel === 'critical').length;
+  const criticalRisk = auditLogs.filter(l => l.riskLevel === 'critical' || l.riskLevel === 'high').length;
+
+  const { mostActiveUser, mostCommonAction } = useMemo(() => {
+    const byUser = new Map<string, number>();
+    const byAction = new Map<string, number>();
+    for (const log of auditLogs) {
+      byUser.set(log.userName, (byUser.get(log.userName) ?? 0) + 1);
+      byAction.set(log.action, (byAction.get(log.action) ?? 0) + 1);
+    }
+    const topOf = (map: Map<string, number>) =>
+      [...map.entries()].sort((a, b) => b[1] - a[1])[0];
+    const topUser = topOf(byUser);
+    const topAction = topOf(byAction);
+    return {
+      mostActiveUser: topUser ? `${topUser[0]} (${topUser[1]} action${topUser[1] === 1 ? '' : 's'})` : '—',
+      mostCommonAction: topAction ? topAction[0] : '—',
+    };
+  }, [auditLogs]);
+
+  const securityAlerts = auditLogs.filter(
+    (l) =>
+      l.status === 'failure' ||
+      l.riskLevel === 'high' ||
+      l.riskLevel === 'critical' ||
+      /fail|denied|unauthor|invalid/i.test(l.action)
+  );
 
   const exportLogs = () => {
     const csvContent = [
@@ -238,13 +195,19 @@ export default function AuditPage() {
         </div>
       </div>
 
+      {loadError && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+          {loadError}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-theme-text-secondary">Total Activities</p>
               <p className="text-3xl font-bold text-theme-text-primary mt-2">{auditLogs.length}</p>
-              <p className="text-xs text-theme-accent mt-2">Last 24 hours</p>
+              <p className="text-xs text-theme-accent mt-2">Most recent entries</p>
             </div>
             <FileText className="w-12 h-12 text-blue-100" />
           </div>
@@ -254,7 +217,9 @@ export default function AuditPage() {
             <div>
               <p className="text-sm font-medium text-theme-text-secondary">Successful</p>
               <p className="text-3xl font-bold text-green-600 mt-2">{successfulActions}</p>
-              <p className="text-xs text-green-600 mt-2">{((successfulActions / auditLogs.length) * 100).toFixed(1)}% success rate</p>
+              <p className="text-xs text-green-600 mt-2">
+                {auditLogs.length > 0 ? `${((successfulActions / auditLogs.length) * 100).toFixed(1)}% success rate` : 'No activity'}
+              </p>
             </div>
             <CheckCircle className="w-12 h-12 text-green-100" />
           </div>
@@ -272,7 +237,7 @@ export default function AuditPage() {
         <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-theme-text-secondary">Critical Risk</p>
+              <p className="text-sm font-medium text-theme-text-secondary">High Risk</p>
               <p className="text-3xl font-bold text-red-600 mt-2">{criticalRisk}</p>
               <p className="text-xs text-red-600 mt-2">Immediate action required</p>
             </div>
@@ -366,10 +331,24 @@ export default function AuditPage() {
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Status</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Risk Level</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">IP Address</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Actions</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Details</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-theme-border">
+              {loading && (
+                <tr>
+                  <td colSpan={8} className="px-6 py-8 text-center text-sm text-theme-text-secondary">
+                    Loading audit logs…
+                  </td>
+                </tr>
+              )}
+              {!loading && filteredLogs.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-6 py-8 text-center text-sm text-theme-text-secondary">
+                    {auditLogs.length === 0 ? 'No audit activity recorded yet.' : 'No logs match the selected filters.'}
+                  </td>
+                </tr>
+              )}
               {filteredLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-theme-muted">
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
@@ -385,7 +364,6 @@ export default function AuditPage() {
                       <User className="w-4 h-4 text-theme-text-tertiary" />
                       <div>
                         <p className="text-sm font-medium text-theme-text-primary">{log.userName}</p>
-                        <p className="text-xs text-theme-text-secondary">ID: {log.userId}</p>
                       </div>
                     </div>
                   </td>
@@ -417,13 +395,8 @@ export default function AuditPage() {
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                     <span className="text-sm text-theme-text-primary">{log.ipAddress}</span>
                   </td>
-                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-accent hover:text-blue-700">
-                        <Eye className="w-3 h-3" />
-                        <span className="hidden sm:inline">View</span>
-                      </button>
-                    </div>
+                  <td className="px-4 sm:px-6 py-4 max-w-md">
+                    <span className="text-sm text-theme-text-secondary break-all">{log.details || '—'}</span>
                   </td>
                 </tr>
               ))}
@@ -438,19 +411,19 @@ export default function AuditPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-theme-text-secondary">Most Active User</span>
-              <span className="text-sm font-semibold text-theme-text-primary">Sarah Johnson (3 actions)</span>
+              <span className="text-sm font-semibold text-theme-text-primary">{mostActiveUser}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-theme-text-secondary">Most Common Action</span>
-              <span className="text-sm font-semibold text-theme-accent">User Login</span>
+              <span className="text-sm font-semibold text-theme-accent">{mostCommonAction}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-theme-text-secondary">High Risk Activities</span>
-              <span className="text-sm font-semibold text-orange-600">2</span>
+              <span className="text-sm font-semibold text-orange-600">{criticalRisk}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-theme-text-secondary">Failed Login Attempts</span>
-              <span className="text-sm font-semibold text-red-600">1</span>
+              <span className="text-sm text-theme-text-secondary">Failed Attempts</span>
+              <span className="text-sm font-semibold text-red-600">{failedActions}</span>
             </div>
           </div>
         </div>
@@ -458,27 +431,18 @@ export default function AuditPage() {
         <div className="bg-theme-surface rounded-lg border border-theme-border p-6">
           <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Security Alerts</h3>
           <div className="space-y-4">
-            <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-red-900">Critical Security Alert</p>
-                <p className="text-xs text-red-700">Multiple failed login attempts detected</p>
+            {securityAlerts.length === 0 && (
+              <p className="text-sm text-theme-text-secondary">No security alerts — all recent activity is normal.</p>
+            )}
+            {securityAlerts.slice(0, 5).map((log) => (
+              <div key={log.id} className="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-900">{log.action}</p>
+                  <p className="text-xs text-red-700">{log.userName} — {log.timestamp}</p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
-              <AlertTriangle className="w-5 h-5 text-amber-600" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-amber-900">High Risk Activity</p>
-                <p className="text-xs text-amber-700">Permission changes detected</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <Shield className="w-5 h-5 text-theme-accent" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-theme-text-primary">System Update</p>
-                <p className="text-xs text-blue-700">Database backup completed</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>

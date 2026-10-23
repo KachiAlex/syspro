@@ -8,22 +8,9 @@ interface VendorAnalyticsProps {
   spendData?: VendorSpend[];
 }
 
-const DEFAULT_PERFORMANCE: VendorPerformance[] = [
-  { level: 'Excellent', count: 45, pct: 27, color: 'bg-green-500' },
-  { level: 'Good', count: 67, pct: 40, color: 'bg-blue-500' },
-  { level: 'Average', count: 34, pct: 20, color: 'bg-yellow-500' },
-  { level: 'Poor', count: 21, pct: 13, color: 'bg-red-500' }
-];
-
-const DEFAULT_SPEND: VendorSpend[] = [
-  { name: 'Manufacturing Partners Inc', spend: '$234,567', pct: 35 },
-  { name: 'Tech Solutions Inc', spend: '$125,000', pct: 19 },
-  { name: 'Global Logistics Ltd', spend: '$89,234', pct: 13 }
-];
-
 export const VendorAnalytics: React.FC<VendorAnalyticsProps> = ({
-  performanceData = DEFAULT_PERFORMANCE,
-  spendData = DEFAULT_SPEND
+  performanceData = [],
+  spendData = []
 }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

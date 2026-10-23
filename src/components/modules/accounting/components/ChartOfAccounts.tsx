@@ -8,27 +8,10 @@ interface ChartOfAccountsProps {
   equity?: { label: string; amount: string }[];
 }
 
-const DEFAULT_ASSETS = [
-  { label: 'Cash', amount: '$67,234' },
-  { label: 'Accounts Receivable', amount: '$45,678' },
-  { label: 'Equipment', amount: '$89,234' }
-];
-
-const DEFAULT_LIABILITIES = [
-  { label: 'Accounts Payable', amount: '$23,456' },
-  { label: 'Short-term Debt', amount: '$12,345' },
-  { label: 'Accrued Expenses', amount: '$8,234' }
-];
-
-const DEFAULT_EQUITY = [
-  { label: 'Retained Earnings', amount: '$100,567' },
-  { label: 'Capital Stock', amount: '$50,000' }
-];
-
 export const ChartOfAccounts: React.FC<ChartOfAccountsProps> = ({
-  assets = DEFAULT_ASSETS,
-  liabilities = DEFAULT_LIABILITIES,
-  equity = DEFAULT_EQUITY
+  assets = [],
+  liabilities = [],
+  equity = []
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

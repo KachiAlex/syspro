@@ -21,10 +21,7 @@ interface BillsModuleProps {
 
 export const BillsModule: React.FC<BillsModuleProps> = ({
   tenantSlug,
-  initialBills = [
-    { id: 'BILL-2024-045', vendor: 'Tech Solutions Inc', amount: '$12,450.00', dueDate: '2024-03-15', status: 'Unpaid' },
-    { id: 'BILL-2024-044', vendor: 'Office Supply Co', amount: '$3,750.00', dueDate: '2024-03-10', status: 'Partially Paid' }
-  ]
+  initialBills = []
 }) => {
   // Use the new API hook for real data
   const {
@@ -122,8 +119,15 @@ export const BillsModule: React.FC<BillsModuleProps> = ({
   const handleSchedulePayment = async (data: any) => {
     setIsSubmitting(true);
     try {
-      // Schedule payment - for now just show success
-      // In a real scenario, this would call an API endpoint
+      const res = await fetch('/api/finance/vendor-payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, status: 'scheduled' }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error || 'Failed to schedule payment');
+      }
       showAlert('success', 'Payment scheduled successfully!');
       setShowScheduleModal(false);
     } catch (err) {

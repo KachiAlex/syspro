@@ -60,55 +60,9 @@ export function PresenceIndicator({
   const [isConnected, setIsConnected] = useState(true);
 
   useEffect(() => {
-    // Simulate presence data (in real app, this would come from WebSocket)
-    const mockUsers: PresenceUser[] = [
-      {
-        id: '1',
-        name: 'John Doe',
-        avatar: '/avatars/john.jpg',
-        status: 'online',
-        activity: 'editing',
-        lastSeen: new Date(),
-        location: { page: '/projects/project-123', section: 'overview' },
-        cursor: { line: 15, column: 25 },
-        permissions: { canEdit: true, canView: true, canComment: true }
-      },
-      {
-        id: '2',
-        name: 'Jane Smith',
-        avatar: '/avatars/jane.jpg',
-        status: 'online',
-        activity: 'viewing',
-        lastSeen: new Date(),
-        location: { page: '/projects/project-123', section: 'tasks' },
-        permissions: { canEdit: false, canView: true, canComment: true }
-      },
-      {
-        id: '3',
-        name: 'Bob Johnson',
-        status: 'away',
-        activity: 'idle',
-        lastSeen: new Date(Date.now() - 300000),
-        location: { page: '/projects/project-123', section: 'timeline' },
-        permissions: { canEdit: true, canView: true, canComment: true }
-      },
-      {
-        id: '4',
-        name: 'Alice Brown',
-        status: 'offline',
-        activity: 'idle',
-        lastSeen: new Date(Date.now() - 3600000),
-        permissions: { canEdit: false, canView: true, canComment: false }
-      }
-    ];
-    setUsers(mockUsers);
-
-    // Simulate connection status
-    const connectionInterval = setInterval(() => {
-      setIsConnected(Math.random() > 0.1); // 90% uptime simulation
-    }, 5000);
-
-    return () => clearInterval(connectionInterval);
+    // Presence requires a realtime backend; until then, show no other users.
+    setUsers([]);
+    setIsConnected(true);
   }, [resourceId, resourceType]);
 
   const onlineUsers = users.filter(user => user.status !== 'offline');
@@ -334,9 +288,9 @@ export function CompactPresence({
   const [editingCount, setEditingCount] = useState(0);
 
   useEffect(() => {
-    // Simulate counts
-    setOnlineCount(3);
-    setEditingCount(1);
+    // Presence requires a realtime backend; until then, report zero.
+    setOnlineCount(0);
+    setEditingCount(0);
   }, [resourceId, resourceType]);
 
   return (
@@ -416,24 +370,9 @@ export function usePresence(resourceId: string, resourceType: string) {
   const [isConnected, setIsConnected] = useState(true);
 
   useEffect(() => {
-    // Simulate presence data
-    const mockUsers: PresenceUser[] = [
-      {
-        id: '1',
-        name: 'John Doe',
-        status: 'online',
-        activity: 'editing',
-        lastSeen: new Date(),
-        permissions: { canEdit: true, canView: true, canComment: true }
-      }
-    ];
-    setUsers(mockUsers);
-
-    const connectionInterval = setInterval(() => {
-      setIsConnected(Math.random() > 0.1);
-    }, 5000);
-
-    return () => clearInterval(connectionInterval);
+    // Presence requires a realtime backend; until then, show no other users.
+    setUsers([]);
+    setIsConnected(true);
   }, [resourceId, resourceType]);
 
   const updatePresence = (activity: PresenceUser['activity'], location?: string) => {

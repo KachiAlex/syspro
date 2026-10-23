@@ -12,9 +12,9 @@ interface InvoicesHeaderProps {
 
 export const InvoicesHeader: React.FC<InvoicesHeaderProps> = ({
   totalInvoices,
-  sentInvoices = 45,
-  collectedAmount = '$234,567',
-  outstandingAmount = '$45,678'
+  sentInvoices = 0,
+  collectedAmount = '—',
+  outstandingAmount = '—'
 }) => {
   const stats = [
     { label: 'Total Invoices', value: totalInvoices, icon: FileText, color: 'text-theme-accent' },

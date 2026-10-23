@@ -256,13 +256,47 @@ export function UpgradeSubscriptionModal({
   currentPlan: string;
   isLoading?: boolean;
 }) {
-  const plans = [
-    { id: "starter", name: "Starter", price: 29, seats: 5, features: ["5 Users", "10GB Storage", "Basic Support"] },
-    { id: "professional", name: "Professional", price: 99, seats: 25, features: ["25 Users", "100GB Storage", "Priority Support", "Advanced Analytics"] },
-    { id: "enterprise", name: "Enterprise", price: 299, seats: 100, features: ["100 Users", "1TB Storage", "24/7 Support", "Custom Integration", "Dedicated Account Manager"] },
-  ];
+  type BillingPlan = {
+    key: string;
+    name: string;
+    price_label: string | null;
+    price_monthly: number | null;
+    currency: string;
+    period_label: string;
+    max_users: number | null;
+    features: string[];
+  };
+
+  const [plans, setPlans] = useState<BillingPlan[]>([]);
+  const [plansLoading, setPlansLoading] = useState(false);
+  const [plansError, setPlansError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    setPlansLoading(true);
+    setPlansError(null);
+    fetch("/api/tenant/billing/plans")
+      .then(async (res) => {
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(payload.error || "Failed to load plans");
+        if (!cancelled) setPlans(payload.plans || []);
+      })
+      .catch((err) => {
+        if (!cancelled) setPlansError(err instanceof Error ? err.message : "Failed to load plans");
+      })
+      .finally(() => {
+        if (!cancelled) setPlansLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
 
   const availablePlans = plans.filter((p) => p.name.toLowerCase() !== currentPlan.toLowerCase());
+
+  const planPrice = (p: BillingPlan) =>
+    p.price_label ?? (p.price_monthly !== null ? `${p.currency} ${p.price_monthly.toLocaleString()}` : "Custom");
 
   if (!isOpen) return null;
 
@@ -281,12 +315,21 @@ export function UpgradeSubscriptionModal({
         <div className="space-y-4 px-6 py-6">
           <p className="text-sm text-theme-text-secondary">Choose a plan that fits your growing needs.</p>
 
+          {plansLoading && (
+            <p className="text-sm text-theme-text-secondary">Loading plans…</p>
+          )}
+          {plansError && (
+            <p className="text-sm text-red-600">{plansError}</p>
+          )}
+          {!plansLoading && !plansError && availablePlans.length === 0 && (
+            <p className="text-sm text-theme-text-secondary">No upgrade plans are currently available.</p>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {availablePlans.map((plan) => (
-              <div key={plan.id} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface transition-all duration-200">
+              <div key={plan.key} className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent focus:border-theme-accent text-theme-text-primary bg-theme-surface transition-all duration-200">
                 <h3 className="font-semibold text-theme-text-primary">{plan.name}</h3>
-                <p className="text-2xl font-bold text-theme-text-primary mt-2">₦{plan.price}</p>
-                <p className="text-xs text-theme-text-secondary">/month</p>
+                <p className="text-2xl font-bold text-theme-text-primary mt-2">{planPrice(plan)}</p>
+                <p className="text-xs text-theme-text-secondary">{plan.period_label}</p>
 
                 <ul className="space-y-2 mt-4">
                   {plan.features.map((feature, idx) => (

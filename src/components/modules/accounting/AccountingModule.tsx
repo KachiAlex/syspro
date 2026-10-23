@@ -20,10 +20,7 @@ interface AccountingModuleProps {
 
 export const AccountingModule: React.FC<AccountingModuleProps> = ({
   tenantSlug,
-  journalEntries = [
-    { id: 'JE-2024-001', date: '2024-02-22', account: 'Cash', description: 'Payment from Tech Corp', debit: '$15,000', credit: '' },
-    { id: 'JE-2024-002', date: '2024-02-21', account: 'Office Supplies', description: 'Equipment purchase', debit: '$234.75', credit: '' }
-  ]
+  journalEntries = []
 }) => {
   const [alert, setAlert] = React.useState<AlertMessage | null>(null);
 

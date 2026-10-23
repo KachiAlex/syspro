@@ -11,10 +11,10 @@ interface FinancialMetricsProps {
 }
 
 export const FinancialMetrics: React.FC<FinancialMetricsProps> = ({
-  totalRevenue = '$234,567',
-  totalExpenses = '$145,890',
-  netIncome = '$88,677',
-  cashBalance = '$67,234'
+  totalRevenue = '—',
+  totalExpenses = '—',
+  netIncome = '—',
+  cashBalance = '—'
 }) => {
   const metrics = [
     { label: 'Total Revenue', value: totalRevenue, icon: TrendingUp, color: 'text-green-600' },
