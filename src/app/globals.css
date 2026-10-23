@@ -200,10 +200,29 @@ select optgroup {
   color: var(--text-primary);
 }
 
-/* Fields sitting on explicit white containers (legacy light modals) keep
-   dark text on a white popup regardless of the active theme. */
-[class*="bg-white"] select option,
-[class*="bg-white"] select optgroup {
+/* Always-light containers & controls (legacy light pages/modals) keep dark
+   text on light popups regardless of the active theme. Only the light end of
+   the gray scale is listed — translucent bg-white/* tokens intentionally do
+   not match. */
+:is(
+  .bg-white, .bg-gray-50, .bg-gray-100, .bg-gray-200, .bg-gray-300,
+  .bg-slate-50, .bg-slate-100, .bg-slate-200
+) :is(input, textarea, select),
+:is(input, textarea, select):is(
+  .bg-white, .bg-gray-50, .bg-gray-100, .bg-gray-200, .bg-gray-300,
+  .bg-slate-50, .bg-slate-100, .bg-slate-200
+) {
+  color: #000000;
+}
+
+:is(
+  .bg-white, .bg-gray-50, .bg-gray-100, .bg-gray-200, .bg-gray-300,
+  .bg-slate-50, .bg-slate-100, .bg-slate-200
+) :is(select option, select optgroup),
+select:is(
+  .bg-white, .bg-gray-50, .bg-gray-100, .bg-gray-200, .bg-gray-300,
+  .bg-slate-50, .bg-slate-100, .bg-slate-200
+) :is(option, optgroup) {
   background-color: #FFFFFF;
   color: #000000;
 }
@@ -292,20 +311,6 @@ select optgroup {
 /* Font family utility for headings */
 .font-jakarta {
   font-family: 'Plus Jakarta Sans', sans-serif;
-}
-
-/* Legacy safeguard: ensure form elements inside explicit white-bg containers
-   still get dark text regardless of theme. */
-[class*="bg-white"] input,
-[class*="bg-white"] textarea,
-[class*="bg-white"] select,
-[class*="bg-white"] input[type="text"],
-[class*="bg-white"] input[type="email"],
-[class*="bg-white"] input[type="password"],
-[class*="bg-white"] input[type="search"],
-[class*="bg-white"] input[type="number"],
-[class*="bg-white"] input[type="date"] {
-  color: #000000;
 }
 
 /* ============================================================
