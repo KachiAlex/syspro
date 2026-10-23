@@ -5,6 +5,7 @@ import { useCallback } from "react";
 import { format } from "date-fns";
 import VendorDrawer from "./vendor-drawer";
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
+import { COUNTRIES } from "@/lib/reference-data";
 
 interface Vendor {
   id: string;
@@ -502,12 +503,19 @@ export default function VendorsWorkspace() {
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-theme-text-primary">Country</label>
-                <input
-                  type="text"
+                <select
                   value={editForm.country || ""}
                   onChange={(e) => setEditForm({ ...editForm, country: e.target.value })}
                   className="w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary"
-                />
+                >
+                  <option value="">Select country…</option>
+                  {COUNTRIES.map((c) => (
+                    <option key={c.code} value={c.name}>{c.name}</option>
+                  ))}
+                  {editForm.country && !COUNTRIES.some((c) => c.name === editForm.country) && (
+                    <option value={editForm.country}>{editForm.country}</option>
+                  )}
+                </select>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-theme-text-primary">Payment Terms</label>

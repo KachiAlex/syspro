@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { getCurrencySymbol } from '@/lib/tenant/currency';
+import { COUNTRIES } from '@/lib/reference-data';
 import { HRService } from '@/app/tenant-admin/sections/hr-service';
 
 interface EmployeePayroll {
@@ -1536,14 +1537,17 @@ function StatutorySettings({ tenantSlug, sym }: { tenantSlug: string; sym: strin
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-theme-text-primary mb-1">Country Code</label>
-          <input
-            type="text"
+          <label className="block text-xs font-medium text-theme-text-primary mb-1">Country</label>
+          <select
             value={countryCode}
-            onChange={(e) => setCountryCode(e.target.value.toUpperCase().slice(0, 2))}
-            placeholder="NG"
+            onChange={(e) => setCountryCode(e.target.value)}
             className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm"
-          />
+          >
+            <option value="">Select…</option>
+            {COUNTRIES.map((c) => (
+              <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+            ))}
+          </select>
         </div>
         <div>
           <label className="block text-xs font-medium text-theme-text-primary mb-1">Pension — Employee %</label>

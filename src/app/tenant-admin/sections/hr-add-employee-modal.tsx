@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, Link, Plus, Users, AlertCircle, CheckCircle, FileSpreadsheet, Download } from 'lucide-react';
 import { HRService } from './hr-service';
+import { WORLD_CURRENCIES, CURRENCY_SYMBOLS } from '@/lib/currencies';
 
 interface AddEmployeeModalProps {
   isOpen: boolean;
@@ -12,23 +13,7 @@ interface AddEmployeeModalProps {
   tenantSlug: string;
 }
 
-const CURRENCY_OPTIONS = [
-  { code: 'USD', label: 'USD ($)' },
-  { code: 'EUR', label: 'EUR (€)' },
-  { code: 'GBP', label: 'GBP (£)' },
-  { code: 'NGN', label: 'NGN (₦)' },
-  { code: 'JPY', label: 'JPY (¥)' },
-  { code: 'CAD', label: 'CAD (C$)' },
-  { code: 'AUD', label: 'AUD (A$)' },
-  { code: 'INR', label: 'INR (₹)' },
-  { code: 'KES', label: 'KES (KSh)' },
-  { code: 'GHS', label: 'GHS (₵)' },
-];
-
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  USD: '$', EUR: '€', GBP: '£', NGN: '₦', JPY: '¥',
-  CAD: 'C$', AUD: 'A$', INR: '₹', KES: 'KSh', GHS: '₵',
-};
+const CURRENCY_OPTIONS = WORLD_CURRENCIES;
 
 export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose, onSubmit, departments, tenantSlug }) => {
   const [activeTab, setActiveTab] = useState<'manual' | 'excel' | 'invite'>('manual');
@@ -379,7 +364,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                     disabled={loading}
                   >
                     {CURRENCY_OPTIONS.map((c) => (
-                      <option key={c.code} value={c.code}>{c.label}</option>
+                      <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
                     ))}
                   </select>
                 </div>

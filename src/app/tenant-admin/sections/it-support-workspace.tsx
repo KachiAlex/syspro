@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { FormAlert } from "@/components/form";
+import { WORLD_REGIONS } from "@/lib/reference-data";
 import type {
   FieldJob,
   KnowledgeBaseArticle,
@@ -1073,13 +1074,19 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                 </div>
                 <div>
                   <label className="text-sm font-semibold text-theme-text-primary">Region</label>
-                  <input
-                    type="text"
+                  <select
                     value={createForm.region}
                     onChange={(event) => handleCreateFieldChange("region", event.target.value)}
-                    placeholder="Global HQ, EMEA, APAC"
                     className="bg-theme-surface mt-2 w-full rounded-2xl border border-theme-border px-4 py-2 text-sm text-theme-text-primary"
-                  />
+                  >
+                    <option value="">Select region…</option>
+                    {WORLD_REGIONS.map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                    {createForm.region && !WORLD_REGIONS.includes(createForm.region) && (
+                      <option value={createForm.region}>{createForm.region}</option>
+                    )}
+                  </select>
                 </div>
               </div>
 

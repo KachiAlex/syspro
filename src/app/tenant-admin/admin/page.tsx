@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Settings, Users, FileText, Heart, Globe, MapPin, Building, Plus, Edit, Trash2, Eye, TrendingUp, TrendingDown, AlertCircle, CheckCircle, X } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { AdminService } from '@/app/tenant-admin/services/admin-service';
+import { COUNTRIES } from '@/lib/reference-data';
 
 interface AdminTab {
   id: string;
@@ -454,7 +455,12 @@ export default function AdminPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-theme-text-primary">Country</label>
-                <input value={branchForm.country} onChange={(e) => setBranchForm({ ...branchForm, country: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary" placeholder="Country" />
+                <select value={branchForm.country} onChange={(e) => setBranchForm({ ...branchForm, country: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary">
+                  <option value="">Select country</option>
+                  {COUNTRIES.map((c) => (
+                    <option key={c.code} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-theme-text-primary">Continent</label>

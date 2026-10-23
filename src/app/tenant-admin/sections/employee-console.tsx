@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { z } from "zod";
 import { useForm } from "@/lib/use-form";
 import { usePermissions, useCanAction } from "@/hooks/use-permissions";
+import { WORLD_REGIONS } from "@/lib/reference-data";
 
 type Employee = {
   id: string;
@@ -196,12 +197,19 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
               placeholder="Branch"
               className="bg-theme-surface rounded-lg border px-3 py-2 text-theme-text-primary"
             />
-            <input
+            <select
               value={form.values.region}
               onChange={(e) => form.setValue("region", e.target.value)}
-              placeholder="Region"
               className="bg-theme-surface rounded-lg border px-3 py-2 text-theme-text-primary"
-            />
+            >
+              <option value="">Region…</option>
+              {WORLD_REGIONS.map((r) => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+              {form.values.region && !WORLD_REGIONS.includes(form.values.region) && (
+                <option value={form.values.region}>{form.values.region}</option>
+              )}
+            </select>
           </div>
           <button
             type="submit"
@@ -255,11 +263,19 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
                         />
                       </td>
                       <td>
-                        <input
+                        <select
                           value={editForm.region}
                           onChange={(e) => setEditForm({ ...editForm, region: e.target.value })}
                           className="bg-theme-surface rounded-lg border px-2 py-1 w-full text-theme-text-primary"
-                        />
+                        >
+                          <option value="">Region…</option>
+                          {WORLD_REGIONS.map((r) => (
+                            <option key={r} value={r}>{r}</option>
+                          ))}
+                          {editForm.region && !WORLD_REGIONS.includes(editForm.region) && (
+                            <option value={editForm.region}>{editForm.region}</option>
+                          )}
+                        </select>
                       </td>
                       <td className="text-xs">{emp.status}</td>
                       <td className="flex gap-2">

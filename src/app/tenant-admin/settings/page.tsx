@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useCallback } from "react";
 import { Save, RotateCcw, Download, Bell, Shield, Database, Building, Users, CheckCircle, AlertCircle } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { WORLD_CURRENCIES } from '@/lib/currencies';
+import { TIMEZONES } from '@/lib/reference-data';
 
 interface Setting {
   id: string;
@@ -56,7 +58,7 @@ const settings: Setting[] = [
     description: 'System default timezone',
     value: 'UTC',
     type: 'select',
-    options: ['UTC-12', 'UTC-11', 'UTC-10', 'UTC-9', 'UTC-8', 'UTC-7', 'UTC-6', 'UTC-5', 'UTC-4', 'UTC-3', 'UTC-2', 'UTC-1', 'UTC', 'UTC+1', 'UTC+2', 'UTC+3', 'UTC+4', 'UTC+5', 'UTC+6', 'UTC+7', 'UTC+8', 'UTC+9', 'UTC+10', 'UTC+11', 'UTC+12']
+    options: TIMEZONES
   },
   {
     id: 'date-format',
@@ -74,7 +76,7 @@ const settings: Setting[] = [
     description: 'Primary currency for financial operations',
     value: 'USD',
     type: 'select',
-    options: ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR', 'AED', 'NGN', 'ZAR', 'GHS', 'KES', 'EGP', 'MAD', 'TZS', 'UGX', 'XOF', 'XAF', 'BRL', 'MXN', 'ARS', 'CLP', 'COP', 'PEN', 'UYU', 'CAD', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF', 'RON', 'BGN', 'HRK', 'RUB', 'TRY', 'ILS', 'SAR', 'QAR', 'KWD', 'BHD', 'OMR', 'JOD', 'LBP', 'PKR', 'BDT', 'LKR', 'NPR', 'MMK', 'IDR', 'THB', 'MYR', 'SGD', 'PHP', 'VND', 'KRW', 'TWD', 'HKD', 'CNY', 'NZD', 'FJD', 'PGK', 'SBD', 'VUV', 'WST', 'TOP']
+    options: WORLD_CURRENCIES.map((c) => c.code)
   },
 
   // Security Settings

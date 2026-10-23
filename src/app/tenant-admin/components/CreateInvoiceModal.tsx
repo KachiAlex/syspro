@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { X, AlertCircle, CheckCircle, Plus, Trash2 } from "lucide-react";
+import { CURRENCY_SYMBOL_OPTIONS } from "@/lib/currencies";
 
 interface InvoiceLineItem {
   id: string;
@@ -384,10 +385,9 @@ export default function CreateInvoiceModal({
                   className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
                   disabled={isSubmitting}
                 >
-                  <option value="₦">Nigerian Naira (₦)</option>
-                  <option value="$">US Dollar ($)</option>
-                  <option value="€">Euro (€)</option>
-                  <option value="£">British Pound (£)</option>
+                  {CURRENCY_SYMBOL_OPTIONS.map((o) => (
+                    <option key={o.code} value={o.symbol}>{o.name} ({o.symbol})</option>
+                  ))}
                 </select>
               </div>
               <div>

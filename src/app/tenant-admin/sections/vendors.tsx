@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Eye, Edit, Download, Filter, Building, FileText, Star, TrendingUp, RefreshCw, X } from 'lucide-react';
+import { COUNTRIES } from '@/lib/reference-data';
 
 interface Vendors {
   tenantSlug: string;
@@ -379,13 +380,16 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
                 onChange={(e) => setNewVendor({ ...newVendor, phone: e.target.value })}
                 className="w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
               />
-              <input
-                type="text"
-                placeholder="Country"
+              <select
                 value={newVendor.country}
                 onChange={(e) => setNewVendor({ ...newVendor, country: e.target.value })}
                 className="w-full px-3 py-2 border border-theme-border rounded-lg text-theme-text-primary"
-              />
+              >
+                <option value="">Country…</option>
+                {COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.name}>{c.name}</option>
+                ))}
+              </select>
               <select
                 value={newVendor.paymentTerms}
                 onChange={(e) => setNewVendor({ ...newVendor, paymentTerms: e.target.value })}

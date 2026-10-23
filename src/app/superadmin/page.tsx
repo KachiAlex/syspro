@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit, Trash2, LogOut, X, Eye, CheckSquare, Square, ChevronLeft, ChevronRight, Settings, Tag, Power } from 'lucide-react';
+import { WORLD_CURRENCIES } from '@/lib/currencies';
 
 interface LicenseTier {
   id: number;
@@ -1822,10 +1823,9 @@ export default function SuperadminPage() {
                     onChange={(e) => setTierFormData({ ...tierFormData, currency: e.target.value })}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
                   >
-                    <option value="USD">USD ($)</option>
-                    <option value="NGN">NGN (₦)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
+                    {WORLD_CURRENCIES.map((c) => (
+                      <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -1997,13 +1997,9 @@ export default function SuperadminPage() {
                     onChange={(e) => setPlanFormData({ ...planFormData, currency: e.target.value })}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
                   >
-                    <option value="NGN">NGN (₦)</option>
-                    <option value="USD">USD ($)</option>
-                    <option value="KES">KES (KSh)</option>
-                    <option value="GHS">GHS (₵)</option>
-                    <option value="ZAR">ZAR (R)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
+                    {WORLD_CURRENCIES.map((c) => (
+                      <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div>

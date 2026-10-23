@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
+import { INDUSTRIES } from "@/lib/reference-data";
 
 const TABS = ["prospects", "contracts", "stages", "campaigns"] as const;
 
@@ -65,7 +66,10 @@ export default function CrmDepthPage() {
               <input placeholder="Name" value={f.pName ?? ""} onChange={(e) => setF({ ...f, pName: e.target.value })} className={input} />
               <input placeholder="Company" value={f.pCompany ?? ""} onChange={(e) => setF({ ...f, pCompany: e.target.value })} className={input} />
               <input placeholder="Email" value={f.pEmail ?? ""} onChange={(e) => setF({ ...f, pEmail: e.target.value })} className={input} />
-              <input placeholder="Industry" value={f.pIndustry ?? ""} onChange={(e) => setF({ ...f, pIndustry: e.target.value })} className={input} />
+              <select value={f.pIndustry ?? ""} onChange={(e) => setF({ ...f, pIndustry: e.target.value })} className={input}>
+                <option value="">Industry…</option>
+                {INDUSTRIES.map((i) => <option key={i} value={i}>{i}</option>)}
+              </select>
               <button className={btn} onClick={() => post({ action: "create-prospect", name: f.pName, companyName: f.pCompany, email: f.pEmail, industry: f.pIndustry })}>Add Prospect</button>
             </div>
             <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">

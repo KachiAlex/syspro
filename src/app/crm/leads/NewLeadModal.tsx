@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import { CURRENCY_SYMBOL_OPTIONS } from "@/lib/currencies";
 
 export default function NewLeadModal({
   isOpen,
@@ -157,11 +158,15 @@ export default function NewLeadModal({
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
-              <input
+              <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300 text-black"
-              />
+                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300 text-black bg-white"
+              >
+                {CURRENCY_SYMBOL_OPTIONS.map((o) => (
+                  <option key={o.code} value={o.symbol}>{o.symbol} — {o.name}</option>
+                ))}
+              </select>
             </div>
           </div>
 

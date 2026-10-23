@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { FormAlert } from "@/components/form";
+import { WORLD_REGIONS } from "@/lib/reference-data";
 
 import type {
   AttributionModel,
@@ -997,7 +998,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
             <div className="grid gap-3 md:grid-cols-2">
               <Input label="Name" value={campaignForm.name} onChange={(value) => setCampaignForm((prev) => ({ ...prev, name: value }))} required />
               <Input label="Subsidiary" value={campaignForm.subsidiary} onChange={(value) => setCampaignForm((prev) => ({ ...prev, subsidiary: value }))} />
-              <Input label="Region" value={campaignForm.region} onChange={(value) => setCampaignForm((prev) => ({ ...prev, region: value }))} />
+              <Select label="Region" value={campaignForm.region} onChange={(value) => setCampaignForm((prev) => ({ ...prev, region: value }))} options={WORLD_REGIONS} />
               <Input label="Branch" value={campaignForm.branch} onChange={(value) => setCampaignForm((prev) => ({ ...prev, branch: value }))} />
               <Input label="Budget" value={campaignForm.budget} onChange={(value) => setCampaignForm((prev) => ({ ...prev, budget: value }))} type="number" />
               <Select label="Channel" value={campaignForm.channel} onChange={(value) => setCampaignForm((prev) => ({ ...prev, channel: value as DemandChannel }))} options={CHANNEL_OPTIONS} />
@@ -1033,7 +1034,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
             <div className="grid gap-3 md:grid-cols-2">
               <Input label="Source name" value={leadSourceForm.name} onChange={(value) => setLeadSourceForm((prev) => ({ ...prev, name: value }))} required />
               <Select label="Channel" value={leadSourceForm.channel} onChange={(value) => setLeadSourceForm((prev) => ({ ...prev, channel: value as DemandChannel }))} options={CHANNEL_OPTIONS} />
-              <Input label="Region" value={leadSourceForm.region} onChange={(value) => setLeadSourceForm((prev) => ({ ...prev, region: value }))} />
+              <Select label="Region" value={leadSourceForm.region} onChange={(value) => setLeadSourceForm((prev) => ({ ...prev, region: value }))} options={WORLD_REGIONS} />
               <Input label="Branch" value={leadSourceForm.branch} onChange={(value) => setLeadSourceForm((prev) => ({ ...prev, branch: value }))} />
               <Input label="Subsidiary" value={leadSourceForm.subsidiary} onChange={(value) => setLeadSourceForm((prev) => ({ ...prev, subsidiary: value }))} />
               <Input label="Cost center" value={leadSourceForm.costCenter} onChange={(value) => setLeadSourceForm((prev) => ({ ...prev, costCenter: value }))} required />
@@ -1084,7 +1085,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: 
               <Select label="Audience" value={assetForm.audience} onChange={(value) => setAssetForm((prev) => ({ ...prev, audience: value as EnablementAsset["audience"] }))} options={["sales", "revops", "executive", "partner"]} />
               <Input label="Owner" value={assetForm.owner} onChange={(value) => setAssetForm((prev) => ({ ...prev, owner: value }))} />
               <Input label="Subsidiary" value={assetForm.subsidiary} onChange={(value) => setAssetForm((prev) => ({ ...prev, subsidiary: value }))} />
-              <Input label="Region" value={assetForm.region} onChange={(value) => setAssetForm((prev) => ({ ...prev, region: value }))} />
+              <Select label="Region" value={assetForm.region} onChange={(value) => setAssetForm((prev) => ({ ...prev, region: value }))} options={WORLD_REGIONS} />
               <Input label="Tags" value={assetForm.tags} onChange={(value) => setAssetForm((prev) => ({ ...prev, tags: value }))} placeholder="fiber, enterprise" />
             </div>
             {formError && (

@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
+import { WORLD_CURRENCIES } from "@/lib/currencies";
+import { INDUSTRIES, TIMEZONES, WORLD_REGIONS } from "@/lib/reference-data";
 
 type StepStatus = "pending" | "complete" | "skipped";
 
@@ -420,8 +422,9 @@ function ProfileForm({
     baseCurrency: "",
     timezone: "",
   });
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm((f) => ({ ...f, [k]: e.target.value }));
+  const set = (k: keyof typeof form) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => setForm((f) => ({ ...f, [k]: e.target.value }));
   return (
     <form
       className="grid gap-3 sm:grid-cols-2"
@@ -439,26 +442,53 @@ function ProfileForm({
       </label>
       <label className="block text-sm">
         <span className="mb-1 block font-medium text-theme-text-primary">Industry</span>
-        <input className={inputCls} value={form.industry} onChange={set("industry")} />
+        <select className={inputCls} value={form.industry} onChange={set("industry")}>
+          <option value="">Select industry…</option>
+          {INDUSTRIES.map((i) => (
+            <option key={i} value={i}>
+              {i}
+            </option>
+          ))}
+          {form.industry && !INDUSTRIES.includes(form.industry) && (
+            <option value={form.industry}>{form.industry}</option>
+          )}
+        </select>
       </label>
       <label className="block text-sm">
         <span className="mb-1 block font-medium text-theme-text-primary">Region</span>
-        <input className={inputCls} value={form.region} onChange={set("region")} />
+        <select className={inputCls} value={form.region} onChange={set("region")}>
+          <option value="">Select region…</option>
+          {WORLD_REGIONS.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+          {form.region && !WORLD_REGIONS.includes(form.region) && (
+            <option value={form.region}>{form.region}</option>
+          )}
+        </select>
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-theme-text-primary">Base currency (e.g. NGN)</span>
-        <input
-          className={inputCls}
-          maxLength={5}
-          value={form.baseCurrency}
-          onChange={set("baseCurrency")}
-        />
+        <span className="mb-1 block font-medium text-theme-text-primary">Base currency</span>
+        <select className={inputCls} value={form.baseCurrency} onChange={set("baseCurrency")}>
+          <option value="">Select currency…</option>
+          {WORLD_CURRENCIES.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.code} — {c.name}
+            </option>
+          ))}
+        </select>
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-theme-text-primary">
-          Timezone (e.g. Africa/Lagos)
-        </span>
-        <input className={inputCls} value={form.timezone} onChange={set("timezone")} />
+        <span className="mb-1 block font-medium text-theme-text-primary">Timezone</span>
+        <select className={inputCls} value={form.timezone} onChange={set("timezone")}>
+          <option value="">Select timezone…</option>
+          {TIMEZONES.map((tz) => (
+            <option key={tz} value={tz}>
+              {tz}
+            </option>
+          ))}
+        </select>
       </label>
       <div className="flex items-end">
         <button className={btnPrimary} disabled={busy} type="submit">
@@ -693,14 +723,21 @@ function CurrencyForm({
       </p>
       <label className="block text-sm">
         <span className="mb-1 block font-medium text-theme-text-primary">Currency</span>
-        <input
+        <select
           className={inputCls}
           required
-          maxLength={5}
           value={form.currency}
           onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}
-          placeholder="USD"
-        />
+        >
+          <option value="" disabled>
+            Select currency…
+          </option>
+          {WORLD_CURRENCIES.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.code} — {c.name}
+            </option>
+          ))}
+        </select>
       </label>
       <label className="block text-sm">
         <span className="mb-1 block font-medium text-theme-text-primary">Effective date</span>

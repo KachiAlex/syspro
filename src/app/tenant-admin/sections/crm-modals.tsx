@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { X, AlertTriangle, Upload, UserPlus, Building2, FileDown, Target, Edit2 } from "lucide-react";
+import { CURRENCY_SYMBOL_OPTIONS } from "@/lib/currencies";
 
 export const LEAD_STAGE_OPTIONS = [
   { value: "new", label: "New" },
@@ -1743,14 +1744,16 @@ export function ConvertLeadToDealModal({
             </div>
             <div>
               <label className="block text-sm font-medium text-theme-text-primary mb-1">Currency</label>
-              <input
-                type="text"
+              <select
                 value={formData.currency}
                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
                 className="w-full px-3 py-2 border border-theme-border rounded-lg focus:ring-2 focus:ring-theme-accent text-theme-text-primary bg-theme-surface"
-                placeholder="₦"
                 disabled={isLoading}
-              />
+              >
+                {CURRENCY_SYMBOL_OPTIONS.map((o) => (
+                  <option key={o.code} value={o.symbol}>{o.name} ({o.symbol})</option>
+                ))}
+              </select>
             </div>
           </div>
 

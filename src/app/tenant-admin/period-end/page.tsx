@@ -5,6 +5,7 @@ import {
   AlertCircle, CalendarClock, Currency, Loader2, Lock, LockOpen, Play, RefreshCw, X,
 } from "lucide-react";
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
+import { WORLD_CURRENCIES } from "@/lib/currencies";
 
 const fmt = (n: number) =>
   `₦${Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
@@ -186,8 +187,13 @@ export default function PeriodEndPage() {
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2 items-end rounded-lg border border-theme-border bg-theme-surface/60 p-4">
             <label className="text-xs text-theme-text-secondary">Currency
-              <input className="block w-28 rounded bg-theme-muted px-3 py-2 text-sm uppercase" placeholder="USD"
-                value={rateForm.currency} onChange={(e) => setRateForm({ ...rateForm, currency: e.target.value.toUpperCase() })} />
+              <select className="block w-48 rounded bg-theme-muted px-3 py-2 text-sm"
+                value={rateForm.currency} onChange={(e) => setRateForm({ ...rateForm, currency: e.target.value })}>
+                <option value="">Select…</option>
+                {WORLD_CURRENCIES.map((c) => (
+                  <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+                ))}
+              </select>
             </label>
             <label className="text-xs text-theme-text-secondary">Rate date
               <input type="date" className="block rounded bg-theme-muted px-3 py-2 text-sm"

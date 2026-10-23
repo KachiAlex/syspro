@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
+import { WORLD_CURRENCIES } from "@/lib/currencies";
 import { AlertCircle, CheckCircle2, Plus, Search } from "lucide-react";
 
 const fmt = (n: number) => `₦${Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
@@ -69,9 +70,15 @@ function PeggedTab({ tenantSlug, post, busy, setError }: any) {
     <div className="space-y-4">
       <p className="text-sm text-theme-text-secondary">Fix one currency to another — rate resolution walks the peg chain when no direct rate exists (e.g. AED → USD at 3.6725).</p>
       <div className="flex flex-wrap gap-2 items-end rounded border border-theme-border p-4">
-        <input className={`${inputCls} w-28`} placeholder="Currency" maxLength={3} value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })} />
+        <select className={`${inputCls} w-44`} value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })}>
+          <option value="">Currency…</option>
+          {WORLD_CURRENCIES.map((c) => <option key={c.code} value={c.code}>{c.code} — {c.name}</option>)}
+        </select>
         <span className="text-theme-text-secondary pb-2">→</span>
-        <input className={`${inputCls} w-28`} placeholder="Pegged to" maxLength={3} value={form.peggedTo} onChange={(e) => setForm({ ...form, peggedTo: e.target.value.toUpperCase() })} />
+        <select className={`${inputCls} w-44`} value={form.peggedTo} onChange={(e) => setForm({ ...form, peggedTo: e.target.value })}>
+          <option value="">Pegged to…</option>
+          {WORLD_CURRENCIES.map((c) => <option key={c.code} value={c.code}>{c.code} — {c.name}</option>)}
+        </select>
         <input className={`${inputCls} w-36`} placeholder="Rate" value={form.rate} onChange={(e) => setForm({ ...form, rate: e.target.value })} />
         <button className={btnCls} disabled={busy || form.currency.length !== 3 || form.peggedTo.length !== 3 || !form.rate}
           onClick={async () => { const r = await post("/api/finance/pegged", { ...form, rate: Number(form.rate) }); if (r) { setForm({ currency: "", peggedTo: "", rate: "" }); load(); } }}>
@@ -93,7 +100,10 @@ function PeggedTab({ tenantSlug, post, busy, setError }: any) {
         </tbody>
       </table>
       <div className="flex gap-2 items-center">
-        <input className={`${inputCls} w-32`} placeholder="Currency" maxLength={3} value={resolve.currency} onChange={(e) => setResolve({ ...resolve, currency: e.target.value.toUpperCase() })} />
+        <select className={`${inputCls} w-44`} value={resolve.currency} onChange={(e) => setResolve({ ...resolve, currency: e.target.value })}>
+          <option value="">Currency…</option>
+          {WORLD_CURRENCIES.map((c) => <option key={c.code} value={c.code}>{c.code} — {c.name}</option>)}
+        </select>
         <button className={btnCls} disabled={resolve.currency.length !== 3}
           onClick={async () => {
             const j = await (await fetch(`/api/finance/pegged?tenantSlug=${encodeURIComponent(tenantSlug)}&view=resolve&currency=${resolve.currency}`)).json();

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { X } from "lucide-react";
+import { CURRENCY_SYMBOL_OPTIONS } from "@/lib/currencies";
 
 type Deal = {
   id?: string;
@@ -132,10 +133,9 @@ export default function NewDealModal({
                   onChange={handleChange}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
                 >
-                  <option value="₦">₦ (Naira)</option>
-                  <option value="$">$ (USD)</option>
-                  <option value="€">€ (EUR)</option>
-                  <option value="£">£ (GBP)</option>
+                  {CURRENCY_SYMBOL_OPTIONS.map((o) => (
+                    <option key={o.code} value={o.symbol}>{o.symbol} — {o.name}</option>
+                  ))}
                 </select>
               </div>
             </div>

@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import type { OrgNode, OrgNodeStatus, OrgTier } from "@/lib/org-tree";
 import { TIER_DEFINITIONS } from "@/lib/org-tree";
+import { WORLD_CURRENCIES } from "@/lib/currencies";
+import { TIMEZONES } from "@/lib/reference-data";
 
 // ============================================================================
 // ARCHITECTURE OVERVIEW
@@ -62,27 +64,8 @@ const TIER_CREATION_OPTIONS: Array<{
   },
 ] as const;
 
-const TIMEZONE_OPTIONS = [
-  { value: "UTC", label: "UTC (Universal Time)" },
-  { value: "GMT", label: "GMT (Greenwich Mean Time)" },
-  { value: "EST", label: "EST (Eastern Standard)" },
-  { value: "CST", label: "CST (Central Standard)" },
-  { value: "PST", label: "PST (Pacific Standard)" },
-  { value: "IST", label: "IST (Indian Standard)" },
-  { value: "SGT", label: "SGT (Singapore Time)" },
-  { value: "SAST", label: "SAST (South Africa Standard)" },
-];
-
-const CURRENCY_OPTIONS = [
-  { value: "USD", label: "USD - US Dollar" },
-  { value: "EUR", label: "EUR - Euro" },
-  { value: "GBP", label: "GBP - British Pound" },
-  { value: "INR", label: "INR - Indian Rupee" },
-  { value: "SGD", label: "SGD - Singapore Dollar" },
-  { value: "JPY", label: "JPY - Japanese Yen" },
-  { value: "ZAR", label: "ZAR - South African Rand" },
-  { value: "NGN", label: "NGN - Nigerian Naira" },
-];
+const TIMEZONE_OPTIONS = TIMEZONES;
+const CURRENCY_OPTIONS = WORLD_CURRENCIES;
 
 // ============================================================================
 // TYPES
@@ -746,9 +729,9 @@ function BranchConfigStep({
             onChange={(e) => onCurrencyChange(e.target.value)}
             className="w-full rounded-lg border border-theme-border px-4 py-2 text-sm focus:border-theme-border focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-opacity-10 bg-theme-surface"
           >
-            {CURRENCY_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
+            {CURRENCY_OPTIONS.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.code} — {c.name}
               </option>
             ))}
           </select>
@@ -764,9 +747,9 @@ function BranchConfigStep({
             onChange={(e) => onTimezoneChange(e.target.value)}
             className="w-full rounded-lg border border-theme-border px-4 py-2 text-sm focus:border-theme-border focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-opacity-10 bg-theme-surface"
           >
-            {TIMEZONE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
+            {TIMEZONE_OPTIONS.map((tz) => (
+              <option key={tz} value={tz}>
+                {tz}
               </option>
             ))}
           </select>
