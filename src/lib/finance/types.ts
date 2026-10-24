@@ -32,6 +32,9 @@ export type FinanceCashAccount = {
   trend: "up" | "down";
   change: string;
   region: string;
+  bankName?: string | null;
+  accountName?: string | null;
+  maskedAccountNumber?: string | null;
 };
 
 export type FinanceExpenseBreakdown = {
@@ -74,6 +77,11 @@ export type FinanceAccount = {
   changeValue: number | null;
   changePeriod: string | null;
   trend: "up" | "down";
+  bankName: string | null;
+  bankCode: string | null;
+  accountNumber: string | null;
+  accountName: string | null;
+  swiftCode: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -88,6 +96,11 @@ const financeAccountSharedSchema = z.object({
   changeValue: z.coerce.number().optional(),
   changePeriod: z.string().optional(),
   trend: z.enum(["up", "down"]).default("up"),
+  bankName: z.string().optional(),
+  bankCode: z.string().optional(),
+  accountNumber: z.string().optional(),
+  accountName: z.string().optional(),
+  swiftCode: z.string().optional(),
 });
 
 export const financeAccountCreateSchema = financeAccountSharedSchema.extend({

@@ -52,6 +52,14 @@ interface CashAccount {
   trend: "up" | "down";
   change: string;
   region: string;
+  bankName?: string | null;
+  accountName?: string | null;
+  maskedAccountNumber?: string | null;
+}
+
+interface BankOption {
+  name: string;
+  code?: string;
 }
 
 interface DashboardData {
@@ -87,9 +95,26 @@ export default function FinanceDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAccountForm, setShowAccountForm] = useState(false);
-  const [accountForm, setAccountForm] = useState({ name: "", type: "bank" as "bank" | "cash", currency: "₦", balance: "" });
+  const emptyAccountForm = {
+    name: "",
+    type: "bank" as "bank" | "cash",
+    currency: "₦",
+    balance: "",
+    bankName: "",
+    bankCode: "",
+    accountNumber: "",
+    accountName: "",
+    swiftCode: "",
+  };
+  const [accountForm, setAccountForm] = useState(emptyAccountForm);
   const [savingAccount, setSavingAccount] = useState(false);
   const [accountError, setAccountError] = useState<string | null>(null);
+  const [bankOptions, setBankOptions] = useState<BankOption[]>([]);
+  const [banksCountry, setBanksCountry] = useState<string | null>(null);
+  const [resolveAvailable, setResolveAvailable] = useState(false);
+  const [resolvingName, setResolvingName] = useState(false);
+  const [resolveNote, setResolveNote] = useState<string | null>(null);
+  const [nameAutofilled, setNameAutofilled] = useState(false);
 
   const loadDashboard = useCallback(async () => {
     if (!tenantSlug) return;
@@ -116,6 +141,72 @@ export default function FinanceDashboard() {
     if (tenantSlug) loadDashboard();
   }, [loadDashboard, tenantSlug]);
 
+  const openAccountForm = useCallback(async () => {
+    setShowAccountForm(true);
+    setAccountForm(emptyAccountForm);
+    setAccountError(null);
+    setResolveNote(null);
+    setNameAutofilled(false);
+    if (!tenantSlug || bankOptions.length) return;
+    try {
+      const res = await fetch(`/api/finance/banks?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+      if (!res.ok) return;
+      const payload = await res.json();
+      setBankOptions(Array.isArray(payload.banks) ? payload.banks : []);
+      setBanksCountry(payload.countryCode ?? null);
+      setResolveAvailable(Boolean(payload.resolvable));
+    } catch {
+      // bank directory unavailable — the name field falls back to free text
+    }
+  }, [tenantSlug, bankOptions.length]);
+
+  // Resolve the account name automatically once a coded bank is selected
+  // and the account number looks complete.
+  useEffect(() => {
+    if (!showAccountForm || accountForm.type !== "bank") return;
+    const digits = accountForm.accountNumber.replace(/\D/g, "");
+    if (!accountForm.bankCode || digits.length < 8) {
+      if (!digits.length) setResolveNote(null);
+      return;
+    }
+    if (!resolveAvailable) {
+      setResolveNote("Name lookup needs an active Paystack gateway — the name can be entered manually.");
+      return;
+    }
+    let cancelled = false;
+    setResolvingName(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/finance/banks/resolve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tenantSlug, bankCode: accountForm.bankCode, accountNumber: digits }),
+        });
+        const payload = await res.json().catch(() => ({}));
+        if (cancelled) return;
+        if (res.ok && payload.accountName) {
+          setAccountForm((prev) => {
+            const next = { ...prev, accountName: payload.accountName };
+            if (!prev.name || nameAutofilled) next.name = payload.accountName;
+            return next;
+          });
+          setNameAutofilled(true);
+          setResolveNote(null);
+        } else {
+          setResolveNote(typeof payload.error === "string" ? payload.error : "Could not verify the account name");
+        }
+      } catch {
+        if (!cancelled) setResolveNote("Account lookup failed — the name can be entered manually.");
+      } finally {
+        if (!cancelled) setResolvingName(false);
+      }
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [accountForm.accountNumber, accountForm.bankCode, accountForm.type, showAccountForm, resolveAvailable, tenantSlug, nameAutofilled]);
+
   const saveAccount = async () => {
     if (!tenantSlug) return;
     const balance = Number(accountForm.balance);
@@ -127,9 +218,14 @@ export default function FinanceDashboard() {
       setAccountError("Opening balance must be a number");
       return;
     }
+    if (accountForm.type === "bank" && (!accountForm.bankName.trim() || accountForm.bankName === "__other__")) {
+      setAccountError("Select or enter the bank");
+      return;
+    }
     setSavingAccount(true);
     setAccountError(null);
     try {
+      const isBank = accountForm.type === "bank";
       const res = await fetch("/api/finance/accounts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -139,12 +235,19 @@ export default function FinanceDashboard() {
           type: accountForm.type,
           currency: accountForm.currency,
           balance,
+          bankName: isBank ? accountForm.bankName.trim() : undefined,
+          bankCode: isBank && accountForm.bankCode ? accountForm.bankCode : undefined,
+          accountNumber: isBank && accountForm.accountNumber ? accountForm.accountNumber.replace(/\D/g, "") : undefined,
+          accountName: isBank && accountForm.accountName ? accountForm.accountName : undefined,
+          swiftCode: isBank && accountForm.swiftCode.trim() ? accountForm.swiftCode.trim() : undefined,
         }),
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(payload.error ? JSON.stringify(payload.error) : "Failed to create account");
       setShowAccountForm(false);
-      setAccountForm({ name: "", type: "bank", currency: "₦", balance: "" });
+      setAccountForm(emptyAccountForm);
+      setNameAutofilled(false);
+      setResolveNote(null);
       await loadDashboard();
     } catch (err) {
       setAccountError(err instanceof Error ? err.message : "Failed to create account");
@@ -381,7 +484,7 @@ export default function FinanceDashboard() {
             Cash &amp; Bank Accounts
           </h2>
           <button
-            onClick={() => setShowAccountForm(true)}
+            onClick={openAccountForm}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-theme-accent text-white text-sm font-medium hover:opacity-90 transition-opacity font-jakarta"
           >
             <Plus className="h-4 w-4" />
@@ -406,6 +509,12 @@ export default function FinanceDashboard() {
                     <span className="text-xs px-2 py-0.5 rounded-full bg-[rgba(255,255,255,.04)] text-theme-text-secondary font-jakarta">
                       {account.type === "bank" ? "Bank" : "Cash"}
                     </span>
+                    {account.bankName && (
+                      <span className="text-xs text-theme-text-secondary font-jakarta">{account.bankName}</span>
+                    )}
+                    {account.maskedAccountNumber && (
+                      <span className="text-xs text-theme-text-tertiary font-jakarta">{account.maskedAccountNumber}</span>
+                    )}
                     <span className="text-xs text-theme-text-tertiary font-jakarta">{account.region}</span>
                   </div>
                 </div>
@@ -475,7 +584,7 @@ export default function FinanceDashboard() {
       {/* Add Account modal */}
       {showAccountForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-          <div className="w-full max-w-md bg-theme-surface border border-theme-border rounded-[14px] p-6" style={{ boxShadow: '0 12px 40px rgba(0,0,0,.4)' }}>
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-theme-surface border border-theme-border rounded-[14px] p-6" style={{ boxShadow: '0 12px 40px rgba(0,0,0,.4)' }}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-lg font-semibold text-theme-text-primary font-jakarta">Add Cash/Bank Account</h3>
               <button
@@ -487,16 +596,6 @@ export default function FinanceDashboard() {
               </button>
             </div>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-theme-text-secondary mb-1.5 font-jakarta">Account name</label>
-                <input
-                  type="text"
-                  value={accountForm.name}
-                  onChange={(e) => setAccountForm({ ...accountForm, name: e.target.value })}
-                  placeholder="e.g. GTBank — Operating"
-                  className="w-full px-4 py-2 border border-theme-border rounded-[10px] text-sm text-theme-text-primary bg-theme-muted focus:outline-none focus:border-[rgba(227,30,36,.4)] focus:shadow-[0_0_0_3px_rgba(227,30,36,.08)] font-jakarta"
-                />
-              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-theme-text-secondary mb-1.5 font-jakarta">Type</label>
@@ -523,6 +622,90 @@ export default function FinanceDashboard() {
                     ))}
                   </select>
                 </div>
+              </div>
+              {accountForm.type === "bank" && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-theme-text-secondary mb-1.5 font-jakarta">
+                      Bank{banksCountry ? ` (${banksCountry})` : ""}
+                    </label>
+                    {bankOptions.length > 0 ? (
+                      <select
+                        value={accountForm.bankName}
+                        onChange={(e) => {
+                          const bank = bankOptions.find((b) => b.name === e.target.value);
+                          setAccountForm({
+                            ...accountForm,
+                            bankName: e.target.value,
+                            bankCode: bank?.code ?? "",
+                            accountName: "",
+                          });
+                          setResolveNote(null);
+                        }}
+                        className="w-full px-4 py-2 border border-theme-border rounded-[10px] text-sm font-medium text-theme-text-primary bg-theme-muted hover:bg-theme-surface focus:outline-none focus:border-[rgba(227,30,36,.4)] cursor-pointer"
+                      >
+                        <option value="">Select bank…</option>
+                        {bankOptions.map((b) => (
+                          <option key={b.name} value={b.name}>{b.name}</option>
+                        ))}
+                        <option value="__other__">Other (not listed)</option>
+                      </select>
+                    ) : null}
+                    {(bankOptions.length === 0 || accountForm.bankName === "__other__") && (
+                      <input
+                        type="text"
+                        value={accountForm.bankName === "__other__" ? "" : accountForm.bankName}
+                        onChange={(e) => setAccountForm({ ...accountForm, bankName: e.target.value, bankCode: "", accountName: "" })}
+                        placeholder="Bank name"
+                        className="w-full px-4 py-2 border border-theme-border rounded-[10px] text-sm text-theme-text-primary bg-theme-muted focus:outline-none focus:border-[rgba(227,30,36,.4)] focus:shadow-[0_0_0_3px_rgba(227,30,36,.08)] font-jakarta"
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-theme-text-secondary mb-1.5 font-jakarta">Account number</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={accountForm.accountNumber}
+                      onChange={(e) => setAccountForm({ ...accountForm, accountNumber: e.target.value, accountName: "" })}
+                      placeholder="e.g. 0123456789"
+                      className="w-full px-4 py-2 border border-theme-border rounded-[10px] text-sm text-theme-text-primary bg-theme-muted focus:outline-none focus:border-[rgba(227,30,36,.4)] focus:shadow-[0_0_0_3px_rgba(227,30,36,.08)] font-jakarta"
+                    />
+                    {resolvingName && (
+                      <p className="text-xs text-theme-text-tertiary mt-1.5 font-jakarta flex items-center gap-1.5">
+                        <Loader2 className="h-3 w-3 animate-spin" /> Verifying account…
+                      </p>
+                    )}
+                    {!resolvingName && accountForm.accountName && (
+                      <p className="text-xs text-theme-success mt-1.5 font-jakarta">
+                        ✓ {accountForm.accountName}
+                      </p>
+                    )}
+                    {!resolvingName && resolveNote && (
+                      <p className="text-xs text-theme-text-tertiary mt-1.5 font-jakarta">{resolveNote}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-theme-text-secondary mb-1.5 font-jakarta">SWIFT / BIC (optional)</label>
+                    <input
+                      type="text"
+                      value={accountForm.swiftCode}
+                      onChange={(e) => setAccountForm({ ...accountForm, swiftCode: e.target.value })}
+                      placeholder="e.g. ZEIBNGLA"
+                      className="w-full px-4 py-2 border border-theme-border rounded-[10px] text-sm text-theme-text-primary bg-theme-muted focus:outline-none focus:border-[rgba(227,30,36,.4)] focus:shadow-[0_0_0_3px_rgba(227,30,36,.08)] font-jakarta"
+                    />
+                  </div>
+                </>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-theme-text-secondary mb-1.5 font-jakarta">Account name</label>
+                <input
+                  type="text"
+                  value={accountForm.name}
+                  onChange={(e) => { setAccountForm({ ...accountForm, name: e.target.value }); setNameAutofilled(false); }}
+                  placeholder={accountForm.type === "bank" ? "Auto-filled when the account number resolves" : "e.g. Petty cash — HQ"}
+                  className="w-full px-4 py-2 border border-theme-border rounded-[10px] text-sm text-theme-text-primary bg-theme-muted focus:outline-none focus:border-[rgba(227,30,36,.4)] focus:shadow-[0_0_0_3px_rgba(227,30,36,.08)] font-jakarta"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-theme-text-secondary mb-1.5 font-jakarta">Opening balance</label>

@@ -138,6 +138,11 @@ function mapAccountRow(row: FinanceAccountRecord): FinanceDashboardSnapshot["cas
     trend: row.trend === "down" ? "down" : "up",
     change: formatAccountChange(row),
     region: humanizeOrgLabel(row.region_id) ?? "Global",
+    bankName: row.bank_name ?? null,
+    accountName: row.account_name ?? null,
+    maskedAccountNumber: row.account_number
+      ? `•••• ${String(row.account_number).slice(-4)}`
+      : null,
   };
 }
 

@@ -28,6 +28,11 @@ export type FinanceAccountRecord = {
   change_value: number | null;
   change_period: string | null;
   trend: "up" | "down";
+  bank_name: string | null;
+  bank_code: string | null;
+  account_number: string | null;
+  account_name: string | null;
+  swift_code: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -132,6 +137,12 @@ async function ensureFinanceTablesRun(sql: SqlClient = SQL) {
       updated_at timestamptz default now()
     )
   `;
+
+  await sql`alter table finance_accounts add column if not exists bank_name text`;
+  await sql`alter table finance_accounts add column if not exists bank_code text`;
+  await sql`alter table finance_accounts add column if not exists account_number text`;
+  await sql`alter table finance_accounts add column if not exists account_name text`;
+  await sql`alter table finance_accounts add column if not exists swift_code text`;
 
   await sql`
     create table if not exists finance_schedules (
@@ -303,6 +314,11 @@ function normalizeFinanceAccountRow(row: FinanceAccountRecord): FinanceAccount {
     changeValue: row.change_value !== null ? Number(row.change_value) : null,
     changePeriod: row.change_period,
     trend: row.trend === "down" ? "down" : "up",
+    bankName: row.bank_name ?? null,
+    bankCode: row.bank_code ?? null,
+    accountNumber: row.account_number ?? null,
+    accountName: row.account_name ?? null,
+    swiftCode: row.swift_code ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -381,7 +397,12 @@ export async function insertFinanceAccount(payload: FinanceAccountCreateInput): 
       balance,
       change_value,
       change_period,
-      trend
+      trend,
+      bank_name,
+      bank_code,
+      account_number,
+      account_name,
+      swift_code
     ) values (
       ${id},
       ${payload.tenantSlug},
@@ -393,7 +414,12 @@ export async function insertFinanceAccount(payload: FinanceAccountCreateInput): 
       ${payload.balance},
       ${payload.changeValue ?? null},
       ${payload.changePeriod ?? null},
-      ${payload.trend ?? "up"}
+      ${payload.trend ?? "up"},
+      ${payload.bankName ?? null},
+      ${payload.bankCode ?? null},
+      ${payload.accountNumber ?? null},
+      ${payload.accountName ?? null},
+      ${payload.swiftCode ?? null}
     )
     returning *
   `) as FinanceAccountRecord[];
@@ -416,7 +442,12 @@ export async function updateFinanceAccount(
     updates.branchId === undefined &&
     updates.changeValue === undefined &&
     updates.changePeriod === undefined &&
-    updates.trend === undefined
+    updates.trend === undefined &&
+    updates.bankName === undefined &&
+    updates.bankCode === undefined &&
+    updates.accountNumber === undefined &&
+    updates.accountName === undefined &&
+    updates.swiftCode === undefined
   ) {
     const existing = (await sql`select * from finance_accounts where id = ${id} limit 1`) as FinanceAccountRecord[];
     return existing.length ? normalizeFinanceAccountRow(existing[0]) : null;
@@ -434,6 +465,11 @@ export async function updateFinanceAccount(
       change_value = coalesce(${updates.changeValue ?? null}, change_value),
       change_period = coalesce(${updates.changePeriod ?? null}, change_period),
       trend = coalesce(${updates.trend ?? null}, trend),
+      bank_name = coalesce(${updates.bankName ?? null}, bank_name),
+      bank_code = coalesce(${updates.bankCode ?? null}, bank_code),
+      account_number = coalesce(${updates.accountNumber ?? null}, account_number),
+      account_name = coalesce(${updates.accountName ?? null}, account_name),
+      swift_code = coalesce(${updates.swiftCode ?? null}, swift_code),
       updated_at = now()
     where id = ${id}
     returning *
