@@ -26,6 +26,7 @@ import {
   initializeGatewayPayment, listGatewayConfigs, listPaymentLinks,
   upsertGatewayConfig,
 } from "@/lib/finance/gateway-providers";
+import { knownStatesForDocType } from "@/lib/platform/doc-states";
 
 export async function GET(request: NextRequest) {
   const _scope = await requireModuleAccess(request, "admin", "read");
@@ -38,6 +39,17 @@ export async function GET(request: NextRequest) {
     switch (view) {
       case "workflows":
         return NextResponse.json({ workflows: await listWorkflows(context.tenantSlug, searchParams.get("docType") ?? undefined) });
+      case "doc-states": {
+        const docType = String(searchParams.get("docType") ?? "");
+        const names = new Set<string>(knownStatesForDocType(docType));
+        const workflows = await listWorkflows(context.tenantSlug, docType || undefined);
+        for (const w of workflows) {
+          for (const s of (w.states ?? []) as { name?: string }[]) {
+            if (s?.name) names.add(s.name);
+          }
+        }
+        return NextResponse.json({ states: [...names] });
+      }
       case "allowed-actions":
         return NextResponse.json({ actions: await allowedActions(context.tenantSlug, String(searchParams.get("docType")), String(searchParams.get("state")), (searchParams.get("roles") ?? "").split(",").filter(Boolean)) });
       case "print-formats":

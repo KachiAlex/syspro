@@ -41,6 +41,26 @@ export default function PlatformPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Fetch the states this doc type actually uses (canonical lifecycle +
+  // states from existing workflows) to feed the transition From/To dropdowns.
+  useEffect(() => {
+    const docType = (f.wfDoc ?? "").trim();
+    if (!docType) {
+      setF((prev) => (prev.docStates?.length ? { ...prev, docStates: [] } : prev));
+      return;
+    }
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/platform?view=doc-states&docType=${encodeURIComponent(docType)}`);
+        const d = await res.json().catch(() => ({}));
+        setF((prev) => ({ ...prev, docStates: Array.isArray(d.states) ? d.states : [] }));
+      } catch {
+        // leave prior suggestions
+      }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [f.wfDoc]);
+
   const post = async (body: Record<string, unknown>) => {
     const res = await fetch("/api/platform", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
@@ -72,6 +92,31 @@ export default function PlatformPage() {
     setF({ ...f, wfStates: wfStates.map((s, j) => (j === i ? { ...s, ...patch } : s)) });
   const updateWfTransition = (i: number, patch: Partial<WfTransition>) =>
     setF({ ...f, wfTrans: wfTransitions.map((t, j) => (j === i ? { ...t, ...patch } : t)) });
+
+  // From/To options = states defined in the editor + states fetched for this
+  // doc type. Picking a fetched state appends it to the editor list so the
+  // save-time validation stays consistent.
+  const wfStateOptions: string[] = [
+    ...new Set([
+      ...wfStates.map((s) => s.name.trim()).filter(Boolean),
+      ...((f.docStates ?? []) as string[]),
+    ]),
+  ];
+  const pickWfTransitionState = (i: number, field: "from" | "to", value: string) =>
+    setF((prev) => {
+      const prevStates: WfState[] = prev.wfStates ?? [];
+      const nextStates =
+        value && !prevStates.some((s) => s.name.trim() === value)
+          ? [...prevStates, { name: value, docStatus: "" }]
+          : prevStates;
+      return {
+        ...prev,
+        wfStates: nextStates,
+        wfTrans: (prev.wfTrans ?? []).map((t: WfTransition, j: number) =>
+          j === i ? { ...t, [field]: value } : t
+        ),
+      };
+    });
 
   const editWorkflow = (w: any) =>
     setF({
@@ -159,7 +204,12 @@ export default function PlatformPage() {
                       >×</button>
                     </div>
                   ))}
-                  {!wfStates.length && <p className="text-xs text-theme-text-tertiary">Add the statuses documents move through — e.g. Draft → Pending → Approved.</p>}
+                  {!wfStates.length && <p className="text-xs text-theme-text-tertiary">Add the statuses documents move through — e.g. Draft → Pending → Approved. States already used by this doc type appear automatically in the transition dropdowns below.</p>}
+                  {(f.docStates ?? []).length > 0 && (
+                    <p className="mt-1 text-xs text-theme-text-tertiary">
+                      {(f.docStates as string[]).length} state(s) found for this doc type — pick them in the transition dropdowns to add them here.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -172,9 +222,9 @@ export default function PlatformPage() {
                   {wfTransitions.map((t, i) => (
                     <div key={i} className="rounded-lg border border-theme-border p-3">
                       <div className="flex flex-wrap items-center gap-2">
-                        <select value={t.from} onChange={(e) => updateWfTransition(i, { from: e.target.value })} className={input}>
+                        <select value={t.from} onChange={(e) => pickWfTransitionState(i, "from", e.target.value)} className={input}>
                           <option value="">From…</option>
-                          {wfStates.filter((s) => s.name.trim()).map((s) => <option key={s.name} value={s.name.trim()}>{s.name.trim()}</option>)}
+                          {wfStateOptions.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                         <input
                           placeholder="action (e.g. approve)"
@@ -182,9 +232,9 @@ export default function PlatformPage() {
                           onChange={(e) => updateWfTransition(i, { action: e.target.value })}
                           className={input}
                         />
-                        <select value={t.to} onChange={(e) => updateWfTransition(i, { to: e.target.value })} className={input}>
+                        <select value={t.to} onChange={(e) => pickWfTransitionState(i, "to", e.target.value)} className={input}>
                           <option value="">To…</option>
-                          {wfStates.filter((s) => s.name.trim()).map((s) => <option key={s.name} value={s.name.trim()}>{s.name.trim()}</option>)}
+                          {wfStateOptions.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                         <button
                           className={btnSm}
