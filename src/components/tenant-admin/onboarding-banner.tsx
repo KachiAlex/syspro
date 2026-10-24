@@ -39,6 +39,20 @@ export default function OnboardingBanner() {
 
   useEffect(() => {
     load();
+  }, [load, pathname]);
+
+  // The shell persists across client-side navigations, so without these the
+  // banner would keep showing pre-completion state after go-live elsewhere.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") load();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
   }, [load]);
 
   if (!state || state.dismissed || state.completedAt || hiding) return null;
