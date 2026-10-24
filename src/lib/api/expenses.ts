@@ -49,9 +49,11 @@ export interface ExpenseUpdateInput {
 export interface ExpenseApprovalInput {
   expenseId: string;
   tenantSlug: string;
-  approverRole: "MANAGER" | "FINANCE" | "EXECUTIVE";
-  approverId: string;
-  approverName: string;
+  // Approver identity is derived server-side from the session — these are
+  // ignored if supplied.
+  approverRole?: "MANAGER" | "FINANCE" | "EXECUTIVE";
+  approverId?: string;
+  approverName?: string;
   action: "approved" | "rejected" | "clarification_requested";
   reason?: string;
 }

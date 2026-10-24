@@ -314,11 +314,17 @@ export const expenseUpdateSchema = expenseSharedSchema.partial().extend({
 
 export const expenseApproveSchema = z.object({
   tenantSlug: z.string().min(1),
-  action: z.enum(["APPROVED", "REJECTED", "CLARIFY_NEEDED"]),
+  action: z
+    .enum(["APPROVED", "REJECTED", "CLARIFY_NEEDED", "approved", "rejected", "clarification_requested"])
+    .transform((v) =>
+      v.toLowerCase() === "clarification_requested" ? "CLARIFY_NEEDED" : v.toUpperCase()
+    ),
   reason: z.string().optional(),
-  approverRole: z.enum(EXPENSE_APPROVER_ROLES),
-  approverId: z.string().min(1),
-  approverName: z.string().min(1),
+  // Approver identity is derived from the session server-side — these fields
+  // are accepted for backward compatibility but ignored.
+  approverRole: z.enum(EXPENSE_APPROVER_ROLES).optional(),
+  approverId: z.string().min(1).optional(),
+  approverName: z.string().min(1).optional(),
 });
 
 export type ExpenseCreateInput = z.infer<typeof expenseCreateSchema>;

@@ -2202,9 +2202,9 @@ export async function approveExpense(expenseId: string, tenantSlug: string, appr
     ) values (
       ${approvalId},
       ${expenseId},
-      ${approval.approverRole},
-      ${approval.approverId},
-      ${approval.approverName},
+      ${approval.approverRole ?? "FINANCE"},
+      ${approval.approverId ?? "system"},
+      ${approval.approverName ?? "System"},
       ${approval.action},
       ${approval.reason ?? null},
       ${current.amount}
@@ -2239,7 +2239,7 @@ export async function approveExpense(expenseId: string, tenantSlug: string, appr
   // Create audit log
   await sql`
     insert into expense_audit_logs (id, expense_id, action, user_id, details)
-    values (${randomUUID()}, ${expenseId}, 'APPROVAL_' || ${approval.action}, ${approval.approverId}, ${JSON.stringify({ approverRole: approval.approverRole, reason: approval.reason })})
+    values (${randomUUID()}, ${expenseId}, 'APPROVAL_' || ${approval.action}, ${approval.approverId ?? "system"}, ${JSON.stringify({ approverRole: approval.approverRole ?? "FINANCE", reason: approval.reason })})
   `;
 
   return normalizeExpenseRecord(record, current.approvals);

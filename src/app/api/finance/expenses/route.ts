@@ -85,7 +85,14 @@ export async function POST(request: NextRequest) {
     await seedExpenseCategories();
     
     console.log("Creating expense with validated data:", parsed.data);
-    const expense = await createExpense(parsed.data);
+    // Server-owned statuses: a submitted expense always enters the approval
+    // workflow as PENDING (or DRAFT when explicitly saved as a draft) — never
+    // APPROVED/PAID at creation. Client-sent status values are ignored.
+    const expense = await createExpense({
+      ...parsed.data,
+      approvalStatus: parsed.data.approvalStatus === "DRAFT" ? "DRAFT" : "PENDING",
+      paymentStatus: "UNPAID",
+    });
     console.log("Expense created successfully:", expense);
 
     // Check budget for this category
@@ -162,7 +169,25 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const expense = await updateExpense(id, tenantSlug, parsed.data);
+    // Approval status is server-owned — it only moves via /approve. Recording
+    // payment stays possible here, but only once the expense is APPROVED.
+    const { approvalStatus: _ignored, paymentStatus, ...fields } = parsed.data as any;
+    const sanitized: any = { ...fields };
+    if (paymentStatus) {
+      const current = await getExpense(id, tenantSlug);
+      if (!current) {
+        return NextResponse.json({ error: "Expense not found" }, { status: 404 });
+      }
+      if (current.approvalStatus !== "APPROVED") {
+        return NextResponse.json(
+          { error: "Expense must be approved before payment can be recorded" },
+          { status: 409 }
+        );
+      }
+      sanitized.paymentStatus = paymentStatus;
+    }
+
+    const expense = await updateExpense(id, tenantSlug, sanitized);
     if (!expense) {
       return NextResponse.json({ error: "Expense not found" }, { status: 404 });
     }

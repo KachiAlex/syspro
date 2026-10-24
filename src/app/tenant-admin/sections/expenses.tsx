@@ -174,9 +174,6 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
         expenseId: selectedExpense.id,
         tenantSlug: ts,
         action: "approved",
-        approverRole: "MANAGER",
-        approverId: "current-user",
-        approverName: "Manager",
       });
       await loadExpenses();
       setSuccess("Expense approved");
@@ -199,9 +196,6 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
         expenseId: selectedExpense.id,
         tenantSlug: ts,
         action: "rejected",
-        approverRole: "MANAGER",
-        approverId: "current-user",
-        approverName: "Manager",
       });
       await loadExpenses();
       setSuccess("Expense rejected");
@@ -240,9 +234,6 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
           expenseId: id,
           tenantSlug: ts,
           action: "approved",
-          approverRole: "MANAGER",
-          approverId: "current-user",
-          approverName: "Manager",
         });
       }
       await loadExpenses();
@@ -268,9 +259,6 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
           expenseId: id,
           tenantSlug: ts,
           action: "rejected",
-          approverRole: "MANAGER",
-          approverId: "current-user",
-          approverName: "Manager",
         });
       }
       await loadExpenses();
