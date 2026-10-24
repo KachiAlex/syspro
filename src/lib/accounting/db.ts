@@ -32,15 +32,20 @@ export async function createChartOfAccount(
   input: ChartOfAccountCreateInput
 ): Promise<ChartOfAccount> {
   try {
-    // use `sql` template from sql-client
+    // Dual-write both column families: code/name/type (NOT NULL, lowercase
+    // type, consumed by GL posting + bank recon) and account_* (consumed by
+    // the accounting workspace UI).
+    const glType = input.accountType === "INCOME" ? "revenue" : input.accountType.toLowerCase();
     const result = await sql`
       INSERT INTO chart_of_accounts (
+        code, name, type,
         tenant_slug, account_code, account_name, account_type, sub_type,
         parent_account_id, description, currency, is_system_account, is_active,
         branch_id, department_id, project_id,
         allow_manual_posting, require_cost_center, is_reconciliation_account,
         created_by
       ) VALUES (
+        ${input.accountCode}, ${input.accountName}, ${glType},
         ${input.tenantSlug}, ${input.accountCode}, ${input.accountName}, 
         ${input.accountType}, ${input.subType}, ${input.parentAccountId},
         ${input.description}, ${input.currency}, ${input.isSystemAccount},
@@ -51,26 +56,32 @@ export async function createChartOfAccount(
       RETURNING *
     `;
 
-    return Array.isArray(result) ? result[0] : result;
+    const row = Array.isArray(result) ? result[0] : result;
+    return db.mapRow(row) as ChartOfAccount;
   } catch (error) {
     console.error("Error creating chart of account:", error);
     throw error;
   }
 }
 
+// Normalize across the two column families: GL-side code/name/type
+// (lowercase types, 'revenue') and accounting-side account_* (uppercase
+// types, 'INCOME'). Rows may carry either or both.
+const NORMALIZED_ACCOUNT_TYPE =
+  "coalesce(account_type, case upper(type) when 'REVENUE' then 'INCOME' else upper(type) end)";
+
 export async function getChartOfAccounts(
   tenantSlug: string,
   filters?: { accountType?: string; branchId?: string; isActive?: boolean }
 ): Promise<ChartOfAccount[]> {
   try {
-    // use `sql` template from sql-client
-    // Build dynamic query based on filters
-    let whereConditions = ["tenant_slug = $1"];
+    // Tenant rows plus global (tenant_slug is null) seeded defaults.
+    const whereConditions = ["(tenant_slug = $1 or tenant_slug is null)"];
     const params: any[] = [tenantSlug];
     let paramIndex = 2;
 
     if (filters?.accountType) {
-      whereConditions.push(`account_type = $${paramIndex}`);
+      whereConditions.push(`${NORMALIZED_ACCOUNT_TYPE} = $${paramIndex}`);
       params.push(filters.accountType);
       paramIndex++;
     }
@@ -88,13 +99,23 @@ export async function getChartOfAccounts(
     }
 
     const whereClause = whereConditions.join(" AND ");
-    
-    // Use raw query with Neon
-    const query = `SELECT * FROM chart_of_accounts WHERE ${whereClause} ORDER BY account_code`;
-    
-    // Execute with params - Neon supports this
+
+    const query = `
+      SELECT
+        id, tenant_slug, tenant_id, code, name, type, parent_id, metadata,
+        created_at, updated_at, sub_type, subtype, balance, description,
+        parent_account_id, parent_accounts_id, currency, is_system_account,
+        branch_id, department_id, project_id, allow_manual_posting,
+        require_cost_center, is_reconciliation_account, created_by, is_active,
+        coalesce(account_code, code) as account_code,
+        coalesce(account_name, name) as account_name,
+        ${NORMALIZED_ACCOUNT_TYPE} as account_type
+      FROM chart_of_accounts
+      WHERE ${whereClause}
+      ORDER BY coalesce(account_code, code)`;
+
     const result = await (sql as any)(query, params);
-    return Array.isArray(result) ? result : [];
+    return db.mapRows(Array.isArray(result) ? result : []) as ChartOfAccount[];
   } catch (error) {
     console.error("Error fetching chart of accounts:", error);
     return [];
@@ -131,8 +152,12 @@ export async function updateChartOfAccount(
   let paramIndex = 1;
 
   if (input.accountName) {
-    updates.push(`account_name = $${paramIndex++}`);
+    updates.push(`account_name = $${paramIndex}`);
     params.push(input.accountName);
+    paramIndex++;
+    updates.push(`name = $${paramIndex}`);
+    params.push(input.accountName);
+    paramIndex++;
   }
 
   if (input.description !== undefined) {

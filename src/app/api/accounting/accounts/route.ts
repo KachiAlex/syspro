@@ -69,11 +69,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const account = await createChartOfAccount({ ...parsed.data, tenantSlug: context.tenantSlug });
+    const account = await createChartOfAccount({
+      ...parsed.data,
+      tenantSlug: context.tenantSlug,
+      createdBy: context.userId ?? parsed.data.createdBy,
+    });
 
     return NextResponse.json({ account, data: account }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    if (error?.code === "23505") {
+      return NextResponse.json(
+        { error: "An account with that code already exists" },
+        { status: 409 }
+      );
+    }
     console.error("Error creating account:", errorMessage, error);
     return NextResponse.json(
       { error: "Failed to create account", details: errorMessage },

@@ -524,15 +524,20 @@ export async function getChartOfAccounts(tenantSlug?: string): Promise<ChartOfAc
     : sql``;
 
   const accounts = (await sql`
-    select * from chart_of_accounts 
+    select * from chart_of_accounts
     ${whereClause}
-    order by code
+    order by coalesce(code, account_code)
   `) as any[];
 
-  return accounts.map(account => ({
-    code: account.code,
-    name: account.name,
-    type: account.type,
-    isActive: account.is_active
-  }));
+  // Two column families exist: code/name/type (GL-side, lowercase types)
+  // and account_code/account_name/account_type (accounting-side, 'INCOME').
+  return accounts.map((account) => {
+    const rawType = (account.type ?? account.account_type ?? "").toLowerCase();
+    return {
+      code: account.code ?? account.account_code,
+      name: account.name ?? account.account_name,
+      type: rawType === "income" ? "revenue" : rawType,
+      isActive: account.is_active,
+    };
+  });
 }

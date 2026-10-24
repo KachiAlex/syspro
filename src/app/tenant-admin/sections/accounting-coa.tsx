@@ -4,13 +4,11 @@ import React, { useState, useEffect } from "react";
 import { useCallback } from "react";
 import {
   Plus,
-  Edit2,
   X,
   AlertCircle,
   Loader2,
   Check,
   Eye,
-  EyeOff,
 } from "lucide-react";
 import type { ChartOfAccount, ChartOfAccountCreateInput } from "@/lib/accounting/types";
 
@@ -111,6 +109,14 @@ export default function ChartOfAccountsWorkspace({
     EXPENSE: filteredAccounts.filter((a) => a.accountType === "EXPENSE"),
   };
 
+  const TYPE_LABELS: Record<string, string> = {
+    ASSET: "Assets",
+    LIABILITY: "Liabilities",
+    EQUITY: "Equity",
+    INCOME: "Income",
+    EXPENSE: "Expenses",
+  };
+
   return (
     <div className="rounded-3xl border border-theme-border bg-theme-muted p-8 shadow-sm">
       <div className="space-y-6">
@@ -119,6 +125,9 @@ export default function ChartOfAccountsWorkspace({
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-theme-text-secondary">General Ledger</p>
             <h2 className="text-2xl font-semibold text-theme-text-primary">Chart of Accounts</h2>
+            <p className="text-xs text-theme-text-tertiary mt-1">
+              Asset accounts coded 1000–1199 appear as bank accounts in Bank Recon.
+            </p>
           </div>
           <button
             onClick={() => {
@@ -182,7 +191,7 @@ export default function ChartOfAccountsWorkspace({
               typeAccounts.length > 0 && (
                 <div key={type}>
                   <h3 className="text-sm font-semibold uppercase tracking-wider text-theme-text-secondary mb-3">
-                    {type}S
+                    {TYPE_LABELS[type] ?? type}
                   </h3>
                   <div className="space-y-2">
                     {typeAccounts.map((account) => (
@@ -233,6 +242,48 @@ export default function ChartOfAccountsWorkspace({
               )
             ))}
           </div>
+        )}
+
+        {/* Details Modal */}
+        {selectedAccount && (
+          <>
+            <div
+              className="fixed inset-0 bg-theme-overlay z-40"
+              onClick={() => setSelectedAccount(null)}
+            />
+            <div className="fixed right-0 top-0 h-full w-full max-w-md bg-theme-surface shadow-xl z-50 overflow-y-auto rounded-l-3xl">
+              <div className="p-8 space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold text-theme-text-primary">Account Details</h3>
+                  <button
+                    onClick={() => setSelectedAccount(null)}
+                    className="text-theme-text-secondary hover:text-theme-text-primary"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                <dl className="space-y-4 text-sm">
+                  {[
+                    ["Code", selectedAccount.accountCode],
+                    ["Name", selectedAccount.accountName],
+                    ["Type", selectedAccount.accountType],
+                    ["Sub-type", selectedAccount.subType || "—"],
+                    ["Description", selectedAccount.description || "—"],
+                    ["Currency", selectedAccount.currency || "—"],
+                    ["Status", selectedAccount.isActive ? "Active" : "Inactive"],
+                    ["System account", selectedAccount.isSystemAccount ? "Yes" : "No"],
+                    ["Manual posting", selectedAccount.allowManualPosting ? "Allowed" : "Not allowed"],
+                    ["Reconciliation account", selectedAccount.isReconciliationAccount ? "Yes" : "No"],
+                  ].map(([label, value]) => (
+                    <div key={label} className="flex items-start justify-between gap-4 border-b border-theme-border pb-2">
+                      <dt className="text-theme-text-secondary">{label}</dt>
+                      <dd className="font-medium text-theme-text-primary text-right">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </div>
+          </>
         )}
 
         {/* Form Modal */}
