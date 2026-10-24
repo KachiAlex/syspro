@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
+import { useToast } from "@/components/ui/toast-provider";
 
 const TABS = ["workflows", "print-formats", "webhooks", "web-forms", "data-import", "gateways", "maintenance"] as const;
 
@@ -12,6 +13,7 @@ export default function PlatformPage() {
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
   const [f, setF] = useState<Record<string, any>>({});
+  const { toast } = useToast();
 
   const load = useCallback(async () => {
     const views = ["workflows", "print-formats", "webhooks", "web-forms", "data-imports", "gateways", "maintenance"];
@@ -61,14 +63,21 @@ export default function PlatformPage() {
     return () => clearTimeout(t);
   }, [f.wfDoc]);
 
-  const post = async (body: Record<string, unknown>) => {
+  const post = async (body: Record<string, unknown>, successMsg?: string) => {
     const res = await fetch("/api/platform", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
     });
     const ct = res.headers.get("content-type") ?? "";
     const d = ct.includes("json") ? await res.json() : {};
-    if (!res.ok) { setError(d.error ?? "Failed"); return null; }
-    setError(""); load();
+    if (!res.ok) {
+      const err = typeof d.error === "string" ? d.error : "Request failed";
+      setError(err);
+      toast(err, "error");
+      return null;
+    }
+    setError("");
+    if (successMsg) toast(successMsg, "success");
+    load();
     return d;
   };
 
@@ -147,7 +156,8 @@ export default function PlatformPage() {
       }
     }
     setError("");
-    post({ action: "upsert-workflow", id: f.wfId, docType: f.wfDoc, name: f.wfName, states, transitions });
+    post({ action: "upsert-workflow", id: f.wfId, docType: f.wfDoc, name: f.wfName, states, transitions },
+      f.wfId ? "Workflow updated" : "Workflow saved");
     setF({ ...f, wfId: undefined, wfDoc: "", wfName: "", wfStates: [], wfTrans: [] });
   };
 
@@ -307,7 +317,7 @@ export default function PlatformPage() {
               <button className={btn} onClick={() => post({
                 action: "upsert-print-format", docType: f.pfDoc, name: f.pfName,
                 bodyHtml: f.pfBody, isDefault: f.pfDefault,
-              })}>Save Format</button>
+              }, "Print format saved")}>Save Format</button>
             </div>
             <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
               <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Doc Type</th><th className={th}>Name</th><th className={th}>Default</th><th className={th}>Updated</th></tr></thead>
@@ -335,7 +345,7 @@ export default function PlatformPage() {
                 action: "create-webhook", name: f.whName, targetUrl: f.whUrl,
                 secret: f.whSecret || undefined,
                 docTypes: (f.whDocs ?? "").split(",").map((s: string) => s.trim()).filter(Boolean),
-              })}>Subscribe</button>
+              }, "Webhook subscription created")}>Subscribe</button>
               <button className={btnSm} onClick={async () => { const d = await post({ action: "process-deliveries" }); setMsg(d ? `${d.delivered}/${d.processed} delivered` : ""); }}>Process Queue</button>
             </div>
             <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
@@ -427,7 +437,7 @@ export default function PlatformPage() {
                     type: fld.type || "text",
                     required: Boolean(fld.required),
                   }));
-                post({ action: "create-web-form", name: f.fmName, slug: f.fmSlug, targetEntity: f.fmTarget ?? "lead", schema });
+                post({ action: "create-web-form", name: f.fmName, slug: f.fmSlug, targetEntity: f.fmTarget ?? "lead", schema }, "Web form created");
               }}>Create Form</button>
             </div>
             {data.forms?.map((fm: any) => (
@@ -533,7 +543,7 @@ export default function PlatformPage() {
                 <button className={btn} onClick={() => post({
                   action: "upsert-gateway", provider: f.gwProvider ?? "paystack", publicKey: f.gwPub,
                   secretKey: f.gwSecret, webhookSecret: f.gwHook, mode: f.gwMode ?? "test",
-                })}>Save Config</button>
+                }, `${(f.gwProvider ?? "paystack") === "paystack" ? "Paystack" : "Flutterwave"} configuration saved`)}>Save Config</button>
               </div>
               <p className="text-xs text-theme-text-tertiary">
                 Webhook URL to configure at the provider: <code>/api/webhooks/payments?tenant={tenantSlug}&provider={f.gwProvider ?? "paystack"}</code>
