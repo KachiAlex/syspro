@@ -12,9 +12,10 @@ const TABS = ["workflows", "print-formats", "webhooks", "web-forms", "data-impor
 type PrintDocSpec = {
   heading: string;
   titleTag?: string;
+  currencyTag?: string;
   details: { key: string; label: string }[];
   totals: { key: string; label: string }[];
-  itemFields: { key: string; label: string }[];
+  itemFields: { key: string; label: string; numeric?: boolean }[];
   sample: Record<string, any>;
 };
 
@@ -22,21 +23,22 @@ const PRINT_DOC_TYPES: Record<string, PrintDocSpec> = {
   invoice: {
     heading: "Invoice",
     titleTag: "invoice_number",
+    currencyTag: "currency",
     details: [
       { key: "customer_name", label: "Bill to" },
-      { key: "issue_date", label: "Issued" },
-      { key: "due_date", label: "Due" },
+      { key: "issue_date", label: "Issue date" },
+      { key: "due_date", label: "Due date" },
     ],
     totals: [
       { key: "subtotal", label: "Subtotal" },
       { key: "tax_total", label: "Tax" },
-      { key: "grand_total", label: "Total" },
+      { key: "grand_total", label: "Total due" },
     ],
     itemFields: [
       { key: "description", label: "Description" },
-      { key: "quantity", label: "Qty" },
-      { key: "unit_price", label: "Unit price" },
-      { key: "amount", label: "Amount" },
+      { key: "quantity", label: "Qty", numeric: true },
+      { key: "unit_price", label: "Unit price", numeric: true },
+      { key: "amount", label: "Amount", numeric: true },
     ],
     sample: {
       invoice_number: "INV-0142", customer_name: "Sample Customer Ltd",
@@ -49,11 +51,12 @@ const PRINT_DOC_TYPES: Record<string, PrintDocSpec> = {
     },
   },
   receipt: {
-    heading: "Receipt",
+    heading: "Official Receipt",
     titleTag: "receipt_number",
+    currencyTag: "currency",
     details: [
       { key: "customer_name", label: "Received from" },
-      { key: "payment_date", label: "Date" },
+      { key: "payment_date", label: "Payment date" },
       { key: "payment_method", label: "Method" },
     ],
     totals: [{ key: "amount", label: "Amount received" }],
@@ -66,17 +69,18 @@ const PRINT_DOC_TYPES: Record<string, PrintDocSpec> = {
   quotation: {
     heading: "Quotation",
     titleTag: "quotation_number",
+    currencyTag: "currency",
     details: [
-      { key: "customer_name", label: "To" },
-      { key: "issue_date", label: "Issued" },
+      { key: "customer_name", label: "Prepared for" },
+      { key: "issue_date", label: "Issue date" },
       { key: "valid_until", label: "Valid until" },
     ],
-    totals: [{ key: "grand_total", label: "Total" }],
+    totals: [{ key: "grand_total", label: "Quoted total" }],
     itemFields: [
       { key: "description", label: "Description" },
-      { key: "quantity", label: "Qty" },
-      { key: "unit_price", label: "Unit price" },
-      { key: "amount", label: "Amount" },
+      { key: "quantity", label: "Qty", numeric: true },
+      { key: "unit_price", label: "Unit price", numeric: true },
+      { key: "amount", label: "Amount", numeric: true },
     ],
     sample: {
       quotation_number: "QTN-0057", customer_name: "Sample Customer Ltd",
@@ -86,9 +90,12 @@ const PRINT_DOC_TYPES: Record<string, PrintDocSpec> = {
   },
 };
 
+const PRINT_ACCENTS = ["#1e40af", "#047857", "#0e7490", "#7c3aed", "#be123c", "#334155"];
+
 type PrintBuilder = {
   doc: string;
   heading: string;
+  accent: string;
   details: string[];
   showItems: boolean;
   itemCols: string[];
@@ -102,6 +109,7 @@ function initPrintBuilder(doc: string, spec?: PrintDocSpec): PrintBuilder {
   return {
     doc,
     heading: spec?.heading ?? "",
+    accent: PRINT_ACCENTS[0],
     details: (spec?.details ?? []).map((d) => d.key),
     showItems: (spec?.itemFields.length ?? 0) > 0,
     itemCols: (spec?.itemFields ?? []).map((c) => c.key),
@@ -110,21 +118,61 @@ function initPrintBuilder(doc: string, spec?: PrintDocSpec): PrintBuilder {
   };
 }
 
+// Modern document layout — accent header bar, bill-to/meta columns,
+// styled items table, right-aligned totals card, footer rule.
 function buildPrintBody(spec: PrintDocSpec, b: PrintBuilder): string {
-  let html = `<h1>${escHtml(b.heading.trim() || spec.heading)}${spec.titleTag ? ` {{${spec.titleTag}}}` : ""}</h1>`;
+  const accent = b.accent || PRINT_ACCENTS[0];
+  const muted = "#6b7280";
+  const line = "#e5e7eb";
+  const cur = spec.currencyTag ? `{{${spec.currencyTag}}}` : "";
+
+  let html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#111827;max-width:760px;margin:0 auto;padding:8px">`;
+
+  // Header: title left, document number right, accent rule beneath.
+  html += `<table style="width:100%;border-collapse:collapse"><tr>` +
+    `<td style="vertical-align:bottom"><div style="font-size:26px;font-weight:700;color:${accent};letter-spacing:-0.5px">${escHtml(b.heading.trim() || spec.heading)}</div></td>` +
+    `<td style="vertical-align:bottom;text-align:right">${spec.titleTag ? `<div style="font-size:15px;font-weight:600">{{${spec.titleTag}}}</div>` : ""}</td>` +
+    `</tr></table><div style="height:3px;background:${accent};margin:8px 0 0"></div>`;
+
+  // Bill-to block left, remaining details right-aligned meta block.
   const det = spec.details.filter((d) => b.details.includes(d.key));
-  if (det.length) html += `<p>${det.map((d) => `<b>${d.label}:</b> {{${d.key}}}`).join("<br/>")}</p>`;
+  if (det.length) {
+    const [first, ...rest] = det;
+    html += `<table style="width:100%;border-collapse:collapse;margin-top:20px"><tr>` +
+      `<td style="vertical-align:top"><div style="font-size:11px;color:${muted};text-transform:uppercase;letter-spacing:0.6px">${first.label}</div><div style="font-size:16px;font-weight:600;margin-top:2px">{{${first.key}}}</div></td>` +
+      `<td style="vertical-align:top;text-align:right;font-size:13px;line-height:1.9">${rest.map((d) => `<span style="color:${muted}">${d.label}:</span> <b>{{${d.key}}}</b>`).join("<br/>")}</td>` +
+      `</tr></table>`;
+  }
+
+  // Items table: accent header row, thin row separators, numeric columns right.
   const cols = b.showItems ? spec.itemFields.filter((c) => b.itemCols.includes(c.key)) : [];
   if (cols.length) {
-    html += `<table><thead><tr>${cols.map((c) => `<th>${c.label}</th>`).join("")}</tr></thead><tbody>{{#each items}}<tr>${cols.map((c) => `<td>{{${c.key}}}</td>`).join("")}</tr>{{/each}}</tbody></table>`;
+    const thStyle = `padding:9px 10px;background:${accent};color:#ffffff;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;`;
+    const tdBase = `padding:9px 10px;border-bottom:1px solid ${line};font-size:13px;`;
+    html += `<table style="width:100%;border-collapse:collapse;margin-top:24px"><thead><tr>` +
+      cols.map((c) => `<th style="${thStyle}text-align:${c.numeric ? "right" : "left"}">${c.label}</th>`).join("") +
+      `</tr></thead><tbody>{{#each items}}<tr>` +
+      cols.map((c) => `<td style="${tdBase}text-align:${c.numeric ? "right" : "left"}">{{${c.key}}}</td>`).join("") +
+      `</tr>{{/each}}</tbody></table>`;
   }
+
+  // Totals card: muted labels, accent-bordered emphasized final row.
   const tot = spec.totals.filter((t) => b.totals.includes(t.key));
   if (tot.length) {
-    html += `<p style="text-align:right">${tot
-      .map((t, i) => `${i === tot.length - 1 ? "<b>" : ""}${t.label}: {{${t.key}}}${i === tot.length - 1 ? "</b>" : ""}`)
-      .join("<br/>")}</p>`;
+    const rows = tot.map((t, i) => {
+      const last = i === tot.length - 1;
+      return `<tr>` +
+        `<td style="padding:${last ? "10px" : "4px"} 16px ${last ? "10px" : "4px"} 0;font-size:${last ? "15px" : "13px"};${last ? `font-weight:700;border-top:2px solid ${accent};padding-top:8px` : `color:${muted}`}">${t.label}</td>` +
+        `<td style="text-align:right;padding:${last ? "10px" : "4px"} 0;font-size:${last ? "15px" : "13px"};${last ? `font-weight:700;color:${accent};border-top:2px solid ${accent};padding-top:8px` : ""}">${cur}{{${t.key}}}</td>` +
+        `</tr>`;
+    }).join("");
+    html += `<table style="margin-left:auto;border-collapse:collapse;margin-top:18px;min-width:260px">${rows}</table>`;
   }
-  if (b.footer.trim()) html += `<p><i>${escHtml(b.footer.trim())}</i></p>`;
+
+  if (b.footer.trim()) {
+    html += `<div style="margin-top:36px;padding-top:14px;border-top:1px solid ${line};color:${muted};font-size:12px;font-style:italic">${escHtml(b.footer.trim())}</div>`;
+  }
+  html += `</div>`;
   return html;
 }
 
@@ -467,6 +515,25 @@ export default function PlatformPage() {
                     <div>
                       <label className="mb-1 block text-xs text-theme-text-tertiary">Heading</label>
                       <input value={pfBuilder.heading} onChange={(e) => setPfB({ ...pfBuilder, heading: e.target.value })} className={`${input} w-full`} />
+                    </div>
+                    <div>
+                      <p className="mb-1 text-xs text-theme-text-tertiary">Accent color</p>
+                      <div className="flex gap-2">
+                        {PRINT_ACCENTS.map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            aria-label={`Accent ${c}`}
+                            onClick={() => setPfB({ ...pfBuilder, accent: c })}
+                            className="h-7 w-7 rounded-full border-2 transition"
+                            style={{
+                              background: c,
+                              borderColor: pfBuilder.accent === c ? "#ffffff" : "transparent",
+                              boxShadow: pfBuilder.accent === c ? `0 0 0 2px ${c}` : "none",
+                            }}
+                          />
+                        ))}
+                      </div>
                     </div>
                     {pfSpec.details.length > 0 && (
                       <div>
