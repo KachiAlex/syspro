@@ -11,9 +11,15 @@ import {
 } from "@/lib/tenant-admin/utils";
 import { requireModuleGate } from "@/lib/api-auth";
 import { AuditService, IntegrationService, APIKeyService } from "@/lib/tenant-admin/service";
+import {
+  removeIntegrationSubscription,
+  syncIntegrationSubscription,
+} from "@/lib/platform/webhooks";
 import { asTenantSlug } from "@/lib/tenant-admin/utils";
 import type { UserId, ResourceId, AuditAction, Permission } from "@/lib/tenant-admin/types";
 import { z } from "zod";
+
+const WEBHOOK_EVENT = z.enum(["create", "update", "submit", "cancel"]);
 
 const CreateIntegrationSchema = z.object({
   name: z.string().min(1).max(100),
@@ -22,6 +28,7 @@ const CreateIntegrationSchema = z.object({
   config: z.record(z.any()),
   description: z.string().max(500).optional(),
   webhookUrl: z.string().url().optional(),
+  events: z.array(WEBHOOK_EVENT).optional(),
 });
 
 const UpdateIntegrationSchema = z.object({
@@ -29,6 +36,7 @@ const UpdateIntegrationSchema = z.object({
   enabled: z.boolean().optional(),
   config: z.record(z.any()).optional(),
   webhookUrl: z.string().url().optional(),
+  events: z.array(WEBHOOK_EVENT).optional(),
 });
 
 const CreateAPIKeySchema = z.object({
@@ -140,7 +148,20 @@ export async function POST(request: NextRequest) {
         status: parsed.data.enabled ? "active" : "inactive",
         config: parsed.data.config,
         webhookUrl: parsed.data.webhookUrl,
+        events: parsed.data.events,
       }, context.userId as UserId);
+
+      // Live delivery channel: a linked webhook_subscriptions row puts this
+      // integration on the signed/retry delivery pipeline.
+      await syncIntegrationSubscription({
+        id: integration.id,
+        tenantSlug: String(context.tenantSlug),
+        name: integration.name,
+        status: integration.status,
+        webhookUrl: integration.webhookUrl,
+        config: integration.config as Record<string, any>,
+        events: integration.events,
+      });
 
       const auditService = new AuditService();
       await auditService.log(
@@ -229,12 +250,31 @@ export async function PATCH(request: NextRequest) {
         return errorResponse("Integration not found", 404);
       }
 
+      const effectiveConfig = parsed.data.config
+        ? unmaskConfig(parsed.data.config, (existing as any).config)
+        : undefined;
+
       const updated = await service.update(asTenantSlug(context.tenantSlug), id as ResourceId, {
         name: parsed.data.name,
         status: parsed.data.enabled === undefined ? undefined : parsed.data.enabled ? "active" : "inactive",
-        config: parsed.data.config ? unmaskConfig(parsed.data.config, (existing as any).config) : undefined,
+        config: effectiveConfig,
         webhookUrl: parsed.data.webhookUrl,
+        events: parsed.data.events,
       });
+
+      // Keep the delivery subscription in step with the record — including
+      // unmasked secrets, since sync signs real payloads with them.
+      if (updated) {
+        await syncIntegrationSubscription({
+          id: updated.id,
+          tenantSlug: String(context.tenantSlug),
+          name: updated.name,
+          status: updated.status,
+          webhookUrl: updated.webhookUrl,
+          config: (effectiveConfig ?? (updated as any).config) as Record<string, any>,
+          events: updated.events,
+        });
+      }
 
       const auditService = new AuditService();
       await auditService.log(
@@ -306,6 +346,7 @@ export async function DELETE(request: NextRequest) {
       const existing = await service.getById(asTenantSlug(context.tenantSlug), id as ResourceId);
       if (existing) {
         await service.delete(asTenantSlug(context.tenantSlug), id as ResourceId);
+        await removeIntegrationSubscription(id);
         await auditService.log(
           asTenantSlug(context.tenantSlug),
           context.userId as UserId,

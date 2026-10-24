@@ -177,3 +177,102 @@ export async function retryDelivery(tenantSlug: string, id: string) {
 export function newDeliveryId() {
   return randomUUID();
 }
+
+// ---------------------------------------------------------------------------
+// admin_integrations <-> webhook_subscriptions bridge
+//
+// The Integrations page stores a provider record (name, credentials, events)
+// per tenant. A linked webhook_subscriptions row — keyed by integration_id —
+// gives every integration with a webhook_url real delivery through the signed,
+// retried pipeline above, instead of being a passive registry entry.
+// ---------------------------------------------------------------------------
+
+let linkColumnEnsured = false;
+async function ensureIntegrationLinkColumn() {
+  if (linkColumnEnsured) return;
+  await db.query(
+    `alter table webhook_subscriptions add column if not exists integration_id text`,
+    []
+  );
+  await db.query(
+    `create unique index if not exists webhook_subscriptions_integration_uidx
+     on webhook_subscriptions (integration_id) where integration_id is not null`,
+    []
+  );
+  linkColumnEnsured = true;
+}
+
+const DEFAULT_INTEGRATION_EVENTS = ["create", "update", "submit", "cancel"];
+
+/**
+ * Upsert the webhook subscription backing an integration record. Called after
+ * integration create/update; pass the *unmasked* config so the real signing
+ * secret is used. Throws when the target URL is not permitted.
+ */
+export async function syncIntegrationSubscription(integration: {
+  id: string;
+  tenantSlug: string;
+  name: string;
+  status: string;
+  webhookUrl?: string | null;
+  config?: Record<string, any> | null;
+  events?: string[] | null;
+}) {
+  await ensureIntegrationLinkColumn();
+  const cfg = integration.config ?? {};
+  const targetUrl = integration.webhookUrl || null;
+
+  // No webhook URL — the integration receives nothing; drop any link.
+  if (!targetUrl) {
+    await db.query(`delete from webhook_subscriptions where integration_id = $1`, [integration.id]);
+    return { linked: false };
+  }
+
+  const check = webhookUrlAllowed(targetUrl);
+  if (!check.ok) throw new Error(`Target URL is not permitted: ${check.reason}`);
+
+  const docTypes = Array.isArray(cfg.docTypes) ? cfg.docTypes.map(String) : [];
+  const events =
+    Array.isArray(integration.events) && integration.events.length
+      ? integration.events
+      : DEFAULT_INTEGRATION_EVENTS;
+  const secret =
+    typeof cfg.webhookSecret === "string" && cfg.webhookSecret
+      ? cfg.webhookSecret
+      : typeof cfg.secret === "string" && cfg.secret
+        ? cfg.secret
+        : null;
+  const active = integration.status === "active";
+  const name = `Integration: ${integration.name}`;
+
+  const existing = (
+    await db.query<any>(
+      `select id from webhook_subscriptions where integration_id = $1`,
+      [integration.id]
+    )
+  ).rows[0];
+
+  if (existing) {
+    await db.query(
+      `update webhook_subscriptions
+       set name = $2, target_url = $3, secret = $4, doc_types = $5,
+           events = $6, is_active = $7
+       where id = $1`,
+      [existing.id, name, targetUrl, secret, docTypes, events, active]
+    );
+  } else {
+    await db.query(
+      `insert into webhook_subscriptions
+         (tenant_slug, name, target_url, secret, doc_types, events, is_active, integration_id)
+       values ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [integration.tenantSlug, name, targetUrl, secret, docTypes, events, active, integration.id]
+    );
+  }
+  return { linked: true, active };
+}
+
+/** Drop the linked subscription when the integration is deleted. */
+export async function removeIntegrationSubscription(integrationId: string) {
+  await ensureIntegrationLinkColumn();
+  await db.query(`delete from webhook_subscriptions where integration_id = $1`, [integrationId]);
+}

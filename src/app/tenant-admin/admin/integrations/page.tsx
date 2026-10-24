@@ -12,6 +12,7 @@ interface Integration {
   webhook_url?: string;
   webhookUrl?: string;
   config?: Record<string, any>;
+  events?: string[];
   last_sync_at?: string;
   error_message?: string;
 }
@@ -30,6 +31,19 @@ interface ApiKey {
 const INTEGRATION_TYPES = ["webhook", "oauth", "api_key", "custom"];
 const MASK = "********";
 
+const EVENT_OPTIONS = [
+  { id: "create", label: "Created" },
+  { id: "update", label: "Updated" },
+  { id: "submit", label: "Submitted / issued" },
+  { id: "cancel", label: "Cancelled" },
+] as const;
+const ALL_EVENTS = EVENT_OPTIONS.map((e) => e.id);
+
+const DOC_TYPE_OPTIONS = [
+  "invoice", "sales_order", "payment", "expense", "bill", "purchase_order",
+  "lead", "deal", "customer", "employee", "payroll_run", "work_order",
+];
+
 export default function IntegrationsPage() {
   const { tenantSlug } = useTenantContext();
   const [tab, setTab] = useState<"integrations" | "api-keys">("integrations");
@@ -47,6 +61,9 @@ export default function IntegrationsPage() {
   const [intWebhook, setIntWebhook] = useState("");
   const [intEnabled, setIntEnabled] = useState(true);
   const [intConfigRows, setIntConfigRows] = useState<KvRow[]>([]);
+  const [intEvents, setIntEvents] = useState<string[]>([...ALL_EVENTS]);
+  const [intDocTypes, setIntDocTypes] = useState<string[]>([]);
+  const [intSecret, setIntSecret] = useState("");
 
   // API key form state
   const [showKeyForm, setShowKeyForm] = useState(false);
@@ -81,6 +98,7 @@ export default function IntegrationsPage() {
   function openCreate() {
     setEditing(null);
     setIntName(""); setIntType("webhook"); setIntWebhook(""); setIntEnabled(true); setIntConfigRows([]);
+    setIntEvents([...ALL_EVENTS]); setIntDocTypes([]); setIntSecret("");
     setShowIntForm(true);
   }
 
@@ -90,27 +108,35 @@ export default function IntegrationsPage() {
     setIntType(i.type);
     setIntWebhook(i.webhook_url || i.webhookUrl || "");
     setIntEnabled(i.status === "active");
-    setIntConfigRows(objectToRows(i.config || {}));
+    // Dedicated fields own docTypes/webhookSecret — keep the KvEditor for the
+    // remaining custom config only.
+    const { docTypes, webhookSecret, ...restConfig } = (i.config || {}) as Record<string, any>;
+    setIntConfigRows(objectToRows(restConfig));
+    setIntEvents(i.events && i.events.length ? i.events : [...ALL_EVENTS]);
+    setIntDocTypes(Array.isArray(docTypes) ? docTypes.map(String) : []);
+    setIntSecret(typeof webhookSecret === "string" ? webhookSecret : "");
     setShowIntForm(true);
   }
 
   async function saveIntegration() {
     if (!tenantSlug || !intName.trim()) return;
-    const config = rowsToObject(intConfigRows);
+    const config: Record<string, any> = { ...rowsToObject(intConfigRows), docTypes: intDocTypes };
+    if (intSecret) config.webhookSecret = intSecret;
+    const body = { name: intName, enabled: intEnabled, config, webhookUrl: intWebhook || undefined, events: intEvents };
     setError(null);
     try {
       if (editing) {
         const res = await fetch(`/api/tenant/integrations?tenantSlug=${encodeURIComponent(tenantSlug)}&id=${editing.id}&type=integration`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: intName, enabled: intEnabled, config, webhookUrl: intWebhook || undefined }),
+          body: JSON.stringify(body),
         });
         if (!res.ok) throw new Error((await res.json()).error || "Update failed");
       } else {
         const res = await fetch(`/api/tenant/integrations?tenantSlug=${encodeURIComponent(tenantSlug)}&type=integration`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: intName, type: intType, enabled: intEnabled, config, webhookUrl: intWebhook || undefined }),
+          body: JSON.stringify({ ...body, type: intType }),
         });
         if (!res.ok) throw new Error((await res.json()).error || "Create failed");
       }
@@ -229,6 +255,22 @@ export default function IntegrationsPage() {
 
       {tab === "api-keys" && !loading && (
         <>
+          <div className="mb-4 rounded-lg border border-theme-border bg-theme-surface p-4 text-sm">
+            <p className="font-medium mb-1">Push data in from your tools</p>
+            <p className="text-theme-text-secondary mb-2">
+              A CRM, POS, or script can create records in this ERP with any active key —
+              send <code>x-api-key</code> (or <code>Authorization: Bearer</code>) and <code>x-tenant-slug</code> headers to:
+            </p>
+            <ul className="space-y-1 text-xs font-mono text-theme-text-secondary">
+              <li>POST /api/external/v1/leads &nbsp;—&nbsp; {"{ companyName, contactName, contactEmail?, stage?, externalId? }"}</li>
+              <li>POST /api/external/v1/customers &nbsp;—&nbsp; {"{ name, contactName?, contactEmail?, externalId? }"}</li>
+              <li>POST /api/external/v1/orders &nbsp;—&nbsp; {"{ customerName, items: [{ name, quantity, unitPrice }], externalId? }"}</li>
+              <li>GET &nbsp;/api/external/v1/ping &nbsp;—&nbsp; connectivity check</li>
+            </ul>
+            <p className="text-xs text-theme-text-tertiary mt-2">
+              Include an <code>externalId</code> to make retries safe — the same id never creates two records.
+            </p>
+          </div>
           {apiKeys.length === 0 && <p className="text-theme-text-secondary">No API keys yet. Keys authenticate external calls (e.g. the AI agent API) via the <code>x-api-key</code> + <code>x-tenant-slug</code> headers.</p>}
           {apiKeys.length > 0 && (
             <div className="overflow-x-auto">
@@ -281,8 +323,63 @@ export default function IntegrationsPage() {
                 </select>
               </>
             )}
-            <label className="block text-sm mb-1">Webhook URL</label>
-            <input value={intWebhook} onChange={(e) => setIntWebhook(e.target.value)} placeholder="https://…" className="w-full border rounded px-2 py-1.5 mb-3 text-sm" />
+            <label className="block text-sm mb-1">Webhook URL <span className="text-theme-text-tertiary">(we push events here)</span></label>
+            <input value={intWebhook} onChange={(e) => setIntWebhook(e.target.value)} placeholder="https://your-crm.example.com/erp-events" className="w-full border rounded px-2 py-1.5 mb-3 text-sm" />
+            {intWebhook && (
+              <div className="mb-3 rounded border border-theme-border p-3 space-y-3 bg-theme-muted/40">
+                <div>
+                  <p className="text-sm font-medium mb-1">Send when a document is…</p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1">
+                    {EVENT_OPTIONS.map((ev) => (
+                      <label key={ev.id} className="flex items-center gap-1.5 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={intEvents.includes(ev.id)}
+                          onChange={(e) =>
+                            setIntEvents((prev) =>
+                              e.target.checked ? [...prev, ev.id] : prev.filter((x) => x !== ev.id)
+                            )
+                          }
+                        />
+                        {ev.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">For these documents <span className="text-theme-text-tertiary font-normal">(none checked = everything)</span></p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1">
+                    {DOC_TYPE_OPTIONS.map((dt) => (
+                      <label key={dt} className="flex items-center gap-1.5 text-xs">
+                        <input
+                          type="checkbox"
+                          checked={intDocTypes.includes(dt)}
+                          onChange={(e) =>
+                            setIntDocTypes((prev) =>
+                              e.target.checked ? [...prev, dt] : prev.filter((x) => x !== dt)
+                            )
+                          }
+                        />
+                        {dt.replace(/_/g, " ")}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Signing secret <span className="text-theme-text-tertiary font-normal">(optional)</span></p>
+                  <input
+                    value={intSecret}
+                    onChange={(e) => setIntSecret(e.target.value)}
+                    placeholder="Used to sign payloads — verify with X-ERP-Signature"
+                    className="w-full border rounded px-2 py-1.5 text-sm"
+                  />
+                  <p className="text-xs text-theme-text-tertiary mt-1">
+                    Every delivery is POSTed with headers <code>X-ERP-Event</code>, <code>X-ERP-Delivery</code>, and{" "}
+                    <code>X-ERP-Signature</code> (HMAC-SHA256 over the raw body). Deliveries retry automatically.
+                  </p>
+                </div>
+              </div>
+            )}
             <label className="block text-sm mb-1">Config entries <span className="text-theme-text-tertiary">(secrets show as {MASK} — leave as-is to keep them)</span></label>
             <div className="mb-3">
               <KvEditor rows={intConfigRows} onChange={setIntConfigRows} />
