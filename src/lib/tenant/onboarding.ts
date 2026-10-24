@@ -193,7 +193,7 @@ type Validator = (tenantSlug: string) => Promise<ValidatorResult>;
 const TABLE_MIGRATION: Record<string, string> = {
   tenants: "core schema",
   tenant_admins: "core schema",
-  employees: "core schema",
+  admin_employees: "hr schema",
   fiscal_periods: "20261016_gl_consolidation.sql",
   chart_of_accounts: "20261016_gl_consolidation.sql",
   journal_entries: "20261016_gl_consolidation.sql",
@@ -355,7 +355,7 @@ const VALIDATORS: Record<OnboardingStepId, Validator> = {
         [tenantSlug]
       );
       const employees = await tableCount(
-        `select count(*)::int as n from employees where tenant_slug = $1`,
+        `select count(*)::int as n from admin_employees where tenant_slug = $1`,
         [tenantSlug]
       );
       const total = admins + employees;
