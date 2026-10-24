@@ -41,14 +41,15 @@ export async function POST(request: NextRequest) {
   try {
     const res = await fetch(
       `https://api.paystack.co/bank/resolve?account_number=${encodeURIComponent(accountNumber)}&bank_code=${encodeURIComponent(bankCode)}`,
-      { headers: { Authorization: `Bearer ${secretKey}` } }
+      { headers: { Authorization: `Bearer ${String(secretKey).trim()}` } }
     );
     const payload = await res.json().catch(() => null);
     if (!res.ok || !payload?.status) {
-      return NextResponse.json(
-        { error: payload?.message || "Unable to resolve account number" },
-        { status: 422 }
-      );
+      const upstream = String(payload?.message ?? "Unable to resolve account number");
+      const hint = /key|authorization|token/i.test(upstream)
+        ? `${upstream} — check the Paystack secret key in Settings → Platform → Gateways (must be the sk_… secret key, not the pk_… public key)`
+        : upstream;
+      return NextResponse.json({ error: hint }, { status: 422 });
     }
     return NextResponse.json({ accountName: payload.data.account_name });
   } catch (error) {

@@ -23,7 +23,7 @@ import {
   processDueSchedules, updateSchedule,
 } from "@/lib/platform/maintenance";
 import {
-  initializeGatewayPayment, listGatewayConfigs, listPaymentLinks,
+  getGatewayConfig, initializeGatewayPayment, listGatewayConfigs, listPaymentLinks,
   upsertGatewayConfig,
 } from "@/lib/finance/gateway-providers";
 import { knownStatesForDocType } from "@/lib/platform/doc-states";
@@ -164,9 +164,36 @@ export async function POST(request: NextRequest) {
         }
         return NextResponse.json({ config: await upsertGatewayConfig({
           tenantSlug: context.tenantSlug, provider: provider as "paystack" | "flutterwave",
-          publicKey: body.publicKey, secretKey: String(body.secretKey),
-          webhookSecret: body.webhookSecret, mode: body.mode, isActive: body.isActive,
+          publicKey: typeof body.publicKey === "string" ? body.publicKey.trim() : body.publicKey,
+          secretKey: String(body.secretKey).trim(),
+          webhookSecret: typeof body.webhookSecret === "string" ? body.webhookSecret.trim() : body.webhookSecret,
+          mode: body.mode, isActive: body.isActive,
         }) });
+      }
+      case "verify-gateway": {
+        const provider = String(body.provider ?? "paystack");
+        const cfg = await getGatewayConfig(context.tenantSlug, provider as "paystack" | "flutterwave");
+        if (!cfg?.secret_key) {
+          return NextResponse.json({ ok: false, error: `No active ${provider} config — save keys first` });
+        }
+        try {
+          const url = provider === "paystack"
+            ? "https://api.paystack.co/bank?country=nigeria&perPage=1"
+            : "https://api.flutterwave.com/v3/banks/NG";
+          const res = await fetch(url, {
+            headers: { Authorization: `Bearer ${String(cfg.secret_key).trim()}` },
+          });
+          const payload = await res.json().catch(() => null);
+          if (res.ok && (payload?.status === true || payload?.status === "success")) {
+            return NextResponse.json({ ok: true, message: `${provider} keys are valid (${cfg.mode ?? "test"} mode)` });
+          }
+          return NextResponse.json({
+            ok: false,
+            error: `${provider} rejected the key: ${payload?.message ?? `HTTP ${res.status}`}. Make sure the Secret key starts with ${provider === "paystack" ? "sk_" : "FLWSECK-"} — not the public key.`,
+          });
+        } catch (e) {
+          return NextResponse.json({ ok: false, error: "Could not reach the provider" });
+        }
       }
       case "init-payment": {
         const provider = String(body.provider ?? "paystack");

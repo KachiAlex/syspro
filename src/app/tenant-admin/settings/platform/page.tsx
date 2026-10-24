@@ -544,7 +544,20 @@ export default function PlatformPage() {
                   action: "upsert-gateway", provider: f.gwProvider ?? "paystack", publicKey: f.gwPub,
                   secretKey: f.gwSecret, webhookSecret: f.gwHook, mode: f.gwMode ?? "test",
                 }, `${(f.gwProvider ?? "paystack") === "paystack" ? "Paystack" : "Flutterwave"} configuration saved`)}>Save Config</button>
+                <button className={btnSm} onClick={async () => {
+                  const d = await post({ action: "verify-gateway", provider: f.gwProvider ?? "paystack" });
+                  if (d) d.ok ? toast(d.message ?? "Keys are valid", "success") : toast(d.error ?? "Key check failed", "error");
+                }}>Test Keys</button>
               </div>
+              {!!data.configs?.length && (
+                <div className="flex flex-wrap gap-2">
+                  {data.configs.map((c: any) => (
+                    <span key={c.id} className={`rounded-full px-3 py-1 text-xs ${c.is_active ? "bg-emerald-900/60 text-emerald-300" : "bg-theme-elevated text-theme-text-secondary"}`}>
+                      {c.provider} · {c.mode} · {c.is_active ? "active" : "inactive"} · {c.public_key ? `${String(c.public_key).slice(0, 10)}…` : "no public key"}
+                    </span>
+                  ))}
+                </div>
+              )}
               <p className="text-xs text-theme-text-tertiary">
                 Webhook URL to configure at the provider: <code>/api/webhooks/payments?tenant={tenantSlug}&provider={f.gwProvider ?? "paystack"}</code>
               </p>
