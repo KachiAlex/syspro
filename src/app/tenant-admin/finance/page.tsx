@@ -10,10 +10,14 @@ import {
   Calendar,
   ArrowRight,
   Loader2,
+  Landmark,
+  Plus,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
 import { TrendChart } from "@/components/tenant-admin/trend-chart";
+import { CURRENCY_SYMBOL_OPTIONS } from "@/lib/currencies";
 
 interface DashboardMetric {
   label: string;
@@ -39,11 +43,23 @@ interface ExpenseBreakdownItem {
   direction: "up" | "down";
 }
 
+interface CashAccount {
+  id: string;
+  name: string;
+  type: "bank" | "cash";
+  balance: string;
+  currency: string;
+  trend: "up" | "down";
+  change: string;
+  region: string;
+}
+
 interface DashboardData {
   metrics: DashboardMetric[];
   receivables: ScheduleItem[];
   payables: ScheduleItem[];
   expenseBreakdown: ExpenseBreakdownItem[];
+  cashAccounts?: CashAccount[];
   trend?: { labels: string[]; revenue: number[]; expenses: number[] };
 }
 
@@ -70,6 +86,10 @@ export default function FinanceDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAccountForm, setShowAccountForm] = useState(false);
+  const [accountForm, setAccountForm] = useState({ name: "", type: "bank" as "bank" | "cash", currency: "₦", balance: "" });
+  const [savingAccount, setSavingAccount] = useState(false);
+  const [accountError, setAccountError] = useState<string | null>(null);
 
   const loadDashboard = useCallback(async () => {
     if (!tenantSlug) return;
@@ -96,7 +116,45 @@ export default function FinanceDashboard() {
     if (tenantSlug) loadDashboard();
   }, [loadDashboard, tenantSlug]);
 
+  const saveAccount = async () => {
+    if (!tenantSlug) return;
+    const balance = Number(accountForm.balance);
+    if (!accountForm.name.trim()) {
+      setAccountError("Account name is required");
+      return;
+    }
+    if (!accountForm.balance || !Number.isFinite(balance)) {
+      setAccountError("Opening balance must be a number");
+      return;
+    }
+    setSavingAccount(true);
+    setAccountError(null);
+    try {
+      const res = await fetch("/api/finance/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantSlug,
+          name: accountForm.name.trim(),
+          type: accountForm.type,
+          currency: accountForm.currency,
+          balance,
+        }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error ? JSON.stringify(payload.error) : "Failed to create account");
+      setShowAccountForm(false);
+      setAccountForm({ name: "", type: "bank", currency: "₦", balance: "" });
+      await loadDashboard();
+    } catch (err) {
+      setAccountError(err instanceof Error ? err.message : "Failed to create account");
+    } finally {
+      setSavingAccount(false);
+    }
+  };
+
   const metrics = Array.isArray(data?.metrics) ? data.metrics : [];
+  const cashAccounts = data?.cashAccounts ?? [];
 
   // Combine receivables (income) and payables (expense) as recent transactions
   const recentTransactions = React.useMemo(() => {
@@ -315,6 +373,61 @@ export default function FinanceDashboard() {
         </div>
       </div>
 
+      {/* Cash & Bank Accounts — dashboard-level cash accounts (finance_accounts) */}
+      <div className="bg-theme-surface rounded-[14px] border border-theme-border" style={{ boxShadow: '0 4px 14px rgba(0,0,0,.2)' }}>
+        <div className="p-6 border-b border-theme-border flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-theme-text-primary flex items-center gap-2 font-jakarta">
+            <Landmark className="h-5 w-5 text-theme-text-secondary" />
+            Cash &amp; Bank Accounts
+          </h2>
+          <button
+            onClick={() => setShowAccountForm(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-theme-accent text-white text-sm font-medium hover:opacity-90 transition-opacity font-jakarta"
+          >
+            <Plus className="h-4 w-4" />
+            Add Account
+          </button>
+        </div>
+        <div className="divide-y divide-theme-border">
+          {cashAccounts.length === 0 && (
+            <div className="p-8 text-center text-theme-text-tertiary font-jakarta">
+              No bank or cash accounts yet — add one to start tracking your cash position.
+            </div>
+          )}
+          {cashAccounts.map((account) => (
+            <div key={account.id} className="p-4 flex items-center justify-between hover:bg-theme-sidebar-hover transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-[10px] bg-[rgba(129,140,248,.12)] flex items-center justify-center">
+                  <Landmark className="h-4 w-4 text-theme-accent" />
+                </div>
+                <div>
+                  <p className="font-medium text-theme-text-primary font-jakarta">{account.name}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-[rgba(255,255,255,.04)] text-theme-text-secondary font-jakarta">
+                      {account.type === "bank" ? "Bank" : "Cash"}
+                    </span>
+                    <span className="text-xs text-theme-text-tertiary font-jakarta">{account.region}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-semibold text-theme-text-primary font-jakarta">{account.balance}</p>
+                <p className={`text-xs font-jakarta ${account.trend === "down" ? "text-theme-danger" : "text-theme-success"}`}>
+                  {account.change}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="p-4 border-t border-theme-border text-center text-xs text-theme-text-tertiary font-jakarta">
+          These are dashboard cash accounts. For the GL chart of accounts used by Bank Recon, see{" "}
+          <Link href="/tenant-admin/finance/coa" className="text-theme-primary hover:text-theme-accent">
+            Chart of Accounts
+          </Link>
+          .
+        </div>
+      </div>
+
       {/* Quick Actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Link
@@ -358,6 +471,95 @@ export default function FinanceDashboard() {
           <p className="text-sm font-medium text-theme-text-primary font-jakarta group-hover:text-theme-accent transition-colors">Reports</p>
         </Link>
       </div>
+
+      {/* Add Account modal */}
+      {showAccountForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="w-full max-w-md bg-theme-surface border border-theme-border rounded-[14px] p-6" style={{ boxShadow: '0 12px 40px rgba(0,0,0,.4)' }}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-semibold text-theme-text-primary font-jakarta">Add Cash/Bank Account</h3>
+              <button
+                onClick={() => { setShowAccountForm(false); setAccountError(null); }}
+                className="text-theme-text-tertiary hover:text-theme-text-primary transition-colors"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-theme-text-secondary mb-1.5 font-jakarta">Account name</label>
+                <input
+                  type="text"
+                  value={accountForm.name}
+                  onChange={(e) => setAccountForm({ ...accountForm, name: e.target.value })}
+                  placeholder="e.g. GTBank — Operating"
+                  className="w-full px-4 py-2 border border-theme-border rounded-[10px] text-sm text-theme-text-primary bg-theme-muted focus:outline-none focus:border-[rgba(227,30,36,.4)] focus:shadow-[0_0_0_3px_rgba(227,30,36,.08)] font-jakarta"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-theme-text-secondary mb-1.5 font-jakarta">Type</label>
+                  <select
+                    value={accountForm.type}
+                    onChange={(e) => setAccountForm({ ...accountForm, type: e.target.value as "bank" | "cash" })}
+                    className="w-full px-4 py-2 border border-theme-border rounded-[10px] text-sm font-medium text-theme-text-primary bg-theme-muted hover:bg-theme-surface focus:outline-none focus:border-[rgba(227,30,36,.4)] cursor-pointer"
+                  >
+                    <option value="bank">Bank</option>
+                    <option value="cash">Cash</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-theme-text-secondary mb-1.5 font-jakarta">Currency</label>
+                  <select
+                    value={accountForm.currency}
+                    onChange={(e) => setAccountForm({ ...accountForm, currency: e.target.value })}
+                    className="w-full px-4 py-2 border border-theme-border rounded-[10px] text-sm font-medium text-theme-text-primary bg-theme-muted hover:bg-theme-surface focus:outline-none focus:border-[rgba(227,30,36,.4)] cursor-pointer"
+                  >
+                    {CURRENCY_SYMBOL_OPTIONS.map((c) => (
+                      <option key={c.code} value={c.symbol}>
+                        {c.symbol} — {c.code} {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-theme-text-secondary mb-1.5 font-jakarta">Opening balance</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={accountForm.balance}
+                  onChange={(e) => setAccountForm({ ...accountForm, balance: e.target.value })}
+                  placeholder="0.00"
+                  className="w-full px-4 py-2 border border-theme-border rounded-[10px] text-sm text-theme-text-primary bg-theme-muted focus:outline-none focus:border-[rgba(227,30,36,.4)] focus:shadow-[0_0_0_3px_rgba(227,30,36,.08)] font-jakarta"
+                />
+              </div>
+              {accountError && (
+                <div className="bg-[rgba(239,68,68,.08)] border border-[rgba(239,68,68,.2)] text-theme-danger text-sm px-3 py-2 rounded-[10px] font-jakarta">
+                  {accountError}
+                </div>
+              )}
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => { setShowAccountForm(false); setAccountError(null); }}
+                  className="px-4 py-2 rounded-[10px] border border-theme-border text-sm font-medium text-theme-text-secondary hover:bg-theme-muted transition-colors font-jakarta"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveAccount}
+                  disabled={savingAccount}
+                  className="px-4 py-2 rounded-[10px] bg-theme-accent text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2 font-jakarta"
+                >
+                  {savingAccount && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Create Account
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
