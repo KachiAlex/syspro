@@ -15,9 +15,14 @@ export default function PlatformPage() {
 
   const load = useCallback(async () => {
     const views = ["workflows", "print-formats", "webhooks", "web-forms", "data-imports", "gateways", "maintenance"];
-    const results = await Promise.all(
-      views.map((v) => fetch(`/api/platform?view=${v}`).then((r) => r.json()).catch(() => ({})))
-    );
+    const [results, rolesRes] = await Promise.all([
+      Promise.all(
+        views.map((v) => fetch(`/api/platform?view=${v}`).then((r) => r.json()).catch(() => ({})))
+      ),
+      tenantSlug
+        ? fetch(`/api/tenant/roles?tenantSlug=${encodeURIComponent(tenantSlug)}`).then((r) => r.json()).catch(() => ({}))
+        : Promise.resolve({}),
+    ]);
     setData({
       workflows: results[0].workflows ?? [],
       formats: results[1].formats ?? [],
@@ -30,8 +35,9 @@ export default function PlatformPage() {
       links: results[5].links ?? [],
       schedules: results[6].schedules ?? [],
       visits: results[6].visits ?? [],
+      roles: rolesRes.roles ?? [],
     });
-  }, []);
+  }, [tenantSlug]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -55,6 +61,51 @@ export default function PlatformPage() {
       className={`${input} w-full font-mono`} rows={3} />
   );
 
+  type WfState = { name: string; docStatus: string };
+  type WfTransition = { from: string; action: string; to: string; roles: string[] };
+  const wfStates: WfState[] = f.wfStates ?? [];
+  const wfTransitions: WfTransition[] = f.wfTrans ?? [];
+  const roleNames: string[] = (data.roles ?? []).map((r: any) => r.name).filter(Boolean);
+  const DOC_STATUSES = ["draft", "submitted", "approved", "rejected", "cancelled"];
+
+  const updateWfState = (i: number, patch: Partial<WfState>) =>
+    setF({ ...f, wfStates: wfStates.map((s, j) => (j === i ? { ...s, ...patch } : s)) });
+  const updateWfTransition = (i: number, patch: Partial<WfTransition>) =>
+    setF({ ...f, wfTrans: wfTransitions.map((t, j) => (j === i ? { ...t, ...patch } : t)) });
+
+  const editWorkflow = (w: any) =>
+    setF({
+      ...f,
+      wfId: w.id,
+      wfDoc: w.doc_type,
+      wfName: w.name,
+      wfStates: (w.states ?? []).map((s: any) => ({ name: s.name ?? "", docStatus: s.docStatus ?? "" })),
+      wfTrans: (w.transitions ?? []).map((t: any) => ({
+        from: t.from ?? "", action: t.action ?? "", to: t.to ?? "", roles: t.roles ?? [],
+      })),
+    });
+
+  const saveWorkflow = () => {
+    if (!f.wfDoc?.trim() || !f.wfName?.trim()) return setError("Doc type and workflow name are required");
+    const states = wfStates
+      .filter((s) => s.name.trim())
+      .map((s) => ({ name: s.name.trim(), ...(s.docStatus ? { docStatus: s.docStatus } : {}) }));
+    const names = new Set(states.map((s) => s.name));
+    if (!states.length) return setError("Add at least one state");
+    if (names.size !== states.length) return setError("State names must be unique");
+    const transitions = wfTransitions
+      .filter((t) => t.from && t.to && t.action.trim())
+      .map((t) => ({ from: t.from, to: t.to, action: t.action.trim(), roles: t.roles ?? [] }));
+    for (const t of transitions) {
+      if (!names.has(t.from) || !names.has(t.to)) {
+        return setError(`Transition '${t.action}' references a state that doesn't exist`);
+      }
+    }
+    setError("");
+    post({ action: "upsert-workflow", id: f.wfId, docType: f.wfDoc, name: f.wfName, states, transitions });
+    setF({ ...f, wfId: undefined, wfDoc: "", wfName: "", wfStates: [], wfTrans: [] });
+  };
+
   if (!tenantSlug) return null;
 
   return (
@@ -73,17 +124,107 @@ export default function PlatformPage() {
 
         {tab === "workflows" && (
           <div className="space-y-4">
-            <div className="grid gap-2 rounded-xl border border-theme-border bg-theme-surface p-4">
+            <div className="grid gap-4 rounded-xl border border-theme-border bg-theme-surface p-4">
               <div className="flex flex-wrap gap-2">
                 <input placeholder="Doc type (e.g. invoice)" value={f.wfDoc ?? ""} onChange={(e) => setF({ ...f, wfDoc: e.target.value })} className={input} />
                 <input placeholder="Workflow name" value={f.wfName ?? ""} onChange={(e) => setF({ ...f, wfName: e.target.value })} className={input} />
               </div>
-              {jsonInput("wfStates", 'States JSON: [{"name":"Draft"},{"name":"Pending"},{"name":"Approved","docStatus":"approved"}]')}
-              {jsonInput("wfTrans", 'Transitions JSON: [{"from":"Draft","to":"Pending","action":"submit","roles":["staff"]},{"from":"Pending","to":"Approved","action":"approve","roles":["manager"]}]')}
-              <button className={btn} onClick={() => post({
-                action: "upsert-workflow", docType: f.wfDoc, name: f.wfName,
-                states: JSON.parse(f.wfStates || "[]"), transitions: JSON.parse(f.wfTrans || "[]"),
-              })}>Save Workflow</button>
+
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="text-xs font-medium uppercase tracking-wide text-theme-text-secondary">States</label>
+                  <button className={btnSm} onClick={() => setF({ ...f, wfStates: [...wfStates, { name: "", docStatus: "" }] })}>+ Add state</button>
+                </div>
+                <div className="space-y-2">
+                  {wfStates.map((s, i) => (
+                    <div key={i} className="flex flex-wrap items-center gap-2">
+                      <input
+                        placeholder="State name (e.g. Pending Approval)"
+                        value={s.name}
+                        onChange={(e) => updateWfState(i, { name: e.target.value })}
+                        className={`${input} min-w-[180px] flex-1`}
+                      />
+                      <select
+                        value={s.docStatus}
+                        onChange={(e) => updateWfState(i, { docStatus: e.target.value })}
+                        className={input}
+                      >
+                        <option value="">no doc status</option>
+                        {DOC_STATUSES.map((d) => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                      <button
+                        className={btnSm}
+                        onClick={() => setF({ ...f, wfStates: wfStates.filter((_, j) => j !== i) })}
+                        aria-label="Remove state"
+                      >×</button>
+                    </div>
+                  ))}
+                  {!wfStates.length && <p className="text-xs text-theme-text-tertiary">Add the statuses documents move through — e.g. Draft → Pending → Approved.</p>}
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="text-xs font-medium uppercase tracking-wide text-theme-text-secondary">Transitions</label>
+                  <button className={btnSm} onClick={() => setF({ ...f, wfTrans: [...wfTransitions, { from: "", action: "", to: "", roles: [] }] })}>+ Add transition</button>
+                </div>
+                <div className="space-y-3">
+                  {wfTransitions.map((t, i) => (
+                    <div key={i} className="rounded-lg border border-theme-border p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <select value={t.from} onChange={(e) => updateWfTransition(i, { from: e.target.value })} className={input}>
+                          <option value="">From…</option>
+                          {wfStates.filter((s) => s.name.trim()).map((s) => <option key={s.name} value={s.name.trim()}>{s.name.trim()}</option>)}
+                        </select>
+                        <input
+                          placeholder="action (e.g. approve)"
+                          value={t.action}
+                          onChange={(e) => updateWfTransition(i, { action: e.target.value })}
+                          className={input}
+                        />
+                        <select value={t.to} onChange={(e) => updateWfTransition(i, { to: e.target.value })} className={input}>
+                          <option value="">To…</option>
+                          {wfStates.filter((s) => s.name.trim()).map((s) => <option key={s.name} value={s.name.trim()}>{s.name.trim()}</option>)}
+                        </select>
+                        <button
+                          className={btnSm}
+                          onClick={() => setF({ ...f, wfTrans: wfTransitions.filter((_, j) => j !== i) })}
+                          aria-label="Remove transition"
+                        >×</button>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <span className="text-xs text-theme-text-tertiary">Roles allowed:</span>
+                        {roleNames.map((r) => (
+                          <label key={r} className="flex items-center gap-1 text-xs">
+                            <input
+                              type="checkbox"
+                              checked={t.roles.includes(r)}
+                              onChange={(e) =>
+                                updateWfTransition(i, {
+                                  roles: e.target.checked ? [...t.roles, r] : t.roles.filter((x) => x !== r),
+                                })
+                              }
+                            />
+                            {r}
+                          </label>
+                        ))}
+                        {!roleNames.length && <span className="text-xs text-theme-text-tertiary">(leave all unchecked = any role)</span>}
+                        {roleNames.length > 0 && !t.roles.length && <span className="text-xs text-theme-text-tertiary">any role</span>}
+                      </div>
+                    </div>
+                  ))}
+                  {!wfTransitions.length && <p className="text-xs text-theme-text-tertiary">Define which actions move a document between states and which roles may perform them.</p>}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button className={btn} onClick={saveWorkflow}>{f.wfId ? "Update Workflow" : "Save Workflow"}</button>
+                {f.wfId && (
+                  <button className={btnSm} onClick={() => setF({ ...f, wfId: undefined, wfDoc: "", wfName: "", wfStates: [], wfTrans: [] })}>
+                    Cancel edit
+                  </button>
+                )}
+              </div>
             </div>
             {data.workflows?.map((w: any) => (
               <div key={w.id} className="rounded-xl border border-theme-border bg-theme-surface p-4">
@@ -91,6 +232,7 @@ export default function PlatformPage() {
                   <b>{w.doc_type} — {w.name}</b>
                   <div className="flex items-center gap-2">
                     <span className={`rounded-full px-2 py-0.5 text-xs ${w.is_active ? "bg-emerald-900/60 text-emerald-300" : "bg-theme-elevated"}`}>{w.is_active ? "active" : "inactive"}</span>
+                    <button className={btnSm} onClick={() => editWorkflow(w)}>Edit</button>
                     <button className={btnSm} onClick={() => post({ action: "delete-workflow", id: w.id })}>Delete</button>
                   </div>
                 </div>
@@ -185,11 +327,58 @@ export default function PlatformPage() {
                   <option value="lead">Creates Lead</option><option value="ticket">Creates Ticket</option><option value="customer">Creates Contact</option>
                 </select>
               </div>
-              {jsonInput("fmSchema", 'Fields JSON: [{"name":"name","label":"Full Name","type":"text","required":true},{"name":"email","label":"Email","type":"email","required":true},{"name":"message","label":"Message","type":"textarea"}]')}
-              <button className={btn} onClick={() => post({
-                action: "create-web-form", name: f.fmName, slug: f.fmSlug,
-                targetEntity: f.fmTarget, schema: JSON.parse(f.fmSchema || "[]"),
-              })}>Create Form</button>
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="text-xs font-medium uppercase tracking-wide text-theme-text-secondary">Form fields</label>
+                  <button className={btnSm} onClick={() => setF({ ...f, fmFields: [...(f.fmFields ?? []), { name: "", label: "", type: "text", required: false }] })}>+ Add field</button>
+                </div>
+                <div className="space-y-2">
+                  {(f.fmFields ?? []).map((fld: any, i: number) => (
+                    <div key={i} className="flex flex-wrap items-center gap-2">
+                      <input
+                        placeholder="Field key (e.g. email)"
+                        value={fld.name}
+                        onChange={(e) => setF({ ...f, fmFields: f.fmFields.map((x: any, j: number) => (j === i ? { ...x, name: e.target.value } : x)) })}
+                        className={`${input} w-44`}
+                      />
+                      <input
+                        placeholder="Label (e.g. Email address)"
+                        value={fld.label}
+                        onChange={(e) => setF({ ...f, fmFields: f.fmFields.map((x: any, j: number) => (j === i ? { ...x, label: e.target.value } : x)) })}
+                        className={`${input} flex-1`}
+                      />
+                      <select
+                        value={fld.type}
+                        onChange={(e) => setF({ ...f, fmFields: f.fmFields.map((x: any, j: number) => (j === i ? { ...x, type: e.target.value } : x)) })}
+                        className={input}
+                      >
+                        {["text", "email", "tel", "number", "date", "textarea"].map((t) => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                      <label className="flex items-center gap-1 text-xs">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(fld.required)}
+                          onChange={(e) => setF({ ...f, fmFields: f.fmFields.map((x: any, j: number) => (j === i ? { ...x, required: e.target.checked } : x)) })}
+                        />
+                        required
+                      </label>
+                      <button className={btnSm} onClick={() => setF({ ...f, fmFields: f.fmFields.filter((_: any, j: number) => j !== i) })} aria-label="Remove field">×</button>
+                    </div>
+                  ))}
+                  {!(f.fmFields ?? []).length && <p className="text-xs text-theme-text-tertiary">Add the fields this form collects — e.g. name, email, message.</p>}
+                </div>
+              </div>
+              <button className={btn} onClick={() => {
+                const schema = (f.fmFields ?? [])
+                  .filter((fld: any) => fld.name?.trim())
+                  .map((fld: any) => ({
+                    name: fld.name.trim(),
+                    label: fld.label?.trim() || fld.name.trim(),
+                    type: fld.type || "text",
+                    required: Boolean(fld.required),
+                  }));
+                post({ action: "create-web-form", name: f.fmName, slug: f.fmSlug, targetEntity: f.fmTarget, schema });
+              }}>Create Form</button>
             </div>
             {data.forms?.map((fm: any) => (
               <div key={fm.id} className="flex items-center justify-between rounded-xl border border-theme-border bg-theme-surface p-4">
@@ -219,19 +408,47 @@ export default function PlatformPage() {
                   reader.readAsText(file);
                 }} className="text-sm" />
               </div>
-              {f.diCsv && (
-                <>
-                  <p className="text-xs text-theme-text-secondary">CSV columns: {(f.diCsv.split("\n")[0] ?? "").split(",").join(", ")}</p>
-                  {jsonInput("diMap", 'Column map JSON: {"CSV Header":"field"} — fields: ' + JSON.stringify((data.entities ?? []).find((e: any) => e.entity === f.diEntity)?.spec?.fields ?? []))}
-                  <button className={btn} onClick={async () => {
-                    const created = await post({ action: "create-import", entity: f.diEntity, fileName: f.diFile, columnMap: JSON.parse(f.diMap || "{}") });
-                    if (created) {
-                      const r = await post({ action: "run-import", importId: created.dataImport.id, csvText: f.diCsv });
-                      setMsg(r ? `Imported ${r.imported}, ${r.errors?.length ?? 0} errors` : "");
-                    }
-                  }}>Import</button>
-                </>
-              )}
+              {f.diCsv && (() => {
+                const csvHeaders = (f.diCsv.split("\n")[0] ?? "").split(",").map((h: string) => h.trim()).filter(Boolean);
+                const entityFields: string[] = (data.entities ?? []).find((e: any) => e.entity === (f.diEntity ?? "customers"))?.spec?.fields ?? [];
+                const guessField = (h: string) =>
+                  entityFields.find((fl) => fl.toLowerCase() === h.toLowerCase().replace(/[\s\-]+/g, "_")) ?? "";
+                const columnMap: Record<string, string> = {};
+                csvHeaders.forEach((h: string) => {
+                  const mapped = f.diMapObj?.[h] ?? guessField(h);
+                  if (mapped) columnMap[h] = mapped;
+                });
+                return (
+                  <>
+                    <div>
+                      <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-theme-text-secondary">Map CSV columns to fields</label>
+                      <div className="space-y-2">
+                        {csvHeaders.map((h: string) => (
+                          <div key={h} className="flex items-center gap-2">
+                            <span className="w-48 truncate font-mono text-xs text-theme-text-secondary">{h}</span>
+                            <span className="text-xs text-theme-text-tertiary">→</span>
+                            <select
+                              value={f.diMapObj?.[h] ?? guessField(h)}
+                              onChange={(e) => setF({ ...f, diMapObj: { ...(f.diMapObj ?? {}), [h]: e.target.value } })}
+                              className={input}
+                            >
+                              <option value="">— skip column —</option>
+                              {entityFields.map((fl) => <option key={fl} value={fl}>{fl}</option>)}
+                            </select>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <button className={btn} onClick={async () => {
+                      const created = await post({ action: "create-import", entity: f.diEntity, fileName: f.diFile, columnMap });
+                      if (created) {
+                        const r = await post({ action: "run-import", importId: created.dataImport.id, csvText: f.diCsv });
+                        setMsg(r ? `Imported ${r.imported}, ${r.errors?.length ?? 0} errors` : "");
+                      }
+                    }}>Import</button>
+                  </>
+                );
+              })()}
             </div>
             <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
               <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Entity</th><th className={th}>File</th><th className={th}>Status</th><th className={th}>Imported</th><th className={th}>Failed</th><th className={th}>Date</th></tr></thead>
