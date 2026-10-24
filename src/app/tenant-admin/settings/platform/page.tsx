@@ -1,27 +1,43 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
 import { useToast } from "@/components/ui/toast-provider";
 
 const TABS = ["workflows", "print-formats", "webhooks", "web-forms", "data-import", "gateways", "maintenance"] as const;
 
-// Print-format starter data: merge fields + a starter layout + a sample doc
-// used only for the live preview while authoring the template.
-const PRINT_DOC_TYPES: Record<
-  string,
-  { fields: string[]; itemFields: string[]; starter: string; sample: Record<string, any> }
-> = {
+// Print formats are built visually: the user picks a doc type and toggles
+// the blocks they want. buildPrintBody() emits the HTML template the
+// backend renders — admins never see markup.
+type PrintDocSpec = {
+  heading: string;
+  titleTag?: string;
+  details: { key: string; label: string }[];
+  totals: { key: string; label: string }[];
+  itemFields: { key: string; label: string }[];
+  sample: Record<string, any>;
+};
+
+const PRINT_DOC_TYPES: Record<string, PrintDocSpec> = {
   invoice: {
-    fields: ["invoice_number", "customer_name", "issue_date", "due_date", "currency", "subtotal", "tax_total", "grand_total"],
-    itemFields: ["description", "quantity", "unit_price", "amount"],
-    starter: `<h1>Invoice {{invoice_number}}</h1>
-<p><b>Bill to:</b> {{customer_name}}<br/><b>Issued:</b> {{issue_date}} &nbsp;·&nbsp; <b>Due:</b> {{due_date}}</p>
-<table>
-  <thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Amount</th></tr></thead>
-  <tbody>{{#each items}}<tr><td>{{description}}</td><td>{{quantity}}</td><td>{{unit_price}}</td><td>{{amount}}</td></tr>{{/each}}</tbody>
-</table>
-<p style="text-align:right">Subtotal: {{currency}}{{subtotal}}<br/>Tax: {{currency}}{{tax_total}}<br/><b>Total: {{currency}}{{grand_total}}</b></p>`,
+    heading: "Invoice",
+    titleTag: "invoice_number",
+    details: [
+      { key: "customer_name", label: "Bill to" },
+      { key: "issue_date", label: "Issued" },
+      { key: "due_date", label: "Due" },
+    ],
+    totals: [
+      { key: "subtotal", label: "Subtotal" },
+      { key: "tax_total", label: "Tax" },
+      { key: "grand_total", label: "Total" },
+    ],
+    itemFields: [
+      { key: "description", label: "Description" },
+      { key: "quantity", label: "Qty" },
+      { key: "unit_price", label: "Unit price" },
+      { key: "amount", label: "Amount" },
+    ],
     sample: {
       invoice_number: "INV-0142", customer_name: "Sample Customer Ltd",
       issue_date: "2026-10-24", due_date: "2026-11-23", currency: "₦",
@@ -33,27 +49,35 @@ const PRINT_DOC_TYPES: Record<
     },
   },
   receipt: {
-    fields: ["receipt_number", "customer_name", "payment_date", "payment_method", "currency", "amount"],
+    heading: "Receipt",
+    titleTag: "receipt_number",
+    details: [
+      { key: "customer_name", label: "Received from" },
+      { key: "payment_date", label: "Date" },
+      { key: "payment_method", label: "Method" },
+    ],
+    totals: [{ key: "amount", label: "Amount received" }],
     itemFields: [],
-    starter: `<h2>Receipt {{receipt_number}}</h2>
-<p><b>Received from:</b> {{customer_name}}<br/><b>Date:</b> {{payment_date}} &nbsp;·&nbsp; <b>Method:</b> {{payment_method}}</p>
-<p><b>Amount received:</b> {{currency}}{{amount}}</p>
-<p><i>Thank you for your payment.</i></p>`,
     sample: {
       receipt_number: "RCP-0091", customer_name: "Sample Customer Ltd",
       payment_date: "2026-10-24", payment_method: "Bank transfer", currency: "₦", amount: "1,075,000.00",
     },
   },
   quotation: {
-    fields: ["quotation_number", "customer_name", "issue_date", "valid_until", "currency", "grand_total"],
-    itemFields: ["description", "quantity", "unit_price", "amount"],
-    starter: `<h1>Quotation {{quotation_number}}</h1>
-<p><b>To:</b> {{customer_name}}<br/><b>Issued:</b> {{issue_date}} &nbsp;·&nbsp; <b>Valid until:</b> {{valid_until}}</p>
-<table>
-  <thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Amount</th></tr></thead>
-  <tbody>{{#each items}}<tr><td>{{description}}</td><td>{{quantity}}</td><td>{{unit_price}}</td><td>{{amount}}</td></tr>{{/each}}</tbody>
-</table>
-<p style="text-align:right"><b>Total: {{currency}}{{grand_total}}</b></p>`,
+    heading: "Quotation",
+    titleTag: "quotation_number",
+    details: [
+      { key: "customer_name", label: "To" },
+      { key: "issue_date", label: "Issued" },
+      { key: "valid_until", label: "Valid until" },
+    ],
+    totals: [{ key: "grand_total", label: "Total" }],
+    itemFields: [
+      { key: "description", label: "Description" },
+      { key: "quantity", label: "Qty" },
+      { key: "unit_price", label: "Unit price" },
+      { key: "amount", label: "Amount" },
+    ],
     sample: {
       quotation_number: "QTN-0057", customer_name: "Sample Customer Ltd",
       issue_date: "2026-10-24", valid_until: "2026-11-07", currency: "₦", grand_total: "1,075,000.00",
@@ -61,6 +85,48 @@ const PRINT_DOC_TYPES: Record<
     },
   },
 };
+
+type PrintBuilder = {
+  doc: string;
+  heading: string;
+  details: string[];
+  showItems: boolean;
+  itemCols: string[];
+  totals: string[];
+  footer: string;
+};
+
+const escHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+function initPrintBuilder(doc: string, spec?: PrintDocSpec): PrintBuilder {
+  return {
+    doc,
+    heading: spec?.heading ?? "",
+    details: (spec?.details ?? []).map((d) => d.key),
+    showItems: (spec?.itemFields.length ?? 0) > 0,
+    itemCols: (spec?.itemFields ?? []).map((c) => c.key),
+    totals: (spec?.totals ?? []).map((t) => t.key),
+    footer: "",
+  };
+}
+
+function buildPrintBody(spec: PrintDocSpec, b: PrintBuilder): string {
+  let html = `<h1>${escHtml(b.heading.trim() || spec.heading)}${spec.titleTag ? ` {{${spec.titleTag}}}` : ""}</h1>`;
+  const det = spec.details.filter((d) => b.details.includes(d.key));
+  if (det.length) html += `<p>${det.map((d) => `<b>${d.label}:</b> {{${d.key}}}`).join("<br/>")}</p>`;
+  const cols = b.showItems ? spec.itemFields.filter((c) => b.itemCols.includes(c.key)) : [];
+  if (cols.length) {
+    html += `<table><thead><tr>${cols.map((c) => `<th>${c.label}</th>`).join("")}</tr></thead><tbody>{{#each items}}<tr>${cols.map((c) => `<td>{{${c.key}}}</td>`).join("")}</tr>{{/each}}</tbody></table>`;
+  }
+  const tot = spec.totals.filter((t) => b.totals.includes(t.key));
+  if (tot.length) {
+    html += `<p style="text-align:right">${tot
+      .map((t, i) => `${i === tot.length - 1 ? "<b>" : ""}${t.label}: {{${t.key}}}${i === tot.length - 1 ? "</b>" : ""}`)
+      .join("<br/>")}</p>`;
+  }
+  if (b.footer.trim()) html += `<p><i>${escHtml(b.footer.trim())}</i></p>`;
+  return html;
+}
 
 // Mirrors src/lib/platform/print-formats.ts renderTemplate for live preview.
 function renderPrintPreview(template: string, doc: Record<string, any>): string {
@@ -156,19 +222,12 @@ export default function PlatformPage() {
   const btn = "rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium hover:bg-emerald-500 disabled:opacity-50";
   const btnSm = "rounded bg-theme-muted px-2 py-1 text-xs hover:bg-theme-elevated";
   const th = "p-3";
-  // Insert a {{tag}} at the cursor inside the print-format body.
-  const pfBodyRef = useRef<HTMLTextAreaElement>(null);
-  const pfSpec = PRINT_DOC_TYPES[(f.pfDoc ?? "").trim().toLowerCase()];
-  const insertPfTag = (tag: string) => {
-    const ta = pfBodyRef.current;
-    const cur = f.pfBody ?? "";
-    const start = ta?.selectionStart ?? cur.length;
-    const end = ta?.selectionEnd ?? cur.length;
-    setF({ ...f, pfBody: cur.slice(0, start) + tag + cur.slice(end) });
-    requestAnimationFrame(() => {
-      if (ta) { ta.focus(); ta.setSelectionRange(start + tag.length, start + tag.length); }
-    });
-  };
+  // Print-format visual builder — regenerates when the doc type changes.
+  const pfDoc = (f.pfDoc ?? "").trim().toLowerCase();
+  const pfSpec = PRINT_DOC_TYPES[pfDoc];
+  const [pfB, setPfB] = useState<PrintBuilder | null>(null);
+  const pfBuilder: PrintBuilder = pfB && pfB.doc === pfDoc ? pfB : initPrintBuilder(pfDoc, pfSpec);
+  const toggleIn = (arr: string[], k: string) => (arr.includes(k) ? arr.filter((x) => x !== k) : [...arr, k]);
 
   type WfState = { name: string; docStatus: string };
   type WfTransition = { from: string; action: string; to: string; roles: string[] };
@@ -403,59 +462,92 @@ export default function PlatformPage() {
                   <input placeholder="Format name" value={f.pfName ?? ""} onChange={(e) => setF({ ...f, pfName: e.target.value })} className={input} />
                   <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.pfDefault ?? false} onChange={(e) => setF({ ...f, pfDefault: e.target.checked })} /> Default</label>
                 </div>
-                {pfSpec && (
-                  <div>
-                    <p className="mb-1 text-xs text-theme-text-tertiary">Insert field — click to add at cursor:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {pfSpec.fields.map((fl) => (
-                        <button key={fl} className={btnSm} onClick={() => insertPfTag(`{{${fl}}}`)}>{`{{${fl}}}`}</button>
-                      ))}
+                {pfSpec ? (
+                  <>
+                    <div>
+                      <label className="mb-1 block text-xs text-theme-text-tertiary">Heading</label>
+                      <input value={pfBuilder.heading} onChange={(e) => setPfB({ ...pfBuilder, heading: e.target.value })} className={`${input} w-full`} />
                     </div>
+                    {pfSpec.details.length > 0 && (
+                      <div>
+                        <p className="mb-1 text-xs text-theme-text-tertiary">Show in document</p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                          {pfSpec.details.map((d) => (
+                            <label key={d.key} className="flex items-center gap-2 text-sm">
+                              <input type="checkbox" checked={pfBuilder.details.includes(d.key)} onChange={() => setPfB({ ...pfBuilder, details: toggleIn(pfBuilder.details, d.key) })} />
+                              {d.label}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {pfSpec.itemFields.length > 0 && (
+                      <div>
+                        <label className="mb-1 flex items-center gap-2 text-sm">
+                          <input type="checkbox" checked={pfBuilder.showItems} onChange={(e) => setPfB({ ...pfBuilder, showItems: e.target.checked })} />
+                          Include items table
+                        </label>
+                        {pfBuilder.showItems && (
+                          <div className="ml-6 flex flex-wrap gap-x-4 gap-y-1">
+                            {pfSpec.itemFields.map((c) => (
+                              <label key={c.key} className="flex items-center gap-2 text-xs text-theme-text-secondary">
+                                <input type="checkbox" checked={pfBuilder.itemCols.includes(c.key)} onChange={() => setPfB({ ...pfBuilder, itemCols: toggleIn(pfBuilder.itemCols, c.key) })} />
+                                {c.label}
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {pfSpec.totals.length > 0 && (
+                      <div>
+                        <p className="mb-1 text-xs text-theme-text-tertiary">Totals</p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                          {pfSpec.totals.map((t) => (
+                            <label key={t.key} className="flex items-center gap-2 text-sm">
+                              <input type="checkbox" checked={pfBuilder.totals.includes(t.key)} onChange={() => setPfB({ ...pfBuilder, totals: toggleIn(pfBuilder.totals, t.key) })} />
+                              {t.label}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div>
+                      <label className="mb-1 block text-xs text-theme-text-tertiary">Footer note <span className="text-theme-text-tertiary">(optional)</span></label>
+                      <input placeholder='e.g. "Thank you for your business."' value={pfBuilder.footer} onChange={(e) => setPfB({ ...pfBuilder, footer: e.target.value })} className={`${input} w-full`} />
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    <p className="mb-1 text-xs text-theme-text-tertiary">
+                      No guided layout for &quot;{f.pfDoc}&quot; — use invoice, receipt or quotation for the visual builder, or write the template HTML below.
+                    </p>
+                    <textarea
+                      placeholder="Template HTML — use {{field}} for values and {{#each items}}…{{/each}} for line-item loops"
+                      value={f.pfBody ?? ""}
+                      onChange={(e) => setF({ ...f, pfBody: e.target.value })}
+                      className={`${input} w-full font-mono`}
+                      rows={8}
+                    />
                   </div>
                 )}
-                <textarea
-                  ref={pfBodyRef}
-                  placeholder="Template HTML — use {{field}} for values and {{#each items}}…{{/each}} for line-item loops"
-                  value={f.pfBody ?? ""}
-                  onChange={(e) => setF({ ...f, pfBody: e.target.value })}
-                  className={`${input} w-full font-mono`}
-                  rows={10}
-                />
-                <div className="flex flex-wrap gap-2">
-                  {pfSpec?.itemFields.length ? (
-                    <button
-                      className={btnSm}
-                      onClick={() =>
-                        insertPfTag(
-                          `<table><thead><tr>${pfSpec.itemFields.map((fl) => `<th>${fl}</th>`).join("")}</tr></thead><tbody>{{#each items}}<tr>${pfSpec.itemFields.map((fl) => `<td>{{${fl}}}</td>`).join("")}</tr>{{/each}}</tbody></table>`
-                        )
-                      }
-                    >Insert items table</button>
-                  ) : null}
-                  {pfSpec && (
-                    <button
-                      className={btnSm}
-                      onClick={() => setF({ ...f, pfBody: pfSpec.starter })}
-                    >Use starter template</button>
-                  )}
-                </div>
                 <button className={btn} onClick={() => post({
                   action: "upsert-print-format", docType: f.pfDoc, name: f.pfName,
-                  bodyHtml: f.pfBody, isDefault: f.pfDefault,
+                  bodyHtml: pfSpec ? buildPrintBody(pfSpec, pfBuilder) : f.pfBody, isDefault: f.pfDefault,
                 }, "Print format saved")}>Save Format</button>
               </div>
               <div className="rounded-xl border border-theme-border bg-theme-surface p-4">
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-theme-text-secondary">Preview <span className="normal-case text-theme-text-tertiary">— rendered with sample data</span></p>
-                {f.pfBody?.trim() ? (
+                {(pfSpec || f.pfBody?.trim()) ? (
                   <div
                     className="min-h-[300px] overflow-auto rounded-lg bg-white p-4 text-sm text-gray-900"
                     dangerouslySetInnerHTML={{
-                      __html: renderPrintPreview(f.pfBody, pfSpec?.sample ?? {}),
+                      __html: renderPrintPreview(pfSpec ? buildPrintBody(pfSpec, pfBuilder) : (f.pfBody ?? ""), pfSpec?.sample ?? {}),
                     }}
                   />
                 ) : (
                   <div className="flex min-h-[300px] items-center justify-center rounded-lg border border-dashed border-theme-border text-sm text-theme-text-tertiary">
-                    Template preview appears here
+                    Choose a doc type to start building
                   </div>
                 )}
               </div>
