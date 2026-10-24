@@ -154,18 +154,31 @@ export async function POST(request: NextRequest) {
           tenantSlug: context.tenantSlug, importId: String(body.importId),
           csvText: String(body.csvText ?? ""),
         }));
-      case "upsert-gateway":
+      case "upsert-gateway": {
+        const provider = String(body.provider ?? "");
+        if (!["paystack", "flutterwave"].includes(provider)) {
+          return NextResponse.json({ error: "provider must be paystack or flutterwave" }, { status: 400 });
+        }
+        if (!body.secretKey) {
+          return NextResponse.json({ error: "secretKey is required" }, { status: 400 });
+        }
         return NextResponse.json({ config: await upsertGatewayConfig({
-          tenantSlug: context.tenantSlug, provider: body.provider,
+          tenantSlug: context.tenantSlug, provider: provider as "paystack" | "flutterwave",
           publicKey: body.publicKey, secretKey: String(body.secretKey),
           webhookSecret: body.webhookSecret, mode: body.mode, isActive: body.isActive,
         }) });
-      case "init-payment":
+      }
+      case "init-payment": {
+        const provider = String(body.provider ?? "paystack");
+        if (!["paystack", "flutterwave"].includes(provider)) {
+          return NextResponse.json({ error: "provider must be paystack or flutterwave" }, { status: 400 });
+        }
         return NextResponse.json(await initializeGatewayPayment({
           tenantSlug: context.tenantSlug, invoiceId: String(body.invoiceId),
-          provider: body.provider, customerEmail: String(body.customerEmail),
+          provider: provider as "paystack" | "flutterwave", customerEmail: String(body.customerEmail),
           callbackUrl: body.callbackUrl,
         }));
+      }
       case "create-schedule":
         return NextResponse.json({ schedule: await createSchedule({
           tenantSlug: context.tenantSlug, assetName: String(body.assetName),

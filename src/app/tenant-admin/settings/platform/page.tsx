@@ -427,7 +427,7 @@ export default function PlatformPage() {
                     type: fld.type || "text",
                     required: Boolean(fld.required),
                   }));
-                post({ action: "create-web-form", name: f.fmName, slug: f.fmSlug, targetEntity: f.fmTarget, schema });
+                post({ action: "create-web-form", name: f.fmName, slug: f.fmSlug, targetEntity: f.fmTarget ?? "lead", schema });
               }}>Create Form</button>
             </div>
             {data.forms?.map((fm: any) => (
@@ -490,7 +490,7 @@ export default function PlatformPage() {
                       </div>
                     </div>
                     <button className={btn} onClick={async () => {
-                      const created = await post({ action: "create-import", entity: f.diEntity, fileName: f.diFile, columnMap });
+                      const created = await post({ action: "create-import", entity: f.diEntity ?? "customers", fileName: f.diFile, columnMap });
                       if (created) {
                         const r = await post({ action: "run-import", importId: created.dataImport.id, csvText: f.diCsv });
                         setMsg(r ? `Imported ${r.imported}, ${r.errors?.length ?? 0} errors` : "");
@@ -531,8 +531,8 @@ export default function PlatformPage() {
                   <option value="test">Test</option><option value="live">Live</option>
                 </select>
                 <button className={btn} onClick={() => post({
-                  action: "upsert-gateway", provider: f.gwProvider, publicKey: f.gwPub,
-                  secretKey: f.gwSecret, webhookSecret: f.gwHook, mode: f.gwMode,
+                  action: "upsert-gateway", provider: f.gwProvider ?? "paystack", publicKey: f.gwPub,
+                  secretKey: f.gwSecret, webhookSecret: f.gwHook, mode: f.gwMode ?? "test",
                 })}>Save Config</button>
               </div>
               <p className="text-xs text-theme-text-tertiary">
@@ -546,7 +546,7 @@ export default function PlatformPage() {
                 <option value="paystack">Paystack</option><option value="flutterwave">Flutterwave</option>
               </select>
               <button className={btn} onClick={async () => {
-                const d = await post({ action: "init-payment", invoiceId: f.plInv, provider: f.plProvider, customerEmail: f.plEmail });
+                const d = await post({ action: "init-payment", invoiceId: f.plInv, provider: f.plProvider ?? "paystack", customerEmail: f.plEmail });
                 setMsg(d?.checkoutUrl ? `Payment link: ${d.checkoutUrl}` : "");
               }}>Create Payment Link</button>
             </div>
