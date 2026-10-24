@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Download, Loader2, Play, RefreshCcw } from "lucide-react";
 import ReportDefinitionModal from "@/components/ReportDefinitionModal";
+import { KvEditor, rowsToObject, type KvRow } from "@/app/tenant-admin/components/kv-editor";
 
 type Report = {
   id: string;
@@ -31,7 +32,8 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", reportType: "operational", definition: '{"source":"projects"}', schedule: "" });
+  const [form, setForm] = useState({ name: "", reportType: "operational", schedule: "" });
+  const [defRows, setDefRows] = useState<KvRow[]>([{ key: "source", value: "projects" }]);
   const [summary, setSummary] = useState<{ totalReports: number; queuedJobs: number; runsLast7: number; avgRunSecs?: number } | null>(null);
 
   const loadReports = useCallback(async (cursorToLoad: string | null = null) => {
@@ -97,7 +99,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
     setSaving(true);
     setError(null);
     try {
-      const definition = JSON.parse(form.definition || "{}");
+      const definition = rowsToObject(defRows);
       const schedule = form.schedule || undefined;
       const res = await fetch(`/api/reports?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}`, {
         method: "POST",
@@ -105,7 +107,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
         body: JSON.stringify({ name: form.name, reportType: form.reportType, definition, schedule }),
       });
       if (!res.ok) throw new Error("Create failed");
-      setForm({ name: "", reportType: form.reportType, definition: form.definition, schedule: form.schedule });
+      setForm({ name: "", reportType: form.reportType, schedule: form.schedule });
       await loadReports();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -181,8 +183,14 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-theme-text-primary mb-2">Definition (JSON)</label>
-            <textarea value={form.definition} onChange={(e) => setForm((p) => ({ ...p, definition: e.target.value }))} className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 font-mono text-xs" rows={4} />
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">Definition entries</label>
+            <div className="rounded-lg border border-theme-border bg-theme-surface p-3">
+              <KvEditor
+                rows={defRows}
+                onChange={setDefRows}
+                hint='e.g. source → projects, metrics → ["count","sum"]'
+              />
+            </div>
           </div>
           <div className="flex gap-3">
             <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-full bg-theme-surface px-4 py-2 text-sm font-medium text-theme-text-primary shadow-sm hover:bg-theme-muted">

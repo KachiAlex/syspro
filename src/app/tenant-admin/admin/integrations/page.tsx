@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
+import { KvEditor, objectToRows, rowsToObject, type KvRow } from "@/app/tenant-admin/components/kv-editor";
 
 interface Integration {
   id: string;
@@ -45,7 +46,7 @@ export default function IntegrationsPage() {
   const [intType, setIntType] = useState("webhook");
   const [intWebhook, setIntWebhook] = useState("");
   const [intEnabled, setIntEnabled] = useState(true);
-  const [intConfigJson, setIntConfigJson] = useState("{}");
+  const [intConfigRows, setIntConfigRows] = useState<KvRow[]>([]);
 
   // API key form state
   const [showKeyForm, setShowKeyForm] = useState(false);
@@ -79,7 +80,7 @@ export default function IntegrationsPage() {
 
   function openCreate() {
     setEditing(null);
-    setIntName(""); setIntType("webhook"); setIntWebhook(""); setIntEnabled(true); setIntConfigJson("{}");
+    setIntName(""); setIntType("webhook"); setIntWebhook(""); setIntEnabled(true); setIntConfigRows([]);
     setShowIntForm(true);
   }
 
@@ -89,19 +90,13 @@ export default function IntegrationsPage() {
     setIntType(i.type);
     setIntWebhook(i.webhook_url || i.webhookUrl || "");
     setIntEnabled(i.status === "active");
-    setIntConfigJson(JSON.stringify(i.config || {}, null, 2));
+    setIntConfigRows(objectToRows(i.config || {}));
     setShowIntForm(true);
   }
 
   async function saveIntegration() {
     if (!tenantSlug || !intName.trim()) return;
-    let config: Record<string, any>;
-    try {
-      config = JSON.parse(intConfigJson || "{}");
-    } catch {
-      setError("Config must be valid JSON");
-      return;
-    }
+    const config = rowsToObject(intConfigRows);
     setError(null);
     try {
       if (editing) {
@@ -288,8 +283,10 @@ export default function IntegrationsPage() {
             )}
             <label className="block text-sm mb-1">Webhook URL</label>
             <input value={intWebhook} onChange={(e) => setIntWebhook(e.target.value)} placeholder="https://…" className="w-full border rounded px-2 py-1.5 mb-3 text-sm" />
-            <label className="block text-sm mb-1">Config (JSON — secrets show as {MASK})</label>
-            <textarea value={intConfigJson} onChange={(e) => setIntConfigJson(e.target.value)} rows={5} className="w-full border rounded px-2 py-1.5 mb-3 text-sm font-mono" />
+            <label className="block text-sm mb-1">Config entries <span className="text-theme-text-tertiary">(secrets show as {MASK} — leave as-is to keep them)</span></label>
+            <div className="mb-3">
+              <KvEditor rows={intConfigRows} onChange={setIntConfigRows} />
+            </div>
             <label className="flex items-center gap-2 text-sm mb-4">
               <input type="checkbox" checked={intEnabled} onChange={(e) => setIntEnabled(e.target.checked)} /> Enabled
             </label>

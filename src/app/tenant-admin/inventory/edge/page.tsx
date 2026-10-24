@@ -56,12 +56,33 @@ export default function InventoryEdgePage() {
 
         {tab === "packing-slips" && (
           <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              <input placeholder="Sales order ID" value={f.psSo ?? ""} onChange={(e) => setF({ ...f, psSo: e.target.value })} className={input} />
-              <input type="number" placeholder="Cases from" value={f.psFrom ?? 1} onChange={(e) => setF({ ...f, psFrom: e.target.value })} className={`${input} w-28`} />
-              <input type="number" placeholder="Cases to" value={f.psTo ?? ""} onChange={(e) => setF({ ...f, psTo: e.target.value })} className={`${input} w-28`} />
-              <input placeholder='Items JSON [{"sku":"X","qty":5}]' value={f.psItems ?? ""} onChange={(e) => setF({ ...f, psItems: e.target.value })} className={`${input} flex-1 font-mono`} />
-              <button className={btn} onClick={() => post({ action: "create-slip", salesOrderId: f.psSo, fromCaseNo: Number(f.psFrom), toCaseNo: f.psTo ? Number(f.psTo) : undefined, items: JSON.parse(f.psItems || "[]") })}>Create Slip</button>
+            <div className="grid gap-3 rounded-xl border border-theme-border bg-theme-surface p-4">
+              <div className="flex flex-wrap gap-2">
+                <input placeholder="Sales order ID" value={f.psSo ?? ""} onChange={(e) => setF({ ...f, psSo: e.target.value })} className={input} />
+                <input type="number" placeholder="Cases from" value={f.psFrom ?? 1} onChange={(e) => setF({ ...f, psFrom: e.target.value })} className={`${input} w-28`} />
+                <input type="number" placeholder="Cases to" value={f.psTo ?? ""} onChange={(e) => setF({ ...f, psTo: e.target.value })} className={`${input} w-28`} />
+              </div>
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="text-xs font-medium uppercase tracking-wide text-theme-text-secondary">Packed items</label>
+                  <button className={btnSm} onClick={() => setF({ ...f, psItemRows: [...(f.psItemRows ?? []), { sku: "", qty: "" }] })}>+ Add item</button>
+                </div>
+                <div className="space-y-2">
+                  {(f.psItemRows ?? []).map((it: any, i: number) => (
+                    <div key={i} className="flex flex-wrap items-center gap-2">
+                      <input placeholder="SKU" value={it.sku} onChange={(e) => setF({ ...f, psItemRows: f.psItemRows.map((x: any, j: number) => (j === i ? { ...x, sku: e.target.value } : x)) })} className={`${input} flex-1`} />
+                      <input type="number" placeholder="Qty" value={it.qty} onChange={(e) => setF({ ...f, psItemRows: f.psItemRows.map((x: any, j: number) => (j === i ? { ...x, qty: e.target.value } : x)) })} className={`${input} w-24`} />
+                      <button className={btnSm} onClick={() => setF({ ...f, psItemRows: f.psItemRows.filter((_: any, j: number) => j !== i) })} aria-label="Remove item">×</button>
+                    </div>
+                  ))}
+                  {!(f.psItemRows ?? []).length && <p className="text-xs text-theme-text-tertiary">Add the items packed in this slip.</p>}
+                </div>
+              </div>
+              <button className={btn} onClick={() => post({
+                action: "create-slip", salesOrderId: f.psSo, fromCaseNo: Number(f.psFrom),
+                toCaseNo: f.psTo ? Number(f.psTo) : undefined,
+                items: (f.psItemRows ?? []).filter((it: any) => it.sku?.trim()).map((it: any) => ({ sku: it.sku.trim(), qty: Number(it.qty) || 0 })),
+              })}>Create Slip</button>
             </div>
             <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
               <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Slip</th><th className={th}>Cases</th><th className={th}>Items</th><th className={th}>Status</th><th className={th}></th></tr></thead>

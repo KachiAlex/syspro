@@ -122,13 +122,43 @@ function PeggedTab({ tenantSlug, post, busy, setError }: any) {
   );
 }
 
+const CHEQUE_FIELDS = [
+  { key: "date", label: "Date", attrs: ["x", "y", "format"] },
+  { key: "payee", label: "Payee", attrs: ["x", "y"] },
+  { key: "amount_figures", label: "Amount (figures)", attrs: ["x", "y"] },
+  { key: "amount_words", label: "Amount (words)", attrs: ["x", "y", "x2", "y2"] },
+  { key: "account_no", label: "Account no (optional)", attrs: ["x", "y"] },
+] as const;
+
 function ChequesTab({ tenantSlug, post, busy }: any) {
   const [templates, setTemplates] = useState<any[]>([]);
-  const [fieldsJson, setFieldsJson] = useState('{\n  "cheque_size": { "w": 203, "h": 93 },\n  "date": { "x": 160, "y": 12, "format": "DDMMYYYY" },\n  "payee": { "x": 30, "y": 32 },\n  "amount_figures": { "x": 160, "y": 45 },\n  "amount_words": { "x": 20, "y": 52, "x2": 20, "y2": 60 }\n}');
+  const [size, setSize] = useState({ w: "203", h: "93" });
+  const [coords, setCoords] = useState<Record<string, Record<string, string>>>({
+    date: { x: "160", y: "12", format: "DDMMYYYY" },
+    payee: { x: "30", y: "32" },
+    amount_figures: { x: "160", y: "45" },
+    amount_words: { x: "20", y: "52", x2: "20", y2: "60" },
+    account_no: {},
+  });
   const [form, setForm] = useState({ name: "", bank: "" });
   const [render, setRender] = useState({ templateId: "", payee: "", amount: "", date: "", accountNo: "" });
   const [rendered, setRendered] = useState<any>(null);
-  const [jsonErr, setJsonErr] = useState<string | null>(null);
+
+  const buildFields = () => {
+    const fields: Record<string, any> = {
+      cheque_size: { w: Number(size.w) || 0, h: Number(size.h) || 0 },
+    };
+    for (const spec of CHEQUE_FIELDS) {
+      const block: Record<string, any> = {};
+      for (const attr of spec.attrs) {
+        const raw = (coords[spec.key] ?? {})[attr];
+        if (raw == null || raw === "") continue;
+        block[attr] = attr === "format" ? raw : Number(raw);
+      }
+      if (Object.keys(block).length) fields[spec.key] = block;
+    }
+    return fields;
+  };
 
   const load = useCallback(async () => {
     const j = await (await fetch(`/api/finance/cheque?tenantSlug=${encodeURIComponent(tenantSlug)}&view=templates`)).json();
@@ -151,14 +181,51 @@ function ChequesTab({ tenantSlug, post, busy }: any) {
           <input className={inputCls} placeholder="Template name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <input className={inputCls} placeholder="Bank" value={form.bank} onChange={(e) => setForm({ ...form, bank: e.target.value })} />
         </div>
-        <textarea className={`${inputCls} h-40 font-mono`} value={fieldsJson} onChange={(e) => setFieldsJson(e.target.value)} />
-        {jsonErr && <div className="text-rose-400 text-xs">{jsonErr}</div>}
+        <div className="rounded border border-theme-border/60 p-3 space-y-2">
+          <div className="grid grid-cols-[7rem_repeat(4,4.5rem)] items-center gap-2 text-xs font-medium uppercase tracking-wide text-theme-text-tertiary">
+            <span>Cheque size</span><span>w</span><span>h</span><span /><span />
+          </div>
+          <div className="grid grid-cols-[7rem_repeat(4,4.5rem)] items-center gap-2">
+            <span className="text-xs text-theme-text-secondary">leaf (mm)</span>
+            <input className={inputCls} type="number" value={size.w} onChange={(e) => setSize({ ...size, w: e.target.value })} />
+            <input className={inputCls} type="number" value={size.h} onChange={(e) => setSize({ ...size, h: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-[7rem_repeat(4,4.5rem)] items-center gap-2 text-xs font-medium uppercase tracking-wide text-theme-text-tertiary pt-1">
+            <span>Field</span><span>x</span><span>y</span><span>x2</span><span>y2</span>
+          </div>
+          {CHEQUE_FIELDS.map((spec) => (
+            <div key={spec.key} className="grid grid-cols-[7rem_repeat(4,4.5rem)] items-center gap-2">
+              <span className="text-xs text-theme-text-secondary">{spec.label}</span>
+              {["x", "y", "x2", "y2"].map((attr) =>
+                spec.attrs.includes(attr as never) ? (
+                  <input
+                    key={attr}
+                    className={inputCls}
+                    type="number"
+                    value={(coords[spec.key] ?? {})[attr] ?? ""}
+                    onChange={(e) => setCoords({ ...coords, [spec.key]: { ...coords[spec.key], [attr]: e.target.value } })}
+                  />
+                ) : <span key={attr} />
+              )}
+            </div>
+          ))}
+          <div className="flex items-center gap-2 pt-1">
+            <span className="w-28 text-xs text-theme-text-secondary">Date format</span>
+            <select
+              className={inputCls}
+              value={(coords.date ?? {}).format ?? "DDMMYYYY"}
+              onChange={(e) => setCoords({ ...coords, date: { ...coords.date, format: e.target.value } })}
+            >
+              <option value="DDMMYYYY">DDMMYYYY</option>
+              <option value="MMDDYYYY">MMDDYYYY</option>
+              <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+              <option value="DD-MM-YYYY">DD-MM-YYYY</option>
+            </select>
+          </div>
+        </div>
         <button className={btnCls} disabled={busy || !form.name}
           onClick={async () => {
-            let fields: any;
-            try { fields = JSON.parse(fieldsJson); setJsonErr(null); }
-            catch { setJsonErr("Invalid JSON"); return; }
-            const r = await post("/api/finance/cheque", { action: "upsert-template", name: form.name, bank: form.bank || undefined, fields, isDefault: !templates.length });
+            const r = await post("/api/finance/cheque", { action: "upsert-template", name: form.name, bank: form.bank || undefined, fields: buildFields(), isDefault: !templates.length });
             if (r) { setForm({ name: "", bank: "" }); load(); }
           }}>
           <Plus className="h-3.5 w-3.5" /> Save Template

@@ -1,10 +1,81 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
 import { useToast } from "@/components/ui/toast-provider";
 
 const TABS = ["workflows", "print-formats", "webhooks", "web-forms", "data-import", "gateways", "maintenance"] as const;
+
+// Print-format starter data: merge fields + a starter layout + a sample doc
+// used only for the live preview while authoring the template.
+const PRINT_DOC_TYPES: Record<
+  string,
+  { fields: string[]; itemFields: string[]; starter: string; sample: Record<string, any> }
+> = {
+  invoice: {
+    fields: ["invoice_number", "customer_name", "issue_date", "due_date", "currency", "subtotal", "tax_total", "grand_total"],
+    itemFields: ["description", "quantity", "unit_price", "amount"],
+    starter: `<h1>Invoice {{invoice_number}}</h1>
+<p><b>Bill to:</b> {{customer_name}}<br/><b>Issued:</b> {{issue_date}} &nbsp;·&nbsp; <b>Due:</b> {{due_date}}</p>
+<table>
+  <thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Amount</th></tr></thead>
+  <tbody>{{#each items}}<tr><td>{{description}}</td><td>{{quantity}}</td><td>{{unit_price}}</td><td>{{amount}}</td></tr>{{/each}}</tbody>
+</table>
+<p style="text-align:right">Subtotal: {{currency}}{{subtotal}}<br/>Tax: {{currency}}{{tax_total}}<br/><b>Total: {{currency}}{{grand_total}}</b></p>`,
+    sample: {
+      invoice_number: "INV-0142", customer_name: "Sample Customer Ltd",
+      issue_date: "2026-10-24", due_date: "2026-11-23", currency: "₦",
+      subtotal: "1,000,000.00", tax_total: "75,000.00", grand_total: "1,075,000.00",
+      items: [
+        { description: "Professional services", quantity: 1, unit_price: "700,000.00", amount: "700,000.00" },
+        { description: "Implementation support", quantity: 2, unit_price: "150,000.00", amount: "300,000.00" },
+      ],
+    },
+  },
+  receipt: {
+    fields: ["receipt_number", "customer_name", "payment_date", "payment_method", "currency", "amount"],
+    itemFields: [],
+    starter: `<h2>Receipt {{receipt_number}}</h2>
+<p><b>Received from:</b> {{customer_name}}<br/><b>Date:</b> {{payment_date}} &nbsp;·&nbsp; <b>Method:</b> {{payment_method}}</p>
+<p><b>Amount received:</b> {{currency}}{{amount}}</p>
+<p><i>Thank you for your payment.</i></p>`,
+    sample: {
+      receipt_number: "RCP-0091", customer_name: "Sample Customer Ltd",
+      payment_date: "2026-10-24", payment_method: "Bank transfer", currency: "₦", amount: "1,075,000.00",
+    },
+  },
+  quotation: {
+    fields: ["quotation_number", "customer_name", "issue_date", "valid_until", "currency", "grand_total"],
+    itemFields: ["description", "quantity", "unit_price", "amount"],
+    starter: `<h1>Quotation {{quotation_number}}</h1>
+<p><b>To:</b> {{customer_name}}<br/><b>Issued:</b> {{issue_date}} &nbsp;·&nbsp; <b>Valid until:</b> {{valid_until}}</p>
+<table>
+  <thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Amount</th></tr></thead>
+  <tbody>{{#each items}}<tr><td>{{description}}</td><td>{{quantity}}</td><td>{{unit_price}}</td><td>{{amount}}</td></tr>{{/each}}</tbody>
+</table>
+<p style="text-align:right"><b>Total: {{currency}}{{grand_total}}</b></p>`,
+    sample: {
+      quotation_number: "QTN-0057", customer_name: "Sample Customer Ltd",
+      issue_date: "2026-10-24", valid_until: "2026-11-07", currency: "₦", grand_total: "1,075,000.00",
+      items: [{ description: "Professional services", quantity: 1, unit_price: "1,075,000.00", amount: "1,075,000.00" }],
+    },
+  },
+};
+
+// Mirrors src/lib/platform/print-formats.ts renderTemplate for live preview.
+function renderPrintPreview(template: string, doc: Record<string, any>): string {
+  const esc = (v: unknown) =>
+    String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  let out = template.replace(
+    /\{\{#each\s+(\w+)\}\}([\s\S]*?)\{\{\/each\}\}/g,
+    (_, key: string, inner: string) =>
+      (Array.isArray(doc[key]) ? doc[key] : []).map((row: any) => renderPrintPreview(inner, row)).join("")
+  );
+  return out.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, path: string) => {
+    const v = path.split(".").reduce((o: any, k) => o?.[k], doc);
+    return esc(v);
+  });
+}
 
 export default function PlatformPage() {
   const { tenantSlug } = useTenantContext();
@@ -85,10 +156,19 @@ export default function PlatformPage() {
   const btn = "rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium hover:bg-emerald-500 disabled:opacity-50";
   const btnSm = "rounded bg-theme-muted px-2 py-1 text-xs hover:bg-theme-elevated";
   const th = "p-3";
-  const jsonInput = (key: string, ph: string) => (
-    <textarea placeholder={ph} value={f[key] ?? ""} onChange={(e) => setF({ ...f, [key]: e.target.value })}
-      className={`${input} w-full font-mono`} rows={3} />
-  );
+  // Insert a {{tag}} at the cursor inside the print-format body.
+  const pfBodyRef = useRef<HTMLTextAreaElement>(null);
+  const pfSpec = PRINT_DOC_TYPES[(f.pfDoc ?? "").trim().toLowerCase()];
+  const insertPfTag = (tag: string) => {
+    const ta = pfBodyRef.current;
+    const cur = f.pfBody ?? "";
+    const start = ta?.selectionStart ?? cur.length;
+    const end = ta?.selectionEnd ?? cur.length;
+    setF({ ...f, pfBody: cur.slice(0, start) + tag + cur.slice(end) });
+    requestAnimationFrame(() => {
+      if (ta) { ta.focus(); ta.setSelectionRange(start + tag.length, start + tag.length); }
+    });
+  };
 
   type WfState = { name: string; docStatus: string };
   type WfTransition = { from: string; action: string; to: string; roles: string[] };
@@ -307,17 +387,78 @@ export default function PlatformPage() {
 
         {tab === "print-formats" && (
           <div className="space-y-4">
-            <div className="grid gap-2 rounded-xl border border-theme-border bg-theme-surface p-4">
-              <div className="flex flex-wrap gap-2">
-                <input placeholder="Doc type" value={f.pfDoc ?? ""} onChange={(e) => setF({ ...f, pfDoc: e.target.value })} className={input} />
-                <input placeholder="Format name" value={f.pfName ?? ""} onChange={(e) => setF({ ...f, pfName: e.target.value })} className={input} />
-                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.pfDefault ?? false} onChange={(e) => setF({ ...f, pfDefault: e.target.checked })} /> Default</label>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid gap-3 self-start rounded-xl border border-theme-border bg-theme-surface p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <input placeholder="Doc type (e.g. invoice)" value={f.pfDoc ?? ""} onChange={(e) => setF({ ...f, pfDoc: e.target.value })} className={input} />
+                  {Object.keys(PRINT_DOC_TYPES).map((d) => (
+                    <button
+                      key={d}
+                      className={btnSm}
+                      onClick={() => setF({ ...f, pfDoc: d })}
+                    >{d}</button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input placeholder="Format name" value={f.pfName ?? ""} onChange={(e) => setF({ ...f, pfName: e.target.value })} className={input} />
+                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.pfDefault ?? false} onChange={(e) => setF({ ...f, pfDefault: e.target.checked })} /> Default</label>
+                </div>
+                {pfSpec && (
+                  <div>
+                    <p className="mb-1 text-xs text-theme-text-tertiary">Insert field — click to add at cursor:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {pfSpec.fields.map((fl) => (
+                        <button key={fl} className={btnSm} onClick={() => insertPfTag(`{{${fl}}}`)}>{`{{${fl}}}`}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <textarea
+                  ref={pfBodyRef}
+                  placeholder="Template HTML — use {{field}} for values and {{#each items}}…{{/each}} for line-item loops"
+                  value={f.pfBody ?? ""}
+                  onChange={(e) => setF({ ...f, pfBody: e.target.value })}
+                  className={`${input} w-full font-mono`}
+                  rows={10}
+                />
+                <div className="flex flex-wrap gap-2">
+                  {pfSpec?.itemFields.length ? (
+                    <button
+                      className={btnSm}
+                      onClick={() =>
+                        insertPfTag(
+                          `<table><thead><tr>${pfSpec.itemFields.map((fl) => `<th>${fl}</th>`).join("")}</tr></thead><tbody>{{#each items}}<tr>${pfSpec.itemFields.map((fl) => `<td>{{${fl}}}</td>`).join("")}</tr>{{/each}}</tbody></table>`
+                        )
+                      }
+                    >Insert items table</button>
+                  ) : null}
+                  {pfSpec && (
+                    <button
+                      className={btnSm}
+                      onClick={() => setF({ ...f, pfBody: pfSpec.starter })}
+                    >Use starter template</button>
+                  )}
+                </div>
+                <button className={btn} onClick={() => post({
+                  action: "upsert-print-format", docType: f.pfDoc, name: f.pfName,
+                  bodyHtml: f.pfBody, isDefault: f.pfDefault,
+                }, "Print format saved")}>Save Format</button>
               </div>
-              {jsonInput("pfBody", 'Body HTML — e.g. <h1>Invoice {{invoice_number}}</h1><table>{{#each items}}<tr><td>{{description}}</td><td>{{amount}}</td></tr>{{/each}}</table>')}
-              <button className={btn} onClick={() => post({
-                action: "upsert-print-format", docType: f.pfDoc, name: f.pfName,
-                bodyHtml: f.pfBody, isDefault: f.pfDefault,
-              }, "Print format saved")}>Save Format</button>
+              <div className="rounded-xl border border-theme-border bg-theme-surface p-4">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-theme-text-secondary">Preview <span className="normal-case text-theme-text-tertiary">— rendered with sample data</span></p>
+                {f.pfBody?.trim() ? (
+                  <div
+                    className="min-h-[300px] overflow-auto rounded-lg bg-white p-4 text-sm text-gray-900"
+                    dangerouslySetInnerHTML={{
+                      __html: renderPrintPreview(f.pfBody, pfSpec?.sample ?? {}),
+                    }}
+                  />
+                ) : (
+                  <div className="flex min-h-[300px] items-center justify-center rounded-lg border border-dashed border-theme-border text-sm text-theme-text-tertiary">
+                    Template preview appears here
+                  </div>
+                )}
+              </div>
             </div>
             <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
               <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Doc Type</th><th className={th}>Name</th><th className={th}>Default</th><th className={th}>Updated</th></tr></thead>

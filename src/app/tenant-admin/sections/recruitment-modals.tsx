@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus } from 'lucide-react';
 import { HRService } from './hr-service';
+import { KvEditor, objectToRows, rowsToObject, type KvRow } from '../components/kv-editor';
 
 interface BaseModalProps {
   isOpen: boolean;
@@ -540,7 +541,7 @@ export function OfferModal({
   const [applicationId, setApplicationId] = useState('');
   const [salary, setSalary] = useState<number | ''>('');
   const [bonus, setBonus] = useState<number | ''>('');
-  const [benefits, setBenefits] = useState('');
+  const [benefits, setBenefits] = useState<KvRow[]>([]);
   const [startDate, setStartDate] = useState('');
   const [reportingManagerId, setReportingManagerId] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
@@ -550,12 +551,12 @@ export function OfferModal({
       setApplicationId(initialData.applicationId || '');
       setSalary(initialData.salary ?? '');
       setBonus(initialData.bonus ?? '');
-      setBenefits(initialData.benefits ? JSON.stringify(initialData.benefits, null, 2) : '');
+      setBenefits(initialData.benefits ? objectToRows(initialData.benefits) : []);
       setStartDate(initialData.startDate ? initialData.startDate.split('T')[0] : '');
       setReportingManagerId(initialData.reportingManagerId || '');
       setExpiresAt(initialData.expiresAt ? initialData.expiresAt.split('T')[0] : '');
     } else {
-      setApplicationId(''); setSalary(''); setBonus(''); setBenefits(''); setStartDate(''); setReportingManagerId(''); setExpiresAt('');
+      setApplicationId(''); setSalary(''); setBonus(''); setBenefits([]); setStartDate(''); setReportingManagerId(''); setExpiresAt('');
     }
   }, [initialData, isOpen]);
 
@@ -565,10 +566,7 @@ export function OfferModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    let parsedBenefits: Record<string, any> | undefined;
-    if (benefits.trim()) {
-      try { parsedBenefits = JSON.parse(benefits); } catch { parsedBenefits = { note: benefits }; }
-    }
+    const parsedBenefits = benefits.length ? rowsToObject(benefits) : undefined;
     onSubmit({ applicationId, salary: Number(salary) || 0, bonus: bonus ? Number(bonus) : undefined, benefits: parsedBenefits, startDate: startDate ? new Date(startDate).toISOString() : undefined, reportingManagerId, expiresAt: expiresAt ? new Date(expiresAt).toISOString() : undefined });
     onClose();
   };
@@ -586,7 +584,19 @@ export function OfferModal({
           <TextField label="Expires At" value={expiresAt} onChange={setExpiresAt} type="date" />
         </div>
         <TextField label="Reporting Manager ID" value={reportingManagerId} onChange={setReportingManagerId} />
-        <TextArea label="Benefits (JSON or text)" value={benefits} onChange={setBenefits} rows={3} placeholder='{"health": true, "pto": 20}' />
+        <div>
+          <label className="block text-sm font-medium text-theme-text-primary mb-1">Benefits</label>
+          <div className="rounded-lg border border-theme-border bg-theme-muted p-3">
+            <KvEditor
+              rows={benefits}
+              onChange={setBenefits}
+              keyPlaceholder="benefit (e.g. pto)"
+              valuePlaceholder="value (e.g. 20)"
+              addLabel="+ Add benefit"
+              hint='for a free-text note use key "note"'
+            />
+          </div>
+        </div>
         <div className="flex justify-end gap-3 pt-2">
           <CancelBtn onClose={onClose} />
           <SubmitBtn label={mode === 'edit' ? 'Save Changes' : 'Create Offer'} />

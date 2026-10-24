@@ -5,6 +5,7 @@ import { useCallback } from "react";
 import { Upload, FileText, Calendar, Filter, Send, AlertCircle, CheckCircle, X, Plus, Trash2, Download, Eye, Edit } from 'lucide-react';
 import { TeamDataSubmission } from '../types/team-data';
 import { TeamDataService } from '../services/team-data-service';
+import { KvEditor, objectToRows, rowsToObject, type KvRow } from './kv-editor';
 
 interface TeamDataSubmissionPortalProps {
   tenantSlug: string;
@@ -40,6 +41,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
     confidence: 'medium' as TeamDataSubmission['confidence'],
     source: 'manual' as TeamDataSubmission['source']
   });
+  const [customRows, setCustomRows] = useState<KvRow[]>([]);
 
 
 
@@ -375,20 +377,14 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
         return (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-theme-text-primary mb-2">Custom Data (JSON)</label>
-              <textarea
-                value={JSON.stringify(formData.data, null, 2)}
-                onChange={(e) => {
-                  try {
-                    const data = JSON.parse(e.target.value);
-                    setFormData(prev => ({ ...prev, data }));
-                  } catch (error) {
-                    // Invalid JSON, don't update
-                  }
+              <label className="block text-sm font-medium text-theme-text-primary mb-2">Custom Data</label>
+              <KvEditor
+                rows={customRows}
+                onChange={(rows) => {
+                  setCustomRows(rows);
+                  setFormData(prev => ({ ...prev, data: rowsToObject(rows) }));
                 }}
-                className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
-                rows={6}
-                placeholder="Enter custom data in JSON format"
+                hint="numbers and lists are kept as typed values"
               />
             </div>
           </div>
@@ -614,7 +610,11 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                   <label className="block text-sm font-medium text-theme-text-primary mb-2">Data Type *</label>
                   <select
                     value={formData.dataType}
-                    onChange={(e) => setFormData(prev => ({ ...prev, dataType: e.target.value as TeamDataSubmission['dataType'] }))}
+                    onChange={(e) => {
+                      const dt = e.target.value as TeamDataSubmission['dataType'];
+                      if (dt === 'custom') setCustomRows(objectToRows(formData.data));
+                      setFormData(prev => ({ ...prev, dataType: dt }));
+                    }}
                     className="w-full px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-accent text-theme-text-primary"
                   >
                     <option value="sales">Sales Data</option>

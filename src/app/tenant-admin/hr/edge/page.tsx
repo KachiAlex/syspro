@@ -227,10 +227,31 @@ export default function HrEdgePage() {
 
         {tab === "staffing" && (
           <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
+            <div className="grid gap-3 rounded-xl border border-theme-border bg-theme-surface p-4">
               <input placeholder="Plan name" value={f.spName ?? ""} onChange={(e) => setF({ ...f, spName: e.target.value })} className={input} />
-              <input placeholder='Designations JSON [{"designation":"Engineer","count":2,"estCost":500000}]' value={f.spDes ?? ""} onChange={(e) => setF({ ...f, spDes: e.target.value })} className={`${input} flex-1 font-mono`} />
-              <button className={btn} onClick={() => post({ action: "create-staffing-plan", name: f.spName, designations: JSON.parse(f.spDes || "[]") })}>Create</button>
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="text-xs font-medium uppercase tracking-wide text-theme-text-secondary">Planned roles</label>
+                  <button className={btnSm} onClick={() => setF({ ...f, spRows: [...(f.spRows ?? []), { designation: "", count: "", estCost: "" }] })}>+ Add role</button>
+                </div>
+                <div className="space-y-2">
+                  {(f.spRows ?? []).map((r: any, i: number) => (
+                    <div key={i} className="flex flex-wrap items-center gap-2">
+                      <input placeholder="Designation (e.g. Engineer)" value={r.designation} onChange={(e) => setF({ ...f, spRows: f.spRows.map((x: any, j: number) => (j === i ? { ...x, designation: e.target.value } : x)) })} className={`${input} flex-1`} />
+                      <input type="number" placeholder="Count" value={r.count} onChange={(e) => setF({ ...f, spRows: f.spRows.map((x: any, j: number) => (j === i ? { ...x, count: e.target.value } : x)) })} className={`${input} w-24`} />
+                      <input type="number" placeholder="Est. cost" value={r.estCost} onChange={(e) => setF({ ...f, spRows: f.spRows.map((x: any, j: number) => (j === i ? { ...x, estCost: e.target.value } : x)) })} className={`${input} w-32`} />
+                      <button className={btnSm} onClick={() => setF({ ...f, spRows: f.spRows.filter((_: any, j: number) => j !== i) })} aria-label="Remove role">×</button>
+                    </div>
+                  ))}
+                  {!(f.spRows ?? []).length && <p className="text-xs text-theme-text-tertiary">Add each role this plan covers, with headcount and estimated cost.</p>}
+                </div>
+              </div>
+              <button className={btn} onClick={() => post({
+                action: "create-staffing-plan", name: f.spName,
+                designations: (f.spRows ?? []).filter((r: any) => r.designation?.trim()).map((r: any) => ({
+                  designation: r.designation.trim(), count: Number(r.count) || 1, estCost: Number(r.estCost) || 0,
+                })),
+              })}>Create</button>
             </div>
             <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
               <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Plan</th><th className={th}>Roles</th><th className={th}>Est. Cost</th><th className={th}>Status</th><th className={th}></th></tr></thead>
@@ -253,11 +274,34 @@ export default function HrEdgePage() {
 
         {tab === "tax-declarations" && (
           <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              <input placeholder="Employee ID" value={f.tdEmp ?? ""} onChange={(e) => setF({ ...f, tdEmp: e.target.value })} className={input} />
-              <input type="number" placeholder="Year" value={f.tdYear ?? new Date().getFullYear()} onChange={(e) => setF({ ...f, tdYear: e.target.value })} className={`${input} w-24`} />
-              <input placeholder='Reliefs JSON {"rent":500000,"pension":100000}' value={f.tdReliefs ?? ""} onChange={(e) => setF({ ...f, tdReliefs: e.target.value })} className={`${input} flex-1 font-mono`} />
-              <button className={btn} onClick={() => post({ action: "upsert-tax-declaration", employeeId: f.tdEmp, taxYear: Number(f.tdYear ?? new Date().getFullYear()), reliefs: JSON.parse(f.tdReliefs || "{}") })}>Submit</button>
+            <div className="grid gap-3 rounded-xl border border-theme-border bg-theme-surface p-4">
+              <div className="flex flex-wrap gap-2">
+                <input placeholder="Employee ID" value={f.tdEmp ?? ""} onChange={(e) => setF({ ...f, tdEmp: e.target.value })} className={input} />
+                <input type="number" placeholder="Year" value={f.tdYear ?? new Date().getFullYear()} onChange={(e) => setF({ ...f, tdYear: e.target.value })} className={`${input} w-24`} />
+              </div>
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="text-xs font-medium uppercase tracking-wide text-theme-text-secondary">Declared reliefs</label>
+                  <button className={btnSm} onClick={() => setF({ ...f, tdRows: [...(f.tdRows ?? []), { name: "", amount: "" }] })}>+ Add relief</button>
+                </div>
+                <div className="space-y-2">
+                  {(f.tdRows ?? []).map((r: any, i: number) => (
+                    <div key={i} className="flex flex-wrap items-center gap-2">
+                      <input placeholder="Relief type (e.g. rent, pension)" value={r.name} onChange={(e) => setF({ ...f, tdRows: f.tdRows.map((x: any, j: number) => (j === i ? { ...x, name: e.target.value } : x)) })} className={`${input} flex-1`} />
+                      <input type="number" placeholder="Amount" value={r.amount} onChange={(e) => setF({ ...f, tdRows: f.tdRows.map((x: any, j: number) => (j === i ? { ...x, amount: e.target.value } : x)) })} className={`${input} w-36`} />
+                      <button className={btnSm} onClick={() => setF({ ...f, tdRows: f.tdRows.filter((_: any, j: number) => j !== i) })} aria-label="Remove relief">×</button>
+                    </div>
+                  ))}
+                  {!(f.tdRows ?? []).length && <p className="text-xs text-theme-text-tertiary">Add each relief the employee is claiming, with the declared amount.</p>}
+                </div>
+              </div>
+              <button className={btn} onClick={() => post({
+                action: "upsert-tax-declaration", employeeId: f.tdEmp,
+                taxYear: Number(f.tdYear ?? new Date().getFullYear()),
+                reliefs: Object.fromEntries(
+                  (f.tdRows ?? []).filter((r: any) => r.name?.trim()).map((r: any) => [r.name.trim(), Number(r.amount) || 0])
+                ),
+              })}>Submit</button>
             </div>
             <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
               <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Employee</th><th className={th}>Year</th><th className={th}>Declared Reliefs</th><th className={th}>Status</th><th className={th}></th></tr></thead>

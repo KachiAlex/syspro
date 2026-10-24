@@ -114,10 +114,24 @@ export default function InventoryControlPage() {
               <input placeholder="Values csv (S,M,L)" value={f.aValues ?? ""} onChange={(e) => setF({ ...f, aValues: e.target.value })} className={input} />
               <button className={btn} onClick={() => post("/api/inventory/item-master", { action: "upsert-attribute", name: f.aName, values: String(f.aValues ?? "").split(",").map((s) => s.trim()).filter(Boolean) })}>Save Attribute</button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <input placeholder="Template product ID" value={f.vTemplate ?? ""} onChange={(e) => setF({ ...f, vTemplate: e.target.value })} className={input} />
-              <input placeholder='Attributes JSON e.g. {"Size":"M"}' value={f.vAttrs ?? ""} onChange={(e) => setF({ ...f, vAttrs: e.target.value })} className={`${input} flex-1`} />
-              <button className={btn} onClick={() => post("/api/inventory/item-master", { action: "create-variant", templateProductId: f.vTemplate, attributes: JSON.parse(f.vAttrs || "{}") })}>Create Variant</button>
+              {data.attributes?.map((a: any) => (
+                <select
+                  key={a.id}
+                  value={(f.vAttrs ?? {})[a.name] ?? ""}
+                  onChange={(e) => setF({ ...f, vAttrs: { ...(f.vAttrs ?? {}), [a.name]: e.target.value } })}
+                  className={input}
+                >
+                  <option value="">{a.name}…</option>
+                  {a.values?.map((v: string) => <option key={v} value={v}>{v}</option>)}
+                </select>
+              ))}
+              {!data.attributes?.length && <span className="text-xs text-theme-text-tertiary">Define an attribute above first</span>}
+              <button className={btn} onClick={() => post("/api/inventory/item-master", {
+                action: "create-variant", templateProductId: f.vTemplate,
+                attributes: Object.fromEntries(Object.entries(f.vAttrs ?? {}).filter(([, v]) => v)),
+              })}>Create Variant</button>
             </div>
             <div className="rounded-xl border border-theme-border bg-theme-surface p-4">
               {data.attributes?.map((a: any) => <div key={a.id} className="text-sm text-theme-text-primary"><b>{a.name}</b>: {a.values?.join(", ")}</div>)}

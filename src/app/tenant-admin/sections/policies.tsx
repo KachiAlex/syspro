@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Loader2, RefreshCcw, UploadCloud } from "lucide-react";
+import { KvEditor, rowsToObject, type KvRow } from "@/app/tenant-admin/components/kv-editor";
 
 type Policy = {
   id: string;
@@ -17,7 +18,8 @@ export default function PoliciesSection({ tenantSlug }: { tenantSlug: string }) 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState({ key: "", name: "", category: "", document: '{"rules": []}' });
+  const [form, setForm] = useState({ key: "", name: "", category: "" });
+  const [docRows, setDocRows] = useState<KvRow[]>([{ key: "rules", value: "[]" }]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -43,14 +45,14 @@ export default function PoliciesSection({ tenantSlug }: { tenantSlug: string }) 
     setSaving(true);
     setError(null);
     try {
-      const document = JSON.parse(form.document || "{}");
+      const document = rowsToObject(docRows);
       const res = await fetch(`/api/policies?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ key: form.key, name: form.name, category: form.category, document }),
       });
       if (!res.ok) throw new Error("Create failed");
-      setForm({ key: "", name: "", category: form.category, document: form.document });
+      setForm({ key: "", name: "", category: form.category });
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -105,8 +107,14 @@ export default function PoliciesSection({ tenantSlug }: { tenantSlug: string }) 
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-theme-text-primary mb-2">Document (JSON)</label>
-            <textarea value={form.document} onChange={(e) => setForm((p) => ({ ...p, document: e.target.value }))} className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 font-mono text-xs" rows={4} />
+            <label className="block text-sm font-medium text-theme-text-primary mb-2">Document entries</label>
+            <div className="rounded-lg border border-theme-border bg-theme-surface p-3">
+              <KvEditor
+                rows={docRows}
+                onChange={setDocRows}
+                hint='list values go in brackets, e.g. rules → [{ "type": "max" }]'
+              />
+            </div>
           </div>
           <div className="flex gap-3">
             <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-full bg-theme-surface px-4 py-2 text-sm font-medium text-theme-text-primary shadow-sm hover:bg-theme-muted">

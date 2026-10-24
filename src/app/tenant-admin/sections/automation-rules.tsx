@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Loader2, Play, RefreshCcw, ToggleLeft, ToggleRight } from "lucide-react";
+import { KvEditor, rowsToObject, type KvRow } from "@/app/tenant-admin/components/kv-editor";
 
 type Rule = {
   id: string;
@@ -79,7 +80,7 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState(0);
-  const [previewPayload, setPreviewPayload] = useState('{\n  "id": "123"\n}');
+  const [previewRows, setPreviewRows] = useState<KvRow[]>([{ key: "id", value: "123" }]);
 
   const [form, setForm] = useState<{ name: string; eventType: string; description: string; condition: any; actions: Array<{ type: string; params: Record<string, string> }> }>({
     name: "",
@@ -134,14 +135,9 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
   }
 
   const previewResult = useMemo(() => {
-    try {
-      const payload = JSON.parse(previewPayload);
-      const matched = evaluateDraft(form.condition, payload);
-      return { matched, actions: matched ? form.actions : [], error: null };
-    } catch (err) {
-      return { matched: false, actions: [], error: "Invalid payload JSON" };
-    }
-  }, [form.condition, form.actions, previewPayload]);
+    const matched = evaluateDraft(form.condition, rowsToObject(previewRows));
+    return { matched, actions: matched ? form.actions : [] };
+  }, [form.condition, form.actions, previewRows]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -421,30 +417,30 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
             <label className="block text-sm font-medium text-theme-text-primary mb-2">Live preview</label>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-xs text-theme-text-secondary mb-1">Sample payload (JSON)</label>
-                <textarea value={previewPayload} onChange={(e) => setPreviewPayload(e.target.value)} className="bg-theme-surface w-full rounded-lg border border-theme-border px-3 py-2 font-mono text-xs" rows={5} />
-                {previewResult.error && <p className="mt-1 text-xs text-rose-600">{previewResult.error}</p>}
+                <label className="block text-xs text-theme-text-secondary mb-1">Sample payload</label>
+                <div className="rounded-lg border border-theme-border bg-theme-surface p-3">
+                  <KvEditor
+                    rows={previewRows}
+                    onChange={setPreviewRows}
+                    keyPlaceholder="field (e.g. id)"
+                    valuePlaceholder="value"
+                  />
+                </div>
               </div>
               <div className="rounded-lg bg-theme-muted p-3">
                 <p className="text-xs uppercase tracking-[0.2em] text-theme-text-secondary mb-2">Result</p>
-                {previewResult.error ? (
-                  <p className="text-sm text-theme-text-secondary">Fix the payload JSON to see the preview.</p>
-                ) : (
-                  <>
-                    <p className="text-sm font-medium text-theme-text-primary">
-                      {previewResult.matched ? "Matched" : "Skipped"}
-                    </p>
-                    {previewResult.matched && (
-                      <div className="mt-2">
-                        <p className="text-xs text-theme-text-tertiary">Actions that would run:</p>
-                        <ul className="mt-1 space-y-1 text-xs text-theme-text-primary">
-                          {previewResult.actions.map((action, i) => (
-                            <li key={i} className="rounded bg-theme-surface border border-theme-border px-2 py-1">{action.type}: {JSON.stringify(action.params)}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </>
+                <p className="text-sm font-medium text-theme-text-primary">
+                  {previewResult.matched ? "Matched" : "Skipped"}
+                </p>
+                {previewResult.matched && (
+                  <div className="mt-2">
+                    <p className="text-xs text-theme-text-tertiary">Actions that would run:</p>
+                    <ul className="mt-1 space-y-1 text-xs text-theme-text-primary">
+                      {previewResult.actions.map((action, i) => (
+                        <li key={i} className="rounded bg-theme-surface border border-theme-border px-2 py-1">{action.type}: {JSON.stringify(action.params)}</li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </div>
             </div>

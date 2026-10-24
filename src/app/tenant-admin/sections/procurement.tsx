@@ -488,12 +488,57 @@ function CreateRequisitionModal({ tenantSlug, onClose, onCreated }: { tenantSlug
   );
 }
 
+function ItemRowsEditor({
+  rows, onChange, columns,
+}: {
+  rows: Record<string, string>[];
+  onChange: (rows: Record<string, string>[]) => void;
+  columns: { key: string; label: string; numeric?: boolean }[];
+}) {
+  const input = 'w-full border border-theme-border rounded px-2 py-1.5 text-sm bg-theme-surface text-theme-text-primary';
+  return (
+    <div className="space-y-2">
+      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr) 24px` }}>
+        {columns.map((c) => <span key={c.key} className="text-xs font-medium uppercase tracking-wide text-theme-text-tertiary">{c.label}</span>)}
+        <span />
+      </div>
+      {rows.map((row, i) => (
+        <div key={i} className="grid items-center gap-2" style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr) 24px` }}>
+          {columns.map((c) => (
+            <input
+              key={c.key}
+              type={c.numeric ? 'number' : 'text'}
+              value={row[c.key] ?? ''}
+              placeholder={c.label}
+              onChange={(e) => onChange(rows.map((r, j) => (j === i ? { ...r, [c.key]: e.target.value } : r)))}
+              className={input}
+            />
+          ))}
+          <button type="button" onClick={() => onChange(rows.filter((_, j) => j !== i))} className="text-theme-text-tertiary hover:text-red-600" aria-label="Remove item">×</button>
+        </div>
+      ))}
+      <button type="button" onClick={() => onChange([...rows, {}])} className="text-xs text-blue-700 underline">+ Add item</button>
+      {!rows.length && <p className="text-xs text-theme-text-tertiary">Add each line item.</p>}
+    </div>
+  );
+}
+
+function rowsToItems(rows: Record<string, string>[], numericKeys: string[]): Record<string, any>[] {
+  return rows
+    .filter((r) => Object.values(r).some((v) => v?.trim?.()))
+    .map((r) => Object.fromEntries(
+      Object.entries(r)
+        .filter(([, v]) => v !== '')
+        .map(([k, v]) => [k, numericKeys.includes(k) ? Number(v) : v])
+    ));
+}
+
 function CreatePurchaseOrderModal({ tenantSlug, onClose, onCreated }: { tenantSlug: string; onClose: () => void; onCreated: () => void }) {
   const [vendorId, setVendorId] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [amount, setAmount] = useState('0');
   const [deliveryDate, setDeliveryDate] = useState('');
-  const [items, setItems] = useState('');
+  const [items, setItems] = useState<Record<string, string>[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -511,7 +556,7 @@ function CreatePurchaseOrderModal({ tenantSlug, onClose, onCreated }: { tenantSl
           quantity: parseInt(quantity),
           amount: parseFloat(amount),
           deliveryDate: deliveryDate || undefined,
-          items: items ? JSON.parse(items) : [],
+          items: rowsToItems(items, ['qty', 'quantity', 'unitCost']),
         }),
       });
       const payload = await res.json().catch(() => ({}));
@@ -544,8 +589,16 @@ function CreatePurchaseOrderModal({ tenantSlug, onClose, onCreated }: { tenantSl
           <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-theme-text-primary mb-1">Items (JSON)</label>
-          <textarea value={items} onChange={(e) => setItems(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm font-mono" rows={3} placeholder='[{"sku":"RAW-001","name":"Steel","qty":10}]' />
+          <label className="block text-sm font-medium text-theme-text-primary mb-1">Items</label>
+          <ItemRowsEditor
+            rows={items}
+            onChange={setItems}
+            columns={[
+              { key: 'sku', label: 'SKU' },
+              { key: 'name', label: 'Name' },
+              { key: 'qty', label: 'Qty', numeric: true },
+            ]}
+          />
         </div>
         <div className="flex justify-end gap-2 pt-4">
           <button type="button" onClick={onClose} className="px-4 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary hover:bg-theme-muted">Cancel</button>
@@ -561,7 +614,7 @@ function CreatePurchaseOrderModal({ tenantSlug, onClose, onCreated }: { tenantSl
 function CreateGoodsReceiptModal({ tenantSlug, onClose, onCreated }: { tenantSlug: string; onClose: () => void; onCreated: () => void }) {
   const [poId, setPoId] = useState('');
   const [vendorId, setVendorId] = useState('');
-  const [items, setItems] = useState('');
+  const [items, setItems] = useState<Record<string, string>[]>([]);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -570,7 +623,7 @@ function CreateGoodsReceiptModal({ tenantSlug, onClose, onCreated }: { tenantSlu
     e.preventDefault();
     setLoading(true); setError(null);
     try {
-      const parsedItems = items ? JSON.parse(items) : [];
+      const parsedItems = rowsToItems(items, ['quantity', 'unitCost']);
       const res = await fetch('/api/procurement/goods-receipts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -602,8 +655,17 @@ function CreateGoodsReceiptModal({ tenantSlug, onClose, onCreated }: { tenantSlu
           <input value={vendorId} onChange={(e) => setVendorId(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm" placeholder="Vendor ID" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-theme-text-primary mb-1">Items (JSON)</label>
-          <textarea value={items} onChange={(e) => setItems(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm font-mono" rows={4} placeholder='[{"sku":"RAW-001","name":"Steel","quantity":10,"unitCost":5.50}]' />
+          <label className="block text-sm font-medium text-theme-text-primary mb-1">Items</label>
+          <ItemRowsEditor
+            rows={items}
+            onChange={setItems}
+            columns={[
+              { key: 'sku', label: 'SKU' },
+              { key: 'name', label: 'Name' },
+              { key: 'quantity', label: 'Qty', numeric: true },
+              { key: 'unitCost', label: 'Unit cost', numeric: true },
+            ]}
+          />
         </div>
         <textarea placeholder="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm" rows={2} />
         <div className="flex justify-end gap-2 pt-4">

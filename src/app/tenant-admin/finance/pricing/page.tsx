@@ -147,28 +147,55 @@ function RulesTab({ rules, post, busy, reload }: any) {
   );
 }
 
+type SchemeRule = { item: string; minQty: string; discountPct: string; freeItem: string; freeQty: string };
+const blankRule = (): SchemeRule => ({ item: "", minQty: "", discountPct: "", freeItem: "", freeQty: "" });
+
 function SchemesTab({ post, busy }: any) {
   const [form, setForm] = useState({ name: "", validFrom: "", validTo: "" });
-  const [rulesJson, setRulesJson] = useState('[{ "item": "ITEM-1", "minQty": 5, "discountPct": 10 }]');
-  const [parseErr, setParseErr] = useState<string | null>(null);
+  const [ruleRows, setRuleRows] = useState<SchemeRule[]>([blankRule()]);
   const submit = async () => {
-    let rules: any[];
-    try { rules = JSON.parse(rulesJson); setParseErr(null); }
-    catch { setParseErr("Invalid JSON"); return; }
-    await post({ action: "upsert-scheme", name: form.name, rules, validFrom: form.validFrom || undefined, validTo: form.validTo || undefined });
+    const rules = ruleRows
+      .filter((r) => r.item.trim() || r.freeItem.trim())
+      .map((r) => ({
+        item: r.item.trim() || undefined,
+        minQty: r.minQty ? Number(r.minQty) : undefined,
+        discountPct: r.discountPct ? Number(r.discountPct) : undefined,
+        freeItem: r.freeItem.trim() || undefined,
+        freeQty: r.freeQty ? Number(r.freeQty) : undefined,
+      }));
+    await post({
+      action: "upsert-scheme", name: form.name, rules,
+      validFrom: form.validFrom || undefined, validTo: form.validTo || undefined,
+    });
   };
+  const setRow = (i: number, patch: Partial<SchemeRule>) =>
+    setRuleRows(ruleRows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
   return (
-    <div className="space-y-4 max-w-2xl">
+    <div className="space-y-4 max-w-3xl">
       <p className="text-sm text-theme-text-secondary">
-        Promotional schemes — bundles of rules: <code className="font-mono">item, minQty, discountPct, freeItem, freeQty</code>
+        Promotional schemes — bundle discount and free-item rules under one name and validity window.
       </p>
       <div className="grid gap-2 sm:grid-cols-3">
         <input className={inputCls} placeholder="Scheme name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <input className={inputCls} type="date" value={form.validFrom} onChange={(e) => setForm({ ...form, validFrom: e.target.value })} />
         <input className={inputCls} type="date" value={form.validTo} onChange={(e) => setForm({ ...form, validTo: e.target.value })} />
       </div>
-      <textarea className={`${inputCls} h-32 font-mono`} value={rulesJson} onChange={(e) => setRulesJson(e.target.value)} />
-      {parseErr && <div className="text-rose-400 text-sm">{parseErr}</div>}
+      <div className="space-y-2">
+        <div className="grid grid-cols-[1fr_80px_90px_1fr_80px_28px] gap-2 text-xs font-medium uppercase tracking-wide text-theme-text-tertiary">
+          <span>Item</span><span>Min qty</span><span>Discount %</span><span>Free item</span><span>Free qty</span><span />
+        </div>
+        {ruleRows.map((r, i) => (
+          <div key={i} className="grid grid-cols-[1fr_80px_90px_1fr_80px_28px] items-center gap-2">
+            <input className={inputCls} placeholder="Item code" value={r.item} onChange={(e) => setRow(i, { item: e.target.value })} />
+            <input className={inputCls} type="number" placeholder="Qty" value={r.minQty} onChange={(e) => setRow(i, { minQty: e.target.value })} />
+            <input className={inputCls} type="number" placeholder="%" value={r.discountPct} onChange={(e) => setRow(i, { discountPct: e.target.value })} />
+            <input className={inputCls} placeholder="Free item code" value={r.freeItem} onChange={(e) => setRow(i, { freeItem: e.target.value })} />
+            <input className={inputCls} type="number" placeholder="Qty" value={r.freeQty} onChange={(e) => setRow(i, { freeQty: e.target.value })} />
+            <button className="text-theme-text-tertiary hover:text-rose-400" onClick={() => setRuleRows(ruleRows.filter((_, j) => j !== i))} aria-label="Remove rule">×</button>
+          </div>
+        ))}
+        <button className="text-xs text-sky-400 hover:text-sky-300" onClick={() => setRuleRows([...ruleRows, blankRule()])}>+ Add rule</button>
+      </div>
       <button className={btnCls} disabled={busy || !form.name} onClick={submit}><Plus className="h-3.5 w-3.5" /> Save Scheme</button>
     </div>
   );
