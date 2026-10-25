@@ -1017,7 +1017,7 @@ function OfficersPanel({ tenantSlug, onError, onSuccess }: {
     <div className="space-y-4">
       <p className="text-sm text-theme-text-secondary">
         Officers are company-wide approval posts — e.g. <b>Managing Director</b> or <b>Chairman</b>.
-        Unlike department managers (who only decide their own department's documents), officers act on
+        Unlike department managers (who only decide their own department&apos;s documents), officers act on
         any document routed to them. In a rule, reference a post as <code>role:&lt;title-slug&gt;</code>
         — shown on each card below. Multiple users on one post act as parallel approvers (any one decides).
       </p>
@@ -1051,7 +1051,7 @@ function OfficersPanel({ tenantSlug, onError, onSuccess }: {
       {/* Officer cards */}
       {officers.length === 0 ? (
         <div className="rounded-2xl border border-theme-border bg-theme-surface p-8 text-center text-sm text-theme-text-secondary">
-          No officers configured yet. Add posts like "Managing Director" or "Chairman" so rules can route to them.
+          No officers configured yet. Add posts like &quot;Managing Director&quot; or &quot;Chairman&quot; so rules can route to them.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
