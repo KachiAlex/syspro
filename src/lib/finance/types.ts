@@ -269,6 +269,11 @@ export type Expense = {
   attachments?: string[] | null;
   prepaidSchedule?: Record<string, unknown> | null;
   metadata?: Record<string, unknown> | null;
+  /** Approval-workflow linkage — see finance/approvals.ts. */
+  departmentId?: string | null;
+  submitterEmployeeId?: string | null;
+  approvalId?: string | null;
+  journalEntryId?: string | null;
   createdAt: string;
   updatedAt: string;
   createdBy: string;
@@ -306,6 +311,10 @@ export const expenseCreateSchema = expenseSharedSchema.extend({
   regionId: z.string().optional(),
   branchId: z.string().optional(),
   createdBy: z.string().min(1),
+  // Approval routing context — stamped server-side when derivable, but
+  // accepted so admin UIs can file expenses on behalf of a department.
+  departmentId: z.string().optional(),
+  submitterEmployeeId: z.string().optional(),
 });
 
 export const expenseUpdateSchema = expenseSharedSchema.partial().extend({

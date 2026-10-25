@@ -44,3 +44,6 @@
 - Postgres `date` columns come back as JS `Date` at local midnight — cast to `::text` in SQL before slicing, or WAT shifts the date back a day.
 - `journal_entry_lines` has no `tenant_slug` — tenant filtering joins through `journal_entries`.
 - Test data uses `__<prefix>_<ts>__` tenant slugs; clean them after runs.
+- Employee portal expenses live in `expenses` (`type='reimbursement'`, `submitter_employee_id` links the employee); `admin_employee_expenses` is a read-only archive — the 20261128 migration copied rows over preserving ids.
+- Approval config lives in `tenants.settings.approvals`: `expenseMinAmount`/`employeeExpenseMinAmount` (0 = always gate), `expenseDefaultChain`, `expenseStep2Amount`/`expenseStep3Amount` (defaults ₦50k/₦500k), `approvalSlaHours`/`approvalSlaAction` ('remind'|'escalate'). Per-rule SLA overrides via `approval_rules.conditions.slaHours/slaAction`; the automation cron sweeps via `escalateStaleApprovals()`.
+- Approver delegation uses `approval_delegates` (delegator → delegate, optional entity_type + validity window); the engine records `delegatedFor` on decisions.

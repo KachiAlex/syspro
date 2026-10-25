@@ -60,6 +60,9 @@ const DEFAULT_RULES: Record<string, Rule> = {
   "payment_request.created": { channels: ["email"], recipients: [{ kind: "party" }], enabled: true },
   "payment_link.created": { channels: ["email"], recipients: [{ kind: "party" }], enabled: true },
   "expense.decided": { channels: ["email", "in_app"], recipients: [{ kind: "party" }], enabled: true },
+  "expense.settlement_due": { channels: ["email", "in_app"], recipients: [{ kind: "role", value: "finance_manager" }, { kind: "admin" }], enabled: true },
+  "approval.sla_breach": { channels: ["email", "in_app"], recipients: [], enabled: true }, // current-step approvers + admins
+
   "budget.breached": {
     channels: ["email", "in_app"], recipients: [{ kind: "role", value: "finance_manager" }], enabled: true,
   },

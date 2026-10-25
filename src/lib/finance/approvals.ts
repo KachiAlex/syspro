@@ -10,19 +10,23 @@ import { emitEvent } from "@/lib/notify";
 
 export type ApprovalEntityType =
   | "purchase_order" | "bill" | "payment"
-  | "journal_entry" | "sales_return" | "purchase_return";
+  | "journal_entry" | "sales_return" | "purchase_return"
+  | "expense" | "employee_expense";
 
 export interface ApprovalRule {
   id: string;
   tenantSlug: string;
   entityType: ApprovalEntityType;
-  ruleType: "amount_based" | "department_based" | "project_based" | "vendor_based";
+  ruleType: "amount_based" | "department_based" | "project_based" | "vendor_based" | "category_based";
   conditions: {
     minAmount?: number;
     maxAmount?: number;
     departmentId?: string;
     projectId?: string;
     vendorId?: string;
+    categoryId?: string;
+    slaHours?: number;
+    slaAction?: "remind" | "escalate";
   };
   approvers: ApproverStep[];
   isActive: boolean;
@@ -60,9 +64,12 @@ export interface Approval {
 export interface ApprovalDecision {
   step: number;
   userId: string;
-  decision: "approved" | "rejected" | "escalated";
+  decision: "approved" | "rejected" | "escalated" | "clarification_needed";
   comments?: string;
   timestamp: string;
+  /** Set when the decider acted on behalf of the named approver via a
+      valid approval_delegates grant. */
+  delegatedFor?: string;
 }
 
 /* using imported SQL */
@@ -94,16 +101,37 @@ async function ensureApprovalTablesRun(sql = SQL) {
     await sql`
       alter table approvals add column if not exists rule_id uuid
     `;
-    // Entity types grew — relax any legacy check constraint on both tables.
+    // Entity/rule types grew — relax any legacy check constraint on both
+    // tables so expense + category_based rows are accepted.
     await sql`alter table if exists approval_rules drop constraint if exists approval_rules_entity_type_check`;
+    await sql`alter table if exists approval_rules drop constraint if exists approval_rules_rule_type_check`;
     await sql`alter table if exists approvals drop constraint if exists approvals_entity_type_check`;
+
+    // Delegation: lets an approver hand their authority to another user for a
+    // window (out-of-office). entity_type null = all document types.
+    await sql`
+      create table if not exists approval_delegates (
+        id uuid primary key default gen_random_uuid(),
+        tenant_slug text not null,
+        delegator_id text not null,
+        delegate_id text not null,
+        entity_type text,
+        valid_from timestamptz not null default now(),
+        valid_to timestamptz,
+        active boolean default true,
+        note text,
+        created_at timestamptz not null default now(),
+        updated_at timestamptz not null default now()
+      )
+    `;
 
     // Create indexes
     await Promise.all([
       sql`create index if not exists approval_rules_tenant_idx on approval_rules (tenant_slug)`,
       sql`create index if not exists approval_rules_entity_idx on approval_rules (entity_type)`,
       sql`create index if not exists approval_rules_active_idx on approval_rules (is_active)`,
-      sql`create index if not exists approvals_rule_idx on approvals (rule_id)`
+      sql`create index if not exists approvals_rule_idx on approvals (rule_id)`,
+      sql`create index if not exists approval_delegates_lookup_idx on approval_delegates (tenant_slug, delegate_id, delegator_id)`
     ]);
 
   } catch (error) {
@@ -114,7 +142,7 @@ async function ensureApprovalTablesRun(sql = SQL) {
 export async function createApprovalRule(payload: {
   tenantSlug: string;
   entityType: ApprovalEntityType;
-  ruleType: "amount_based" | "department_based" | "project_based" | "vendor_based";
+  ruleType: "amount_based" | "department_based" | "project_based" | "vendor_based" | "category_based";
   conditions: Record<string, any>;
   approvers: ApproverStep[];
   priority?: number;
@@ -236,6 +264,10 @@ function matchesRule(rule: ApprovalRule, entityData: Record<string, any>): boole
     case "vendor_based":
       if (conditions.vendorId && entityData.vendorId !== conditions.vendorId) return false;
       break;
+
+    case "category_based":
+      if (conditions.categoryId && entityData.categoryId !== conditions.categoryId) return false;
+      break;
   }
 
   return true;
@@ -243,23 +275,28 @@ function matchesRule(rule: ApprovalRule, entityData: Record<string, any>): boole
 
 /**
  * Build default approver chain based on document-specified thresholds:
- * - Under ₦50,000 → Department Manager only
- * - ₦50,000 to ₦500,000 → Department Manager → Finance Manager
- * - Above ₦500,000 → Department Manager → Finance Manager → Finance Admin → Tenant Owner
+ * - Under `step2Amount` (default ₦50,000) → Department Manager only
+ * - `step2Amount` to `step3Amount` (default ₦500,000) → Department Manager → Finance Manager
+ * - Above `step3Amount` → Department Manager → Finance Manager → Finance Admin → Tenant Owner
  */
-export function buildThresholdEscalationChain(amount: number): ApproverStep[] {
+export function buildThresholdEscalationChain(
+  amount: number,
+  thresholds?: { step2Amount?: number; step3Amount?: number }
+): ApproverStep[] {
+  const step2Amount = thresholds?.step2Amount ?? 50000;
+  const step3Amount = thresholds?.step3Amount ?? 500000;
   const steps: ApproverStep[] = [];
   let stepNum = 0;
 
   // Always require Department Manager at step 0
   steps.push({ step: stepNum, userId: "role:dept_manager", role: "dept_manager", required: true, order: 0 });
 
-  if (amount >= 50000) {
+  if (amount >= step2Amount) {
     stepNum++;
     steps.push({ step: stepNum, userId: "role:finance_manager", role: "finance_manager", required: true, order: 0 });
   }
 
-  if (amount > 500000) {
+  if (amount > step3Amount) {
     stepNum++;
     steps.push({ step: stepNum, userId: "role:finance_admin", role: "finance_admin", required: true, order: 0 });
     stepNum++;
@@ -267,6 +304,87 @@ export function buildThresholdEscalationChain(amount: number): ApproverStep[] {
   }
 
   return steps;
+}
+
+/**
+ * Resolve the department authority for an approval step: the department's
+ * manager_id on admin_departments, else employees flagged as HOD in that
+ * department. Returns concrete user ids; empty when nobody can be found.
+ */
+async function resolveDeptApprovers(tenantSlug: string, departmentId?: string | null): Promise<string[]> {
+  if (!departmentId) return [];
+  try {
+    const deptRows = await db.query<any>(
+      `select manager_id from admin_departments where id = $1 and tenant_slug = $2 limit 1`,
+      [departmentId, tenantSlug]
+    );
+    const managerId = deptRows.rows[0]?.manager_id;
+    if (managerId) return [String(managerId)];
+
+    const hods = await db.query<any>(
+      `select id from admin_employees
+       where tenant_slug = $1 and department_id = $2
+         and lower(coalesce(role,'')) in ('hod','head_of_department','admin')
+       order by id`,
+      [tenantSlug, departmentId]
+    );
+    return hods.rows.map((r) => String(r.id));
+  } catch (err) {
+    console.error("resolveDeptApprovers failed:", err);
+    return [];
+  }
+}
+
+/**
+ * Expands role placeholders that depend on the document's context — today only
+ * `role:dept_manager`, which resolves to the submitter's department manager(s).
+ * When multiple authorities exist for a step they become parallel approvers
+ * where any one may complete the step (required: false).
+ */
+async function resolveChainApprovers(
+  tenantSlug: string,
+  chain: ApproverStep[],
+  entityData: Record<string, any>
+): Promise<ApproverStep[]> {
+  const out: ApproverStep[] = [];
+  for (const step of chain) {
+    const isDeptManager = step.userId === "role:dept_manager" || step.role === "dept_manager";
+    if (!isDeptManager) {
+      out.push(step);
+      continue;
+    }
+    const resolved = await resolveDeptApprovers(tenantSlug, entityData.departmentId);
+    if (resolved.length === 0) {
+      // Nobody found — keep the placeholder so HOD-role callers can still act.
+      out.push(step);
+      continue;
+    }
+    resolved.forEach((userId, i) => {
+      out.push({ ...step, userId, required: resolved.length === 1 ? step.required : false, order: i });
+    });
+  }
+  return out;
+}
+
+/**
+ * Caller-role aliases: employee-portal roles map onto the role keys used in
+ * approver chains. `hod` → dept_manager, HR roles → admin (HR can act on any
+ * step, mirroring the legacy portal behavior where HR could approve).
+ */
+const APPROVER_ROLE_ALIASES: Record<string, string> = {
+  hod: "dept_manager",
+  head_of_department: "dept_manager",
+  dept_manager: "dept_manager",
+  hr: "admin",
+  hr_admin: "admin",
+  hr_manager: "admin",
+  tenant_admin: "admin",
+};
+
+function normalizeApproverRole(role?: string | null): string | undefined {
+  if (!role) return undefined;
+  const key = role.toLowerCase();
+  return APPROVER_ROLE_ALIASES[key] ?? key;
 }
 
 export async function initiateApproval(payload: {
@@ -284,7 +402,25 @@ export async function initiateApproval(payload: {
 
   const id = randomUUID();
   const amount = payload.entityData.amount || payload.entityData.total || 0;
-  const approverChain = rule?.approvers || buildThresholdEscalationChain(Number(amount));
+
+  // Default ladder thresholds are tenant-tunable via settings.approvals
+  // (expenseStep2Amount / expenseStep3Amount for expense docs; the generic
+  // step2Amount/step3Amount keys apply to everything else).
+  let approverChain: ApproverStep[];
+  if (rule?.approvers) {
+    approverChain = rule.approvers;
+  } else {
+    const settings = await tenantApprovalSettings(payload.tenantSlug);
+    const isExpense = payload.entityType === "expense" || payload.entityType === "employee_expense";
+    approverChain = buildThresholdEscalationChain(Number(amount), {
+      step2Amount: isExpense ? settings.expenseStep2Amount : settings.step2Amount,
+      step3Amount: isExpense ? settings.expenseStep3Amount : settings.step3Amount,
+    });
+  }
+
+  // Department-scoped placeholders (role:dept_manager) resolve against the
+  // submitter's department into concrete approver ids.
+  approverChain = await resolveChainApprovers(payload.tenantSlug, approverChain, payload.entityData);
   
   const [record] = (await sql`
     insert into approvals (
@@ -345,7 +481,7 @@ export async function processApprovalDecision(payload: {
   approvalId: string;
   userId: string;
   userRole?: string;
-  decision: "approved" | "rejected" | "escalated";
+  decision: "approved" | "rejected" | "escalated" | "clarification_needed";
   comments?: string;
 }): Promise<Approval | null> {
   const sql = SQL;
@@ -366,11 +502,24 @@ export async function processApprovalDecision(payload: {
   // Approvers are either concrete userIds or role placeholders ("role:dept_manager");
   // tenant admins may act on any step so workflows cannot stall.
   const currentStepApprovers = approverChain.filter((step: ApproverStep) => step.step === currentStep);
-  const callerRoleKey = payload.userRole ? `role:${payload.userRole}` : null;
-  const isAdmin = ["admin", "tenant_admin", "superadmin"].includes(payload.userRole || "");
-  const isAuthorized = isAdmin || currentStepApprovers.some(
+  const normalizedRole = normalizeApproverRole(payload.userRole);
+  const callerRoleKey = normalizedRole ? `role:${normalizedRole}` : null;
+  const isAdmin = ["admin", "tenant_admin", "superadmin"].includes(normalizedRole || "");
+  let isAuthorized = isAdmin || currentStepApprovers.some(
     (step: ApproverStep) => step.userId === payload.userId || step.userId === callerRoleKey
   );
+
+  // Delegation: an out-of-office approver's delegate may act on their step.
+  let delegatedFor: string | undefined;
+  if (!isAuthorized) {
+    delegatedFor = await findActiveDelegation({
+      tenantSlug: current.tenant_slug,
+      entityType: current.entity_type,
+      approverUserIds: currentStepApprovers.map((s: ApproverStep) => s.userId),
+      delegateId: payload.userId,
+    });
+    isAuthorized = !!delegatedFor;
+  }
 
   if (!isAuthorized) {
     throw new Error("User not authorized to approve at current step");
@@ -384,6 +533,7 @@ export async function processApprovalDecision(payload: {
     comments: payload.comments,
     timestamp: new Date().toISOString()
   };
+  if (delegatedFor) newDecision.delegatedFor = delegatedFor;
 
   decisions.push(newDecision);
 
@@ -393,6 +543,10 @@ export async function processApprovalDecision(payload: {
 
   if (payload.decision === "rejected") {
     newStatus = "rejected";
+  } else if (payload.decision === "clarification_needed") {
+    // Chain stays pending at the same step — the document itself is flagged
+    // for clarification via applyApprovalOutcome below.
+    newStatus = current.status;
   } else if (payload.decision === "escalated") {
     newStatus = "escalated";
     newStep = Math.min(currentStep + 1, approverChain.length - 1);
@@ -424,9 +578,19 @@ export async function processApprovalDecision(payload: {
 
   // Terminal decision reached — apply it to the underlying document so a
   // rejected journal/PO/return cannot take financial effect and an approved
-  // one can.
-  if ((newStatus === "approved" || newStatus === "rejected") && newStatus !== current.status) {
-    await applyApprovalOutcome(updated.tenant_slug, updated.entity_type, updated.entity_id, newStatus);
+  // one can. Clarification requests also update the document status but do
+  // not move the chain.
+  const isTerminal = (newStatus === "approved" || newStatus === "rejected") && newStatus !== current.status;
+  if (isTerminal || payload.decision === "clarification_needed") {
+    await applyApprovalOutcome(
+      updated.tenant_slug,
+      updated.entity_type,
+      updated.entity_id,
+      payload.decision === "clarification_needed" ? "clarify" : (newStatus as "approved" | "rejected"),
+      { decidedBy: payload.userId, comments: payload.comments }
+    );
+  }
+  if (isTerminal) {
     void emitEvent({
       tenantSlug: updated.tenant_slug,
       eventType: "approval.decided",
@@ -444,6 +608,35 @@ export async function processApprovalDecision(payload: {
         comments: payload.comments,
       },
     });
+  }
+
+  // Chain advanced to a new step (or escalated) — notify the approvers now on
+  // deck so multi-step workflows actually move.
+  if ((newStatus === "pending" || newStatus === "escalated") && newStep !== currentStep) {
+    const nextSpecs = (approverChain as ApproverStep[])
+      .filter((s) => s.step === newStep)
+      .map((s) => s.userId.startsWith("role:")
+        ? { kind: "role" as const, value: s.userId.slice(5) }
+        : { kind: "user" as const, value: s.userId });
+    if (nextSpecs.length > 0) {
+      void emitEvent({
+        tenantSlug: updated.tenant_slug,
+        eventType: "approval.requested",
+        sourceModule: "approvals",
+        sourceRecordId: updated.id,
+        actorId: payload.userId,
+        explicitSpecs: nextSpecs,
+        payload: {
+          approvalId: updated.id,
+          entityType: updated.entity_type,
+          entityRef: updated.metadata?.invoiceNumber ?? updated.metadata?.billNumber
+            ?? updated.metadata?.journalNumber ?? updated.metadata?.reference ?? updated.entity_id,
+          amount: updated.metadata?.amount ?? updated.metadata?.total ?? 0,
+          requestedBy: updated.requested_by,
+          requestedByName: updated.metadata?.requestedByName,
+        },
+      });
+    }
   }
 
   return {
@@ -479,6 +672,8 @@ const ENTITY_THRESHOLD_KEYS: Record<ApprovalEntityType, string> = {
   journal_entry: "journalEntryMinAmount",
   sales_return: "returnMinAmount",
   purchase_return: "returnMinAmount",
+  expense: "expenseMinAmount",
+  employee_expense: "employeeExpenseMinAmount",
 };
 
 async function tenantApprovalSettings(tenantSlug: string): Promise<Record<string, number>> {
@@ -498,9 +693,16 @@ export async function requiresApproval(
   entityType: ApprovalEntityType,
   entityData: Record<string, any>
 ): Promise<boolean> {
+  // Employee-submitted expenses always route through the department
+  // authority — mirrors the legacy portal flow where every request needed
+  // an HOD decision.
+  if (entityType === "employee_expense") return true;
   const rule = await findMatchingRule(tenantSlug, entityType, entityData);
   if (rule) return true;
   const settings = await tenantApprovalSettings(tenantSlug);
+  // Opt-in default ladder for finance expenses: when set, every expense is
+  // routed through dept manager → finance → executive even with no rules.
+  if (entityType === "expense" && settings.expenseDefaultChain) return true;
   const min = settings[ENTITY_THRESHOLD_KEYS[entityType]];
   if (min === undefined || min === null) return false;
   const amount = Number(entityData.amount ?? entityData.total ?? 0);
@@ -532,16 +734,27 @@ export async function initiateApprovalIfRequired(payload: {
 
 /**
  * Applies a terminal approval outcome to the underlying document. Called by
- * processApprovalDecision when the chain reaches approved/rejected.
+ * processApprovalDecision when the chain reaches approved/rejected, or when a
+ * clarification request should flip the document's visible status.
  */
 async function applyApprovalOutcome(
   tenantSlug: string,
   entityType: string,
   entityId: string,
-  outcome: "approved" | "rejected"
+  outcome: "approved" | "rejected" | "clarify",
+  ctx?: { decidedBy?: string; comments?: string }
 ): Promise<void> {
+  // Clarification is only meaningful for expense documents — other entity
+  // types would otherwise map it onto their rejected branch.
+  if (outcome === "clarify" && entityType !== "expense" && entityType !== "employee_expense") return;
   try {
     switch (entityType) {
+      case "expense":
+        await applyExpenseOutcome(tenantSlug, entityId, outcome, ctx);
+        break;
+      case "employee_expense":
+        await applyEmployeeExpenseOutcome(tenantSlug, entityId, outcome, ctx);
+        break;
       case "journal_entry":
         await db.query(
           `update journal_entries
@@ -578,6 +791,267 @@ async function applyApprovalOutcome(
   } catch (err) {
     console.error(`applyApprovalOutcome ${entityType} ${entityId}:`, err);
   }
+}
+
+/** Best-effort display name for a user id across employees/admins. */
+async function resolveUserName(tenantSlug: string, userId?: string | null): Promise<string> {
+  if (!userId) return "System";
+  try {
+    const map = await resolveRequesterNames(tenantSlug, [String(userId).toLowerCase()]);
+    return map.get(userId) ?? map.get(String(userId).toLowerCase()) ?? userId;
+  } catch {
+    return userId;
+  }
+}
+
+/**
+ * Finance `expenses` table outcome: sync approval_status, record the decision
+ * in expense_approvals + expense_audit_logs (keeps the expenses UI history
+ * working), and post the GL accrual on final approval — Dr category expense
+ * account / Cr payable. Idempotent via the journal's referenceId.
+ */
+async function applyExpenseOutcome(
+  tenantSlug: string,
+  expenseId: string,
+  outcome: "approved" | "rejected" | "clarify",
+  ctx?: { decidedBy?: string; comments?: string }
+): Promise<void> {
+  const newStatus = outcome === "approved" ? "APPROVED" : outcome === "rejected" ? "REJECTED" : "CLARIFY_NEEDED";
+  const rows = await db.query<any>(
+    `update expenses set approval_status = $1, updated_at = now()
+     where id = $2 and tenant_slug = $3 returning *`,
+    [newStatus, expenseId, tenantSlug]
+  );
+  const expense = rows.rows[0];
+  if (!expense) return;
+
+  const approverName = await resolveUserName(tenantSlug, ctx?.decidedBy);
+  const action = outcome === "approved" ? "APPROVED" : outcome === "rejected" ? "REJECTED" : "CLARIFY_NEEDED";
+
+  await db.query(
+    `insert into expense_approvals (id, expense_id, approver_role, approver_id, approver_name, action, reason, amount_threshold)
+     values ($1, $2, 'FINANCE', $3, $4, $5, $6, $7)`,
+    [randomUUID(), expenseId, ctx?.decidedBy ?? "system", approverName, action, ctx?.comments ?? null, Number(expense.amount) || 0]
+  );
+  await db.query(
+    `insert into expense_audit_logs (id, expense_id, action, user_id, details)
+     values ($1, $2, $3, $4, $5)`,
+    [randomUUID(), expenseId, `APPROVAL_${action}`, ctx?.decidedBy ?? "system",
+     JSON.stringify({ via: "approval_workflow", reason: ctx?.comments ?? null })]
+  );
+
+  if (outcome !== "approved") return;
+  const amount = Number(expense.total_amount ?? expense.amount) || 0;
+  if (amount <= 0 || expense.journal_entry_id) return;
+
+  try {
+    const { postGLEntry, GL_ACCOUNTS } = await import("./gl");
+    const catRows = await db.query<any>(
+      `select account_id from expense_categories where id = $1 limit 1`,
+      [expense.category_id]
+    );
+    const debitAccount = expense.gl_account_id || catRows.rows[0]?.account_id || GL_ACCOUNTS.GENERAL_EXPENSE;
+    // Vendor/cash expenses accrue to AP; reimbursements accrue to the employee
+    // payable so settlement follows the payroll path.
+    const creditAccount = expense.type === "reimbursement" ? GL_ACCOUNTS.PAYROLL_PAYABLE : GL_ACCOUNTS.ACCOUNTS_PAYABLE;
+    const je = await postGLEntry({
+      tenantSlug,
+      entryDate: new Date(),
+      journalType: "SYSTEM",
+      referenceType: "expense",
+      referenceId: expenseId,
+      status: "POSTED",
+      description: `Expense approved — ${expense.description ?? expenseId}`,
+      lines: [
+        { accountCode: String(debitAccount), debitAmount: amount, description: `Expense ${expenseId}` },
+        { accountCode: creditAccount, creditAmount: amount, description: `Accrued payable for expense ${expenseId}` },
+      ],
+      createdBy: ctx?.decidedBy,
+    });
+    const jeId = (je as any)?.id ?? null;
+    if (jeId) {
+      await db.query(`update expenses set journal_entry_id = $1 where id = $2`, [jeId, expenseId]);
+    }
+  } catch (err) {
+    console.error("Expense approval GL posting failed:", err);
+  }
+
+  // Approved expense is now a payable awaiting settlement — alert finance.
+  void emitEvent({
+    tenantSlug,
+    eventType: "expense.settlement_due",
+    sourceModule: "approvals",
+    sourceRecordId: expenseId,
+    actorId: ctx?.decidedBy ?? "system",
+    explicitSpecs: [
+      { kind: "role", value: "finance_manager" },
+      { kind: "role", value: "admin" },
+    ],
+    payload: {
+      expenseId,
+      entityRef: expense.description ?? expenseId,
+      amount,
+      type: expense.type,
+    },
+  });
+}
+
+/**
+ * Employee portal expense outcome: sync admin_employee_expenses status and
+ * approver fields, and post the liability entry on approval — identical to
+ * the legacy portal PATCH behavior.
+ */
+async function applyEmployeeExpenseOutcome(
+  tenantSlug: string,
+  expenseId: string,
+  outcome: "approved" | "rejected" | "clarify",
+  ctx?: { decidedBy?: string; comments?: string }
+): Promise<void> {
+  const rows = await db.query<any>(
+    `select * from admin_employee_expenses where id = $1 and tenant_slug = $2 limit 1`,
+    [expenseId, tenantSlug]
+  );
+  const expense = rows.rows[0];
+  if (!expense) return;
+
+  const newStatus = outcome === "approved" ? "approved" : outcome === "rejected" ? "rejected" : "pending";
+  const approverName = await resolveUserName(tenantSlug, ctx?.decidedBy);
+
+  // GL: approval books the liability (Dr expense / Cr employee payable).
+  // Idempotent via journal_entry_id on the row.
+  let journalEntryId: string | null = expense.journal_entry_id ?? null;
+  if (outcome === "approved" && !journalEntryId) {
+    try {
+      const amount = Number(expense.amount);
+      if (amount > 0) {
+        const { postGLEntry, GL_ACCOUNTS } = await import("./gl");
+        const je = await postGLEntry({
+          tenantSlug,
+          entryDate: new Date(),
+          journalType: "SYSTEM",
+          referenceType: "employee_expense",
+          referenceId: expenseId,
+          status: "POSTED",
+          description: `Employee expense — ${expense.category ?? "general"}`,
+          lines: [
+            { accountCode: GL_ACCOUNTS.GENERAL_EXPENSE, debitAmount: amount, description: `Expense ${expenseId}` },
+            { accountCode: GL_ACCOUNTS.PAYROLL_PAYABLE, creditAmount: amount, description: `Payable to employee ${expense.employee_id}` },
+          ],
+          createdBy: ctx?.decidedBy,
+        });
+        journalEntryId = (je as any)?.id ?? null;
+      }
+    } catch (err) {
+      console.error("Employee expense GL posting failed:", err);
+    }
+  }
+
+  await db.query(`alter table admin_employee_expenses add column if not exists journal_entry_id text`);
+  await db.query(
+    `update admin_employee_expenses
+     set status = $1,
+         approver_id = $2,
+         approver_name = $3,
+         approver_comment = coalesce($4, approver_comment),
+         approved_at = case when $1 = 'pending' then approved_at else coalesce(approved_at, now()) end,
+         journal_entry_id = coalesce($5, journal_entry_id),
+         updated_at = now()
+     where id = $6 and tenant_slug = $7`,
+    [newStatus, ctx?.decidedBy ?? null, approverName, ctx?.comments ?? null, journalEntryId, expenseId, tenantSlug]
+  );
+}
+
+/**
+ * Re-enters a document into its approval chain after a clarification
+ * (CLARIFY_NEEDED) or a fresh submission: resets the approval to pending at
+ * step 0 and notifies the first approvers again. Returns the reset approval,
+ * or null when no workflow row exists for the document.
+ */
+export async function resetApprovalForResubmission(
+  tenantSlug: string,
+  entityType: ApprovalEntityType,
+  entityId: string
+): Promise<Approval | null> {
+  await ensureApprovalTables();
+  const [record] = (await SQL`
+    update approvals
+    set status = 'pending', current_step = 0, updated_at = now()
+    where tenant_slug = ${tenantSlug} and entity_type = ${entityType} and entity_id = ${entityId}
+      and status in ('pending', 'escalated')
+    returning *
+  `) as any[];
+  if (!record) return null;
+
+  const chain = (record.approver_chain ?? []) as ApproverStep[];
+  const specs = chain
+    .filter((s) => s.step === 0)
+    .map((s) => s.userId.startsWith("role:")
+      ? { kind: "role" as const, value: s.userId.slice(5) }
+      : { kind: "user" as const, value: s.userId });
+  if (specs.length > 0) {
+    void emitEvent({
+      tenantSlug,
+      eventType: "approval.requested",
+      sourceModule: "approvals",
+      sourceRecordId: record.id,
+      actorId: record.requested_by,
+      explicitSpecs: specs,
+      payload: {
+        approvalId: record.id,
+        entityType,
+        entityRef: record.metadata?.reference ?? entityId,
+        amount: record.metadata?.amount ?? record.metadata?.total ?? 0,
+        requestedBy: record.requested_by,
+        resubmission: true,
+      },
+    });
+  }
+
+  return {
+    id: record.id,
+    tenantSlug: record.tenant_slug,
+    entityType: record.entity_type,
+    entityId: record.entity_id,
+    ruleId: record.rule_id,
+    status: record.status,
+    requestedBy: record.requested_by,
+    approverChain: record.approver_chain,
+    decisions: record.decisions || [],
+    currentStep: record.current_step,
+    metadata: record.metadata,
+    createdAt: record.created_at,
+    updatedAt: record.updated_at,
+  };
+}
+
+/** Look up the active approval workflow row for a document, if any. */
+export async function getApprovalForEntity(
+  tenantSlug: string,
+  entityType: ApprovalEntityType,
+  entityId: string
+): Promise<Approval | null> {
+  await ensureApprovalTables();
+  const [record] = (await SQL`
+    select * from approvals
+    where tenant_slug = ${tenantSlug} and entity_type = ${entityType} and entity_id = ${entityId}
+    order by created_at desc limit 1
+  `) as any[];
+  if (!record) return null;
+  return {
+    id: record.id,
+    tenantSlug: record.tenant_slug,
+    entityType: record.entity_type,
+    entityId: record.entity_id,
+    ruleId: record.rule_id,
+    status: record.status,
+    requestedBy: record.requested_by,
+    approverChain: record.approver_chain,
+    decisions: record.decisions || [],
+    currentStep: record.current_step,
+    metadata: record.metadata,
+    createdAt: record.created_at,
+    updatedAt: record.updated_at,
+  };
 }
 
 export async function getApprovals(filters: {
@@ -687,18 +1161,35 @@ export async function getPendingApprovalsForUser(
   // Chains mix concrete userIds with role placeholders ("role:dept_manager").
   // Match the step currently awaiting action against the caller's id or role;
   // tenant admins see every pending item so nothing gets stuck.
-  const roleKey = role ? `role:${role}` : null;
-  const seesAll = ["admin", "tenant_admin", "superadmin"].includes(role || "");
+  const normalizedRole = normalizeApproverRole(role);
+  const roleKey = normalizedRole ? `role:${normalizedRole}` : null;
+  const seesAll = ["admin", "tenant_admin", "superadmin"].includes(normalizedRole || "");
 
   const records = (await sql`
-    select * from approvals 
+    select * from approvals
     where tenant_slug = ${tenantSlug}
-    and status = 'pending'
+    and status in ('pending', 'escalated')
     and (
       ${seesAll}
-      or approver_chain -> current_step ->> 'userId' = ${userId}
-      or (${roleKey}::text is not null and approver_chain -> current_step ->> 'userId' = ${roleKey})
       or approver_chain @> ${JSON.stringify([{ userId }])}::jsonb
+      or exists (
+        select 1 from jsonb_array_elements(approver_chain) el
+        where (el->>'step')::int = approvals.current_step
+          and (
+            el->>'userId' = ${userId}
+            or (${roleKey}::text is not null and el->>'userId' = ${roleKey})
+            or exists (
+              select 1 from approval_delegates d
+              where d.tenant_slug = approvals.tenant_slug
+                and d.delegator_id = el->>'userId'
+                and d.delegate_id = ${userId}
+                and d.active
+                and now() >= d.valid_from
+                and (d.valid_to is null or now() <= d.valid_to)
+                and (d.entity_type is null or d.entity_type = approvals.entity_type)
+            )
+          )
+      )
     )
     order by created_at asc
   `) as any[];
@@ -718,4 +1209,304 @@ export async function getPendingApprovalsForUser(
     createdAt: record.created_at,
     updatedAt: record.updated_at
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Delegation (out-of-office)
+// ---------------------------------------------------------------------------
+
+export interface ApprovalDelegate {
+  id: string;
+  tenantSlug: string;
+  delegatorId: string;
+  delegateId: string;
+  entityType: string | null;
+  validFrom: string;
+  validTo: string | null;
+  active: boolean;
+  note: string | null;
+  createdAt: string;
+}
+
+function mapDelegate(row: any): ApprovalDelegate {
+  return {
+    id: row.id,
+    tenantSlug: row.tenant_slug,
+    delegatorId: row.delegator_id,
+    delegateId: row.delegate_id,
+    entityType: row.entity_type ?? null,
+    validFrom: row.valid_from,
+    validTo: row.valid_to ?? null,
+    active: row.active,
+    note: row.note ?? null,
+    createdAt: row.created_at,
+  };
+}
+
+export async function createDelegate(payload: {
+  tenantSlug: string;
+  delegatorId: string;
+  delegateId: string;
+  entityType?: string;
+  validFrom?: string;
+  validTo?: string;
+  note?: string;
+}): Promise<ApprovalDelegate> {
+  await ensureApprovalTables();
+  if (payload.delegatorId === payload.delegateId) {
+    throw new Error("Cannot delegate approval authority to yourself");
+  }
+  const [row] = (await SQL`
+    insert into approval_delegates (tenant_slug, delegator_id, delegate_id, entity_type, valid_from, valid_to, note)
+    values (
+      ${payload.tenantSlug}, ${payload.delegatorId}, ${payload.delegateId},
+      ${payload.entityType ?? null},
+      ${payload.validFrom ? new Date(payload.validFrom) : new Date()},
+      ${payload.validTo ? new Date(payload.validTo) : null},
+      ${payload.note ?? null}
+    ) returning *
+  `) as any[];
+  return mapDelegate(row);
+}
+
+export async function listDelegates(
+  tenantSlug: string,
+  filter?: { delegatorId?: string; delegateId?: string }
+): Promise<ApprovalDelegate[]> {
+  await ensureApprovalTables();
+  const rows = (await SQL`
+    select * from approval_delegates
+    where tenant_slug = ${tenantSlug}
+      and (${filter?.delegatorId ?? null}::text is null or delegator_id = ${filter?.delegatorId ?? null})
+      and (${filter?.delegateId ?? null}::text is null or delegate_id = ${filter?.delegateId ?? null})
+    order by created_at desc
+  `) as any[];
+  return rows.map(mapDelegate);
+}
+
+/** Deactivates a grant (kept for audit) — returns false if not found. */
+export async function revokeDelegate(tenantSlug: string, id: string): Promise<boolean> {
+  await ensureApprovalTables();
+  const rows = (await SQL`
+    update approval_delegates set active = false, updated_at = now()
+    where id = ${id} and tenant_slug = ${tenantSlug}
+    returning id
+  `) as any[];
+  return rows.length > 0;
+}
+
+/**
+ * Returns the delegator whose authority `delegateId` may exercise for one of
+ * `approverUserIds` on this entity type — or undefined when no valid grant
+ * exists. Role placeholders ("role:*") cannot be delegated.
+ */
+async function findActiveDelegation(payload: {
+  tenantSlug: string;
+  entityType: string;
+  approverUserIds: string[];
+  delegateId: string;
+}): Promise<string | undefined> {
+  const concreteIds = payload.approverUserIds.filter(
+    (id) => id && !id.startsWith("role:") && !id.startsWith("kind:")
+  );
+  if (concreteIds.length === 0) return undefined;
+  const rows = (await SQL`
+    select delegator_id from approval_delegates
+    where tenant_slug = ${payload.tenantSlug}
+      and delegate_id = ${payload.delegateId}
+      and delegator_id = any(${concreteIds})
+      and active
+      and now() >= valid_from
+      and (valid_to is null or now() <= valid_to)
+      and (entity_type is null or entity_type = ${payload.entityType})
+    limit 1
+  `) as any[];
+  return rows[0]?.delegator_id;
+}
+
+// ---------------------------------------------------------------------------
+// Rule maintenance
+// ---------------------------------------------------------------------------
+
+export async function updateApprovalRule(
+  tenantSlug: string,
+  ruleId: string,
+  updates: {
+    conditions?: Record<string, any>;
+    approvers?: ApproverStep[];
+    isActive?: boolean;
+    priority?: number;
+    entityType?: ApprovalEntityType;
+    ruleType?: ApprovalRule["ruleType"];
+  }
+): Promise<ApprovalRule | null> {
+  await ensureApprovalTables();
+  const [existing] = (await SQL`
+    select * from approval_rules where id = ${ruleId} and tenant_slug = ${tenantSlug} limit 1
+  `) as any[];
+  if (!existing) return null;
+
+  const conditions = updates.conditions !== undefined ? JSON.stringify(updates.conditions) : JSON.stringify(existing.conditions);
+  const approvers = updates.approvers !== undefined ? JSON.stringify(updates.approvers) : JSON.stringify(existing.approvers);
+  const [record] = (await SQL`
+    update approval_rules set
+      entity_type = ${updates.entityType ?? existing.entity_type},
+      rule_type = ${updates.ruleType ?? existing.rule_type},
+      conditions = ${conditions}::jsonb,
+      approvers = ${approvers}::jsonb,
+      is_active = ${updates.isActive ?? existing.is_active},
+      priority = ${updates.priority ?? existing.priority},
+      updated_at = now()
+    where id = ${ruleId} and tenant_slug = ${tenantSlug}
+    returning *
+  `) as any[];
+  return {
+    id: record.id,
+    tenantSlug: record.tenant_slug,
+    entityType: record.entity_type,
+    ruleType: record.rule_type,
+    conditions: record.conditions,
+    approvers: record.approvers,
+    isActive: record.is_active,
+    priority: record.priority,
+    metadata: record.metadata,
+    createdAt: record.created_at,
+    updatedAt: record.updated_at,
+  };
+}
+
+export async function deleteApprovalRule(tenantSlug: string, ruleId: string): Promise<boolean> {
+  await ensureApprovalTables();
+  const rows = (await SQL`
+    delete from approval_rules where id = ${ruleId} and tenant_slug = ${tenantSlug}
+    returning id
+  `) as any[];
+  return rows.length > 0;
+}
+
+// ---------------------------------------------------------------------------
+// SLA sweep — remind or escalate approvals stuck past their SLA window.
+// Configured per rule via conditions.slaHours/slaAction, or tenant-wide via
+// settings.approvals.approvalSlaHours / approvalSlaAction. Idempotent: each
+// step fires at most once (recorded in metadata.slaFiredSteps).
+// ---------------------------------------------------------------------------
+
+export async function escalateStaleApprovals(
+  tenantSlug?: string
+): Promise<{ scanned: number; reminded: number; escalated: number }> {
+  await ensureApprovalTables();
+  const rows = (await SQL`
+    select a.*, r.conditions as rule_conditions
+    from approvals a
+    left join approval_rules r on r.id = a.rule_id
+    where a.status in ('pending', 'escalated')
+      and (${tenantSlug ?? null}::text is null or a.tenant_slug = ${tenantSlug ?? null})
+    order by a.updated_at asc
+    limit 1000
+  `) as any[];
+  if (rows.length === 0) return { scanned: 0, reminded: 0, escalated: 0 };
+
+  // Tenant-level defaults for rows whose rule carries no SLA config.
+  const tenantSlugs = [...new Set(rows.map((r: any) => r.tenant_slug))];
+  const tenantDefaults = new Map<string, { slaHours?: number; slaAction?: string }>();
+  const settingsRows = (await db.query<any>(
+    `select slug, settings from tenants where slug = any($1)`, [tenantSlugs]
+  )).rows;
+  for (const t of settingsRows) {
+    const approvals = (t.settings as any)?.approvals ?? {};
+    tenantDefaults.set(t.slug, {
+      slaHours: typeof approvals.approvalSlaHours === "number" ? approvals.approvalSlaHours : undefined,
+      slaAction: approvals.approvalSlaAction,
+    });
+  }
+
+  let reminded = 0;
+  let escalated = 0;
+  const now = Date.now();
+
+  for (const row of rows) {
+    const cond = row.rule_conditions ?? {};
+    const defaults = tenantDefaults.get(row.tenant_slug) ?? {};
+    const slaHours = typeof cond.slaHours === "number" ? cond.slaHours : defaults.slaHours;
+    if (!slaHours || slaHours <= 0) continue;
+
+    const staleMs = now - new Date(row.updated_at).getTime();
+    if (staleMs < slaHours * 3600_000) continue;
+
+    const metadata = row.metadata ?? {};
+    const fired: number[] = Array.isArray(metadata.slaFiredSteps) ? metadata.slaFiredSteps : [];
+    if (fired.includes(row.current_step)) continue; // already handled this step
+
+    const chain = (row.approver_chain ?? []) as ApproverStep[];
+    const maxStep = chain.reduce((m, s) => Math.max(m, s.step), 0);
+    const slaAction = (cond.slaAction ?? defaults.slaAction ?? "remind") as string;
+    const willEscalate = slaAction === "escalate";
+    const atLastStep = row.current_step >= maxStep;
+    const entityRef = metadata.invoiceNumber ?? metadata.billNumber
+      ?? metadata.journalNumber ?? metadata.reference ?? row.entity_id;
+
+    if (willEscalate && !atLastStep) {
+      // Advance the chain — the stale step is skipped.
+      const newStep = row.current_step + 1;
+      const decisions = row.decisions ?? [];
+      decisions.push({
+        step: row.current_step,
+        userId: "system",
+        decision: "escalated",
+        comments: `Auto-escalated: no action within ${slaHours}h SLA`,
+        timestamp: new Date().toISOString(),
+      });
+      metadata.slaFiredSteps = [...fired, row.current_step];
+      await SQL`
+        update approvals set
+          status = 'escalated', current_step = ${newStep},
+          decisions = ${JSON.stringify(decisions)},
+          metadata = ${JSON.stringify(metadata)},
+          updated_at = now()
+        where id = ${row.id} and status in ('pending', 'escalated')
+      `;
+      const nextSpecs = chain
+        .filter((s) => s.step === newStep)
+        .map((s) => s.userId.startsWith("role:")
+          ? { kind: "role" as const, value: s.userId.slice(5) }
+          : { kind: "user" as const, value: s.userId });
+      void emitEvent({
+        tenantSlug: row.tenant_slug,
+        eventType: "approval.sla_breach",
+        sourceModule: "approvals",
+        sourceRecordId: row.id,
+        actorId: "system",
+        explicitSpecs: nextSpecs.length ? nextSpecs : [{ kind: "admin" }],
+        payload: { approvalId: row.id, entityType: row.entity_type, entityRef, escalated: true, currentStep: newStep, amount: metadata.amount ?? metadata.total ?? 0 },
+      });
+      escalated++;
+    } else {
+      // Remind: re-notify the approvers still on the clock (or admins when
+      // the last step itself is stale).
+      const specs = atLastStep
+        ? [{ kind: "admin" as const }]
+        : chain
+            .filter((s) => s.step === row.current_step)
+            .map((s) => s.userId.startsWith("role:")
+              ? { kind: "role" as const, value: s.userId.slice(5) }
+              : { kind: "user" as const, value: s.userId });
+      metadata.slaFiredSteps = [...fired, row.current_step];
+      await SQL`
+        update approvals set metadata = ${JSON.stringify(metadata)}
+        where id = ${row.id}
+      `;
+      void emitEvent({
+        tenantSlug: row.tenant_slug,
+        eventType: "approval.sla_breach",
+        sourceModule: "approvals",
+        sourceRecordId: row.id,
+        actorId: "system",
+        explicitSpecs: specs.length ? specs : [{ kind: "admin" }],
+        payload: { approvalId: row.id, entityType: row.entity_type, entityRef, escalated: false, currentStep: row.current_step, amount: metadata.amount ?? metadata.total ?? 0 },
+      });
+      reminded++;
+    }
+  }
+
+  return { scanned: rows.length, reminded, escalated };
 }

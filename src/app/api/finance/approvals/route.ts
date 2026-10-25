@@ -4,23 +4,28 @@ import { z } from "zod";
 import {
   createApprovalRule,
   getApprovalRules,
+  updateApprovalRule,
+  deleteApprovalRule,
   initiateApproval,
   processApprovalDecision,
   getApprovals,
   getPendingApprovalsForUser,
+  createDelegate,
+  listDelegates,
+  revokeDelegate,
 } from "@/lib/finance/approvals";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { requireModuleAccess } from "@/lib/api-auth";
 
-const ENTITY_TYPES = ["purchase_order", "bill", "payment", "journal_entry", "sales_return", "purchase_return"] as const;
+const ENTITY_TYPES = ["purchase_order", "bill", "payment", "journal_entry", "sales_return", "purchase_return", "expense", "employee_expense"] as const;
 
 const approvalRuleCreateSchema = z.object({
   tenantSlug: z.string().min(1),
   entityType: z.enum(ENTITY_TYPES),
-  ruleType: z.enum(["amount_based", "department_based", "project_based", "vendor_based"]),
+  ruleType: z.enum(["amount_based", "department_based", "project_based", "vendor_based", "category_based"]),
   conditions: z.record(z.any()),
   approvers: z.array(z.object({
-    step: z.number().positive(),
+    step: z.number().nonnegative(),
     userId: z.string().min(1),
     role: z.string().optional(),
     required: z.boolean(),
@@ -28,6 +33,31 @@ const approvalRuleCreateSchema = z.object({
   })),
   priority: z.number().optional(),
   metadata: z.record(z.any()).optional(),
+});
+
+const approvalRuleUpdateSchema = z.object({
+  ruleId: z.string().min(1),
+  entityType: z.enum(ENTITY_TYPES).optional(),
+  ruleType: z.enum(["amount_based", "department_based", "project_based", "vendor_based", "category_based"]).optional(),
+  conditions: z.record(z.any()).optional(),
+  approvers: z.array(z.object({
+    step: z.number().nonnegative(),
+    userId: z.string().min(1),
+    role: z.string().optional(),
+    required: z.boolean(),
+    order: z.number().nonnegative(),
+  })).optional(),
+  isActive: z.boolean().optional(),
+  priority: z.number().optional(),
+});
+
+const delegateCreateSchema = z.object({
+  delegatorId: z.string().min(1),
+  delegateId: z.string().min(1),
+  entityType: z.enum(ENTITY_TYPES).optional(),
+  validFrom: z.string().optional(),
+  validTo: z.string().optional(),
+  note: z.string().optional(),
 });
 
 const approvalInitiateSchema = z.object({
@@ -40,7 +70,7 @@ const approvalInitiateSchema = z.object({
 
 const approvalDecisionSchema = z.object({
   userId: z.string().min(1).optional(),
-  decision: z.enum(["approved", "rejected", "escalated"]),
+  decision: z.enum(["approved", "rejected", "escalated", "clarification_needed"]),
   comments: z.string().optional(),
 });
 
@@ -76,6 +106,15 @@ export async function GET(request: NextRequest) {
       });
 
       return NextResponse.json({ rules });
+    }
+
+    // Delegation grants
+    if (url.searchParams.get("delegates") === "true") {
+      const delegates = await listDelegates(tenantSlug, {
+        delegatorId: url.searchParams.get("delegatorId") ?? undefined,
+        delegateId: url.searchParams.get("delegateId") ?? undefined,
+      });
+      return NextResponse.json({ delegates });
     }
 
     // Get pending approvals for user
@@ -148,6 +187,7 @@ export async function POST(request: NextRequest) {
     const ctx = validateTenantContext(request, "write");
     const _gate = await requireModuleAccess(request, "finance", "write");
     if (!_gate.ok) return _gate.response;
+    const tenantSlug = ctx.tenantSlug;
     const body = await request.json();
     
     // Create approval rule
@@ -162,6 +202,67 @@ export async function POST(request: NextRequest) {
 
       const rule = await createApprovalRule(parsed.data);
       return NextResponse.json({ rule }, { status: 201 });
+    }
+
+    // Update an existing rule (conditions, steps, active flag, priority)
+    if (body.action === "update-rule") {
+      const parsed = approvalRuleUpdateSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: "Invalid rule update", details: parsed.error.flatten() },
+          { status: 400 }
+        );
+      }
+      const { ruleId, ...updates } = parsed.data;
+      const rule = await updateApprovalRule(tenantSlug, ruleId, updates);
+      if (!rule) {
+        return NextResponse.json({ error: "Rule not found" }, { status: 404 });
+      }
+      return NextResponse.json({ rule });
+    }
+
+    if (body.action === "delete-rule") {
+      const ruleId = body.ruleId;
+      if (!ruleId) {
+        return NextResponse.json({ error: "ruleId required" }, { status: 400 });
+      }
+      const deleted = await deleteApprovalRule(tenantSlug, ruleId);
+      if (!deleted) {
+        return NextResponse.json({ error: "Rule not found" }, { status: 404 });
+      }
+      return NextResponse.json({ deleted: true });
+    }
+
+    // Delegation grants (out-of-office authority transfer)
+    if (body.action === "create-delegate") {
+      const parsed = delegateCreateSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: "Invalid delegation", details: parsed.error.flatten() },
+          { status: 400 }
+        );
+      }
+      try {
+        const delegate = await createDelegate({ tenantSlug, ...parsed.data });
+        return NextResponse.json({ delegate }, { status: 201 });
+      } catch (delegateError) {
+        return NextResponse.json(
+          { error: String((delegateError as any)?.message ?? delegateError) },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (body.action === "revoke-delegate") {
+      const id = body.delegateRecordId;
+      if (!id) {
+        return NextResponse.json({ error: "delegateRecordId required" }, { status: 400 });
+      }
+      const revoked = await revokeDelegate(tenantSlug, id);
+      if (!revoked) {
+        return NextResponse.json({ error: "Delegation not found" }, { status: 404 });
+      }
+      return NextResponse.json({ revoked: true });
     }
 
     // Process approval decision

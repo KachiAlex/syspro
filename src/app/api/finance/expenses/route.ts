@@ -22,6 +22,31 @@ import { calculateMonthlyUsage, requiresEscalatedApproval } from "@/lib/finance/
 import { getGLAccountForCategory } from "@/lib/finance/service";
 import { enforceBudget, BudgetViolationError } from "@/lib/finance/budget-control";
 import { requireModuleAccess } from "@/lib/api-auth";
+import { sql as SQL } from "@/lib/sql-client";
+import {
+  initiateApprovalIfRequired,
+  resetApprovalForResubmission,
+  getApprovalForEntity,
+} from "@/lib/finance/approvals";
+
+/**
+ * Resolve the submitter's department + employee id so the approval workflow
+ * can route to the right departmental authority. createdBy may be an
+ * employee id, email, or display name.
+ */
+async function resolveSubmitterDept(tenantSlug: string, createdBy: string) {
+  try {
+    const rows = await SQL`
+      select id, department_id from admin_employees
+      where tenant_slug = ${tenantSlug}
+        and (id = ${createdBy} or lower(email) = lower(${createdBy}) or lower(name) = lower(${createdBy}))
+      limit 1
+    `;
+    return { employeeId: (rows as any[])[0]?.id ?? null, departmentId: (rows as any[])[0]?.department_id ?? null };
+  } catch {
+    return { employeeId: null, departmentId: null };
+  }
+}
 
 const expenseListSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -88,12 +113,47 @@ export async function POST(request: NextRequest) {
     // Server-owned statuses: a submitted expense always enters the approval
     // workflow as PENDING (or DRAFT when explicitly saved as a draft) — never
     // APPROVED/PAID at creation. Client-sent status values are ignored.
+    // Stamp the submitter's department — drives department-based approval
+    // routing — before the row is created.
+    const submitter = await resolveSubmitterDept(parsed.data.tenantSlug, parsed.data.createdBy);
     const expense = await createExpense({
       ...parsed.data,
+      departmentId: parsed.data.departmentId ?? submitter.departmentId ?? undefined,
+      submitterEmployeeId: parsed.data.submitterEmployeeId ?? submitter.employeeId ?? undefined,
       approvalStatus: parsed.data.approvalStatus === "DRAFT" ? "DRAFT" : "PENDING",
       paymentStatus: "UNPAID",
     });
     console.log("Expense created successfully:", expense);
+
+    // Route into the approval workflow when a rule, tenant threshold, or the
+    // opt-in default ladder requires it. Skipped for drafts.
+    let approval: Awaited<ReturnType<typeof initiateApprovalIfRequired>> = null;
+    if (expense.approvalStatus !== "DRAFT") {
+      try {
+        approval = await initiateApprovalIfRequired({
+          tenantSlug: parsed.data.tenantSlug,
+          entityType: "expense",
+          entityId: expense.id,
+          requestedBy: parsed.data.createdBy,
+          entityData: {
+            amount: expense.totalAmount ?? parsed.data.amount,
+            departmentId: expense.departmentId,
+            submitterEmployeeId: expense.submitterEmployeeId,
+            categoryId: parsed.data.categoryId,
+            reference: expense.id,
+            description: parsed.data.description,
+            requestedByName: parsed.data.createdBy,
+          },
+        });
+        if (approval) {
+          await SQL`update expenses set approval_id = ${approval.id} where id = ${expense.id}`;
+        }
+      } catch (err) {
+        // Workflow failure must not lose the expense — it stays PENDING and
+        // can still be decided through the legacy admin path.
+        console.error("Expense approval initiation failed:", err);
+      }
+    }
 
     // Check budget for this category
     const budgetUsage = calculateMonthlyUsage(parsed.data.categoryId, parsed.data.amount);
@@ -136,6 +196,7 @@ export async function POST(request: NextRequest) {
           requiresEscalation,
         },
         glBudgetWarnings: glBudget?.warnings ?? [],
+        approval,
       },
       { status: 201 }
     );
@@ -169,28 +230,73 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    // Approval status is server-owned — it only moves via /approve. Recording
-    // payment stays possible here, but only once the expense is APPROVED.
-    const { approvalStatus: _ignored, paymentStatus, ...fields } = parsed.data as any;
+    // Approval status is server-owned — it only moves via /approve or the
+    // resubmit transition below. Recording payment stays possible here, but
+    // only once the expense is APPROVED.
+    const { approvalStatus, paymentStatus, ...fields } = parsed.data as any;
     const sanitized: any = { ...fields };
-    if (paymentStatus) {
+    let resubmit = false;
+    if (paymentStatus || approvalStatus) {
       const current = await getExpense(id, tenantSlug);
       if (!current) {
         return NextResponse.json({ error: "Expense not found" }, { status: 404 });
       }
-      if (current.approvalStatus !== "APPROVED") {
-        return NextResponse.json(
-          { error: "Expense must be approved before payment can be recorded" },
-          { status: 409 }
-        );
+      if (paymentStatus) {
+        if (current.approvalStatus !== "APPROVED") {
+          return NextResponse.json(
+            { error: "Expense must be approved before payment can be recorded" },
+            { status: 409 }
+          );
+        }
+        sanitized.paymentStatus = paymentStatus;
       }
-      sanitized.paymentStatus = paymentStatus;
+      // Submitting a draft or resubmitting after a clarification request is
+      // the only client-driven status move; every other value is ignored.
+      if (
+        approvalStatus === "PENDING" &&
+        (current.approvalStatus === "DRAFT" || current.approvalStatus === "CLARIFY_NEEDED")
+      ) {
+        sanitized.approvalStatus = "PENDING";
+        resubmit = true;
+      }
     }
 
     const expense = await updateExpense(id, tenantSlug, sanitized);
     if (!expense) {
       return NextResponse.json({ error: "Expense not found" }, { status: 404 });
     }
+
+    // (Re)enter the approval workflow: reset an existing chain to step 0, or
+    // initiate one if the expense was a draft that never entered.
+    if (resubmit) {
+      try {
+        const existing = await getApprovalForEntity(tenantSlug, "expense", expense.id);
+        let approval = existing ? await resetApprovalForResubmission(tenantSlug, "expense", expense.id) : null;
+        if (!approval) {
+          approval = await initiateApprovalIfRequired({
+            tenantSlug,
+            entityType: "expense",
+            entityId: expense.id,
+            requestedBy: expense.createdBy,
+            entityData: {
+              amount: expense.totalAmount ?? expense.amount,
+              departmentId: expense.departmentId,
+              submitterEmployeeId: expense.submitterEmployeeId,
+              categoryId: expense.categoryId,
+              reference: expense.id,
+              description: expense.description,
+              requestedByName: expense.createdBy,
+            },
+          });
+          if (approval) {
+            await SQL`update expenses set approval_id = ${approval.id} where id = ${expense.id}`;
+          }
+        }
+      } catch (err) {
+        console.error("Expense resubmission workflow failed:", err);
+      }
+    }
+
     return NextResponse.json({ expense });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

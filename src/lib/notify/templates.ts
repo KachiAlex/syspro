@@ -55,6 +55,28 @@ const BUILDERS: Record<string, Builder> = {
     ].filter(Boolean),
     link: "/tenant-admin/approvals",
   }),
+  "approval.sla_breach": (p) => ({
+    subject: `Approval overdue: ${p.entityType?.replace(/_/g, " ") ?? "document"} ${p.entityRef ?? ""}`,
+    title: "Approval SLA breached",
+    lines: [
+      `A <b>${p.entityType?.replace(/_/g, " ") ?? "document"}</b>${p.entityRef ? ` (${p.entityRef})` : ""} has been waiting for approval past its SLA.`,
+      p.escalated ? `It was escalated to the next approval step.` : `It is still awaiting action at step ${(p.currentStep ?? 0) + 1}.`,
+      p.amount != null ? `Amount: <b>${fmt(p.amount)}</b>` : "",
+    ].filter(Boolean),
+    link: "/tenant-admin/approvals",
+    cta: "Review now",
+  }),
+  "expense.settlement_due": (p) => ({
+    subject: `Expense approved — payment due: ${p.entityRef ?? p.expenseId ?? ""}`,
+    title: "Expense awaiting settlement",
+    lines: [
+      `Expense <b>${p.entityRef ?? p.expenseId ?? ""}</b> was fully approved and is ready for payment.`,
+      p.amount != null ? `Amount: <b>${fmt(p.amount)}</b>` : "",
+      p.type ? `Type: ${p.type}` : "",
+    ].filter(Boolean),
+    link: "/tenant-admin/finance",
+    cta: "Settle payable",
+  }),
   "invoice.issued": (p) => ({
     subject: `Invoice ${p.invoiceNumber ?? ""} — ${fmt(p.amount)} due ${p.dueDate ?? ""}`,
     title: "Invoice issued",

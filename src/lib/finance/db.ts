@@ -1722,6 +1722,10 @@ export type ExpenseRecord = {
   attachments: string[] | null;
   prepaid_schedule: unknown;
   metadata: unknown;
+  department_id: string | null;
+  submitter_employee_id: string | null;
+  approval_id: string | null;
+  journal_entry_id: string | null;
   created_at: string;
   updated_at: string;
   created_by: string;
@@ -1846,8 +1850,20 @@ async function ensureExpenseTablesRun(sql: SqlClient = SQL) {
     )
   `;
 
+  // Approval-workflow linkage: which department's authority decides, who the
+  // submitter maps to in admin_employees, the approvals workflow row, and the
+  // GL entry posted on final approval.
+  await sql`
+    alter table expenses
+      add column if not exists department_id text,
+      add column if not exists submitter_employee_id text,
+      add column if not exists approval_id text,
+      add column if not exists journal_entry_id text
+  `;
+
   await Promise.all([
     sql`create index if not exists expenses_tenant_idx on expenses (tenant_slug, approval_status)`,
+    sql`create index if not exists expenses_department_idx on expenses (tenant_slug, department_id)`,
     sql`create index if not exists expenses_category_idx on expenses (category_id, approval_status)`,
     sql`create index if not exists expenses_date_idx on expenses (date)`,
     sql`create index if not exists expense_approvals_expense_idx on expense_approvals (expense_id)`,
@@ -1973,6 +1989,10 @@ function normalizeExpenseRecord(
     attachments: record.attachments,
     prepaidSchedule: record.prepaid_schedule as Record<string, unknown> | null,
     metadata: record.metadata as Record<string, unknown> | null,
+    departmentId: record.department_id ?? null,
+    submitterEmployeeId: record.submitter_employee_id ?? null,
+    approvalId: record.approval_id ?? null,
+    journalEntryId: record.journal_entry_id ?? null,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
     createdBy: record.created_by,
@@ -2084,6 +2104,8 @@ export async function createExpense(payload: ExpenseCreateInput): Promise<Expens
       notes,
       attachments,
       metadata,
+      department_id,
+      submitter_employee_id,
       created_by
     ) values (
       ${id},
@@ -2105,6 +2127,8 @@ export async function createExpense(payload: ExpenseCreateInput): Promise<Expens
       ${payload.notes ?? null},
       ${payload.attachments && payload.attachments.length > 0 ? sql`${payload.attachments}::text[]` : null},
       ${payload.metadata ? JSON.stringify(payload.metadata) : null},
+      ${payload.departmentId ?? null},
+      ${payload.submitterEmployeeId ?? null},
       ${payload.createdBy}
     )
     returning *

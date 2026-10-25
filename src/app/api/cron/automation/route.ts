@@ -203,6 +203,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 5b. Approval workflow SLA sweep — approvals stuck past their SLA
+    //     (per-rule conditions.slaHours/slaAction, or tenant default
+    //     settings.approvals.approvalSlaHours/approvalSlaAction) are re-
+    //     notified or auto-escalated. Idempotent per step via
+    //     metadata.slaFiredSteps.
+    const { escalateStaleApprovals } = await import("@/lib/finance/approvals");
+    const approvalSla = await escalateStaleApprovals();
+
     // 6. Dunning cycle per tenant that has credit-control config — issues
     //    the next notice level, posts configured fees, applies credit holds.
     //    Idempotent by level: re-running can never double-issue a notice.
@@ -246,6 +254,7 @@ export async function POST(request: NextRequest) {
       attendanceMissedEmitted: attendanceEmitted,
       overBudgetEmitted: overBudget.length,
       slaBreachesDetected: slaBreached.length,
+      approvalSla,
       summariesRefreshed: tenants.length,
       dunningCycles: dunningResults,
       scheduledReportsQueued: scheduledReports.length,

@@ -6,6 +6,10 @@ import { approveExpense, getExpense } from "@/lib/finance/db";
 import { writeFinanceEvent } from "@/lib/finance/events";
 import { requireModuleAccess } from "@/lib/api-auth";
 import { sql as SQL } from "@/lib/sql-client";
+import {
+  getApprovalForEntity,
+  processApprovalDecision,
+} from "@/lib/finance/approvals";
 
 /** Approving an expense is an admin action — a finance user may submit and
  *  track expenses, but only a tenant admin (or superadmin) may decide. */
@@ -22,6 +26,29 @@ async function isTenantAdmin(user: { id: string; email?: string | null; roleId?:
   } catch {
     return false;
   }
+}
+
+/** The caller's approval-role key: their tenant_admins role when they have
+ *  one (so role: placeholders in chains match), else the session roleId. */
+async function resolveApproverRole(
+  user: { id: string; email?: string | null; roleId?: string },
+  tenantSlug: string
+): Promise<string> {
+  if (user.roleId === "superadmin") return "superadmin";
+  if (user.email) {
+    try {
+      const rows = await SQL`
+        select role from tenant_admins
+        where lower(email) = lower(${user.email}) and tenant_slug = ${tenantSlug}
+        limit 1
+      `;
+      const role = String((rows as any[])[0]?.role ?? "").toLowerCase();
+      if (role) return role;
+    } catch {
+      // fall through to roleId
+    }
+  }
+  return user.roleId || "user";
 }
 
 export async function POST(request: NextRequest, context: any) {
@@ -41,11 +68,7 @@ export async function POST(request: NextRequest, context: any) {
   }
 
   try {
-    if (!(await isTenantAdmin(user, parsed.data.tenantSlug))) {
-      return NextResponse.json({ error: "Only tenant admins can approve expenses" }, { status: 403 });
-    }
-
-    // Get expense before approval to send in email
+    // Get expense before approval to check existence + segregation of duties
     const expenseBefore = await getExpense(params.id, parsed.data.tenantSlug);
     if (!expenseBefore) {
       return NextResponse.json({ error: "Expense not found" }, { status: 404 });
@@ -56,6 +79,57 @@ export async function POST(request: NextRequest, context: any) {
     const me = [user.id, user.email, user.name].filter(Boolean).map((v) => String(v).toLowerCase());
     if (creator && me.includes(creator)) {
       return NextResponse.json({ error: "You cannot approve your own expense" }, { status: 403 });
+    }
+
+    // ------------------------------------------------------------------
+    // Workflow path: the expense carries an active approvals row — the
+    // decision goes through the multi-step chain, which authorizes the
+    // caller against the current step and applies the outcome itself.
+    // ------------------------------------------------------------------
+    const workflow = await getApprovalForEntity(parsed.data.tenantSlug, "expense", params.id);
+    if (workflow && (workflow.status === "pending" || workflow.status === "escalated")) {
+      const decision =
+        parsed.data.action === "APPROVED" ? "approved"
+        : parsed.data.action === "REJECTED" ? "rejected"
+        : "clarification_needed";
+
+      let updated;
+      try {
+        updated = await processApprovalDecision({
+          approvalId: workflow.id,
+          userId: user.id,
+          userRole: await resolveApproverRole(user, parsed.data.tenantSlug),
+          decision,
+          comments: parsed.data.reason,
+        });
+      } catch (err) {
+        return NextResponse.json(
+          { error: String((err as any)?.message ?? err) },
+          { status: 403 }
+        );
+      }
+
+      writeFinanceEvent({
+        tenantSlug: parsed.data.tenantSlug,
+        eventType: parsed.data.action === "APPROVED" ? "expense_approved" : "expense_rejected",
+        sourceModule: "finance",
+        sourceRecordId: expenseBefore.id,
+        userId: user.id,
+        amount: expenseBefore.totalAmount || expenseBefore.amount || 0,
+        currency: expenseBefore.currency || "NGN",
+        metadata: { via: "approval_workflow", approvalId: workflow.id, approverId: user.id },
+      });
+
+      const expense = await getExpense(params.id, parsed.data.tenantSlug);
+      return NextResponse.json({ expense, approval: updated });
+    }
+
+    // ------------------------------------------------------------------
+    // Legacy path: no workflow row (pre-workflow expenses or no rule
+    // matched) — only tenant admins decide, as before.
+    // ------------------------------------------------------------------
+    if (!(await isTenantAdmin(user, parsed.data.tenantSlug))) {
+      return NextResponse.json({ error: "Only tenant admins can approve expenses" }, { status: 403 });
     }
 
     // Approver identity always comes from the session — the client cannot
