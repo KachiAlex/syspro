@@ -81,9 +81,35 @@ const ROLE_SPECS = [
   "role:tenant_owner",
 ];
 
+interface TenantOfficer {
+  title: string;
+  userIds: string[];
+}
+
+function officerSlug(title: string): string {
+  return title.toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+/** Tenant-configured company officers (settings.approvals.officers). */
+function useOfficers(tenantSlug: string) {
+  const [officers, setOfficers] = useState<TenantOfficer[]>([]);
+  const reload = useCallback(async () => {
+    if (!tenantSlug) return;
+    try {
+      const res = await fetch(`/api/finance/approvals?officers=true&tenantSlug=${encodeURIComponent(tenantSlug)}`);
+      const data = await res.json();
+      setOfficers(data.officers || []);
+    } catch {
+      setOfficers([]);
+    }
+  }, [tenantSlug]);
+  useEffect(() => { reload(); }, [reload]);
+  return { officers, reload };
+}
+
 export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (section: string) => void }) {
   const { tenantSlug } = useTenantContext();
-  const [tab, setTab] = useState<"requests" | "rules" | "delegates">("requests");
+  const [tab, setTab] = useState<"requests" | "rules" | "officers" | "delegates">("requests");
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -187,7 +213,7 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-theme-border">
-        {([["requests", "Requests"], ["rules", "Rules"], ["delegates", "Delegations"]] as const).map(([key, label]) => (
+        {([["requests", "Requests"], ["rules", "Rules"], ["officers", "Officers"], ["delegates", "Delegations"]] as const).map(([key, label]) => (
           <button
             key={key}
             onClick={() => setTab(key)}
@@ -204,6 +230,13 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
 
       {tab === "rules" && (
         <RulesPanel
+          tenantSlug={tenantSlug ?? ""}
+          onError={setError}
+          onSuccess={(m) => { setSuccess(m); setTimeout(() => setSuccess(null), 3000); }}
+        />
+      )}
+      {tab === "officers" && (
+        <OfficersPanel
           tenantSlug={tenantSlug ?? ""}
           onError={setError}
           onSuccess={(m) => { setSuccess(m); setTimeout(() => setSuccess(null), 3000); }}
@@ -376,10 +409,11 @@ function useUserOptions(tenantSlug: string) {
   return users;
 }
 
-function UserSpecInput({ value, onChange, users, placeholder }: {
+function UserSpecInput({ value, onChange, users, extraSpecs, placeholder }: {
   value: string;
   onChange: (v: string) => void;
   users: Array<{ id: string; name: string }>;
+  extraSpecs?: Array<{ value: string; label?: string }>;
   placeholder?: string;
 }) {
   const listId = React.useId();
@@ -394,6 +428,7 @@ function UserSpecInput({ value, onChange, users, placeholder }: {
       />
       <datalist id={listId}>
         {ROLE_SPECS.map((r) => <option key={r} value={r} />)}
+        {(extraSpecs ?? []).map((s) => <option key={s.value} value={s.value}>{s.label ?? s.value}</option>)}
         {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
       </datalist>
     </>
@@ -424,6 +459,11 @@ function RulesPanel({ tenantSlug, onError, onSuccess }: {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const users = useUserOptions(tenantSlug);
+  const { officers } = useOfficers(tenantSlug);
+  const officerSpecs = officers.map((o) => ({
+    value: `role:${officerSlug(o.title)}`,
+    label: `${o.title} (officer)`,
+  }));
 
   const [entityType, setEntityType] = useState<string>("expense");
   const [ruleType, setRuleType] = useState<string>("amount_based");
@@ -641,6 +681,7 @@ function RulesPanel({ tenantSlug, onError, onSuccess }: {
                         setSteps(next);
                       }}
                       users={users}
+                      extraSpecs={officerSpecs}
                     />
                   </div>
                   <label className="flex items-center gap-1 text-xs text-theme-text-secondary">
@@ -907,6 +948,154 @@ function DelegatesPanel({ tenantSlug, onError, onSuccess }: {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function OfficersPanel({ tenantSlug, onError, onSuccess }: {
+  tenantSlug: string;
+  onError: (m: string | null) => void;
+  onSuccess: (m: string) => void;
+}) {
+  const { officers, reload } = useOfficers(tenantSlug);
+  const users = useUserOptions(tenantSlug);
+  const [saving, setSaving] = useState(false);
+  const [title, setTitle] = useState("");
+  const [newMember, setNewMember] = useState("");
+  const [memberAdds, setMemberAdds] = useState<Record<number, string>>({});
+
+  const nameFor = (id: string) => users.find((u) => u.id === id)?.name ?? id;
+  const inputCls = "w-full rounded-lg border border-theme-border px-3 py-2 text-sm";
+
+  const save = async (next: TenantOfficer[]) => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/finance/approvals?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set-officers", officers: next }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to save officers");
+      onSuccess("Officers updated");
+      reload();
+    } catch (e: any) {
+      onError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addPost = async () => {
+    if (!title.trim()) { onError("Enter an officer title (e.g. Managing Director)"); return; }
+    const userIds = newMember.trim() ? [newMember.trim()] : [];
+    await save([...officers, { title: title.trim(), userIds }]);
+    setTitle(""); setNewMember("");
+  };
+
+  const removePost = (idx: number) => {
+    if (!confirm(`Remove the "${officers[idx].title}" officer post?`)) return;
+    save(officers.filter((_, i) => i !== idx));
+  };
+
+  const addMember = (idx: number) => {
+    const uid = (memberAdds[idx] ?? "").trim();
+    if (!uid) return;
+    const next = officers.map((o, i) =>
+      i === idx ? { ...o, userIds: [...new Set([...o.userIds, uid])] } : o);
+    setMemberAdds({ ...memberAdds, [idx]: "" });
+    save(next);
+  };
+
+  const removeMember = (idx: number, uid: string) => {
+    const next = officers.map((o, i) =>
+      i === idx ? { ...o, userIds: o.userIds.filter((u) => u !== uid) } : o);
+    save(next);
+  };
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-theme-text-secondary">
+        Officers are company-wide approval posts — e.g. <b>Managing Director</b> or <b>Chairman</b>.
+        Unlike department managers (who only decide their own department's documents), officers act on
+        any document routed to them. In a rule, reference a post as <code>role:&lt;title-slug&gt;</code>
+        — shown on each card below. Multiple users on one post act as parallel approvers (any one decides).
+      </p>
+
+      {/* New post */}
+      <div className="rounded-2xl border border-theme-border bg-theme-surface p-6">
+        <div className="grid grid-cols-3 gap-4 items-end">
+          <div>
+            <label className="block text-xs font-medium text-theme-text-primary mb-1">Officer title</label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Managing Director"
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-theme-text-primary mb-1">First holder (optional)</label>
+            <UserSpecInput value={newMember} onChange={setNewMember} users={users} placeholder="user id" />
+          </div>
+          <button
+            onClick={addPost}
+            disabled={saving}
+            className="rounded-lg bg-theme-accent px-4 py-2 text-sm font-semibold text-white hover:bg-theme-accent-hover disabled:opacity-50"
+          >
+            Add post
+          </button>
+        </div>
+      </div>
+
+      {/* Officer cards */}
+      {officers.length === 0 ? (
+        <div className="rounded-2xl border border-theme-border bg-theme-surface p-8 text-center text-sm text-theme-text-secondary">
+          No officers configured yet. Add posts like "Managing Director" or "Chairman" so rules can route to them.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {officers.map((o, idx) => (
+            <div key={idx} className="rounded-2xl border border-theme-border bg-theme-surface p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h4 className="font-semibold text-theme-text-primary">{o.title}</h4>
+                  <code className="text-xs text-theme-text-secondary">role:{officerSlug(o.title)}</code>
+                </div>
+                <button onClick={() => removePost(idx)} className="text-rose-600 hover:text-rose-900 text-sm">Remove</button>
+              </div>
+              <div className="mt-3 space-y-1.5">
+                {o.userIds.length === 0 && (
+                  <p className="text-xs text-amber-600">No holder assigned — steps routed here fall back to tenant admins.</p>
+                )}
+                {o.userIds.map((uid) => (
+                  <div key={uid} className="flex items-center justify-between rounded-lg bg-theme-muted px-3 py-1.5">
+                    <span className="text-sm text-theme-text-primary">{nameFor(uid)}</span>
+                    <button onClick={() => removeMember(idx, uid)} className="text-rose-600 text-xs">remove</button>
+                  </div>
+                ))}
+                <div className="flex gap-2 pt-1">
+                  <div className="flex-1">
+                    <UserSpecInput
+                      value={memberAdds[idx] ?? ""}
+                      onChange={(v) => setMemberAdds({ ...memberAdds, [idx]: v })}
+                      users={users}
+                      placeholder="add user id…"
+                    />
+                  </div>
+                  <button
+                    onClick={() => addMember(idx)}
+                    disabled={saving}
+                    className="rounded-lg border border-theme-border px-3 py-1.5 text-xs font-medium text-theme-text-primary hover:bg-theme-muted disabled:opacity-50"
+                  >
+                    + Add
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

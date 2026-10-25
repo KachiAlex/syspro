@@ -446,4 +446,75 @@ describe.skipIf(!HAS_DB)("expense approval workflow", () => {
     const gone = (await db.query(`select id from approval_rules where id = $1`, [rule.id])).rows;
     expect(gone.length).toBe(0);
   }, T);
+
+  it("tenant officers (Managing Director) resolve company-wide and decide", async () => {
+    const {
+      createApprovalRule, initiateApproval, processApprovalDecision,
+      setOfficers, getOfficers, deleteApprovalRule,
+    } = await import("../lib/finance/approvals");
+    const { createExpense } = await import("../lib/finance/db");
+    const MD1 = `md-${randomUUID().slice(0, 8)}`;
+    const MD2 = `chair-${randomUUID().slice(0, 8)}`;
+
+    // Configure officers: MD + Chairman as parallel holders of separate posts
+    await setOfficers(TENANT, [
+      { title: "Managing Director", userIds: [MD1] },
+      { title: "Chairman", userIds: [MD2] },
+    ]);
+    const officers = await getOfficers(TENANT);
+    expect(officers.map((o) => o.title)).toContain("Managing Director");
+
+    const rule = await createApprovalRule({
+      tenantSlug: TENANT,
+      entityType: "expense",
+      ruleType: "amount_based",
+      conditions: { minAmount: 0 },
+      approvers: [
+        { step: 0, userId: "role:dept_manager", required: true, order: 0 },
+        { step: 1, userId: "role:managing_director", required: true, order: 1 },
+      ],
+      priority: 200,
+    });
+
+    const expense = await createExpense({
+      tenantSlug: TENANT,
+      type: "vendor",
+      amount: 9000,
+      taxType: "NONE",
+      category: "Office Supplies",
+      categoryId: "cat_supplies",
+      description: "Officer routing test",
+      date: "2026-10-22",
+      approvalStatus: "PENDING",
+      paymentStatus: "UNPAID",
+      createdBy: "staff-6",
+      departmentId: DEPT,
+    } as any);
+
+    const approval = await initiateApproval({
+      tenantSlug: TENANT,
+      entityType: "expense",
+      entityId: expense.id,
+      requestedBy: "staff-6",
+      entityData: { amount: 9000, departmentId: DEPT },
+    });
+
+    // Step 1 resolved from the officers map — company-wide, not dept-scoped
+    const step1 = approval.approverChain.filter((s) => s.step === 1);
+    expect(step1.map((s) => s.userId)).toEqual([MD1]);
+
+    // Dept manager can't jump to the officer step
+    await expect(
+      processApprovalDecision({ approvalId: approval.id, userId: MD1, decision: "approved" })
+    ).rejects.toThrow();
+
+    await processApprovalDecision({ approvalId: approval.id, userId: DEPT_MGR, decision: "approved" });
+    const decided = await processApprovalDecision({
+      approvalId: approval.id, userId: MD1, decision: "approved",
+    });
+    expect(decided?.status).toBe("approved");
+
+    await deleteApprovalRule(TENANT, rule.id);
+    await setOfficers(TENANT, []);
+  }, T);
 });

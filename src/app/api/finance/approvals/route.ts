@@ -13,6 +13,8 @@ import {
   createDelegate,
   listDelegates,
   revokeDelegate,
+  getOfficers,
+  setOfficers,
 } from "@/lib/finance/approvals";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { requireModuleAccess } from "@/lib/api-auth";
@@ -49,6 +51,13 @@ const approvalRuleUpdateSchema = z.object({
   })).optional(),
   isActive: z.boolean().optional(),
   priority: z.number().optional(),
+});
+
+const officersSchema = z.object({
+  officers: z.array(z.object({
+    title: z.string().min(1).max(80),
+    userIds: z.array(z.string().min(1)),
+  })).max(50),
 });
 
 const delegateCreateSchema = z.object({
@@ -106,6 +115,12 @@ export async function GET(request: NextRequest) {
       });
 
       return NextResponse.json({ rules });
+    }
+
+    // Company officers (Managing Director, Chairman, …)
+    if (url.searchParams.get("officers") === "true") {
+      const officers = await getOfficers(tenantSlug);
+      return NextResponse.json({ officers });
     }
 
     // Delegation grants
@@ -263,6 +278,21 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Delegation not found" }, { status: 404 });
       }
       return NextResponse.json({ revoked: true });
+    }
+
+    // Company officers: named posts (MD, Chairman, …) mapped to users.
+    // `role:<slug-of-title>` in a rule step resolves to these users at
+    // initiation — company-wide authorities, unlike dept-scoped managers.
+    if (body.action === "set-officers") {
+      const parsed = officersSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: "Invalid officers", details: parsed.error.flatten() },
+          { status: 400 }
+        );
+      }
+      const officers = await setOfficers(tenantSlug, parsed.data.officers);
+      return NextResponse.json({ officers });
     }
 
     // Process approval decision

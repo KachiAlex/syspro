@@ -336,10 +336,53 @@ async function resolveDeptApprovers(tenantSlug: string, departmentId?: string | 
 }
 
 /**
- * Expands role placeholders that depend on the document's context — today only
- * `role:dept_manager`, which resolves to the submitter's department manager(s).
- * When multiple authorities exist for a step they become parallel approvers
- * where any one may complete the step (required: false).
+ * Tenant-configured company officers (Managing Director, Chairman, …) live in
+ * settings.approvals.officers as [{ title, userIds }]. Unlike dept managers —
+ * who are scoped to the document's department — officers are company-wide
+ * authorities. A `role:<slug>` spec where slug = normalized title resolves to
+ * the officer's userIds (employee or tenant-admin ids).
+ */
+export interface TenantOfficer {
+  title: string;
+  userIds: string[];
+}
+
+export function officerSlug(title: string): string {
+  return title.toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+async function tenantOfficers(tenantSlug: string): Promise<TenantOfficer[]> {
+  try {
+    const rows = await db.query<any>(
+      `select settings from tenants where slug = $1`, [tenantSlug]
+    );
+    const officers = (rows.rows[0]?.settings as any)?.approvals?.officers;
+    return Array.isArray(officers) ? officers : [];
+  } catch {
+    return [];
+  }
+}
+
+async function resolveOfficerApprovers(tenantSlug: string, roleKey: string): Promise<string[]> {
+  const officers = await tenantOfficers(tenantSlug);
+  const ids: string[] = [];
+  for (const o of officers) {
+    if (o?.title && officerSlug(o.title) === roleKey && Array.isArray(o.userIds)) {
+      ids.push(...o.userIds.map(String));
+    }
+  }
+  return [...new Set(ids)];
+}
+
+/**
+ * Expands role placeholders that depend on the document's context:
+ *  - `role:dept_manager` → the submitter's department manager(s) / HODs
+ *                         (department-scoped)
+ *  - `role:<title>`      → tenant-configured officers (company-wide posts
+ *                         like Managing Director / Chairman)
+ * Built-in role placeholders (finance_manager, admin, …) stay symbolic so
+ * callers holding that role keep matching by callerRoleKey — resolving them
+ * to tenant_admin ids would lock out employee-side role holders.
  */
 async function resolveChainApprovers(
   tenantSlug: string,
@@ -348,14 +391,17 @@ async function resolveChainApprovers(
 ): Promise<ApproverStep[]> {
   const out: ApproverStep[] = [];
   for (const step of chain) {
-    const isDeptManager = step.userId === "role:dept_manager" || step.role === "dept_manager";
-    if (!isDeptManager) {
+    const spec = step.userId.startsWith("role:") ? step.userId : (step.role ? `role:${step.role}` : null);
+    if (!spec) {
       out.push(step);
       continue;
     }
-    const resolved = await resolveDeptApprovers(tenantSlug, entityData.departmentId);
+    const roleKey = spec.slice(5);
+    const resolved = roleKey === "dept_manager"
+      ? await resolveDeptApprovers(tenantSlug, entityData.departmentId)
+      : await resolveOfficerApprovers(tenantSlug, roleKey);
     if (resolved.length === 0) {
-      // Nobody found — keep the placeholder so HOD-role callers can still act.
+      // Nobody found — keep the placeholder so role-based callers can still act.
       out.push(step);
       continue;
     }
@@ -364,6 +410,29 @@ async function resolveChainApprovers(
     });
   }
   return out;
+}
+
+export async function getOfficers(tenantSlug: string): Promise<TenantOfficer[]> {
+  return tenantOfficers(tenantSlug);
+}
+
+/** Replaces the tenant's officer list — each { title, userIds[] }. */
+export async function setOfficers(
+  tenantSlug: string,
+  officers: TenantOfficer[]
+): Promise<TenantOfficer[]> {
+  const clean = (officers ?? [])
+    .map((o) => ({
+      title: String(o?.title ?? "").trim(),
+      userIds: [...new Set((o?.userIds ?? []).map(String).map((s) => s.trim()).filter(Boolean))],
+    }))
+    .filter((o) => o.title.length > 0);
+  await SQL`
+    update tenants
+    set settings = jsonb_set(coalesce(settings, '{}'::jsonb), '{approvals,officers}', ${JSON.stringify(clean)}::jsonb, true)
+    where slug = ${tenantSlug}
+  `;
+  return clean;
 }
 
 /**
