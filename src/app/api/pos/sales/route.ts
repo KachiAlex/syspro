@@ -6,6 +6,95 @@ import { createPosSale, listPosSales, posDailySummary, getPosSale } from "@/lib/
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { requireModuleAccess } from "@/lib/api-auth";
 
+/**
+ * Tenant discount cap: settings.pos.discountCapPct wins, then
+ * settings.approvals.posDiscountCapPct. undefined = uncapped (legacy).
+ */
+async function posDiscountCap(tenantSlug: string): Promise<number | null> {
+  const { sql } = await import("@/lib/sql-client");
+  const [row] = await sql`select settings from tenants where slug = ${tenantSlug}` as any[];
+  const cap = (row as any)?.settings?.pos?.discountCapPct
+    ?? (row as any)?.settings?.approvals?.posDiscountCapPct;
+  return cap === undefined || cap === null ? null : Number(cap);
+}
+
+/** Is this user allowed to override the POS discount cap? Managers,
+ *  department heads, executives, and configured company officers may. */
+async function posOverrideAuthorized(tenantSlug: string, userId: string): Promise<boolean> {
+  const { sql } = await import("@/lib/sql-client");
+  const admins = await sql`
+    select 1 from tenant_admins
+    where tenant_slug = ${tenantSlug} and id::text = ${userId}
+      and lower(coalesce(role,'')) in ('admin','owner','tenant_admin','superadmin','manager','finance_manager','finance_admin')
+    limit 1
+  ` as any[];
+  if (admins.length) return true;
+  const employees = await sql`
+    select 1 from admin_employees
+    where tenant_slug = ${tenantSlug} and id::text = ${userId}
+      and lower(coalesce(role,'')) in ('hod','head_of_department','admin','executive','manager','supervisor')
+    limit 1
+  ` as any[];
+  if (employees.length) return true;
+  const [tenant] = await sql`select settings from tenants where slug = ${tenantSlug}` as any[];
+  const officers = (tenant as any)?.settings?.approvals?.officers;
+  return Array.isArray(officers) && officers.some((o: any) => Array.isArray(o?.userIds) && o.userIds.map(String).includes(userId));
+}
+
+/**
+ * Enforce the discount cap. Order-level discount.pct, per-line discountPct,
+ * or the computed amount share of the bill can each breach it; a breach
+ * requires discount.overrideBy naming an authorized manager.
+ */
+async function checkDiscountCap(
+  tenantSlug: string,
+  data: z.infer<typeof saleSchema>
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const cap = await posDiscountCap(tenantSlug);
+  if (cap == null) return { ok: true };
+
+  const orderPct = Number(data.discount?.pct ?? 0);
+  const overByPct = orderPct > cap || data.items.some((i) => Number(i.discountPct ?? 0) > cap);
+
+  // Amount-based share — best effort when line unit prices are known.
+  const gross = data.items.reduce((s, i) => s + i.quantity * (i.unitPrice ?? 0), 0);
+  let overByAmount = false;
+  if (gross > 0) {
+    const discountTotal =
+      (data.discount?.amount ?? 0) +
+      gross * (orderPct / 100) +
+      data.items.reduce(
+        (s, i) => s + (i.discountAmount ?? 0) + (i.unitPrice ? i.quantity * i.unitPrice * (i.discountPct ?? 0) / 100 : 0),
+        0
+      );
+    overByAmount = (discountTotal / gross) * 100 > cap + 0.0001;
+  }
+
+  if (!overByPct && !overByAmount) return { ok: true };
+
+  const overrideBy = data.discount?.overrideBy;
+  if (!overrideBy) {
+    return { ok: false, error: `Discount exceeds the ${cap}% cap — a manager override is required (discount.overrideBy)` };
+  }
+  if (!(await posOverrideAuthorized(tenantSlug, overrideBy))) {
+    return { ok: false, error: "The override user is not authorized to approve discounts above the cap" };
+  }
+  try {
+    const { emitEvent } = await import("@/lib/notify");
+    void emitEvent({
+      tenantSlug,
+      eventType: "pos.discount_override",
+      sourceModule: "pos",
+      sourceRecordId: data.localInvoiceNo ?? data.registerId ?? "pos-sale",
+      actorId: overrideBy,
+      payload: { capPct: cap, orderPct, overrideBy, reason: data.discount?.reason },
+    });
+  } catch (err) {
+    console.error("Failed to emit pos.discount_override:", err);
+  }
+  return { ok: true };
+}
+
 const itemSchema = z.object({
   sku: z.string().min(1),
   quantity: z.coerce.number().int().positive(),
@@ -41,6 +130,8 @@ const saleSchema = z.object({
     amount: z.coerce.number().min(0).optional(),
     pct: z.coerce.number().min(0).max(100).optional(),
     reason: z.string().min(1),
+    /** Manager userId authorizing an above-cap discount at the till. */
+    overrideBy: z.string().optional(),
   }).optional(),
   loyaltyRedeemPoints: z.coerce.number().min(0).optional(),
   idempotencyKey: z.string().max(80).optional(),
@@ -85,6 +176,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid parameters", details: parsed.error.flatten() }, { status: 400 });
   }
   try {
+    // Discount policy: above the tenant cap (settings.pos.discountCapPct, or
+    // settings.approvals.posDiscountCapPct) a manager override is required —
+    // validated server-side against admin/employee/officer authority.
+    const capCheck = await checkDiscountCap(context.tenantSlug, parsed.data);
+    if (!capCheck.ok) {
+      return NextResponse.json({ error: capCheck.error }, { status: 403 });
+    }
+
     const result = await createPosSale(context.tenantSlug, {
       ...parsed.data,
       createdBy: context.userId ?? undefined,

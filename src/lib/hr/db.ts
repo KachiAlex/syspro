@@ -374,6 +374,10 @@ async function ensureHrTablesRun(sql: SqlClient = SQL) {
   await sql`alter table admin_payroll_runs add column if not exists journal_entry_id text`;
   await sql`alter table admin_payroll_runs add column if not exists paid_at timestamptz`;
   await sql`alter table admin_payroll_runs add column if not exists payment_journal_entry_id text`;
+  await sql`alter table admin_payroll_runs add column if not exists approval_id text`;
+
+  // Staged salary change awaiting approval (employee_salary_change entity)
+  await sql`alter table admin_employees add column if not exists pending_salary numeric`;
 
   // Employee termination date (set when offboarding completes)
   await sql`alter table admin_employees add column if not exists termination_date date`;

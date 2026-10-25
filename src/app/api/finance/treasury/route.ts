@@ -101,18 +101,57 @@ export async function POST(request: NextRequest) {
     const input = parsed.data as any;
     const userId = (_scope as any).user?.id;
     let data: unknown;
+    let pendingApproval: { approvalId: string } | null = null;
     switch (action) {
       case "upsert-recon-rule": data = await upsertBankReconRule(input); break;
-      case "issue-guarantee": data = await issueBankGuarantee({ ...input, userId }); break;
+      case "issue-guarantee": {
+        // Issuing a guarantee is a financing decision — always routed through
+        // the approval chain; the margin JE posts on approval.
+        const { initiateApproval } = await import("@/lib/finance/approvals");
+        const row = await issueBankGuarantee({ ...input, userId, pendingApproval: true });
+        const approval = await initiateApproval({
+          tenantSlug: input.tenantSlug,
+          entityType: "bank_guarantee",
+          entityId: String((row as any).id),
+          requestedBy: userId ?? "system",
+          entityData: {
+            amount: Number(input.amount) || 0,
+            reference: `Bank guarantee — ${input.bank} for ${input.beneficiary}`,
+            requestedByName: (_scope as any).user?.name ?? userId,
+          },
+        });
+        data = row;
+        pendingApproval = { approvalId: approval.id };
+        break;
+      }
       case "update-guarantee": data = await updateBankGuaranteeStatus(input); break;
-      case "sanction-discounting": data = await sanctionInvoiceDiscounting({ ...input, userId }); break;
+      case "sanction-discounting": {
+        // Borrowing against a receivable — always routed through the
+        // approval chain; the disbursement JE posts on approval.
+        const { initiateApproval } = await import("@/lib/finance/approvals");
+        const row = await sanctionInvoiceDiscounting({ ...input, userId, pendingApproval: true });
+        const approval = await initiateApproval({
+          tenantSlug: input.tenantSlug,
+          entityType: "invoice_discounting",
+          entityId: String((row as any).id),
+          requestedBy: userId ?? "system",
+          entityData: {
+            amount: Number(input.loanAmount) || 0,
+            reference: `Invoice discounting — ${input.bank}`,
+            requestedByName: (_scope as any).user?.name ?? userId,
+          },
+        });
+        data = row;
+        pendingApproval = { approvalId: approval.id };
+        break;
+      }
       case "settle-discounting": data = await settleInvoiceDiscounting({ ...input, userId }); break;
       case "upsert-plan": data = await upsertSubscriptionPlan(input); break;
       case "create-subscription": data = await createSubscription(input); break;
       case "generate-invoices": data = await withProcessLog("subscription-invoices", { tenantSlug: input.tenantSlug, params: input, userId }, () => generateSubscriptionInvoices({ ...input, userId })); break;
       case "fetch-rates": data = await withProcessLog("exchange-rate-fetch", { tenantSlug: input.tenantSlug, params: input, userId }, () => fetchAndStoreExchangeRates(input)); break;
     }
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true, data, pendingApproval });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: error.status ?? 500 });
   }

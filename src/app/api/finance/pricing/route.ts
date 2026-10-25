@@ -80,13 +80,32 @@ export async function POST(request: NextRequest) {
     }
     const input = parsed.data as any;
     let data: unknown;
-    switch (action) {
-      case "upsert-rule": data = await upsertPricingRule(input); break;
-      case "upsert-scheme": data = await upsertPromotionalScheme(input); break;
-      case "upsert-coupon": data = await upsertCouponCode(input); break;
-      case "redeem-coupon": data = await redeemCoupon(input); break;
+    let pendingApproval: { approvalId: string } | null = null;
+    if (action === "upsert-rule" || action === "upsert-scheme" || action === "upsert-coupon") {
+      // Pricing policy changes (rules, schemes, coupons) are always routed
+      // through the approval chain — the upsert replays from approval
+      // metadata on approval.
+      const { initiateApproval } = await import("@/lib/finance/approvals");
+      const ref = input.code ?? input.name ?? action;
+      const approval = await initiateApproval({
+        tenantSlug: input.tenantSlug,
+        entityType: "pricing_change",
+        entityId: `pc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        requestedBy: (_scope as any).user?.id ?? "system",
+        entityData: {
+          amount: Number(input.discountValue ?? input.value ?? 0),
+          reference: `Pricing change — ${ref}`,
+          requestedByName: (_scope as any).user?.name ?? (_scope as any).user?.id,
+          change: { action, input },
+        },
+      });
+      pendingApproval = { approvalId: approval.id };
+    } else {
+      switch (action) {
+        case "redeem-coupon": data = await redeemCoupon(input); break;
+      }
     }
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true, data, pendingApproval });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: error.status ?? 500 });
   }

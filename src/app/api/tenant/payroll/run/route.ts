@@ -247,6 +247,45 @@ export async function POST(request: NextRequest) {
       `;
     }
 
+    // Every payroll run routes through the approval workflow — the draft
+    // cannot post until the chain decides. The creator is recorded as the
+    // requester, which the engine enforces for SoD (creator ≠ approver).
+    try {
+      const { initiateApproval } = await import("@/lib/finance/approvals");
+      const totalNet = entries.reduce((s: number, e: any) => s + (Number(e.netPay) || 0), 0);
+      const totalGross = entries.reduce((s: number, e: any) => s + (Number(e.grossPay) || 0), 0);
+      const [actor] = await sql`
+        select coalesce(a.name, e.name) as name
+        from (select ${context.tenantSlug}::text as ts) t
+        left join tenant_admins a on a.tenant_slug = t.ts and a.id::text = ${context.userId}
+        left join admin_employees e on e.tenant_slug = t.ts and e.id::text = ${context.userId}
+        limit 1
+      ` as any[];
+      const approval = await initiateApproval({
+        tenantSlug: context.tenantSlug,
+        entityType: "payroll_run",
+        entityId: result.runId,
+        requestedBy: context.userId,
+        entityData: {
+          amount: totalNet,
+          total: totalGross,
+          period,
+          reference: `Payroll ${period}`,
+          requestedByName: actor?.name ?? context.userId,
+        },
+      });
+      await sql`
+        alter table admin_payroll_runs add column if not exists approval_id text
+      `;
+      await sql`
+        update admin_payroll_runs set approval_id = ${approval.id} where id = ${result.runId}
+      `;
+    } catch (approvalErr) {
+      // Workflow failure must not lose the run — it stays a draft and the
+      // legacy PATCH approve path still applies.
+      console.error("Payroll approval initiation failed:", approvalErr);
+    }
+
     return NextResponse.json({
       success: true,
       runId: result.runId,

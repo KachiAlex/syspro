@@ -90,6 +90,15 @@ export function ensureTreasuryTables() {
         bank_account_code text,
         created_at timestamptz not null default now()
       )`;
+    // Approval workflow widened the lifecycle: pending_approval rows carry no
+    // journal entries until the chain decides. Re-add the checks idempotently.
+    await sql`alter table bank_guarantees drop constraint if exists bank_guarantees_status_check`;
+    await sql`alter table bank_guarantees add constraint bank_guarantees_status_check
+      check (status in ('open','pending_approval','claimed','released','expired','rejected'))`;
+    await sql`alter table invoice_discountings drop constraint if exists invoice_discountings_status_check`;
+    await sql`alter table invoice_discountings add constraint invoice_discountings_status_check
+      check (status in ('sanctioned','pending_approval','settled','closed','rejected'))`;
+
     await sql`create index if not exists subscriptions_due_idx
       on subscriptions (tenant_slug, status, next_invoice_date)`;
     await sql`
@@ -203,11 +212,14 @@ export async function issueBankGuarantee(input: {
   beneficiary: string; bank: string; amount: number; currency?: string;
   startDate: string; endDate: string; marginAmount?: number; notes?: string;
   userId?: string;
+  /** When the approval workflow gates this issue, the row waits at
+      'pending_approval' and the margin JE is deferred to the outcome. */
+  pendingApproval?: boolean;
 }) {
   await ensureTreasuryTables();
   let jeId: string | null = null;
   // Margin deposit for issued guarantees: Dr margin asset / Cr bank
-  if (input.direction === "issued" && (input.marginAmount ?? 0) > 0) {
+  if (!input.pendingApproval && input.direction === "issued" && (input.marginAmount ?? 0) > 0) {
     const je = await postGLEntry({
       tenantSlug: input.tenantSlug,
       entryDate: input.startDate,
@@ -224,10 +236,11 @@ export async function issueBankGuarantee(input: {
     jeId = je.id;
   }
   const [row] = (await SQL`
-    insert into bank_guarantees (tenant_slug, direction, beneficiary, bank, amount, currency, start_date, end_date, margin_amount, journal_entry_id, notes)
+    insert into bank_guarantees (tenant_slug, direction, beneficiary, bank, amount, currency, start_date, end_date, margin_amount, status, journal_entry_id, notes)
     values (${input.tenantSlug}, ${input.direction}, ${input.beneficiary}, ${input.bank},
             ${input.amount}, ${input.currency ?? "NGN"}, ${input.startDate}, ${input.endDate},
-            ${input.marginAmount ?? 0}, ${jeId}, ${input.notes ?? null})
+            ${input.marginAmount ?? 0}, ${input.pendingApproval ? "pending_approval" : "open"},
+            ${jeId}, ${input.notes ?? null})
     returning *
   `) as any[];
   return row;
@@ -259,6 +272,9 @@ export async function listBankGuarantees(tenantSlug: string, status?: string) {
 export async function sanctionInvoiceDiscounting(input: {
   tenantSlug: string; invoiceId: string; bank: string; loanAmount: number;
   disbursementDate: string; periodDays?: number; userId?: string;
+  /** When the approval workflow gates this sanction, the row waits at
+      'pending_approval' and the disbursement JE is deferred to the outcome. */
+  pendingApproval?: boolean;
 }) {
   await ensureTreasuryTables();
   const [inv] = (await SQL`
@@ -269,23 +285,28 @@ export async function sanctionInvoiceDiscounting(input: {
   if (input.loanAmount > Number(inv.amount)) {
     throw new Error("Loan exceeds invoice value");
   }
-  const je = await postGLEntry({
-    tenantSlug: input.tenantSlug,
-    entryDate: input.disbursementDate,
-    journalType: "SYSTEM",
-    referenceType: "invoice_discounting",
-    referenceId: input.invoiceId,
-    description: `Invoice discounting ${inv.invoice_number} — ${input.bank}`,
-    createdBy: input.userId,
-    lines: [
-      { accountCode: GL_ACCOUNTS.BANK, debitAmount: input.loanAmount, description: "Loan disbursement" },
-      { accountCode: "2300", creditAmount: input.loanAmount, description: "Short-term loan payable" },
-    ],
-  });
+  let jeId: string | null = null;
+  if (!input.pendingApproval) {
+    const je = await postGLEntry({
+      tenantSlug: input.tenantSlug,
+      entryDate: input.disbursementDate,
+      journalType: "SYSTEM",
+      referenceType: "invoice_discounting",
+      referenceId: input.invoiceId,
+      description: `Invoice discounting ${inv.invoice_number} — ${input.bank}`,
+      createdBy: input.userId,
+      lines: [
+        { accountCode: GL_ACCOUNTS.BANK, debitAmount: input.loanAmount, description: "Loan disbursement" },
+        { accountCode: "2300", creditAmount: input.loanAmount, description: "Short-term loan payable" },
+      ],
+    });
+    jeId = je.id;
+  }
   const [row] = (await SQL`
-    insert into invoice_discountings (tenant_slug, invoice_id, bank, loan_amount, disbursement_date, period_days, journal_entry_id)
+    insert into invoice_discountings (tenant_slug, invoice_id, bank, loan_amount, disbursement_date, period_days, status, journal_entry_id)
     values (${input.tenantSlug}, ${input.invoiceId}, ${input.bank}, ${input.loanAmount},
-            ${input.disbursementDate}, ${input.periodDays ?? 90}, ${je.id})
+            ${input.disbursementDate}, ${input.periodDays ?? 90},
+            ${input.pendingApproval ? "pending_approval" : "sanctioned"}, ${jeId})
     returning *
   `) as any[];
   return row;

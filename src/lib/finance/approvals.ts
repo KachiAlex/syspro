@@ -11,7 +11,10 @@ import { emitEvent } from "@/lib/notify";
 export type ApprovalEntityType =
   | "purchase_order" | "bill" | "payment"
   | "journal_entry" | "sales_return" | "purchase_return"
-  | "expense" | "employee_expense";
+  | "expense" | "employee_expense"
+  | "payroll_run" | "employee_salary_change" | "credit_limit_change"
+  | "stock_adjustment" | "bank_guarantee" | "invoice_discounting"
+  | "pricing_change";
 
 export interface ApprovalRule {
   id: string;
@@ -594,6 +597,13 @@ export async function processApprovalDecision(payload: {
     throw new Error("User not authorized to approve at current step");
   }
 
+  // Segregation of duties: the requester cannot decide their own document.
+  // Tenant admins stay break-glass — they can act on any step by design so
+  // workflows cannot stall.
+  if (!isAdmin && payload.userId === current.requested_by) {
+    throw new Error("The requester cannot approve their own document");
+  }
+
   // Add decision
   const newDecision: ApprovalDecision = {
     step: currentStep,
@@ -656,7 +666,8 @@ export async function processApprovalDecision(payload: {
       updated.entity_type,
       updated.entity_id,
       payload.decision === "clarification_needed" ? "clarify" : (newStatus as "approved" | "rejected"),
-      { decidedBy: payload.userId, comments: payload.comments }
+      { decidedBy: payload.userId, comments: payload.comments },
+      updated.metadata
     );
   }
   if (isTerminal) {
@@ -743,7 +754,32 @@ const ENTITY_THRESHOLD_KEYS: Record<ApprovalEntityType, string> = {
   purchase_return: "returnMinAmount",
   expense: "expenseMinAmount",
   employee_expense: "employeeExpenseMinAmount",
+  payroll_run: "payrollMinAmount",
+  employee_salary_change: "salaryChangeMinAmount",
+  credit_limit_change: "creditLimitMinAmount",
+  stock_adjustment: "stockAdjustmentMinAmount",
+  bank_guarantee: "bankGuaranteeMinAmount",
+  invoice_discounting: "invoiceDiscountingMinAmount",
+  pricing_change: "pricingChangeMinAmount",
 };
+
+/**
+ * Entity types that gate unconditionally — authority/policy decisions rather
+ * than volume documents. For these, the configured *MinAmount setting acts as
+ * an opt-out floor instead of an opt-in threshold: documents below it skip the
+ * chain (e.g. trivial stock adjustments), everything else routes for review.
+ * bill/payment keep the volume-document semantics (undefined setting = ungated).
+ */
+const ALWAYS_GATED: ReadonlySet<ApprovalEntityType> = new Set([
+  "employee_expense",
+  "payroll_run",
+  "employee_salary_change",
+  "credit_limit_change",
+  "stock_adjustment",
+  "bank_guarantee",
+  "invoice_discounting",
+  "pricing_change",
+]);
 
 async function tenantApprovalSettings(tenantSlug: string): Promise<Record<string, number>> {
   const rows = await db.query<any>(
@@ -762,10 +798,6 @@ export async function requiresApproval(
   entityType: ApprovalEntityType,
   entityData: Record<string, any>
 ): Promise<boolean> {
-  // Employee-submitted expenses always route through the department
-  // authority — mirrors the legacy portal flow where every request needed
-  // an HOD decision.
-  if (entityType === "employee_expense") return true;
   const rule = await findMatchingRule(tenantSlug, entityType, entityData);
   if (rule) return true;
   const settings = await tenantApprovalSettings(tenantSlug);
@@ -773,8 +805,14 @@ export async function requiresApproval(
   // routed through dept manager → finance → executive even with no rules.
   if (entityType === "expense" && settings.expenseDefaultChain) return true;
   const min = settings[ENTITY_THRESHOLD_KEYS[entityType]];
-  if (min === undefined || min === null) return false;
   const amount = Number(entityData.amount ?? entityData.total ?? 0);
+  if (ALWAYS_GATED.has(entityType)) {
+    // Always-gated types: a configured floor opts small documents out
+    // (e.g. stockAdjustmentMinAmount lets trivial adjustments through).
+    if (min === undefined || min === null) return true;
+    return amount >= Number(min);
+  }
+  if (min === undefined || min === null) return false;
   return amount >= Number(min);
 }
 
@@ -811,7 +849,8 @@ async function applyApprovalOutcome(
   entityType: string,
   entityId: string,
   outcome: "approved" | "rejected" | "clarify",
-  ctx?: { decidedBy?: string; comments?: string }
+  ctx?: { decidedBy?: string; comments?: string },
+  metadata?: Record<string, unknown>
 ): Promise<void> {
   // Clarification is only meaningful for expense documents — other entity
   // types would otherwise map it onto their rejected branch.
@@ -823,6 +862,31 @@ async function applyApprovalOutcome(
         break;
       case "employee_expense":
         await applyEmployeeExpenseOutcome(tenantSlug, entityId, outcome, ctx);
+        break;
+      case "bill":
+        await applyBillOutcome(tenantSlug, entityId, outcome, ctx);
+        break;
+      case "payment":
+        await applyVendorPaymentOutcome(tenantSlug, entityId, outcome, ctx);
+        break;
+      case "payroll_run":
+        await applyPayrollRunOutcome(tenantSlug, entityId, outcome, ctx);
+        break;
+      case "employee_salary_change":
+        await applySalaryChangeOutcome(tenantSlug, entityId, outcome, ctx);
+        break;
+      case "credit_limit_change":
+        await applyCreditLimitOutcome(tenantSlug, entityId, outcome, ctx);
+        break;
+      case "stock_adjustment":
+        await applyStockAdjustmentOutcome(tenantSlug, entityId, outcome, metadata, ctx);
+        break;
+      case "bank_guarantee":
+      case "invoice_discounting":
+        await applyTreasuryOutcome(tenantSlug, entityType, entityId, outcome, ctx);
+        break;
+      case "pricing_change":
+        await applyPricingChangeOutcome(tenantSlug, entityId, outcome, metadata, ctx);
         break;
       case "journal_entry":
         await db.query(
@@ -854,8 +918,6 @@ async function applyApprovalOutcome(
           );
         }
         break;
-      // bill/payment approvals are tracked but do not gate the underlying
-      // document — their lifecycle is managed by existing flows.
     }
   } catch (err) {
     console.error(`applyApprovalOutcome ${entityType} ${entityId}:`, err);
@@ -1028,6 +1090,310 @@ async function applyEmployeeExpenseOutcome(
      where id = $6 and tenant_slug = $7`,
     [newStatus, ctx?.decidedBy ?? null, approverName, ctx?.comments ?? null, journalEntryId, expenseId, tenantSlug]
   );
+}
+
+/**
+ * Bill outcome: a gated bill waits at 'pending_approval' with no GL or tax
+ * ledger effects. Approval opens it and posts the AP journal + tax ledger
+ * entries deferred at create; rejection voids it.
+ */
+async function applyBillOutcome(
+  tenantSlug: string,
+  billId: string,
+  outcome: "approved" | "rejected" | "clarify",
+  ctx?: { decidedBy?: string; comments?: string }
+): Promise<void> {
+  const rows = await db.query<any>(
+    `update bills set status = $1, updated_at = now()
+     where id = $2 and tenant_slug = $3 and status = 'pending_approval'
+     returning *`,
+    [outcome === "approved" ? "open" : "rejected", billId, tenantSlug]
+  );
+  const bill = rows.rows[0];
+  if (!bill || outcome !== "approved") return;
+
+  try {
+    const { getBill } = await import("./bills");
+    const { createBillJournalEntry } = await import("./accounting");
+    const normalized = await getBill(billId, tenantSlug);
+    if (normalized && !bill.journal_entry_id) {
+      await createBillJournalEntry(billId, normalized);
+    }
+  } catch (err) {
+    console.error("Bill approval GL posting failed:", err);
+  }
+  try {
+    const { recordBillTaxes } = await import("./localization");
+    await recordBillTaxes({
+      tenantSlug,
+      billId,
+      billNumber: bill.bill_number,
+      vendorId: bill.vendor_id,
+      date: bill.bill_date,
+      subtotal: Number(bill.subtotal) || 0,
+      vatAmount: Number(bill.taxes) || 0,
+      whtAmount: Number(bill.wht_amount) || 0,
+      whtRate: bill.wht_rate ?? undefined,
+    });
+  } catch (err) {
+    console.error("Bill approval tax ledger failed:", err);
+  }
+}
+
+/**
+ * Vendor payment outcome: a gated payment waits at 'pending_approval' — its
+ * bill applications are recorded but balances and the journal are deferred.
+ * Approval posts the payment JE, applies the balance deltas, and marks the
+ * payment posted; rejection voids it.
+ */
+async function applyVendorPaymentOutcome(
+  tenantSlug: string,
+  paymentId: string,
+  outcome: "approved" | "rejected" | "clarify",
+  ctx?: { decidedBy?: string; comments?: string }
+): Promise<void> {
+  const rows = await db.query<any>(
+    `update vendor_payments set status = $1
+     where id = $2 and tenant_slug = $3 and status = 'pending_approval'
+     returning *`,
+    [outcome === "approved" ? "posted" : "rejected", paymentId, tenantSlug]
+  );
+  const payment = rows.rows[0];
+  if (!payment || outcome !== "approved") return;
+
+  const apps = (await db.query<any>(
+    `select bill_id, applied_amount from vendor_payment_applications where payment_id = $1`,
+    [paymentId]
+  )).rows;
+  for (const app of apps) {
+    await db.query(
+      `update bills
+       set balance_due = balance_due - $1,
+           status = case
+             when balance_due - $1 <= 0.005 then 'paid'
+             when balance_due - $1 < total then 'partially_paid'
+             else status
+           end,
+           updated_at = now()
+       where id = $2 and tenant_slug = $3`,
+      [Number(app.applied_amount), app.bill_id, tenantSlug]
+    );
+  }
+
+  try {
+    const { getVendorPayment } = await import("./vendor-payments");
+    const { createPaymentJournalEntry } = await import("./accounting");
+    const normalized = await getVendorPayment(paymentId, tenantSlug);
+    if (normalized && !payment.journal_entry_id) {
+      await createPaymentJournalEntry(paymentId, normalized);
+    }
+  } catch (err) {
+    console.error("Vendor payment approval GL posting failed:", err);
+  }
+}
+
+/**
+ * Payroll run outcome: approval runs the same accrual posting the legacy
+ * PATCH action performs (atomic draft→processing claim + JE). Rejection
+ * voids the run so the period's unique index frees for a re-run, and
+ * releases the one-off adjustments it consumed — mirrors the cancel path.
+ */
+async function applyPayrollRunOutcome(
+  tenantSlug: string,
+  runId: string,
+  outcome: "approved" | "rejected" | "clarify",
+  ctx?: { decidedBy?: string; comments?: string }
+): Promise<void> {
+  if (outcome === "rejected") {
+    const run = (await db.query<any>(
+      `update admin_payroll_runs set status = 'cancelled'
+       where id = $1 and tenant_slug = $2 and status = 'draft' returning period`,
+      [runId, tenantSlug]
+    )).rows[0];
+    if (run?.period) {
+      await db.query(
+        `update admin_payroll_adjustments set status = 'pending', applied_at = null
+         where tenant_slug = $1 and effective_period = $2 and status = 'applied'`,
+        [tenantSlug, run.period]
+      );
+    }
+    return;
+  }
+  const { postPayrollAccrual } = await import("../hr/payroll-post");
+  const approvedBy = await resolveUserName(tenantSlug, ctx?.decidedBy);
+  await postPayrollAccrual({
+    tenantSlug,
+    runId,
+    approvedBy,
+    userId: ctx?.decidedBy,
+  });
+}
+
+/** Salary change outcome: applies or clears the staged pending_salary. */
+async function applySalaryChangeOutcome(
+  tenantSlug: string,
+  employeeId: string,
+  outcome: "approved" | "rejected" | "clarify",
+  ctx?: { decidedBy?: string; comments?: string }
+): Promise<void> {
+  if (outcome === "approved") {
+    await db.query(
+      `update admin_employees
+       set salary = coalesce(pending_salary, salary), pending_salary = null, updated_at = now()
+       where id = $1 and tenant_slug = $2`,
+      [employeeId, tenantSlug]
+    );
+  } else {
+    await db.query(
+      `update admin_employees set pending_salary = null, updated_at = now()
+       where id = $1 and tenant_slug = $2`,
+      [employeeId, tenantSlug]
+    );
+  }
+}
+
+/** Credit limit outcome: applies or clears the staged pending_credit_limit. */
+async function applyCreditLimitOutcome(
+  tenantSlug: string,
+  customerId: string,
+  outcome: "approved" | "rejected" | "clarify",
+  ctx?: { decidedBy?: string; comments?: string }
+): Promise<void> {
+  if (outcome === "approved") {
+    await db.query(
+      `update finance_customers
+       set credit_limit = pending_credit_limit, pending_credit_limit = null, updated_at = now()
+       where id = $1 and tenant_slug = $2`,
+      [customerId, tenantSlug]
+    );
+  } else {
+    await db.query(
+      `update finance_customers set pending_credit_limit = null, updated_at = now()
+       where id = $1 and tenant_slug = $2`,
+      [customerId, tenantSlug]
+    );
+  }
+}
+
+/**
+ * Stock adjustment outcome: the movement was never recorded — the full
+ * payload lives in approval metadata and is replayed on approval.
+ */
+async function applyStockAdjustmentOutcome(
+  tenantSlug: string,
+  _entityId: string,
+  outcome: "approved" | "rejected" | "clarify",
+  metadata?: Record<string, unknown>,
+  ctx?: { decidedBy?: string; comments?: string }
+): Promise<void> {
+  if (outcome !== "approved") return;
+  const movement = (metadata as any)?.movement;
+  if (!movement?.productSku || !movement?.movementType) return;
+  try {
+    const { recordStockMovement } = await import("../inventory/stock-movements");
+    await recordStockMovement(tenantSlug, movement);
+  } catch (err) {
+    console.error("Stock adjustment apply failed:", err);
+  }
+}
+
+/**
+ * Treasury outcome: gated guarantees/discounting wait at 'pending_approval'
+ * with no journal posted. Approval posts the deferred JE (margin deposit for
+ * guarantees, loan disbursement for discounting) and opens the facility.
+ */
+async function applyTreasuryOutcome(
+  tenantSlug: string,
+  entityType: string,
+  entityId: string,
+  outcome: "approved" | "rejected" | "clarify",
+  ctx?: { decidedBy?: string; comments?: string }
+): Promise<void> {
+  const isGuarantee = entityType === "bank_guarantee";
+  const table = isGuarantee ? "bank_guarantees" : "invoice_discountings";
+  const openStatus = isGuarantee ? "open" : "sanctioned";
+  const dateCol = isGuarantee ? "start_date" : "disbursement_date";
+  const rows = await db.query<any>(
+    `update ${table} set status = $1
+     where id = $2 and tenant_slug = $3 and status = 'pending_approval'
+     returning *, ${dateCol}::text as entry_date_text`,
+    [outcome === "approved" ? openStatus : "rejected", entityId, tenantSlug]
+  );
+  const row = rows.rows[0];
+  if (!row || outcome !== "approved" || row.journal_entry_id) return;
+
+  try {
+    const { postGLEntry, GL_ACCOUNTS } = await import("./gl");
+    if (isGuarantee) {
+      const margin = Number(row.margin_amount) || 0;
+      if (row.direction === "issued" && margin > 0) {
+        const je = await postGLEntry({
+          tenantSlug,
+          entryDate: row.entry_date_text,
+          journalType: "SYSTEM",
+          referenceType: "bank_guarantee",
+          referenceId: row.beneficiary,
+          status: "POSTED",
+          description: `Bank guarantee margin — ${row.bank} for ${row.beneficiary}`,
+          createdBy: ctx?.decidedBy,
+          lines: [
+            { accountCode: "1560", debitAmount: margin, description: "Guarantee margin deposit" },
+            { accountCode: GL_ACCOUNTS.BANK, creditAmount: margin, description: "Margin paid" },
+          ],
+        });
+        await db.query(`update bank_guarantees set journal_entry_id = $1 where id = $2`, [(je as any)?.id ?? null, entityId]);
+      }
+    } else {
+      const [inv] = (await db.query<any>(
+        `select invoice_number from finance_invoices where id = $1 and tenant_slug = $2`,
+        [row.invoice_id, tenantSlug]
+      )).rows;
+      const loanAmount = Number(row.loan_amount) || 0;
+      if (loanAmount > 0) {
+        const je = await postGLEntry({
+          tenantSlug,
+          entryDate: row.entry_date_text,
+          journalType: "SYSTEM",
+          referenceType: "invoice_discounting",
+          referenceId: row.invoice_id,
+          status: "POSTED",
+          description: `Invoice discounting ${inv?.invoice_number ?? row.invoice_id} — ${row.bank}`,
+          createdBy: ctx?.decidedBy,
+          lines: [
+            { accountCode: GL_ACCOUNTS.BANK, debitAmount: loanAmount, description: "Loan disbursement" },
+            { accountCode: "2300", creditAmount: loanAmount, description: "Short-term loan payable" },
+          ],
+        });
+        await db.query(`update invoice_discountings set journal_entry_id = $1 where id = $2`, [(je as any)?.id ?? null, entityId]);
+      }
+    }
+  } catch (err) {
+    console.error(`Treasury approval JE posting failed (${entityType} ${entityId}):`, err);
+  }
+}
+
+/**
+ * Pricing change outcome: the upsert never ran — the action + payload live in
+ * approval metadata and are replayed on approval.
+ */
+async function applyPricingChangeOutcome(
+  tenantSlug: string,
+  _entityId: string,
+  outcome: "approved" | "rejected" | "clarify",
+  metadata?: Record<string, unknown>,
+  ctx?: { decidedBy?: string; comments?: string }
+): Promise<void> {
+  if (outcome !== "approved") return;
+  const change = (metadata as any)?.change as { action?: string; input?: any } | undefined;
+  if (!change?.action || !change.input) return;
+  try {
+    const pricing = await import("./pricing");
+    if (change.action === "upsert-rule") await pricing.upsertPricingRule(change.input);
+    else if (change.action === "upsert-scheme") await pricing.upsertPromotionalScheme(change.input);
+    else if (change.action === "upsert-coupon") await pricing.upsertCouponCode(change.input);
+  } catch (err) {
+    console.error("Pricing change apply failed:", err);
+  }
 }
 
 /**

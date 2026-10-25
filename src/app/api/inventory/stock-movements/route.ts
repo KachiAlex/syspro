@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Invalid parameters", details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const movement = await recordStockMovement(parsed.data.tenantSlug, {
+    const movementInput = {
       productSku: parsed.data.productSku,
       productName: parsed.data.productName,
       movementType: parsed.data.movementType,
@@ -74,7 +74,42 @@ export async function POST(request: NextRequest) {
       serialNos: parsed.data.serialNos,
       expiryDate: parsed.data.expiryDate,
       notes: parsed.data.notes,
-    });
+    };
+
+    // Stock adjustments are shrinkage decisions — they route through the
+    // approval workflow and only record on approval. Tenants can set
+    // settings.approvals.stockAdjustmentMinAmount to let trivial
+    // adjustments through without review.
+    if (movementInput.movementType === "adjustment") {
+      const value = movementInput.quantity * movementInput.unitCost;
+      const { requiresApproval, initiateApproval } = await import("@/lib/finance/approvals");
+      const gated = await requiresApproval(parsed.data.tenantSlug, "stock_adjustment", {
+        amount: value,
+        productSku: movementInput.productSku,
+        warehouseId: movementInput.warehouseId,
+      });
+      if (gated) {
+        const approval = await initiateApproval({
+          tenantSlug: parsed.data.tenantSlug,
+          entityType: "stock_adjustment",
+          entityId: `sadj_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          requestedBy: _scope.user?.id ?? "system",
+          entityData: {
+            amount: value,
+            productSku: movementInput.productSku,
+            reference: `Stock adjustment — ${movementInput.productSku} ×${movementInput.quantity}`,
+            requestedByName: _scope.user?.name ?? _scope.user?.id,
+            movement: movementInput,
+          },
+        });
+        return NextResponse.json(
+          { success: true, pendingApproval: true, approvalId: approval.id },
+          { status: 202 }
+        );
+      }
+    }
+
+    const movement = await recordStockMovement(parsed.data.tenantSlug, movementInput);
 
     return NextResponse.json({ success: true, data: movement }, { status: 201 });
   } catch (error) {

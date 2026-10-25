@@ -74,11 +74,71 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     delete (updateData as any).departmentName;
     delete (updateData as any).tenantSlug;
 
-    const employee = await updateEmployee(id, updateData, parsed.data.tenantSlug, auth.user.id);
+    // Salary changes are authority decisions — the new value is staged in
+    // pending_salary and routed through the approval workflow instead of
+    // being applied directly.
+    let salaryPending: { previousSalary: number | null; newSalary: number } | null = null;
+    if (updateData.salary !== undefined && parsed.data.tenantSlug) {
+      const { sql } = await import("@/lib/sql-client");
+      await sql`alter table admin_employees add column if not exists pending_salary numeric`;
+      const [emp] = await sql`
+        select salary, pending_salary, name, department_id
+        from admin_employees
+        where id = ${id} and tenant_slug = ${parsed.data.tenantSlug}
+        limit 1
+      ` as any[];
+      if (!emp) {
+        return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+      }
+      const newSalary = Number(updateData.salary);
+      const previousSalary = emp.salary == null ? null : Number(emp.salary);
+      if (previousSalary !== newSalary) {
+        if (emp.pending_salary != null) {
+          return NextResponse.json(
+            { error: `A salary change to ${emp.pending_salary} is already awaiting approval for this employee` },
+            { status: 409 }
+          );
+        }
+        await sql`
+          update admin_employees set pending_salary = ${newSalary}
+          where id = ${id} and tenant_slug = ${parsed.data.tenantSlug}
+        `;
+        delete updateData.salary;
+        try {
+          const { initiateApproval } = await import("@/lib/finance/approvals");
+          await initiateApproval({
+            tenantSlug: parsed.data.tenantSlug,
+            entityType: "employee_salary_change",
+            entityId: id,
+            requestedBy: auth.user.id,
+            entityData: {
+              amount: newSalary,
+              previousAmount: previousSalary,
+              departmentId: emp.department_id,
+              reference: `Salary change — ${emp.name ?? id}`,
+              requestedByName: auth.user.id,
+            },
+          });
+        } catch (approvalErr) {
+          // Roll the staging back if the workflow could not be created —
+          // otherwise the change hangs invisible.
+          await sql`update admin_employees set pending_salary = null where id = ${id}`;
+          throw approvalErr;
+        }
+        salaryPending = { previousSalary, newSalary };
+      } else {
+        delete updateData.salary; // no-op change — don't touch the row
+      }
+    }
+
+    // A salary-only request leaves updateData empty — skip the update call.
+    const employee = Object.keys(updateData).length
+      ? await updateEmployee(id, updateData, parsed.data.tenantSlug, auth.user.id)
+      : await getEmployeeById(id, parsed.data.tenantSlug!);
     if (!employee) {
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
     }
-    return NextResponse.json({ employee });
+    return NextResponse.json({ employee, salaryPendingApproval: salaryPending });
   } catch (error: any) {
     console.error("Employee update failed", error);
     const msg = error?.message || "";

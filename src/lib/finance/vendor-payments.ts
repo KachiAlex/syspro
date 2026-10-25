@@ -18,7 +18,7 @@ export interface VendorPayment {
   amount: number;
   appliedAmount: number;
   unappliedAmount: number;
-  status: "draft" | "posted" | "reconciled" | "cancelled";
+  status: "draft" | "posted" | "reconciled" | "cancelled" | "pending_approval" | "rejected";
   paymentDate: string;
   bankDetails?: Record<string, unknown>;
   applications: PaymentApplication[];
@@ -73,6 +73,7 @@ async function ensurePaymentTablesRun(sql = SQL) {
   } catch {
     console.warn("Payment tables not found, ensure migration has run");
   }
+  await sql`alter table vendor_payments add column if not exists approval_id text`;
 }
 
 function normalizePayment(record: VendorPaymentRecord, applications: PaymentApplicationRecord[]): VendorPayment {
@@ -215,6 +216,15 @@ export async function createVendorPayment(payload: {
   const paymentNumber = `PAY-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
   const currency = payload.currency || 'NGN';
 
+  // Maker-checker: a payment meeting the tenant's approval threshold (or
+  // matching a rule) waits at 'pending_approval' — bill balances and the
+  // journal entry are deferred until the chain approves.
+  const { requiresApproval } = await import("./approvals");
+  const gated = await requiresApproval(payload.tenantSlug, "payment", {
+    amount: payload.amount,
+    vendorId: payload.vendorId,
+  });
+
   const [record] = (await sql`
     insert into vendor_payments (
       id, tenant_slug, payment_number, vendor_id, method, currency,
@@ -223,7 +233,7 @@ export async function createVendorPayment(payload: {
     ) values (
       ${id}, ${payload.tenantSlug}, ${paymentNumber}, ${payload.vendorId},
       ${payload.method}, ${currency}, ${payload.amount}, ${0}, ${payload.amount},
-      'draft', ${payload.paymentDate}, ${payload.bankDetails || null},
+      ${gated ? 'pending_approval' : 'draft'}, ${payload.paymentDate}, ${payload.bankDetails || null},
       ${payload.metadata || null}, now()
     ) returning *
   `) as VendorPaymentRecord[];
@@ -261,26 +271,29 @@ export async function createVendorPayment(payload: {
 
     // Update payment applied amounts
     await sql`
-      update vendor_payments 
-      set applied_amount = ${totalApplied}, 
+      update vendor_payments
+      set applied_amount = ${totalApplied},
           unapplied_amount = ${payload.amount - totalApplied}
       where id = ${id}
     `;
 
-    // Update bill balances and mark paid/partially_paid accordingly
-    await Promise.all(payload.applications.map(async (app) => {
-      await sql`
-        update bills 
-        set balance_due = balance_due - ${app.appliedAmount},
-            status = case
-              when balance_due - ${app.appliedAmount} <= 0.005 then 'paid'
-              when balance_due - ${app.appliedAmount} < total then 'partially_paid'
-              else status
-            end,
-            updated_at = now()
-        where id = ${app.billId} and tenant_slug = ${payload.tenantSlug}
-      `;
-    }));
+    // Update bill balances and mark paid/partially_paid accordingly — gated
+    // payments defer this to the approval outcome.
+    if (!gated) {
+      await Promise.all(payload.applications.map(async (app) => {
+        await sql`
+          update bills
+          set balance_due = balance_due - ${app.appliedAmount},
+              status = case
+                when balance_due - ${app.appliedAmount} <= 0.005 then 'paid'
+                when balance_due - ${app.appliedAmount} < total then 'partially_paid'
+                else status
+              end,
+              updated_at = now()
+          where id = ${app.billId} and tenant_slug = ${payload.tenantSlug}
+        `;
+      }));
+    }
 
     // Keep the in-memory record consistent for the journal posting below
     record.applied_amount = totalApplied;
@@ -289,12 +302,34 @@ export async function createVendorPayment(payload: {
 
   const payment = normalizePayment(record, applications);
 
-  // Create accounting journal entry
-  try {
-    await createPaymentJournalEntry(id, payment);
-  } catch (accountingError) {
-    console.error("Failed to create journal entry for payment:", accountingError);
-    // Don't fail the payment creation if accounting fails
+  if (!gated) {
+    // Create accounting journal entry
+    try {
+      await createPaymentJournalEntry(id, payment);
+    } catch (accountingError) {
+      console.error("Failed to create journal entry for payment:", accountingError);
+      // Don't fail the payment creation if accounting fails
+    }
+  } else {
+    try {
+      const { initiateApproval } = await import("./approvals");
+      const approval = await initiateApproval({
+        tenantSlug: payload.tenantSlug,
+        entityType: "payment",
+        entityId: id,
+        requestedBy: (payload.metadata as any)?.createdBy ?? "system",
+        entityData: {
+          amount: payload.amount,
+          vendorId: payload.vendorId,
+          paymentNumber,
+          reference: paymentNumber,
+          requestedByName: (payload.metadata as any)?.createdBy,
+        },
+      });
+      await sql`update vendor_payments set approval_id = ${approval.id} where id = ${id}`;
+    } catch (approvalErr) {
+      console.error("Vendor payment approval initiation failed:", approvalErr);
+    }
   }
 
   try {
@@ -323,6 +358,20 @@ export async function createVendorPayment(payload: {
 export async function updateVendorPayment(paymentId: string, updates: Partial<VendorPayment>, tenantSlug?: string): Promise<VendorPayment | null> {
   const sql = SQL;
   await ensurePaymentTables(sql);
+
+  // A payment awaiting its approval chain cannot be status-flipped directly —
+  // the workflow outcome writes posted/rejected itself.
+  if (updates.status) {
+    const [pending] = (await sql`
+      select id from vendor_payments
+      where id = ${paymentId} and status = 'pending_approval'
+        ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
+      limit 1
+    `) as any[];
+    if (pending) {
+      throw new Error("Payment is awaiting approval — decide it through the approvals workflow");
+    }
+  }
 
   const [record] = (await sql`
     update vendor_payments set
@@ -377,6 +426,9 @@ export async function applyPaymentToBill(paymentId: string, billId: string, appl
   if (!payment) {
     throw new Error("Payment not found");
   }
+  if (payment.status === "pending_approval" || payment.status === "rejected") {
+    throw new Error(`Payment is ${payment.status} — cannot be applied to bills`);
+  }
 
   const billRecords = tenantSlug
     ? (await db.query<any>(`select * from bills where id = $1 and tenant_slug = $2 limit 1`, [billId, tenantSlug])).rows
@@ -387,6 +439,9 @@ export async function applyPaymentToBill(paymentId: string, billId: string, appl
   }
 
   const bill = billRecords[0];
+  if (bill.status === "pending_approval" || bill.status === "rejected") {
+    throw new Error(`Bill is ${bill.status} — cannot receive payments`);
+  }
 
   // Check if application amount is valid
   if (appliedAmount > payment.unappliedAmount) {

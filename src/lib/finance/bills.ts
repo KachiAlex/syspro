@@ -38,7 +38,7 @@ export interface Bill {
   whtAmount: number;
   /** Amount actually owed to the vendor: total − whtAmount. */
   balanceDue: number;
-  status: "draft" | "open" | "partially_paid" | "paid" | "overdue" | "cancelled";
+  status: "draft" | "open" | "partially_paid" | "paid" | "overdue" | "cancelled" | "pending_approval" | "rejected";
   items: BillItem[];
   metadata?: Record<string, unknown>;
   createdAt: string;
@@ -99,6 +99,7 @@ async function ensureBillTablesRun(sql = SQL) {
   // Tables should already exist from migration, but ensure for development
   await sql`alter table if exists bills add column if not exists wht_rate numeric(5,2)`;
   await sql`alter table if exists bills add column if not exists wht_amount numeric(18,2) not null default 0`;
+  await sql`alter table if exists bills add column if not exists approval_id text`;
   try {
     await sql`select 1 from bills limit 1`;
     await sql`select 1 from bill_items limit 1`;
@@ -348,6 +349,15 @@ export async function createBill(payload: {
     });
   }
 
+  // Maker-checker: a bill meeting the tenant's approval threshold (or
+  // matching a rule) stays 'pending_approval' — its AP journal and tax
+  // ledger entries are deferred until the chain approves.
+  const { requiresApproval } = await import("./approvals");
+  const gated = await requiresApproval(payload.tenantSlug, "bill", {
+    amount: total,
+    vendorId: payload.vendorId,
+  });
+
   const [record] = (await sql`
     insert into bills (
       id, tenant_slug, bill_number, vendor_id, po_id, branch_id,
@@ -358,7 +368,7 @@ export async function createBill(payload: {
       ${payload.poId || null}, ${payload.branchId || null},
       ${payload.billDate}, ${payload.dueDate || null}, ${currency},
       ${subtotal}, ${taxes}, ${total}, ${payload.whtRate ?? null}, ${whtAmount},
-      ${balanceDue}, 'open', ${payload.metadata || null}, now(), now()
+      ${balanceDue}, ${gated ? "pending_approval" : "open"}, ${payload.metadata || null}, now(), now()
     ) returning *
   `);
 
@@ -384,30 +394,53 @@ export async function createBill(payload: {
 
   const bill = normalizeBill(record, itemRecords);
 
-  // Create accounting journal entry
-  try {
-    await createBillJournalEntry(id, bill);
-  } catch (accountingError) {
-    console.error("Failed to create journal entry for bill:", accountingError);
-    // Don't fail the bill creation if accounting fails
-  }
+  if (!gated) {
+    // Create accounting journal entry
+    try {
+      await createBillJournalEntry(id, bill);
+    } catch (accountingError) {
+      console.error("Failed to create journal entry for bill:", accountingError);
+      // Don't fail the bill creation if accounting fails
+    }
 
-  // Statutory ledger: input VAT claimable + WHT withheld feed the tax returns
-  try {
-    const { recordBillTaxes } = await import("./localization");
-    await recordBillTaxes({
-      tenantSlug: payload.tenantSlug,
-      billId: id,
-      billNumber,
-      vendorId: payload.vendorId,
-      date: payload.billDate,
-      subtotal,
-      vatAmount: taxes,
-      whtAmount,
-      whtRate: payload.whtRate,
-    });
-  } catch (taxErr) {
-    console.error("Failed to record bill tax transactions:", taxErr);
+    // Statutory ledger: input VAT claimable + WHT withheld feed the tax returns
+    try {
+      const { recordBillTaxes } = await import("./localization");
+      await recordBillTaxes({
+        tenantSlug: payload.tenantSlug,
+        billId: id,
+        billNumber,
+        vendorId: payload.vendorId,
+        date: payload.billDate,
+        subtotal,
+        vatAmount: taxes,
+        whtAmount,
+        whtRate: payload.whtRate,
+      });
+    } catch (taxErr) {
+      console.error("Failed to record bill tax transactions:", taxErr);
+    }
+  } else {
+    try {
+      const { initiateApproval } = await import("./approvals");
+      const approval = await initiateApproval({
+        tenantSlug: payload.tenantSlug,
+        entityType: "bill",
+        entityId: id,
+        requestedBy: (payload.metadata as any)?.createdBy ?? "system",
+        entityData: {
+          amount: total,
+          vendorId: payload.vendorId,
+          billNumber,
+          reference: billNumber,
+          requestedByName: (payload.metadata as any)?.createdBy,
+        },
+      });
+      await sql`alter table bills add column if not exists approval_id text`;
+      await sql`update bills set approval_id = ${approval.id} where id = ${id}`;
+    } catch (approvalErr) {
+      console.error("Bill approval initiation failed:", approvalErr);
+    }
   }
 
   try {
@@ -437,6 +470,20 @@ export async function createBill(payload: {
 export async function updateBill(billId: string, updates: Partial<Bill>, tenantSlug?: string): Promise<Bill | null> {
   const sql = SQL;
   await ensureBillTables(sql);
+
+  // A bill awaiting its approval chain cannot be status-flipped directly —
+  // the workflow outcome writes the terminal status itself.
+  if (updates.status) {
+    const [pending] = (await sql`
+      select id from bills
+      where id = ${billId} and status = 'pending_approval'
+        ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
+      limit 1
+    `) as any[];
+    if (pending) {
+      throw new Error("Bill is awaiting approval — decide it through the approvals workflow");
+    }
+  }
 
   const [record] = (await sql`
     update bills set

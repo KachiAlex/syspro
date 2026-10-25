@@ -46,6 +46,8 @@ async function ensureCreditTablesRun() {
     updated_at timestamptz not null default now()
   )`;
   await sql`alter table if exists finance_customers add column if not exists email text`;
+  // Staged credit limit change awaiting approval (credit_limit_change entity)
+  await sql`alter table if exists finance_customers add column if not exists pending_credit_limit numeric`;
   await sql`create table if not exists dunning_notices (
     id uuid primary key default gen_random_uuid(),
     tenant_slug text not null,
