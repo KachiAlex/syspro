@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import {
-  getFund, replenishFund, disburseFund, pettyCashBook,
+  getFund, pettyCashBook,
 } from "@/lib/finance/imprest";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { requireModuleAccess } from "@/lib/api-auth";
@@ -53,10 +53,27 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   try {
     const tenantSlug = context.tenantSlug;
-    const out = parsed.data.action === "replenish"
-      ? await replenishFund({ tenantSlug, fundId: id, ...parsed.data })
-      : await disburseFund({ tenantSlug, fundId: id, ...parsed.data });
-    return NextResponse.json(out, { status: 201 });
+    // Replenishment (Dr petty cash / Cr bank) and disbursement (Dr expense /
+    // Cr petty cash) are cash movements — they route through the approval
+    // chain and only post once approved.
+    const { gateOrRun } = await import("@/lib/finance/gated-actions");
+    const action = parsed.data.action === "replenish" ? "imprest_replenish" : "imprest_disburse";
+    const outcome = await gateOrRun(
+      tenantSlug,
+      action,
+      { fundId: id, ...parsed.data },
+      { requestedBy: context.userId ?? "unknown" }
+    );
+    if (outcome.status === "pending") {
+      return NextResponse.json(
+        { pendingApproval: true, approvalId: outcome.approvalId },
+        { status: 202 }
+      );
+    }
+    if (outcome.status === "denied") {
+      return NextResponse.json({ error: outcome.error }, { status: 403 });
+    }
+    return NextResponse.json(outcome.result, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 400 });
   }

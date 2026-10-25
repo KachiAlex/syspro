@@ -18,27 +18,12 @@ async function posDiscountCap(tenantSlug: string): Promise<number | null> {
   return cap === undefined || cap === null ? null : Number(cap);
 }
 
-/** Is this user allowed to override the POS discount cap? Managers,
- *  department heads, executives, and configured company officers may. */
+/** Is this user allowed to override the POS discount cap? Delegates to the
+ *  shared engine check — managers, department heads, executives, and
+ *  configured company officers. */
 async function posOverrideAuthorized(tenantSlug: string, userId: string): Promise<boolean> {
-  const { sql } = await import("@/lib/sql-client");
-  const admins = await sql`
-    select 1 from tenant_admins
-    where tenant_slug = ${tenantSlug} and id::text = ${userId}
-      and lower(coalesce(role,'')) in ('admin','owner','tenant_admin','superadmin','manager','finance_manager','finance_admin')
-    limit 1
-  ` as any[];
-  if (admins.length) return true;
-  const employees = await sql`
-    select 1 from admin_employees
-    where tenant_slug = ${tenantSlug} and id::text = ${userId}
-      and lower(coalesce(role,'')) in ('hod','head_of_department','admin','executive','manager','supervisor')
-    limit 1
-  ` as any[];
-  if (employees.length) return true;
-  const [tenant] = await sql`select settings from tenants where slug = ${tenantSlug}` as any[];
-  const officers = (tenant as any)?.settings?.approvals?.officers;
-  return Array.isArray(officers) && officers.some((o: any) => Array.isArray(o?.userIds) && o.userIds.map(String).includes(userId));
+  const { canOverride } = await import("@/lib/finance/approvals");
+  return canOverride(tenantSlug, userId);
 }
 
 /**

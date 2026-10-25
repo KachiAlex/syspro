@@ -312,6 +312,21 @@ export async function createVendorPayment(payload: {
     }
   } else {
     try {
+      // Risk escalation: paying a vendor whose bank details changed within
+      // the last 30 days forces a company-officer step regardless of amount
+      // — the classic beneficiary-switch fraud window.
+      let forceOfficerApproval = false;
+      let bankChangedAt: string | null = null;
+      try {
+        const [v] = (await sql`
+          select bank_details_changed_at::text as changed_at
+          from vendors where id = ${payload.vendorId} and tenant_slug = ${payload.tenantSlug}
+        `) as any[];
+        bankChangedAt = v?.changed_at ?? null;
+        if (bankChangedAt && Date.now() - new Date(bankChangedAt).getTime() < 30 * 86400000) {
+          forceOfficerApproval = true;
+        }
+      } catch { /* column may predate the gate migration */ }
       const { initiateApproval } = await import("./approvals");
       const approval = await initiateApproval({
         tenantSlug: payload.tenantSlug,
@@ -324,6 +339,9 @@ export async function createVendorPayment(payload: {
           paymentNumber,
           reference: paymentNumber,
           requestedByName: (payload.metadata as any)?.createdBy,
+          forceOfficerApproval,
+          riskFlags: forceOfficerApproval ? ["vendor_bank_recently_changed"] : [],
+          bankDetailsChangedAt: bankChangedAt,
         },
       });
       await sql`update vendor_payments set approval_id = ${approval.id} where id = ${id}`;

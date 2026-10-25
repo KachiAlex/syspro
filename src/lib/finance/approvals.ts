@@ -14,7 +14,35 @@ export type ApprovalEntityType =
   | "expense" | "employee_expense"
   | "payroll_run" | "employee_salary_change" | "credit_limit_change"
   | "stock_adjustment" | "bank_guarantee" | "invoice_discounting"
-  | "pricing_change";
+  | "pricing_change"
+  | "gated_action";
+
+/** Approval domains — the rows of the tenant's delegation-of-authority
+ * matrix (settings.approvals.authorityMatrix). Every gated entity type and
+ * registered gated action maps onto exactly one domain. */
+export type GateDomain =
+  | "spend" | "treasury" | "people" | "inventory"
+  | "master_data" | "system" | "sales";
+
+/** Default domain per entity type; gated actions carry their own. */
+export const ENTITY_DOMAINS: Record<string, GateDomain> = {
+  purchase_order: "spend",
+  bill: "spend",
+  payment: "spend",
+  expense: "spend",
+  employee_expense: "spend",
+  payroll_run: "spend",
+  purchase_return: "spend",
+  bank_guarantee: "treasury",
+  invoice_discounting: "treasury",
+  employee_salary_change: "people",
+  credit_limit_change: "master_data",
+  vendor_bank_change: "master_data",
+  pricing_change: "master_data",
+  stock_adjustment: "inventory",
+  journal_entry: "system",
+  sales_return: "sales",
+};
 
 export interface ApprovalRule {
   id: string;
@@ -439,6 +467,31 @@ export async function setOfficers(
 }
 
 /**
+ * Override-mode authorization: is `userId` allowed to co-sign an over-cap
+ * action in real time? Managers, department heads, executives, and any
+ * configured company officer may — the same authority set used for POS
+ * discount overrides, now shared by all override-mode gated actions.
+ */
+export async function canOverride(tenantSlug: string, userId: string): Promise<boolean> {
+  const admins = await SQL`
+    select 1 from tenant_admins
+    where tenant_slug = ${tenantSlug} and id::text = ${userId}
+      and lower(coalesce(role,'')) in ('admin','owner','tenant_admin','superadmin','manager','finance_manager','finance_admin')
+    limit 1
+  ` as any[];
+  if (admins.length) return true;
+  const employees = await SQL`
+    select 1 from admin_employees
+    where tenant_slug = ${tenantSlug} and id::text = ${userId}
+      and lower(coalesce(role,'')) in ('hod','head_of_department','admin','executive','manager','supervisor')
+    limit 1
+  ` as any[];
+  if (employees.length) return true;
+  const officers = await tenantOfficers(tenantSlug);
+  return officers.some((o) => Array.isArray(o?.userIds) && o.userIds.map(String).includes(userId));
+}
+
+/**
  * Caller-role aliases: employee-portal roles map onto the role keys used in
  * approver chains. `hod` → dept_manager, HR roles → admin (HR can act on any
  * step, mirroring the legacy portal behavior where HR could approve).
@@ -483,16 +536,48 @@ export async function initiateApproval(payload: {
     approverChain = rule.approvers;
   } else {
     const settings = await tenantApprovalSettings(payload.tenantSlug);
-    const isExpense = payload.entityType === "expense" || payload.entityType === "employee_expense";
-    approverChain = buildThresholdEscalationChain(Number(amount), {
-      step2Amount: isExpense ? settings.expenseStep2Amount : settings.step2Amount,
-      step3Amount: isExpense ? settings.expenseStep3Amount : settings.step3Amount,
-    });
+    // Delegation-of-authority matrix: when the domain has a configured band
+    // for this amount, its approver list IS the chain (DoA grid). Otherwise
+    // fall back to the legacy amount ladder.
+    const domain = (payload.entityData.domain ?? ENTITY_DOMAINS[payload.entityType]) as GateDomain | undefined;
+    const matrixChain = chainFromBand(
+      matrixBandFor((settings as any)?.authorityMatrix ?? {}, domain, Number(amount))
+    );
+    if (matrixChain) {
+      approverChain = matrixChain;
+    } else {
+      const isExpense = payload.entityType === "expense" || payload.entityType === "employee_expense";
+      approverChain = buildThresholdEscalationChain(Number(amount), {
+        step2Amount: isExpense ? settings.expenseStep2Amount : settings.step2Amount,
+        step3Amount: isExpense ? settings.expenseStep3Amount : settings.step3Amount,
+      });
+    }
   }
 
   // Department-scoped placeholders (role:dept_manager) resolve against the
   // submitter's department into concrete approver ids.
   approverChain = await resolveChainApprovers(payload.tenantSlug, approverChain, payload.entityData);
+
+  // Risk escalation: callers flag documents that must reach a company officer
+  // regardless of amount (e.g. paying a vendor whose bank details changed
+  // recently). A title may be supplied ("managing_director"); the first
+  // configured officer post is the fallback, then role:admin.
+  if (payload.entityData.forceOfficerApproval) {
+    const wanted = typeof payload.entityData.forceOfficerApproval === "string"
+      ? payload.entityData.forceOfficerApproval : undefined;
+    const officers = await tenantOfficers(payload.tenantSlug);
+    const post = wanted
+      ? officers.find((o) => officerSlug(o.title) === officerSlug(wanted))
+      : officers[0];
+    const holders = (post?.userIds ?? []).map(String).filter(Boolean);
+    const stepNo = approverChain.reduce((m, s) => Math.max(m, s.step), -1) + 1;
+    if (holders.length) {
+      holders.forEach((uid, i) =>
+        approverChain.push({ step: stepNo, userId: uid, required: holders.length === 1, order: i }));
+    } else {
+      approverChain.push({ step: stepNo, userId: "role:admin", required: true, order: 0 });
+    }
+  }
   
   const [record] = (await sql`
     insert into approvals (
@@ -761,6 +846,7 @@ const ENTITY_THRESHOLD_KEYS: Record<ApprovalEntityType, string> = {
   bank_guarantee: "bankGuaranteeMinAmount",
   invoice_discounting: "invoiceDiscountingMinAmount",
   pricing_change: "pricingChangeMinAmount",
+  gated_action: "gatedActionMinAmount",
 };
 
 /**
@@ -781,12 +867,78 @@ const ALWAYS_GATED: ReadonlySet<ApprovalEntityType> = new Set([
   "pricing_change",
 ]);
 
-async function tenantApprovalSettings(tenantSlug: string): Promise<Record<string, number>> {
+async function tenantApprovalSettings(tenantSlug: string): Promise<Record<string, any>> {
   const rows = await db.query<any>(
     `select settings from tenants where slug = $1`,
     [tenantSlug]
   );
   return (rows.rows[0]?.settings as any)?.approvals ?? {};
+}
+
+// ---------------------------------------------------------------------------
+// Delegation-of-authority matrix — settings.approvals.authorityMatrix
+// ---------------------------------------------------------------------------
+
+/**
+ * One band of the authority matrix. Bands are ordered; the first band whose
+ * `upTo` covers the amount wins (null = unlimited). `approvers` entries are
+ * step specs in order — a string entry is one step, a string[] entry is
+ * parallel approvers at one step. Spec tokens:
+ *   "dept_manager"        → role:dept_manager (document's department)
+ *   "officer:<title>"     → role:<slug-of-title> (company officer post)
+ *   "role:<key>"          → symbolic role placeholder
+ *   "user:<id>"           → concrete user id
+ * `mode` overrides the enforcement mode for this band ("block" | "review").
+ * A band with approvers: [] means auto-approved — no chain at that level.
+ */
+export interface MatrixBand {
+  upTo: number | null;
+  approvers?: (string | string[])[];
+  mode?: "block" | "review";
+}
+
+export type AuthorityMatrix = Partial<Record<GateDomain, MatrixBand[]>>;
+
+export async function tenantAuthorityMatrix(tenantSlug: string): Promise<AuthorityMatrix> {
+  const settings = await tenantApprovalSettings(tenantSlug);
+  const matrix = (settings as any)?.authorityMatrix;
+  return matrix && typeof matrix === "object" ? matrix : {};
+}
+
+/** The band covering `amount` for `domain`, or null when the domain has no
+ *  configured matrix. */
+export function matrixBandFor(
+  matrix: AuthorityMatrix,
+  domain: GateDomain | undefined,
+  amount: number
+): MatrixBand | null {
+  if (!domain) return null;
+  const bands = matrix[domain];
+  if (!Array.isArray(bands) || bands.length === 0) return null;
+  return bands.find((b) => b && (b.upTo === null || b.upTo === undefined || amount <= Number(b.upTo))) ?? null;
+}
+
+function specToApprover(spec: string, step: number, order: number, required: boolean): ApproverStep {
+  const s = spec.trim();
+  if (s.startsWith("user:")) return { step, userId: s.slice(5), required, order };
+  if (s.startsWith("officer:")) return { step, userId: `role:${officerSlug(s.slice(8))}`, required, order };
+  if (s.startsWith("role:")) return { step, userId: s, required, order };
+  return { step, userId: `role:${s}`, required, order };
+}
+
+/** Builds an approver chain from the domain's matrix band. Returns null when
+ *  the band auto-approves (empty approvers) — caller decides fallback when
+ *  no matrix exists for the domain. */
+export function chainFromBand(band: MatrixBand | null): ApproverStep[] | null {
+  if (!band) return null;
+  const chain: ApproverStep[] = [];
+  (band.approvers ?? []).forEach((entry, step) => {
+    const specs = Array.isArray(entry) ? entry : [entry];
+    specs.forEach((spec, order) => {
+      chain.push(specToApprover(spec, step, order, specs.length === 1));
+    });
+  });
+  return chain;
 }
 
 /**
@@ -801,11 +953,16 @@ export async function requiresApproval(
   const rule = await findMatchingRule(tenantSlug, entityType, entityData);
   if (rule) return true;
   const settings = await tenantApprovalSettings(tenantSlug);
+  const amount = Number(entityData.amount ?? entityData.total ?? 0);
+  // Delegation-of-authority matrix owns the decision for its domain: a band
+  // with approvers means gate, approvers:[] means auto-approve.
+  const domain = (entityData.domain ?? ENTITY_DOMAINS[entityType]) as GateDomain | undefined;
+  const band = matrixBandFor((settings as any)?.authorityMatrix ?? {}, domain, amount);
+  if (band) return (band.approvers ?? []).length > 0;
   // Opt-in default ladder for finance expenses: when set, every expense is
   // routed through dept manager → finance → executive even with no rules.
   if (entityType === "expense" && settings.expenseDefaultChain) return true;
   const min = settings[ENTITY_THRESHOLD_KEYS[entityType]];
-  const amount = Number(entityData.amount ?? entityData.total ?? 0);
   if (ALWAYS_GATED.has(entityType)) {
     // Always-gated types: a configured floor opts small documents out
     // (e.g. stockAdjustmentMinAmount lets trivial adjustments through).
@@ -887,6 +1044,9 @@ async function applyApprovalOutcome(
         break;
       case "pricing_change":
         await applyPricingChangeOutcome(tenantSlug, entityId, outcome, metadata, ctx);
+        break;
+      case "gated_action":
+        await applyGatedActionOutcome(tenantSlug, entityId, outcome, metadata, ctx);
         break;
       case "journal_entry":
         await db.query(
@@ -1393,6 +1553,52 @@ async function applyPricingChangeOutcome(
     else if (change.action === "upsert-coupon") await pricing.upsertCouponCode(change.input);
   } catch (err) {
     console.error("Pricing change apply failed:", err);
+  }
+}
+
+/**
+ * Gated-action outcome: the deferred mutation lives in metadata
+ * ({ action, payload }) and replays through the gated-action registry on
+ * approval. Post-hoc (review-mode) rows work the other way — the action
+ * already ran; approval merely marks it reviewed, while rejection invokes
+ * the action's reverse handler when one is registered.
+ */
+async function applyGatedActionOutcome(
+  tenantSlug: string,
+  entityId: string,
+  outcome: "approved" | "rejected" | "clarify",
+  metadata?: Record<string, unknown>,
+  ctx?: { decidedBy?: string; comments?: string }
+): Promise<void> {
+  const m = metadata as any;
+  const actionName = m?.action as string | undefined;
+  if (!actionName) return;
+  try {
+    const { getGatedAction } = await import("./gated-actions");
+    const def = getGatedAction(actionName);
+    if (!def) {
+      console.error(`Gated action "${actionName}" is not registered (approval entity ${entityId})`);
+      return;
+    }
+    const actionCtx = { requestedBy: m.requestedBy, decidedBy: ctx?.decidedBy };
+    if (m.postHoc) {
+      // Review mode: the effect already applied at request time. Approval
+      // acknowledges the review; rejection reverses the effect when the
+      // action defines a reverse handler.
+      if (outcome === "rejected" && def.reverse) {
+        await def.reverse(tenantSlug, m.payload, actionCtx);
+      }
+      return;
+    }
+    if (outcome === "approved") {
+      await def.run(tenantSlug, m.payload, actionCtx);
+    } else if (outcome === "rejected" && def.rejected) {
+      await def.rejected(tenantSlug, m.payload, actionCtx);
+    }
+  } catch (err) {
+    // Matches the other appliers: the approval row already committed, so a
+    // replay failure is logged rather than thrown back at the decider.
+    console.error(`Gated action "${actionName}" outcome failed (${entityId}):`, err);
   }
 }
 

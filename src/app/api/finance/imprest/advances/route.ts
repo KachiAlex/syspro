@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { issueAdvance } from "@/lib/finance/imprest";
 import { db } from "@/lib/sql-client";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { requireModuleAccess } from "@/lib/api-auth";
@@ -46,8 +45,25 @@ export async function POST(request: NextRequest) {
   if (!parsed.success)
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   try {
-    const out = await issueAdvance({ tenantSlug: context.tenantSlug, ...parsed.data });
-    return NextResponse.json(out, { status: 201 });
+    // Cash advances to staff route through the approval chain — the advance
+    // (and its GL posting) only exists once approved.
+    const { gateOrRun } = await import("@/lib/finance/gated-actions");
+    const outcome = await gateOrRun(
+      context.tenantSlug,
+      "imprest_advance",
+      parsed.data,
+      { requestedBy: context.userId ?? "unknown" }
+    );
+    if (outcome.status === "pending") {
+      return NextResponse.json(
+        { pendingApproval: true, approvalId: outcome.approvalId },
+        { status: 202 }
+      );
+    }
+    if (outcome.status === "denied") {
+      return NextResponse.json({ error: outcome.error }, { status: 403 });
+    }
+    return NextResponse.json(outcome.result, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 400 });
   }

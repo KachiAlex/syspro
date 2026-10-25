@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
-  createPayrollAdjustment,
   listPayrollAdjustments,
 } from "@/lib/hr/db";
 
@@ -64,8 +63,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const result = await createPayrollAdjustment(parsed.data);
-    return NextResponse.json({ id: result.id });
+    // Bonuses/deductions feed payroll — they route through the approval
+    // chain instead of the self-reported approvedBy field. The adjustment
+    // row only exists once the chain approves.
+    const { gateOrRun } = await import("@/lib/finance/gated-actions");
+    const outcome = await gateOrRun(
+      parsed.data.tenantSlug,
+      "payroll_adjustment",
+      parsed.data,
+      { requestedBy: _scope.user.id }
+    );
+    if (outcome.status === "pending") {
+      return NextResponse.json(
+        { pendingApproval: true, approvalId: outcome.approvalId },
+        { status: 202 }
+      );
+    }
+    if (outcome.status === "denied") {
+      return NextResponse.json({ error: outcome.error }, { status: 403 });
+    }
+    return NextResponse.json({ id: outcome.result.id });
   } catch (error) {
     console.error("Failed to create payroll adjustment:", error);
     return NextResponse.json(

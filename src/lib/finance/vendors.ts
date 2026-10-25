@@ -361,6 +361,10 @@ async function ensureVendorTables(sql: SqlClient) {
       `alter table vendors add column if not exists bank_details jsonb`,
       `alter table vendors add column if not exists metadata jsonb`,
       `alter table vendors add column if not exists created_by text`,
+      // Approval-gated bank changes: staged delta + fraud-window marker used
+      // by vendor-payment risk escalation.
+      `alter table vendors add column if not exists pending_bank_details jsonb`,
+      `alter table vendors add column if not exists bank_details_changed_at timestamptz`,
       `alter table vendors add column if not exists email text`,
       `alter table vendors add column if not exists phone text`,
       `alter table vendors add column if not exists address text`,

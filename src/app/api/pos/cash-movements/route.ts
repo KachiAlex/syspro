@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { addCashMovement, listCashMovements } from "@/lib/pos/shifts";
+import { listCashMovements } from "@/lib/pos/shifts";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { requireModuleAccess } from "@/lib/api-auth";
 
@@ -21,6 +21,7 @@ const schema = z.object({
   type: z.enum(["pay_in", "pay_out", "drop"]),
   amount: z.coerce.number().positive(),
   reason: z.string().max(300).optional(),
+  overrideBy: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -33,11 +34,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid parameters", details: parsed.error.flatten() }, { status: 400 });
   }
   try {
-    const result = await addCashMovement(context.tenantSlug, {
-      ...parsed.data,
-      createdBy: context.userId ?? undefined,
-    });
-    return NextResponse.json(result, { status: 201 });
+    // Pay-outs and drops above the tenant cap (settings.pos.cashMovementCap)
+    // need a named manager override — real-time, like discount overrides.
+    const { gateOrRun } = await import("@/lib/finance/gated-actions");
+    const outcome = await gateOrRun(
+      context.tenantSlug,
+      "pos_cash_movement",
+      { ...parsed.data, createdBy: context.userId ?? undefined },
+      { requestedBy: context.userId ?? "unknown" }
+    );
+    if (outcome.status === "denied") {
+      return NextResponse.json({ error: outcome.error }, { status: 403 });
+    }
+    if (outcome.status === "pending") {
+      return NextResponse.json({ pendingApproval: true, approvalId: outcome.approvalId }, { status: 202 });
+    }
+    return NextResponse.json(outcome.result, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 422 });
   }

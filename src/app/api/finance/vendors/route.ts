@@ -152,6 +152,8 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 }
 
+const BANK_FIELDS = ["accountNumber", "bankCode", "bankName"] as const;
+
 export async function PUT(request: NextRequest) {
   const context = validateTenantContext(request, "write");
   const _gate = await requireModuleAccess(request, "finance", "write");
@@ -187,9 +189,53 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const vendor = await updateVendor(id, parsed.data, context.tenantSlug);
+    // Bank detail changes route through the approval engine — payment
+    // diversion via edited beneficiary accounts is the classic AP fraud.
+    // Non-bank fields still apply immediately.
+    const bankChanges: Record<string, string | undefined> = {};
+    const nonBank: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(parsed.data)) {
+      if ((BANK_FIELDS as readonly string[]).includes(key)) bankChanges[key] = value as string | undefined;
+      else nonBank[key] = value;
+    }
+
+    const current = await getVendor(id, context.tenantSlug);
+    if (!current) {
+      return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+    }
+
+    const changed = BANK_FIELDS.filter(
+      (f) => bankChanges[f] !== undefined && String(bankChanges[f] ?? "") !== String((current as any)[f] ?? "")
+    );
+
+    let vendor = Object.keys(nonBank).length
+      ? await updateVendor(id, nonBank, context.tenantSlug)
+      : current;
     if (!vendor) {
       return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+    }
+
+    if (changed.length > 0) {
+      const staged: Record<string, string | undefined> = {};
+      for (const f of changed) staged[f] = bankChanges[f];
+      const { gateOrRun } = await import("@/lib/finance/gated-actions");
+      const outcome = await gateOrRun(
+        context.tenantSlug,
+        "vendor_bank_change",
+        { vendorId: id, vendorName: vendor.name ?? current.name, bankChanges: staged },
+        { requestedBy: _gate.user.id ?? "unknown" }
+      );
+      if (outcome.status === "pending") {
+        return NextResponse.json({
+          vendor,
+          bankChangePendingApproval: true,
+          approvalId: outcome.approvalId,
+        }, { status: 202 });
+      }
+      if (outcome.status === "denied") {
+        return NextResponse.json({ error: outcome.error }, { status: 403 });
+      }
+      vendor = outcome.result ?? vendor;
     }
 
     return NextResponse.json({ vendor });
