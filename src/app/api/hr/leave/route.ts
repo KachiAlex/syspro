@@ -95,6 +95,45 @@ export async function POST(request: NextRequest) {
 
   try {
     const requestRecord = await insertLeave(parsed.data);
+
+    // Converged flow: the request always needs a decision — routed through
+    // the approvals engine (dept manager by default, people-matrix band can
+    // elevate or auto-approve). The row stays 'pending' either way; the
+    // engine flips it on decision.
+    try {
+      const { sql } = await import("@/lib/sql-client");
+      const [emp] = (await sql`
+        select department_id from admin_employees
+        where id = ${parsed.data.employeeId} and tenant_slug = ${parsed.data.tenantSlug} limit 1
+      `) as any[];
+      const { gateOrRun } = await import("@/lib/finance/gated-actions");
+      const outcome = await gateOrRun(
+        parsed.data.tenantSlug,
+        "leave_request",
+        {
+          leaveId: requestRecord.id,
+          employeeId: parsed.data.employeeId,
+          employeeName: parsed.data.employeeName,
+          leaveType: parsed.data.leaveType,
+          startDate: parsed.data.startDate,
+          endDate: parsed.data.endDate,
+          days,
+        },
+        { requestedBy: parsed.data.employeeId, departmentId: emp?.department_id ?? undefined }
+      );
+      if (outcome.status === "pending") {
+        await sql`update admin_leave set approval_id = ${outcome.approvalId} where id = ${requestRecord.id}`;
+        return NextResponse.json(
+          { request: { ...requestRecord, approvalId: outcome.approvalId }, pendingApproval: true },
+          { status: 202 }
+        );
+      }
+    } catch (gateErr) {
+      // A gating failure must not strand the request — it stays pending in
+      // the legacy reviewer flow.
+      console.error("Leave approval gate failed:", gateErr);
+    }
+
     return NextResponse.json({ request: requestRecord }, { status: 201 });
   } catch (error) {
     console.error("Leave create failed", error);

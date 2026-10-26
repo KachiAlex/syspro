@@ -26,6 +26,25 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 
   try {
+    // Requests inside an approval workflow are decided by the chain, not here.
+    if (["approved", "rejected"].includes(parsed.data.status)) {
+      const { sql } = await import("@/lib/sql-client");
+      const [row] = (await sql`
+        select approval_id from admin_leave
+        where id = ${id} and tenant_slug = ${parsed.data.tenantSlug} limit 1
+      `) as any[];
+      if (row?.approval_id) {
+        const [ap] = (await sql`
+          select status from approvals where id = ${row.approval_id} limit 1
+        `) as any[];
+        if (ap?.status === "pending") {
+          return NextResponse.json(
+            { error: "This leave request is in the approval workflow — decide it from the approvals inbox" },
+            { status: 409 }
+          );
+        }
+      }
+    }
     const leave = await updateLeaveStatus(id, parsed.data.tenantSlug, parsed.data.status, _scope.user.id);
     if (!leave) {
       return NextResponse.json({ error: "Leave request not found" }, { status: 404 });

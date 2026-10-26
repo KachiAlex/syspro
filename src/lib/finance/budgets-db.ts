@@ -224,8 +224,13 @@ export async function changeBudgetStatus(
   newStatus: BudgetStatus
 ): Promise<Budget | null> {
   try {
+    // Bump the version first — every status change is a new budget version.
+    // (Previously re-used the same version_number → unique_budget_version
+    // violations on the second transition.)
     const result = await db.query(
-      `UPDATE budgets SET status = $1 WHERE id = $2 AND tenant_slug = $3 RETURNING *`,
+      `UPDATE budgets
+       SET status = $1, version_number = version_number + 1
+       WHERE id = $2 AND tenant_slug = $3 RETURNING *`,
       [newStatus, budgetId.toString(), tenantSlug]
     );
 

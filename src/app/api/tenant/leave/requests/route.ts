@@ -162,6 +162,37 @@ export async function POST(request: NextRequest) {
       pendingDelta: days,
     });
 
+    // Converged flow: route the decision through the approvals engine
+    // (dept manager by default; people-matrix band can auto-approve).
+    let approvalId: string | undefined;
+    try {
+      const [emp] = await sql`
+        select department_id from admin_employees
+        where id = ${parsed.data.employeeId} and tenant_slug = ${context.tenantSlug} limit 1
+      `;
+      const { gateOrRun } = await import("@/lib/finance/gated-actions");
+      const outcome = await gateOrRun(
+        context.tenantSlug,
+        "leave_request",
+        {
+          leaveId: id,
+          employeeId: parsed.data.employeeId,
+          employeeName: employeeName ?? parsed.data.employeeId,
+          leaveType,
+          startDate: parsed.data.startDate,
+          endDate: parsed.data.endDate,
+          days,
+        },
+        { requestedBy: parsed.data.employeeId, departmentId: (emp as any)?.department_id ?? undefined }
+      );
+      if (outcome.status === "pending") {
+        approvalId = outcome.approvalId;
+        await sql`update admin_leave set approval_id = ${approvalId} where id = ${id}`;
+      }
+    } catch (gateErr) {
+      console.error("Leave approval gate failed:", gateErr);
+    }
+
     return NextResponse.json(
       {
         success: true,
@@ -173,7 +204,9 @@ export async function POST(request: NextRequest) {
           startDate: (row as any).start_date,
           endDate: (row as any).end_date,
           status: "Pending",
+          approvalId,
         },
+        pendingApproval: !!approvalId,
         message: "Leave request created successfully",
       },
       { status: 201 }

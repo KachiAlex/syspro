@@ -286,6 +286,7 @@ async function ensureHrTablesRun(sql: SqlClient = SQL) {
   await sql`alter table admin_leave add column if not exists reviewer_id text`;
   await sql`alter table admin_leave add column if not exists reviewer_comment text`;
   await sql`alter table admin_leave add column if not exists reviewed_at timestamptz`;
+  await sql`alter table admin_leave add column if not exists approval_id text`;
 
   // Payroll runs
   await sql`

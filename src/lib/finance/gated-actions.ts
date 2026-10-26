@@ -57,6 +57,12 @@ export interface GatedActionDef<P = any> {
   describe: (payload: P) => string;
   /** Override mode only: is this payload over the configured cap? */
   overLimit?: (payload: P, settings: Record<string, any>) => boolean;
+  /** Block mode only: when false, the ungated path does NOT call run — the
+   *  record stays in its pre-decision state for a legacy/manual decision
+   *  flow (e.g. requisitions/leave have always-visible pending rows). An
+   *  explicit auto-approve matrix band (approvers: []) still runs so the
+   *  document reaches its approved end-state. Default true. */
+  runUngated?: boolean;
   /** The real mutation — runs now (ungated/override/review) or on approval. */
   run: (tenantSlug: string, payload: P, ctx: GateCtx) => Promise<any>;
   /** Block mode: fired after the approval row is created — e.g. mark the
@@ -189,7 +195,15 @@ export async function gateOrRun<P extends Record<string, any>>(
     }
     return { status: "pending", approvalId: approval.id };
   }
-  return { status: "ran", result: await def.run(tenantSlug, payload, ctx) };
+  // Ungated: run now — except actions that deliberately defer to a legacy
+  // decision flow when no gate is configured (runUngated === false). An
+  // explicit auto-approve band (approvers: []) still runs so the document
+  // reaches its approved end-state.
+  const explicitAutoApprove = !!band && !engineGated;
+  if (explicitAutoApprove || def.runUngated !== false) {
+    return { status: "ran", result: await def.run(tenantSlug, payload, ctx) };
+  }
+  return { status: "ran", result: undefined };
 }
 
 // ---------------------------------------------------------------------------
@@ -336,4 +350,173 @@ registerGatedAction<Record<string, any>>("pos_refund", {
     return cap !== undefined && cap !== null && Number(p.estimatedRefund ?? 0) > Number(cap);
   },
   run: async (tenantSlug, p) => (await import("../pos/returns")).createPosReturn(tenantSlug, p as any),
+});
+
+// ---------------------------------------------------------------------------
+// Converged flows — bespoke approval mechanisms replaced by the shared engine.
+// ---------------------------------------------------------------------------
+
+/** Purchase requisitions: the row is created 'pending' and stays visible;
+ *  what the gate controls is the pending → approved transition. Ungated
+ *  (no rule/matrix/requisitionMinAmount) keeps the legacy manual
+ *  approve/reject PATCH; a configured chain decides via the inbox. */
+registerGatedAction<Record<string, any>>("purchase_requisition", {
+  domain: "spend",
+  mode: "block",
+  runUngated: false,
+  gated: (p, settings) => {
+    const min = (settings?.approvals as any)?.requisitionMinAmount;
+    return min !== undefined && min !== null && Number(p.totalAmount ?? 0) >= Number(min);
+  },
+  amount: (p) => Number(p.totalAmount ?? 0),
+  describe: (p) =>
+    `Purchase requisition ${p.requisitionNumber ?? p.requisitionId} — ${Number(p.totalAmount ?? 0).toLocaleString()}`,
+  run: async (tenantSlug, p) => {
+    const r = await db.query(
+      `update procurement_requisitions set status = 'approved', updated_at = now()
+       where id = $1 and tenant_slug = $2 and status = 'pending' returning id`,
+      [p.requisitionId, tenantSlug]
+    );
+    return r.rows[0];
+  },
+  rejected: async (tenantSlug, p) => {
+    await db.query(
+      `update procurement_requisitions set status = 'rejected', updated_at = now()
+       where id = $1 and tenant_slug = $2 and status = 'pending'`,
+      [p.requisitionId, tenantSlug]
+    );
+  },
+});
+
+/** Leave requests: every request needs a decision (existing semantic), so
+ *  always gate — the employee's department manager is step 0 by default and
+ *  a people-matrix band can elevate or auto-approve (e.g. approvers: [] for
+ *  short absences). Ungated keeps the legacy PATCH decision flow. */
+registerGatedAction<Record<string, any>>("leave_request", {
+  domain: "people",
+  mode: "block",
+  runUngated: false,
+  always: true,
+  amount: (p) => Number(p.days ?? 0),
+  describe: (p) =>
+    `Leave — ${p.employeeName ?? p.employeeId}, ${p.leaveType} ${p.startDate} → ${p.endDate} (${p.days}d)`,
+  run: async (tenantSlug, p, ctx) =>
+    (await import("../hr/db")).updateLeaveStatus(p.leaveId, tenantSlug, "approved", ctx.decidedBy ?? ctx.requestedBy),
+  rejected: async (tenantSlug, p, ctx) =>
+    (await import("../hr/db")).updateLeaveStatus(p.leaveId, tenantSlug, "rejected", ctx.decidedBy ?? ctx.requestedBy),
+});
+
+/** Invoice deletion — destructive; always routed unless a sales-matrix band
+ *  auto-approves. */
+registerGatedAction<Record<string, any>>("invoice_delete", {
+  domain: "sales",
+  mode: "block",
+  always: true,
+  amount: (p) => Number(p.total ?? 0),
+  describe: (p) =>
+    `Delete invoice ${p.invoiceNumber ?? p.invoiceId}${p.total ? ` — ${Number(p.total).toLocaleString()}` : ""}`,
+  run: async (tenantSlug, p) =>
+    (await import("./db")).deleteFinanceInvoice(p.invoiceId, tenantSlug),
+});
+
+/** Fiscal period close — posts the closing JE and locks the period. */
+registerGatedAction<Record<string, any>>("period_close", {
+  domain: "system",
+  mode: "block",
+  always: true,
+  amount: () => 0,
+  describe: (p) => `Close fiscal period ${p.periodName ?? p.periodId}`,
+  run: async (tenantSlug, p, ctx) =>
+    (await import("./gl")).closeFiscalPeriod(p.periodId, ctx.decidedBy ?? ctx.requestedBy),
+});
+
+/** Employee termination — the status transition waits for the chain. */
+registerGatedAction<Record<string, any>>("employee_termination", {
+  domain: "people",
+  mode: "block",
+  always: true,
+  amount: () => 0,
+  describe: (p) => `Terminate employee ${p.employeeName ?? p.employeeId}`,
+  run: async (tenantSlug, p, ctx) =>
+    (await import("../hr/db")).updateEmployee(p.employeeId, { status: "terminated" }, tenantSlug, ctx.decidedBy ?? ctx.requestedBy),
+});
+
+/** Employee deletion — erases history; always gated. */
+registerGatedAction<Record<string, any>>("employee_delete", {
+  domain: "people",
+  mode: "block",
+  always: true,
+  amount: () => 0,
+  describe: (p) => `Delete employee ${p.employeeName ?? p.employeeId}`,
+  run: async (tenantSlug, p, ctx) =>
+    (await import("../hr/db")).deleteEmployee(p.employeeId, tenantSlug, ctx.decidedBy ?? ctx.requestedBy),
+});
+
+/** Fixed-asset disposal/write-off — derecognizes the asset and posts the
+ *  gain/loss journal. Amount is the asset's net book value. */
+registerGatedAction<Record<string, any>>("asset_disposal", {
+  domain: "system",
+  mode: "block",
+  always: true,
+  amount: (p) => Number(p.netBookValue ?? 0),
+  describe: (p) =>
+    `Asset ${p.method} — ${p.assetName ?? p.assetId}${p.netBookValue ? ` (NBV ${Number(p.netBookValue).toLocaleString()})` : ""}`,
+  run: async (tenantSlug, p, ctx) =>
+    (await import("./fixed-assets")).disposeAsset({
+      tenantSlug,
+      assetId: p.assetId,
+      disposalDate: p.disposalDate,
+      method: p.method,
+      proceeds: p.proceeds !== undefined ? Number(p.proceeds) : undefined,
+      proceedsAccountCode: p.proceedsAccountCode,
+      userId: ctx.decidedBy ?? ctx.requestedBy,
+    }),
+});
+
+/** Stock transfer completion — goods only move when the transfer completes,
+ *  so that's the gated transition. Gates on value (qty × unit cost) against
+ *  settings.approvals.stockTransferMinAmount or an inventory-matrix band. */
+registerGatedAction<Record<string, any>>("stock_transfer_completion", {
+  domain: "inventory",
+  mode: "block",
+  gated: (p, settings) => {
+    const min = (settings?.approvals as any)?.stockTransferMinAmount;
+    return min !== undefined && min !== null && Number(p.value ?? 0) >= Number(min);
+  },
+  amount: (p) => Number(p.value ?? 0),
+  describe: (p) =>
+    `Stock transfer ${p.productSku ?? p.productId} ×${p.quantity} ${p.from ?? "?"} → ${p.to ?? "?"}${p.value ? ` — ${Number(p.value).toLocaleString()}` : ""}`,
+  run: async (tenantSlug, p) =>
+    (await import("../inventory/transfers")).completeStockTransfer(tenantSlug, p.transferId),
+});
+
+/** Budget approval — replaces the half-dead budget_approvals mechanism:
+ *  submission routes through the chain; approval flips DRAFT → APPROVED and
+ *  writes a budget_approvals audit row; rejection returns it to DRAFT. */
+registerGatedAction<Record<string, any>>("budget_approval", {
+  domain: "spend",
+  mode: "block",
+  always: true,
+  amount: (p) => Number(p.totalBudgetAmount ?? 0),
+  describe: (p) =>
+    `Budget approval — ${p.budgetName ?? p.budgetId} ${Number(p.totalBudgetAmount ?? 0).toLocaleString()}`,
+  run: async (tenantSlug, p, ctx) => {
+    const { changeBudgetStatus, createBudgetApproval } = await import("./budgets-db");
+    try {
+      const rec = await createBudgetApproval(BigInt(p.budgetId), tenantSlug, 1, "approvals_engine");
+      if ((rec as any)?.id) {
+        await db.query(
+          `update budget_approvals
+           set status = 'APPROVED', approver_id = $1, approver_name = $2, approved_at = now()
+           where id = $3`,
+          [ctx.decidedBy ?? ctx.requestedBy, ctx.decidedBy ?? ctx.requestedBy, (rec as any).id]
+        );
+      }
+    } catch (err) {
+      console.error("budget_approval audit row failed:", err);
+    }
+    return changeBudgetStatus(BigInt(p.budgetId), tenantSlug, "APPROVED");
+  },
+  rejected: async (tenantSlug, p) =>
+    (await import("./budgets-db")).changeBudgetStatus(BigInt(p.budgetId), tenantSlug, "DRAFT"),
 });

@@ -112,6 +112,24 @@ export async function POST(request: NextRequest) {
       returning *
     `) as any[];
 
+    // Route the approval decision through the shared engine when the tenant
+    // has a spend-matrix band, a matching rule, or requisitionMinAmount set.
+    // Ungated requisitions keep the manual approve/reject PATCH flow.
+    const { gateOrRun } = await import("@/lib/finance/gated-actions");
+    const outcome = await gateOrRun(
+      parsed.data.tenantSlug,
+      "purchase_requisition",
+      { requisitionId: id, requisitionNumber: reqNumber, totalAmount },
+      { requestedBy: parsed.data.requestedBy ?? _scope.user.id ?? "unknown" }
+    );
+    if (outcome.status === "pending") {
+      await sql`update procurement_requisitions set approval_id = ${outcome.approvalId} where id = ${id}`;
+      return NextResponse.json(
+        { success: true, data: { ...row, approval_id: outcome.approvalId }, pendingApproval: true },
+        { status: 202 }
+      );
+    }
+
     return NextResponse.json({ success: true, data: row }, { status: 201 });
   } catch (error) {
     console.error("Error creating requisition:", error);
@@ -135,20 +153,28 @@ export async function PATCH(request: NextRequest) {
     const sql = SQL;
     await ensureRequisitionTables(sql);
 
-    if (action === "approve") {
-      const [row] = (await sql`
-        update procurement_requisitions
-        set status = 'approved', updated_at = now()
-        where id = ${id} and tenant_slug = ${tenantSlug} and status = 'pending'
-        returning *
+    if (action === "approve" || action === "reject") {
+      // When the requisition is inside an approval workflow, the decision
+      // belongs to the chain — decide it from the approvals inbox.
+      const [req] = (await sql`
+        select approval_id from procurement_requisitions
+        where id = ${id} and tenant_slug = ${tenantSlug} limit 1
       `) as any[];
-      return NextResponse.json({ success: !!row, data: row });
-    }
-
-    if (action === "reject") {
+      if (req?.approval_id) {
+        const [ap] = (await sql`
+          select status from approvals where id = ${req.approval_id} limit 1
+        `) as any[];
+        if (ap?.status === "pending") {
+          return NextResponse.json(
+            { success: false, error: "This requisition is in the approval workflow — decide it from the approvals inbox" },
+            { status: 409 }
+          );
+        }
+      }
+      const next = action === "approve" ? "approved" : "rejected";
       const [row] = (await sql`
         update procurement_requisitions
-        set status = 'rejected', updated_at = now()
+        set status = ${next}, updated_at = now()
         where id = ${id} and tenant_slug = ${tenantSlug} and status = 'pending'
         returning *
       `) as any[];
@@ -178,5 +204,6 @@ async function ensureRequisitionTables(sql: any) {
       updated_at timestamptz default now()
     )
   `;
+  await sql`alter table if exists procurement_requisitions add column if not exists approval_id text`;
   await sql`create index if not exists procurement_requisitions_tenant_idx on procurement_requisitions (tenant_slug, status)`;
 }

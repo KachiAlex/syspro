@@ -43,7 +43,7 @@ export async function PATCH(request: NextRequest, context: any) {
     const approvedBy = (approver as any)?.name ?? ctx.userId;
 
     const [existing] = await sql`
-      select status, employee_id, employee_name, leave_type, start_date, end_date
+      select status, employee_id, employee_name, leave_type, start_date, end_date, approval_id
       from admin_leave
       where id = ${id} and tenant_slug = ${ctx.tenantSlug}
       limit 1
@@ -52,6 +52,19 @@ export async function PATCH(request: NextRequest, context: any) {
       return errorResponse("Leave request not found", 404);
     }
     const prev = existing as any;
+
+    // Requests inside an approval workflow are decided by the chain.
+    if (prev.approval_id && ["approved", "rejected"].includes(status)) {
+      const [ap] = await sql`
+        select status from approvals where id = ${prev.approval_id} limit 1
+      `;
+      if ((ap as any)?.status === "pending") {
+        return errorResponse(
+          "This leave request is in the approval workflow — decide it from the approvals inbox",
+          409
+        );
+      }
+    }
 
     const [row] = await sql`
       update admin_leave

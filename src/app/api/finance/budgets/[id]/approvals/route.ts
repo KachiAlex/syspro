@@ -62,6 +62,60 @@ export async function POST(
       tenantSlug,
     });
 
+    // Converged flow: budget approval routes through the shared approvals
+    // engine (spend domain). approve=true submits the budget to the chain;
+    // approval flips it to APPROVED, rejection returns it to DRAFT.
+    if (validated.approve) {
+      const { getBudget } = await import("@/lib/finance/budgets-db");
+      const budget = await getBudget(validated.budgetId, tenantSlug);
+      if (!budget) {
+        return NextResponse.json({ error: "Budget not found" }, { status: 404 });
+      }
+      const { gateOrRun } = await import("@/lib/finance/gated-actions");
+      const outcome = await gateOrRun(
+        tenantSlug,
+        "budget_approval",
+        {
+          budgetId: validated.budgetId.toString(),
+          budgetName: (budget as any).name,
+          totalBudgetAmount: (budget as any).totalBudgetAmount,
+        },
+        { requestedBy: validated.approverId }
+      );
+      if (outcome.status === "pending") {
+        return NextResponse.json(
+          { status: "PENDING", pendingApproval: true, approvalId: outcome.approvalId },
+          { status: 202 }
+        );
+      }
+      if (outcome.status === "denied") {
+        return NextResponse.json({ error: outcome.error }, { status: 403 });
+      }
+      return NextResponse.json(outcome.result, { status: 201 });
+    }
+
+    // Rejection: route through the engine when an open approval exists,
+    // else fall back to the legacy budget_approvals row update.
+    const { db } = await import("@/lib/sql-client");
+    const pending = (await db.query(
+      `select id from approvals
+       where tenant_slug = $1 and entity_type = 'gated_action' and status = 'pending'
+         and metadata->'payload'->>'budgetId' = $2
+       limit 1`,
+      [tenantSlug, validated.budgetId.toString()]
+    )).rows[0];
+    if (pending) {
+      const { processApprovalDecision } = await import("@/lib/finance/approvals");
+      const decided = await processApprovalDecision({
+        approvalId: pending.id,
+        userId: _scope.user.id,
+        userRole: (_scope.user as any).role,
+        decision: "rejected",
+        comments: validated.comment,
+      });
+      return NextResponse.json({ status: "REJECTED", approval: decided }, { status: 200 });
+    }
+
     const approval = await approveBudget(validated);
 
     return NextResponse.json(approval, { status: 201 });

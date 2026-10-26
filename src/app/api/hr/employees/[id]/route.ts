@@ -131,14 +131,42 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
 
-    // A salary-only request leaves updateData empty — skip the update call.
+    // Termination is an authority decision — route it through the approvals
+    // engine (people domain). Other fields still apply immediately.
+    let terminationPending: { approvalId: string } | null = null;
+    if (updateData.status === "terminated" && parsed.data.tenantSlug) {
+      delete updateData.status;
+      const { gateOrRun } = await import("@/lib/finance/gated-actions");
+      const [empRow] = await (await import("@/lib/sql-client")).sql`
+        select name, department_id from admin_employees
+        where id = ${id} and tenant_slug = ${parsed.data.tenantSlug} limit 1
+      ` as any[];
+      const outcome = await gateOrRun(
+        parsed.data.tenantSlug,
+        "employee_termination",
+        { employeeId: id, employeeName: empRow?.name },
+        { requestedBy: auth.user.id, departmentId: empRow?.department_id ?? undefined }
+      );
+      if (outcome.status === "pending") {
+        terminationPending = { approvalId: outcome.approvalId };
+      } else if (outcome.status === "denied") {
+        return NextResponse.json({ error: outcome.error }, { status: 403 });
+      }
+    }
+
+    // A salary/termination-only request leaves updateData empty — skip the
+    // update call and refetch.
     const employee = Object.keys(updateData).length
       ? await updateEmployee(id, updateData, parsed.data.tenantSlug, auth.user.id)
       : await getEmployeeById(id, parsed.data.tenantSlug!);
     if (!employee) {
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
     }
-    return NextResponse.json({ employee, salaryPendingApproval: salaryPending });
+    return NextResponse.json({
+      employee,
+      salaryPendingApproval: salaryPending,
+      terminationPendingApproval: terminationPending,
+    });
   } catch (error: any) {
     console.error("Employee update failed", error);
     const msg = error?.message || "";
@@ -174,7 +202,21 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         { status: 409 }
       );
     }
-    await deleteEmployee(id, tenantSlug, auth.user.id);
+    // Deleting an employee erases history — always routed through the
+    // approvals engine unless a people-matrix band auto-approves.
+    const { gateOrRun } = await import("@/lib/finance/gated-actions");
+    const outcome = await gateOrRun(
+      tenantSlug,
+      "employee_delete",
+      { employeeId: id },
+      { requestedBy: auth.user.id }
+    );
+    if (outcome.status === "pending") {
+      return NextResponse.json({ success: true, pendingApproval: true, approvalId: outcome.approvalId }, { status: 202 });
+    }
+    if (outcome.status === "denied") {
+      return NextResponse.json({ error: outcome.error }, { status: 403 });
+    }
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Employee delete failed", error);

@@ -310,6 +310,9 @@ async function ensureGLTablesRun() {
     )`;
     await sql`alter table if exists fiscal_periods add column if not exists allow_posting boolean default true`;
     await sql`alter table if exists fiscal_periods add column if not exists closed_at timestamptz`;
+    await sql`alter table if exists fiscal_periods add column if not exists closed_by text`;
+    await sql`alter table if exists fiscal_periods add column if not exists locked_at timestamptz`;
+    await sql`alter table if exists fiscal_periods add column if not exists locked_by text`;
 
     await sql`create table if not exists account_balances (
       id uuid primary key default gen_random_uuid(),

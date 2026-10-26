@@ -56,6 +56,9 @@ export interface ApprovalRule {
     projectId?: string;
     vendorId?: string;
     categoryId?: string;
+    /** Gated-action rules only: scope the rule to one registered action
+     *  (metadata.action). Without it a gated_action rule matches all actions. */
+    action?: string;
     slaHours?: number;
     slaAction?: "remind" | "escalate";
   };
@@ -276,6 +279,9 @@ export async function findMatchingRule(
 
 function matchesRule(rule: ApprovalRule, entityData: Record<string, any>): boolean {
   const { conditions } = rule;
+
+  // Action-scoped rules only fire for the registered gated action they name.
+  if (conditions.action && entityData.action !== conditions.action) return false;
 
   switch (rule.ruleType) {
     case "amount_based":
@@ -551,6 +557,16 @@ export async function initiateApproval(payload: {
         step2Amount: isExpense ? settings.expenseStep2Amount : settings.step2Amount,
         step3Amount: isExpense ? settings.expenseStep3Amount : settings.step3Amount,
       });
+      // Gated actions without a department context (period close, invoice
+      // delete, asset disposal, …) can't resolve a dept_manager step —
+      // substitute finance-manager authority as the sensible default floor.
+      if (payload.entityType === "gated_action" && !payload.entityData.departmentId) {
+        approverChain = approverChain.map((s) =>
+          s.userId === "role:dept_manager"
+            ? { ...s, userId: "role:finance_manager", role: "finance_manager" }
+            : s
+        );
+      }
     }
   }
 

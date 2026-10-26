@@ -172,41 +172,45 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: `Transfer is already ${transfer.status}` }, { status: 409 });
     }
 
-    const next = action === "complete" ? "completed" : "cancelled";
-    const updated = (await db.query(
-      `update inventory_stock_transfers set status = $1, completed_at = now() where id = $2 and tenant_slug = $3 returning *`,
-      [next, id, tenantSlug]
-    )).rows[0];
-
-    if (next === "completed") {
-      if (transfer.from_warehouse_id && transfer.to_warehouse_id) {
-        // Warehouse-aware path: signed transfer movements + per-warehouse
-        // balances. No GL effect — inventory value is unchanged.
-        const product = (await db.query(
-          `select sku, name, unit_cost from inventory_products where id = $1 and tenant_slug = $2`,
-          [transfer.product_id, tenantSlug]
-        )).rows[0];
-        const { transferStock } = await import("@/lib/inventory/warehouses");
-        await transferStock({
-          tenantSlug,
-          productSku: transfer.product_sku ?? product?.sku ?? String(transfer.product_id),
-          productName: product?.name,
+    if (action === "complete") {
+      // Goods only move at completion — gate it on value against
+      // settings.approvals.stockTransferMinAmount or an inventory-matrix band.
+      const product = (await db.query(
+        `select sku, name, unit_cost from inventory_products where id = $1 and tenant_slug = $2`,
+        [transfer.product_id, tenantSlug]
+      )).rows[0];
+      const value = Number(transfer.quantity) * Number(product?.unit_cost ?? 0);
+      const { gateOrRun } = await import("@/lib/finance/gated-actions");
+      const outcome = await gateOrRun(
+        tenantSlug,
+        "stock_transfer_completion",
+        {
+          transferId: id,
+          productId: transfer.product_id,
+          productSku: transfer.product_sku ?? product?.sku,
           quantity: Number(transfer.quantity),
-          unitCost: Number(product?.unit_cost ?? 0),
-          fromWarehouseId: transfer.from_warehouse_id,
-          toWarehouseId: transfer.to_warehouse_id,
-          referenceId: transfer.id,
-          serialNos: Array.isArray(transfer.serial_nos) ? transfer.serial_nos : undefined,
-          lotNo: transfer.lot_no ?? undefined,
-        });
-      } else {
-        // Legacy free-text location path
-        await db.query(
-          `update inventory_products set location = $1 where id = $2 and tenant_slug = $3 and location = $4`,
-          [transfer.to_location, transfer.product_id, tenantSlug, transfer.from_location]
+          value,
+          from: transfer.from_warehouse_id ?? transfer.from_location,
+          to: transfer.to_warehouse_id ?? transfer.to_location,
+        },
+        { requestedBy: _scope.user.id ?? "unknown" }
+      );
+      if (outcome.status === "pending") {
+        return NextResponse.json(
+          { transfer, pendingApproval: true, approvalId: outcome.approvalId },
+          { status: 202 }
         );
       }
+      if (outcome.status === "denied") {
+        return NextResponse.json({ error: outcome.error }, { status: 403 });
+      }
+      return NextResponse.json({ transfer: outcome.result });
     }
+
+    const updated = (await db.query(
+      `update inventory_stock_transfers set status = 'cancelled', completed_at = now() where id = $1 and tenant_slug = $2 returning *`,
+      [id, tenantSlug]
+    )).rows[0];
 
     return NextResponse.json({ transfer: updated });
   } catch (error) {

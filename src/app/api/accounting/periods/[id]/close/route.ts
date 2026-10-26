@@ -1,6 +1,5 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { closeFiscalPeriod } from "@/lib/finance/gl";
 import { requireModuleAccess } from "@/lib/api-auth";
 import { getCurrentUser } from "@/lib/auth-helpers";
 
@@ -19,10 +18,36 @@ export async function POST(
 
   const params = await context.params;
   const user = getCurrentUser(request);
+  const tenantSlug = scope.user.tenantSlug ?? user?.tenantSlug ?? "";
+  if (!tenantSlug) {
+    return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });
+  }
 
   try {
-    const result = await closeFiscalPeriod(params.id, user?.id ?? undefined);
-    return NextResponse.json({ success: true, data: result });
+    // Closing a fiscal period posts the closing JE and locks the period —
+    // an authority decision, always routed through the approvals engine.
+    const { db } = await import("@/lib/sql-client");
+    const period = (await db.query(
+      `select name from fiscal_periods where id = $1 limit 1`,
+      [params.id]
+    )).rows[0];
+    const { gateOrRun } = await import("@/lib/finance/gated-actions");
+    const outcome = await gateOrRun(
+      tenantSlug,
+      "period_close",
+      { periodId: params.id, periodName: period?.name },
+      { requestedBy: user?.id ?? scope.user.id ?? "unknown" }
+    );
+    if (outcome.status === "pending") {
+      return NextResponse.json(
+        { success: true, pendingApproval: true, approvalId: outcome.approvalId },
+        { status: 202 }
+      );
+    }
+    if (outcome.status === "denied") {
+      return NextResponse.json({ error: outcome.error }, { status: 403 });
+    }
+    return NextResponse.json({ success: true, data: outcome.result });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const status = message.includes("not found")
