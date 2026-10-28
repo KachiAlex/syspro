@@ -672,3 +672,32 @@ registerGatedAction<Record<string, any>>("landed_cost", {
       createdBy: ctx.decidedBy ?? ctx.requestedBy,
     } as any),
 });
+
+/** BOM create/update — the recipe that drives material consumption and
+ *  production costing. Opt-in master-data control: ungated unless a
+ *  master_data band or action-scoped rule exists (like coa_change). */
+registerGatedAction<Record<string, any>>("bom_change", {
+  domain: "master_data",
+  mode: "block",
+  amount: () => 0,
+  describe: (p) => `BOM ${p.op === "update" ? "update" : "create"} — ${p.productSku ?? p.bomId ?? ""}`.trim(),
+  run: async (tenantSlug, p) => {
+    const { createBom, updateBom } = await import("../manufacturing/bom");
+    if (p.op === "update") {
+      return updateBom(p.bomId, tenantSlug, p.fields as any);
+    }
+    return createBom({ ...p, tenantSlug } as any);
+  },
+});
+
+/** Work-order completion — posts WIP JE, consumes materials, receipts FG.
+ *  Opt-in: shop floors that want sign-off on completions add an
+ *  inventory band or a rule scoped to this action. */
+registerGatedAction<Record<string, any>>("work_order_complete", {
+  domain: "inventory",
+  mode: "block",
+  amount: (p) => Number(p.quantity ?? 0) * Number(p.unitCost ?? 0),
+  describe: (p) => `Complete work order — ${p.orderNumber ?? p.workOrderId ?? ""}`.trim(),
+  run: async (tenantSlug, p) =>
+    (await import("../manufacturing/work-orders")).completeWorkOrder(p.workOrderId, tenantSlug, p.opts),
+});

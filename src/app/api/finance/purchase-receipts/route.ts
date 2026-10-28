@@ -21,6 +21,7 @@ const itemSchema = z.object({
   receivedQty: z.number().positive(),
   rejectedQty: z.number().optional(),
   unitPrice: z.number().optional(),
+  uom: z.string().optional(),
 });
 
 const postSchema = z.object({

@@ -40,6 +40,7 @@ export async function ensureDeliveryNoteTables(sql: any = SQL) {
       product_id text,
       sku text,
       description text,
+      uom text,
       ordered_qty numeric not null default 0,
       delivered_qty numeric not null default 0,
       rejected_qty numeric not null default 0,
@@ -50,6 +51,7 @@ export async function ensureDeliveryNoteTables(sql: any = SQL) {
   await sql`create index if not exists dni_note_idx on delivery_note_items (note_id)`;
   await sql`create index if not exists delivery_notes_tenant_idx on delivery_notes (tenant_slug, status)`;
   await sql`alter table if exists delivery_note_items add column if not exists so_line_key text`;
+  await sql`alter table if exists delivery_note_items add column if not exists uom text`;
 }
 
 /** Delivered-so-far per SO line key (sku or description), across all
@@ -136,12 +138,12 @@ export async function createDeliveryNote(input: {
     await sql`
       insert into delivery_note_items (
         id, tenant_slug, note_id, so_line_key, product_id, sku, description,
-        ordered_qty, delivered_qty, rejected_qty, unit_price
+        uom, ordered_qty, delivered_qty, rejected_qty, unit_price
       ) values (
         ${`dni_${randomUUID().slice(0, 12)}`}, ${input.tenantSlug}, ${id},
         ${line.soLineKey ?? line.sku ?? line.description ?? null}, ${line.productId ?? null},
-        ${line.sku ?? null}, ${line.description ?? null}, 0, ${line.deliveredQty},
-        ${line.rejectedQty ?? 0}, ${line.unitPrice ?? 0}
+        ${line.sku ?? null}, ${line.description ?? null}, ${(line as any).uom ?? null}, 0,
+        ${line.deliveredQty}, ${line.rejectedQty ?? 0}, ${line.unitPrice ?? 0}
       )
     `;
   }
@@ -164,12 +166,25 @@ export async function deliverDeliveryNote(tenantSlug: string, noteId: string) {
 
   for (const item of items) {
     try {
+      const sku = item.sku ?? item.product_id ?? item.description ?? "unknown";
+      let stockQty = Number(item.delivered_qty);
+      if (item.uom) {
+        const [prod] = (await sql`
+          select stock_uom from inventory_products
+          where tenant_slug = ${tenantSlug} and sku = ${sku} limit 1
+        `) as any[];
+        const stockUom = prod?.stock_uom ?? "Unit";
+        if (item.uom !== stockUom) {
+          const { convertUom } = await import("../inventory/item-master");
+          stockQty = await convertUom(tenantSlug, stockQty, item.uom, stockUom);
+        }
+      }
       const { recordStockMovement } = await import("../inventory/stock-movements");
       await recordStockMovement(tenantSlug, {
-        productSku: item.sku ?? item.product_id ?? item.description ?? "unknown",
+        productSku: sku,
         productName: item.description ?? null,
         movementType: "out",
-        quantity: Number(item.delivered_qty),
+        quantity: stockQty,
         unitCost: Number(item.unit_price ?? 0),
         referenceType: "delivery_note",
         referenceId: noteId,

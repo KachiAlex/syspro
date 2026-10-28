@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { gateOrRun } from "@/lib/finance/gated-actions";
 import {
   createBom,
   listBoms,
@@ -97,8 +98,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Invalid parameters", details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const bom = await createBom(parsed.data);
-    return NextResponse.json({ success: true, data: bom }, { status: 201 });
+    // BOM drives material consumption + costing — opt-in master-data gate.
+    const gated = await gateOrRun(parsed.data.tenantSlug, "bom_change",
+      { op: "create", ...parsed.data },
+      { requestedBy: (request.headers.get("x-user-id") ?? "unknown") });
+    if (gated.status === "pending") {
+      return NextResponse.json({ success: true, pendingApproval: true,
+        approvalId: (gated as any).approvalId }, { status: 202 });
+    }
+    if (gated.status === "denied") {
+      return NextResponse.json({ success: false, error: (gated as any).error }, { status: 403 });
+    }
+    return NextResponse.json({ success: true, data: (gated as any).result }, { status: 201 });
   } catch (error) {
     console.error("Error in BOM POST:", error);
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
@@ -144,8 +155,17 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Invalid parameters", details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const updated = await updateBom(id, tenantSlug, parsed.data);
-    return NextResponse.json({ success: true, data: updated });
+    const gated = await gateOrRun(tenantSlug, "bom_change",
+      { op: "update", bomId: id, fields: parsed.data },
+      { requestedBy: (request.headers.get("x-user-id") ?? "unknown") });
+    if (gated.status === "pending") {
+      return NextResponse.json({ success: true, pendingApproval: true,
+        approvalId: (gated as any).approvalId }, { status: 202 });
+    }
+    if (gated.status === "denied") {
+      return NextResponse.json({ success: false, error: (gated as any).error }, { status: 403 });
+    }
+    return NextResponse.json({ success: true, data: (gated as any).result });
   } catch (error) {
     console.error("Error in BOM PATCH:", error);
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });

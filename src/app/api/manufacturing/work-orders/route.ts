@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { gateOrRun } from "@/lib/finance/gated-actions";
 import {
   createWorkOrder,
   listWorkOrders,
@@ -120,12 +121,26 @@ export async function PATCH(request: NextRequest) {
 
     if (action === "complete") {
       try {
-        const wo = await completeWorkOrder(id, tenantSlug, {
-          serialNos: Array.isArray(body.serialNos) ? body.serialNos : undefined,
-          lotNo: typeof body.lotNo === "string" ? body.lotNo : undefined,
-          expiryDate: typeof body.expiryDate === "string" ? body.expiryDate : undefined,
-        });
-        return NextResponse.json({ success: !!wo, data: wo });
+        // Opt-in gate — completing posts the WIP JE + FG receipt.
+        const gated = await gateOrRun(tenantSlug, "work_order_complete", {
+          workOrderId: id,
+          orderNumber: body.orderNumber,
+          quantity: body.quantity,
+          unitCost: body.unitCost,
+          opts: {
+            serialNos: Array.isArray(body.serialNos) ? body.serialNos : undefined,
+            lotNo: typeof body.lotNo === "string" ? body.lotNo : undefined,
+            expiryDate: typeof body.expiryDate === "string" ? body.expiryDate : undefined,
+          },
+        }, { requestedBy: (request.headers.get("x-user-id") ?? "unknown") });
+        if (gated.status === "pending") {
+          return NextResponse.json({ success: true, pendingApproval: true,
+            approvalId: (gated as any).approvalId }, { status: 202 });
+        }
+        if (gated.status === "denied") {
+          return NextResponse.json({ success: false, error: (gated as any).error }, { status: 403 });
+        }
+        return NextResponse.json({ success: !!(gated as any).result, data: (gated as any).result });
       } catch (err) {
         return NextResponse.json({ success: false, error: err instanceof Error ? err.message : "Completion failed" }, { status: 400 });
       }

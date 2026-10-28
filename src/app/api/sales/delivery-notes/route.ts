@@ -29,6 +29,7 @@ const postSchema = z.object({
     deliveredQty: z.number().positive(),
     rejectedQty: z.number().optional(),
     unitPrice: z.number().optional(),
+    uom: z.string().optional(),
   })).min(1),
 });
 

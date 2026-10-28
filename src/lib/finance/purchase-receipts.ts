@@ -39,6 +39,7 @@ export async function ensurePurchaseReceiptTables(sql: any = SQL) {
       product_id text,
       sku text,
       description text,
+      uom text,
       ordered_qty numeric not null default 0,
       received_qty numeric not null default 0,
       rejected_qty numeric not null default 0,
@@ -47,6 +48,7 @@ export async function ensurePurchaseReceiptTables(sql: any = SQL) {
     )
   `;
   await sql`create index if not exists pri_receipt_idx on purchase_receipt_items (receipt_id)`;
+  await sql`alter table if exists purchase_receipt_items add column if not exists uom text`;
   await sql`create index if not exists purchase_receipts_tenant_idx on purchase_receipts (tenant_slug, status)`;
 }
 
@@ -59,6 +61,7 @@ export interface ReceiptItemInput {
   receivedQty: number;
   rejectedQty?: number;
   unitPrice?: number;
+  uom?: string;
 }
 
 export async function createPurchaseReceipt(input: {
@@ -121,12 +124,12 @@ export async function createPurchaseReceipt(input: {
     await sql`
       insert into purchase_receipt_items (
         id, tenant_slug, receipt_id, po_item_id, product_id, sku, description,
-        ordered_qty, received_qty, rejected_qty, unit_price
+        uom, ordered_qty, received_qty, rejected_qty, unit_price
       ) values (
         ${`pri_${randomUUID().slice(0, 12)}`}, ${input.tenantSlug}, ${id},
         ${item.poItemId ?? null}, ${item.productId ?? null}, ${item.sku ?? null},
-        ${item.description ?? null}, ${item.orderedQty ?? 0}, ${item.receivedQty},
-        ${item.rejectedQty ?? 0}, ${item.unitPrice ?? 0}
+        ${item.description ?? null}, ${item.uom ?? null}, ${item.orderedQty ?? 0},
+        ${item.receivedQty}, ${item.rejectedQty ?? 0}, ${item.unitPrice ?? 0}
       )
     `;
   }
@@ -157,20 +160,48 @@ export async function receivePurchaseReceipt(tenantSlug: string, receiptId: stri
         where id = ${item.po_item_id}
       `;
     }
-    // Stock-in — the goods physically entered the warehouse.
+    // Stock-in — goods physically entered the warehouse. The stock ledger
+    // posts in the product's stock_uom; the receipt line may arrive in any
+    // declared UoM (buy drums, stock liters) — convertUom walks the chain.
     try {
+      const sku = item.sku ?? item.product_id ?? item.description ?? "unknown";
+      let prod: any = null;
+      try {
+        [prod] = (await sql`
+          select sku, stock_uom, current_stock, unit_cost from inventory_products
+          where tenant_slug = ${tenantSlug} and sku = ${sku} limit 1
+        `) as any[];
+      } catch { /* stock_uom column may not exist yet */ }
+      let stockQty = Number(item.received_qty);
+      const stockUom = prod?.stock_uom ?? "Unit";
+      if (item.uom && item.uom !== stockUom) {
+        const { convertUom } = await import("../inventory/item-master");
+        stockQty = await convertUom(tenantSlug, stockQty, item.uom, stockUom);
+      }
       const { recordStockMovement } = await import("../inventory/stock-movements");
       await recordStockMovement(tenantSlug, {
-        productSku: item.sku ?? item.product_id ?? item.description ?? "unknown",
+        productSku: sku,
         productName: item.description ?? null,
         movementType: "in",
-        quantity: Number(item.received_qty),
+        quantity: stockQty,
         unitCost: Number(item.unit_price ?? 0),
         referenceType: "purchase_receipt",
         referenceId: receiptId,
         warehouseId: receipt.warehouse_id ?? undefined,
         notes: `Purchase receipt ${receipt.receipt_number}`,
       } as any);
+      // Moving-average unit cost — receipts are what goods actually cost.
+      // Landed cost folds on top of this later.
+      if (prod && Number(prod.current_stock) >= 0 && stockQty > 0) {
+        const newCost =
+          (Number(prod.current_stock) * Number(prod.unit_cost ?? 0) +
+           stockQty * Number(item.unit_price ?? 0)) /
+          (Number(prod.current_stock) + stockQty);
+        await sql`
+          update inventory_products set unit_cost = ${newCost}
+          where tenant_slug = ${tenantSlug} and sku = ${sku}
+        `;
+      }
     } catch (err) {
       console.error(`Receipt stock-in failed for line ${item.id}:`, err);
     }

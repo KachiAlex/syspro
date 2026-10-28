@@ -666,4 +666,53 @@ describe.skipIf(!HAS_DB)("converged approval flows", () => {
       [JSON.stringify({ approvals: {} }), TENANT]
     );
   }, T);
+
+  it("uom: receipt posts stock in the product stock_uom + updates moving-average cost", async () => {
+    // Conversion chain: Case → Unit ×12
+    const { upsertUomConversion, ensureItemMasterTables } = await import("../lib/inventory/item-master");
+    await ensureItemMasterTables();
+    const { db: dbx } = await import("../lib/sql-client");
+    await dbx.query(
+      `insert into inventory_uoms (tenant_slug, name) values ($1,'Case'),($1,'Unit') on conflict do nothing`,
+      [TENANT]
+    ).catch(() => {});
+    try { await upsertUomConversion(TENANT, "Case", "Unit", 12); } catch { /* exists */ }
+
+    const sku = `UOM-${randomUUID().slice(0, 6)}`;
+    try {
+      await db.query(
+        `insert into inventory_products (id, tenant_slug, sku, name, current_stock, unit_cost, location, category, stock_uom)
+         values ($1,$2,$3,'Oil',10,100,'Main','General','Unit')`,
+        [`ip_${randomUUID().slice(0, 8)}`, TENANT, sku]
+      );
+    } catch {
+      await db.query(
+        `insert into inventory_products (id, tenant_slug, sku, name, current_stock, unit_cost, location, stock_uom)
+         values ($1,$2,$3,'Oil',10,100,'Main','Unit')`,
+        [`ip_${randomUUID().slice(0, 8)}`, TENANT, sku]
+      );
+    }
+
+    // Receive 2 Cases (= 24 Units) at ₦120/case → stock-in 24 units;
+    // unit cost: (10×100 + 24×10)/(10+24)... unitPrice is per RECEIPT uom —
+    // cost per stock unit = 120/12 = 10 → MA = (10×100 + 24×10)/34 = 36.47
+    const { createPurchaseReceipt, receivePurchaseReceipt } = await import("../lib/finance/purchase-receipts");
+    const r = await createPurchaseReceipt({
+      tenantSlug: TENANT, receivedDate: "2026-10-22",
+      items: [{ sku, description: "Oil", receivedQty: 2, unitPrice: 10, uom: "Case" }],
+    });
+    await receivePurchaseReceipt(TENANT, r.id);
+
+    const mv = (await db.query(
+      `select quantity, product_sku from stock_movements
+       where tenant_slug = $1 and reference_id = $2`, [TENANT, r.id]
+    )).rows[0];
+    expect(Number(mv.quantity)).toBe(24);
+
+    const prod = (await db.query(
+      `select unit_cost from inventory_products where tenant_slug = $1 and sku = $2`, [TENANT, sku]
+    )).rows[0];
+    // MA over stock qty: (10×100 + 24×10) / 34 = 36.47
+    expect(Number(prod.unit_cost)).toBeCloseTo(36.47, 2);
+  }, T);
 });
