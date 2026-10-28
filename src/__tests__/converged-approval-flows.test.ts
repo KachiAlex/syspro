@@ -602,4 +602,68 @@ describe.skipIf(!HAS_DB)("converged approval flows", () => {
     expect(Number(rows[0].paid_amount)).toBeCloseTo(30000.3, 2);
     expect(Number(rows[1].paid_amount)).toBeCloseTo(9999.7, 2);
   }, T);
+
+  it("landed_cost: ungated posts + folds unit cost; gated defers voucher to the chain", async () => {
+    // Ungated path — TENANT has no spend-domain config
+    const { createLandedCostVoucher } = await import("../lib/inventory/landed-cost");
+    const sku = `LCV-${randomUUID().slice(0, 6)}`;
+    try {
+      await db.query(
+        `insert into inventory_products (id, tenant_slug, sku, name, current_stock, unit_cost, location, category)
+         values ($1,$2,$3,'LC Item',10,5000,'Main','General')`,
+        [`ip_${randomUUID().slice(0, 8)}`, TENANT, sku]
+      );
+    } catch {
+      await db.query(
+        `insert into inventory_products (id, tenant_slug, sku, name, current_stock, unit_cost, location)
+         values ($1,$2,$3,'LC Item',10,5000,'Main')`,
+        [`ip_${randomUUID().slice(0, 8)}`, TENANT, sku]
+      );
+    }
+
+    const { gateOrRun } = await import("../lib/finance/gated-actions");
+    const ran = await gateOrRun(TENANT, "landed_cost", {
+      referenceId: "GRN-X", chargeType: "freight", totalAmount: 5000,
+      items: [{ sku, quantity: 10, unitCost: 5000 }],
+    }, { requestedBy: "tester" });
+    expect(ran.status).toBe("ran");
+
+    // ₦5,000 over 10 units → +₦500/unit moving average
+    const prod = (await db.query(
+      `select unit_cost from inventory_products where tenant_slug = $1 and sku = $2`, [TENANT, sku]
+    )).rows[0];
+    expect(Number(prod.unit_cost)).toBeCloseTo(5500, 2);
+
+    // Gated path — give TENANT a spend-domain matrix band (last test in
+    // the file, so mutating its settings can't affect the others).
+    await db.query(
+      `update tenants set settings = $1::jsonb where slug = $2`,
+      [JSON.stringify({ approvals: { authorityMatrix: {
+        spend: [{ upTo: null, approvers: ["role:finance_manager"] }],
+      }}}), TENANT]
+    );
+    const sku2 = `LCV-${randomUUID().slice(0, 6)}`;
+    const pend = await gateOrRun(TENANT, "landed_cost", {
+      referenceId: "GRN-Y", chargeType: "insurance", totalAmount: 2000,
+      items: [{ sku: sku2, quantity: 5, unitCost: 1000 }],
+    }, { requestedBy: "requester" });
+    expect(pend.status).toBe("pending");
+    // Voucher must NOT exist until approval
+    let v = (await db.query(
+      `select count(*)::int as c from landed_cost_vouchers where tenant_slug = $1 and reference_id = 'GRN-Y'`, [TENANT]
+    )).rows[0];
+    expect(v.c).toBe(0);
+    await decideToTerminal((pend as any).approvalId);
+    v = (await db.query(
+      `select count(*)::int as c from landed_cost_vouchers where tenant_slug = $1 and reference_id = 'GRN-Y'`, [TENANT]
+    )).rows[0];
+    expect(v.c).toBe(1);
+
+    // Restore ungated settings so a suite re-run stays deterministic
+    // (beforeAll inserts on conflict-do-nothing, it doesn't reset).
+    await db.query(
+      `update tenants set settings = $1::jsonb where slug = $2`,
+      [JSON.stringify({ approvals: {} }), TENANT]
+    );
+  }, T);
 });

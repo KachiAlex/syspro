@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createLandedCostVoucher, listLandedCostVouchers } from "@/lib/inventory/landed-cost";
+import { gateOrRun } from "@/lib/finance/gated-actions";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { requireModuleAccess } from "@/lib/api-auth";
 
@@ -42,8 +43,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid parameters", details: parsed.error.flatten() }, { status: 400 });
   }
   try {
-    const voucher = await createLandedCostVoucher(context.tenantSlug, parsed.data);
-    return NextResponse.json({ voucher }, { status: 201 });
+    // Capitalizing charges writes unit costs AND a journal — route through
+    // the maker-checker registry; ungated posts immediately as before.
+    const gated = await gateOrRun(context.tenantSlug, "landed_cost", {
+      ...parsed.data,
+      createdBy: context.userId ?? "unknown",
+    }, { requestedBy: context.userId ?? "unknown" });
+    if (gated.status === "pending") {
+      return NextResponse.json({
+        approvalId: (gated as any).approvalId,
+        pendingApproval: true,
+      }, { status: 202 });
+    }
+    if (gated.status === "denied") {
+      return NextResponse.json({ error: (gated as any).error ?? "Denied" }, { status: 403 });
+    }
+    return NextResponse.json({ voucher: (gated as any).result }, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 422 });
   }

@@ -657,3 +657,18 @@ registerGatedAction<Record<string, any>>("delivery_note", {
   run: async (tenantSlug, p) =>
     (await import("../sales/delivery-notes")).deliverDeliveryNote(tenantSlug, p.noteId),
 });
+
+/** Landed cost — freight/duty/insurance capitalized into moving-average
+ *  item cost + JE. Spend domain; the entire voucher create (allocation,
+ *  cost fold-in, JE) replays on approval. */
+registerGatedAction<Record<string, any>>("landed_cost", {
+  domain: "spend",
+  mode: "block",
+  amount: (p) => Number(p.totalAmount ?? 0),
+  describe: (p) => `Landed cost — ${p.chargeType ?? ""} on ${p.referenceId ?? ""} ${Number(p.totalAmount ?? 0).toLocaleString()}`.trim(),
+  run: async (tenantSlug, p, ctx) =>
+    (await import("../inventory/landed-cost")).createLandedCostVoucher(tenantSlug, {
+      ...p,
+      createdBy: ctx.decidedBy ?? ctx.requestedBy,
+    } as any),
+});
