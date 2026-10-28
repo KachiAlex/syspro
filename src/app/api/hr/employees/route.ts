@@ -4,7 +4,7 @@ import { z } from "zod";
 import { listEmployees, insertEmployee, countEmployees, ensureHrTables, resolveOrCreateDepartment } from "@/lib/hr/db";
 import { ensureAdminTables } from "@/lib/admin/db";
 import { extractAuthContext } from "@/lib/auth-helper";
-import { requireModuleAccess } from "@/lib/api-auth";
+import { requireModuleAccess, requireDocAccess } from "@/lib/api-auth";
 import { resolveDepartmentHeadContext } from "@/lib/tenant-admin/utils";
 import { sql as SQL } from "@/lib/sql-client";
 import { setEmployeePassword, generatePassword } from "@/lib/hr/auth";
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const scope = await requireModuleAccess(request, "people", "write");
+  const scope = await requireDocAccess(request, "employee", "create", "people", "write");
   if (!scope.ok) return scope.response;
   const auth = extractAuthContext(request);
   if (!auth.tenantSlug) {

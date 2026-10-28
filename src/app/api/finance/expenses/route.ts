@@ -21,7 +21,7 @@ import {
 import { calculateMonthlyUsage, requiresEscalatedApproval } from "@/lib/finance/budget";
 import { getGLAccountForCategory } from "@/lib/finance/service";
 import { enforceBudget, BudgetViolationError } from "@/lib/finance/budget-control";
-import { requireModuleAccess } from "@/lib/api-auth";
+import { requireModuleAccess, requireDocAccess } from "@/lib/api-auth";
 import { sql as SQL } from "@/lib/sql-client";
 import {
   initiateApprovalIfRequired,
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    const _scope = await requireModuleAccess(request, "finance", "write");
+    const _scope = await requireDocAccess(request, "expense_claim", "create", "finance", "write");
     if (!_scope.ok) return _scope.response;
 
   const body = await request.json().catch(() => null);

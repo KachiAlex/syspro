@@ -5,7 +5,7 @@ import {
   listPayrollAdjustments,
 } from "@/lib/hr/db";
 
-import { requireModuleAccess } from "@/lib/api-auth";
+import { requireModuleAccess, requireDocAccess } from "@/lib/api-auth";
 const createSchema = z.object({
   tenantSlug: z.string().min(1),
   employeeId: z.string().min(1),
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    const _scope = await requireModuleAccess(request, "people", "write");
+    const _scope = await requireDocAccess(request, "payroll_adjustment", "create", "people", "write");
     if (!_scope.ok) return _scope.response;
 
   try {

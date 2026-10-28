@@ -8,7 +8,7 @@ import {
   upsertSubscriptionPlan, listSubscriptionPlans, createSubscription, listSubscriptions,
   generateSubscriptionInvoices, fetchAndStoreExchangeRates,
 } from "@/lib/finance/treasury";
-import { requireModuleAccess } from "@/lib/api-auth";
+import { requireModuleAccess, requireDocAccess } from "@/lib/api-auth";
 import { withProcessLog } from "@/lib/finance/process-log";
 
 export async function GET(request: NextRequest) {
@@ -85,7 +85,7 @@ const schemas = {
 } as const;
 
 export async function POST(request: NextRequest) {
-  const _scope = await requireModuleAccess(request, "finance", "write");
+  const _scope = await requireDocAccess(request, "treasury_document", "submit", "finance", "write");
   if (!_scope.ok) return _scope.response;
   try {
     const body = await request.json();

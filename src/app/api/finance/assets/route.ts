@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { createAsset, listAssets, getAssetSchedule, ensureAssetTables } from "@/lib/finance/fixed-assets";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
-import { requireModuleAccess } from "@/lib/api-auth";
+import { requireModuleAccess, requireDocAccess } from "@/lib/api-auth";
 
 export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");
@@ -42,7 +42,7 @@ const createSchema = z.object({
 
 export async function POST(request: NextRequest) {
   const context = validateTenantContext(request, "write");
-  const gate = await requireModuleAccess(request, "finance", "write");
+  const gate = await requireDocAccess(request, "asset", "edit", "finance", "write");
   if (!gate.ok) return gate.response;
   try {
     const parsed = createSchema.safeParse(await request.json());

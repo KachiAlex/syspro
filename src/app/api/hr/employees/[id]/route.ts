@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { updateEmployee, deleteEmployee, getEmployeeById, resolveOrCreateDepartment, employeeDependencies } from "@/lib/hr/db";
-import { requireModuleAccess } from "@/lib/api-auth";
+import { requireModuleAccess, requireDocAccess } from "@/lib/api-auth";
 
 const updateSchema = z.object({
   tenantSlug: z.string().optional(),
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireModuleAccess(request, "people", "write");
+  const auth = await requireDocAccess(request, "employee", "edit", "people", "write");
   if (!auth.ok) return auth.response;
   const { id } = await params;
 
@@ -241,7 +241,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireModuleAccess(request, "people", "write");
+  const auth = await requireDocAccess(request, "employee", "delete", "people", "write");
   if (!auth.ok) return auth.response;
   const { id } = await params;
   const tenantSlug = auth.user.tenantSlug ?? new URL(request.url).searchParams.get("tenantSlug");

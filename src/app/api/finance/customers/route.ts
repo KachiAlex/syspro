@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { listCustomers, upsertCustomer, customerOpenBalance } from "@/lib/finance/credit-control";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
-import { requireModuleAccess } from "@/lib/api-auth";
+import { requireModuleAccess, requireDocAccess } from "@/lib/api-auth";
 
 export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");
@@ -36,7 +36,7 @@ const schema = z.object({
 
 export async function POST(request: NextRequest) {
   const context = validateTenantContext(request, "write");
-  const gate = await requireModuleAccess(request, "finance", "write");
+  const gate = await requireDocAccess(request, "customer", "edit", "finance", "write");
   if (!gate.ok) return gate.response;
   const body = await request.json().catch(() => null);
   const parsed = schema.safeParse(body);
