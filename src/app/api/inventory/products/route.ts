@@ -4,7 +4,7 @@ import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { db } from "@/lib/sql-client";
 import { getPagination } from "@/lib/pagination";
 
-import { requireModuleAccess } from "@/lib/api-auth";
+import { requireModuleAccess, requireDocAccess } from "@/lib/api-auth";
 async function ensureInventoryTables() {
   await db.query(`
     create table if not exists inventory_products (
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    const _scope = await requireModuleAccess(request, "admin", "write");
+    const _scope = await requireDocAccess(request, "product", "create", "admin", "write");
     if (!_scope.ok) return _scope.response;
 
   try {
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-    const _scope = await requireModuleAccess(request, "admin", "write");
+    const _scope = await requireDocAccess(request, "product", "edit", "admin", "write");
     if (!_scope.ok) return _scope.response;
 
   try {

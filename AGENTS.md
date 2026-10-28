@@ -72,3 +72,5 @@
 - FIFO COGS: `postStockMovementJournal` takes an optional `fifoCogsAmount` — negative-movement JEs post at layer cost when FIFO ran, else `quantity × unitCost` as before.
 - Approvals settings writes (`POST save-settings`) zod-validate `authorityMatrix` band shape + scalar patch keys — malformed DoA config 400s instead of silently weakening controls.
 - `scripts/migrate.sh` applies pending `db/migrations` in order, tracks `schema_migrations` (filename+md5), skips applied.
+- Doc-gate coverage extended: goods_receipt.submit (purchase-receipts), delivery_note.submit, sales_order.create/edit, customer.edit (merge), purchase_requisition.create/approve, product.create/edit — all backward-compatible (module fallback when no doc.* keys assigned).
+- Approver digest: cron step emits `approvals.digest` events for pending approvals >24h (deduped daily per requested_by) — "you have N items waiting" notification through the standard pipeline.

@@ -254,6 +254,34 @@ export async function POST(request: NextRequest) {
       console.error("reorder scan failed:", err);
     }
 
+    // 6c. Approver digest — pending approvals older than 24h surface as a
+    // per-approver notification (deduped daily per approver).
+    let digestEmitted = 0;
+    try {
+      const stale = (await SQL`
+        select tenant_slug, requested_by, count(*)::int as pending
+        from approvals
+        where status = 'pending' and created_at < now() - interval '24 hours'
+        group by tenant_slug, requested_by
+        limit 500
+      `) as any[];
+      const { emitEvent } = await import("@/lib/notify");
+      const day = new Date().toISOString().slice(0, 10);
+      for (const row of stale) {
+        await emitEvent({
+          tenantSlug: row.tenant_slug,
+          eventType: "approvals.digest",
+          sourceModule: "finance",
+          sourceRecordId: String(row.requested_by ?? "approvers"),
+          dedupeKey: `aprdigest:${row.requested_by}:${day}`,
+          payload: { pendingCount: Number(row.pending), approver: row.requested_by },
+        });
+        digestEmitted++;
+      }
+    } catch (err) {
+      console.error("approver digest failed:", err);
+    }
+
     // 7. Queue due scheduled reports, then drain the report job queue
     const scheduledReports = await queueDueScheduledReports(BATCH_LIMIT);
     const reportResults = await processQueuedReportJobs(BATCH_LIMIT);

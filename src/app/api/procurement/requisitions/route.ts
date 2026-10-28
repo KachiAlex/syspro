@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql as SQL } from "@/lib/sql-client";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import { requireModuleAccess } from "@/lib/api-auth";
+import { requireModuleAccess, requireDocAccess } from "@/lib/api-auth";
 
 const createRequisitionSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    const _scope = await requireModuleAccess(request, "finance", "write");
+    const _scope = await requireDocAccess(request, "purchase_requisition", "create", "finance", "write");
     if (!_scope.ok) return _scope.response;
 
   try {
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-    const _scope = await requireModuleAccess(request, "finance", "write");
+    const _scope = await requireDocAccess(request, "purchase_requisition", "approve", "finance", "write");
     if (!_scope.ok) return _scope.response;
 
   try {

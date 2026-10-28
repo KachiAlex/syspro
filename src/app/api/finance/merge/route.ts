@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
-import { requireModuleAccess } from "@/lib/api-auth";
+import { requireModuleAccess, requireDocAccess } from "@/lib/api-auth";
 import { gateOrRun } from "@/lib/finance/gated-actions";
 import { sql as SQL } from "@/lib/sql-client";
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const context = validateTenantContext(request, "write");
-  const gate = await requireModuleAccess(request, "finance", "write");
+  const gate = await requireDocAccess(request, "customer", "edit", "finance", "write");
   if (!gate.ok) return gate.response;
   const parsed = postSchema.safeParse(await request.json());
   if (!parsed.success) {

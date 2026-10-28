@@ -4,7 +4,7 @@ import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { db } from "@/lib/sql-client";
 import { getPagination } from "@/lib/pagination";
 
-import { requireModuleAccess } from "@/lib/api-auth";
+import { requireModuleAccess, requireDocAccess } from "@/lib/api-auth";
 import {
   computeQuantity,
   computeTotal,
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    const _scope = await requireModuleAccess(request, "sales", "write");
+    const _scope = await requireDocAccess(request, "sales_order", "create", "sales", "write");
     if (!_scope.ok) return _scope.response;
 
   try {
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-    const _scope = await requireModuleAccess(request, "sales", "write");
+    const _scope = await requireDocAccess(request, "sales_order", "edit", "sales", "write");
     if (!_scope.ok) return _scope.response;
 
   try {
