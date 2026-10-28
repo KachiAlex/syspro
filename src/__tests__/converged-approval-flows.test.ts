@@ -715,4 +715,52 @@ describe.skipIf(!HAS_DB)("converged approval flows", () => {
     // MA over stock qty: (10×100 + 24×10) / 34 = 36.47
     expect(Number(prod.unit_cost)).toBeCloseTo(36.47, 2);
   }, T);
+
+  it("fifo: layers consume oldest-first and stamp real COGS on the issue movement", async () => {
+    // Opt TENANT into fifo (restore at end — beforeAll doesn't reset settings)
+    await db.query(`update tenants set settings = $1::jsonb where slug = $2`,
+      [JSON.stringify({ inventory: { valuationMethod: "fifo" }, approvals: {} }), TENANT]);
+
+    const sku = `FIFO-${randomUUID().slice(0, 6)}`;
+    try {
+      await db.query(
+        `insert into inventory_products (id, tenant_slug, sku, name, current_stock, unit_cost, location, category, allow_negative_stock)
+         values ($1,$2,$3,'Widget',0,0,'Main','General',true)`,
+        [`ip_${randomUUID().slice(0, 8)}`, TENANT, sku]
+      );
+    } catch {
+      await db.query(
+        `insert into inventory_products (id, tenant_slug, sku, name, current_stock, unit_cost, location)
+         values ($1,$2,$3,'Widget',0,0,'Main')`,
+        [`ip_${randomUUID().slice(0, 8)}`, TENANT, sku]
+      );
+    }
+
+    const { fifoLayerIn, fifoLayerOut, fifoValuation } = await import("../lib/inventory/valuation");
+    // Two layers: 10 @ ₦100, then 10 @ ₦120
+    await fifoLayerIn({ tenantSlug: TENANT, productSku: sku, quantity: 10, unitCost: 100 });
+    await fifoLayerIn({ tenantSlug: TENANT, productSku: sku, quantity: 10, unitCost: 120 });
+
+    // Issue 15 → should consume all 10×100 + 5×120 = ₦1600
+    const mvId = `mv_fifo_${randomUUID().slice(0, 6)}`;
+    await db.query(
+      `insert into stock_movements (id, tenant_slug, product_sku, product_name, movement_type, quantity, unit_cost, reference_type, reference_id, created_at)
+       values ($1,$2,$3,'Widget','sale',15,110,'test','x',now())`,
+      [mvId, TENANT, sku]
+    );
+    const cogs = await fifoLayerOut({ tenantSlug: TENANT, productSku: sku, quantity: 15, movementId: mvId });
+    expect(cogs).toBeCloseTo(1600, 2);
+
+    const mv = (await db.query(`select cogs_amount from stock_movements where id = $1`, [mvId])).rows[0];
+    expect(Number(mv.cogs_amount)).toBeCloseTo(1600, 2);
+
+    // Remaining: 5 @ ₦120 = ₦600
+    const val = await fifoValuation(TENANT);
+    const row = val.find((r: any) => r.product_sku === sku);
+    expect(Number(row.on_hand)).toBe(5);
+    expect(Number(row.value)).toBeCloseTo(600, 2);
+
+    await db.query(`update tenants set settings = $1::jsonb where slug = $2`,
+      [JSON.stringify({ approvals: {} }), TENANT]);
+  }, T);
 });

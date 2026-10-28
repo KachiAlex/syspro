@@ -182,7 +182,7 @@ export async function receivePurchaseReceipt(tenantSlug: string, receiptId: stri
       await recordStockMovement(tenantSlug, {
         productSku: sku,
         productName: item.description ?? null,
-        movementType: "in",
+        movementType: "purchase_receipt",
         quantity: stockQty,
         unitCost: Number(item.unit_price ?? 0),
         referenceType: "purchase_receipt",

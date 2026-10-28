@@ -161,6 +161,29 @@ export async function recordStockMovement(
     }
   }
 
+  // FIFO valuation (opt-in per tenant): receipts push a cost layer,
+  // issues consume oldest-first and stamp cogs_amount on the movement.
+  try {
+    const { getValuationMethod, fifoLayerIn, fifoLayerOut } = await import("./valuation");
+    if (await getValuationMethod(tenantSlug) === "fifo") {
+      if (positiveTypes.includes(movement.movementType)) {
+        await fifoLayerIn({
+          tenantSlug, productSku: movement.productSku,
+          warehouseId: movement.warehouseId, quantity: Math.abs(movement.quantity),
+          unitCost: movement.unitCost, referenceId: movement.referenceId,
+        });
+      } else if (negativeTypes.includes(movement.movementType)) {
+        await fifoLayerOut({
+          tenantSlug, productSku: movement.productSku,
+          warehouseId: movement.warehouseId, quantity: Math.abs(movement.quantity),
+          movementId: id,
+        });
+      }
+    }
+  } catch (err) {
+    console.error("FIFO layer update failed:", err);
+  }
+
   if (!options?.skipJournalEntry) {
     await postStockMovementJournal(tenantSlug, movement);
   }

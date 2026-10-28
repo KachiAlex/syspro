@@ -183,7 +183,7 @@ export async function deliverDeliveryNote(tenantSlug: string, noteId: string) {
       await recordStockMovement(tenantSlug, {
         productSku: sku,
         productName: item.description ?? null,
-        movementType: "out",
+        movementType: "sale",
         quantity: stockQty,
         unitCost: Number(item.unit_price ?? 0),
         referenceType: "delivery_note",

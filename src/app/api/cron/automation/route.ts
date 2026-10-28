@@ -233,6 +233,27 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 6b. Reorder scan: enabled rules whose stock dropped below level get
+    // an auto material request (deduped by open MRs) — the piece that was
+    // built but never invoked.
+    let reorderScans = 0;
+    try {
+      const { runReorderScan } = await import("@/lib/inventory/material-requests");
+      let tenants: any[] = [];
+      try {
+        tenants = (await SQL`
+          select distinct tenant_slug from inventory_reorder_rules where enabled
+        `) as any[];
+      } catch { /* rules table may not exist yet */ }
+      for (const t of tenants) {
+        const created = await runReorderScan(t.tenant_slug);
+        reorderScans += Array.isArray(created) ? created.length
+          : (created?.materialRequests?.length ?? created?.triggered ?? 0);
+      }
+    } catch (err) {
+      console.error("reorder scan failed:", err);
+    }
+
     // 7. Queue due scheduled reports, then drain the report job queue
     const scheduledReports = await queueDueScheduledReports(BATCH_LIMIT);
     const reportResults = await processQueuedReportJobs(BATCH_LIMIT);
