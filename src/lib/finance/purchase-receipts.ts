@@ -207,6 +207,37 @@ export async function receivePurchaseReceipt(tenantSlug: string, receiptId: stri
     }
   }
 
+  // GRNI journal — Dr inventory asset / Cr goods-received-not-invoiced.
+  // This is the piece the legacy goods-receipts route handled; converging
+  // it here makes purchase_receipts the single source of goods-in truth.
+  try {
+    const receiptValue = items.reduce(
+      (s, i) => s + Number(i.received_qty) * Number(i.unit_price ?? 0), 0);
+    if (receiptValue > 0) {
+      const { resolvePostingAccount } = await import("./posting-settings");
+      const { postGLEntry } = await import("./gl");
+      const [invAcc, grniAcc] = await Promise.all([
+        resolvePostingAccount(tenantSlug, "inventory_asset"),
+        resolvePostingAccount(tenantSlug, "goods_received_not_invoiced"),
+      ]);
+      await postGLEntry({
+        tenantSlug,
+        entryDate: new Date().toISOString().slice(0, 10),
+        journalType: "SYSTEM",
+        referenceType: "purchase_receipt",
+        referenceId: receiptId,
+        description: `Goods receipt ${receipt.receipt_number}`,
+        createdBy: decidedBy ?? receipt.created_by ?? "approvals",
+        lines: [
+          { accountCode: invAcc, debitAmount: receiptValue, description: "Inventory received" },
+          { accountCode: grniAcc, creditAmount: receiptValue, description: "Goods received not invoiced" },
+        ],
+      });
+    }
+  } catch (err) {
+    console.error(`GRNI journal failed for receipt ${receiptId}:`, err);
+  }
+
   await sql`
     update purchase_receipts set status = 'received', updated_at = now()
     where id = ${receiptId}

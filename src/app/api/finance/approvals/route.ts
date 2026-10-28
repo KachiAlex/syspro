@@ -321,6 +321,23 @@ export async function POST(request: NextRequest) {
       if (!patch || typeof patch !== "object" || Array.isArray(patch)) {
         return NextResponse.json({ error: "patch object required" }, { status: 400 });
       }
+      // Shape-check before persisting — a malformed matrix/threshold would
+      // silently weaken every control routed through this config.
+      const bandSchema = z.object({
+        upTo: z.number().positive().nullable().optional(),
+        approvers: z.array(z.string()).optional(),
+        mode: z.enum(["block", "review"]).optional(),
+      });
+      const patchSchema = z.object({
+        authorityMatrix: z.record(z.string(), z.array(bandSchema)).optional(),
+      }).catchall(z.union([z.number(), z.string(), z.boolean(), z.null()]))
+        .passthrough();
+      const parsed = patchSchema.safeParse(patch);
+      if (!parsed.success) {
+        return NextResponse.json({
+          error: `Invalid approvals settings: ${parsed.error.issues[0]?.path.join(".")} ${parsed.error.issues[0]?.message}`,
+        }, { status: 400 });
+      }
       const settings = await setApprovalSettings(tenantSlug, patch);
       return NextResponse.json({ settings });
     }

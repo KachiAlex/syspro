@@ -163,6 +163,9 @@ export async function recordStockMovement(
 
   // FIFO valuation (opt-in per tenant): receipts push a cost layer,
   // issues consume oldest-first and stamp cogs_amount on the movement.
+  // The captured COGS feeds the journal below so postings price at real
+  // layer cost, not the sale/stale unitCost on the movement.
+  let fifoCogs: number | undefined;
   try {
     const { getValuationMethod, fifoLayerIn, fifoLayerOut } = await import("./valuation");
     if (await getValuationMethod(tenantSlug) === "fifo") {
@@ -173,7 +176,7 @@ export async function recordStockMovement(
           unitCost: movement.unitCost, referenceId: movement.referenceId,
         });
       } else if (negativeTypes.includes(movement.movementType)) {
-        await fifoLayerOut({
+        fifoCogs = await fifoLayerOut({
           tenantSlug, productSku: movement.productSku,
           warehouseId: movement.warehouseId, quantity: Math.abs(movement.quantity),
           movementId: id,
@@ -185,7 +188,7 @@ export async function recordStockMovement(
   }
 
   if (!options?.skipJournalEntry) {
-    await postStockMovementJournal(tenantSlug, movement);
+    await postStockMovementJournal(tenantSlug, movement, fifoCogs);
   }
 
   // Low-stock alert — only after stock-reducing movements, and deduped daily
@@ -224,7 +227,8 @@ export async function recordStockMovement(
 
 async function postStockMovementJournal(
   tenantSlug: string,
-  movement: Omit<StockMovement, "id" | "createdAt" | "tenantSlug">
+  movement: Omit<StockMovement, "id" | "createdAt" | "tenantSlug">,
+  fifoCogsAmount?: number
 ): Promise<void> {
   // Skip journal entries for movement types that are already handled by their
   // source modules to prevent duplicate journal entries:
@@ -234,7 +238,11 @@ async function postStockMovementJournal(
   const sourceHandledTypes: StockMovementType[] = ["purchase_receipt", "work_order_issue", "work_order_receipt"];
   if (sourceHandledTypes.includes(movement.movementType)) return;
 
-  const totalValue = movement.quantity * movement.unitCost;
+  // Stock-out postings price at FIFO layer cost when valuation ran;
+  // otherwise fall back to the movement's declared unitCost.
+  const totalValue = fifoCogsAmount !== undefined && fifoCogsAmount > 0
+    ? fifoCogsAmount
+    : movement.quantity * movement.unitCost;
   if (Math.abs(totalValue) < 0.01) return;
 
   const today = new Date().toISOString().split("T")[0];

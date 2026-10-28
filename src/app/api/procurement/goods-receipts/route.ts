@@ -102,121 +102,62 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Posting preflight: abort the receipt before any write if the required
-    // posting accounts are misconfigured (Venditium checkout pattern).
-    const { assertPostingAccountsConfigured } = await import("@/lib/finance/posting-settings");
-    try {
-      await assertPostingAccountsConfigured(tenantSlug, ["inventory_asset", "goods_received_not_invoiced"]);
-    } catch (e) {
-      return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 422 });
-    }
+    // Converged path — this legacy endpoint now delegates to
+    // purchase_receipts (the gated GRN): over-receipt guard, UoM
+    // conversion, moving-average cost, GRNI journal, PO progress, and
+    // optional approval chaining all live there.
+    const { createPurchaseReceipt } = await import("@/lib/finance/purchase-receipts");
+    const { gateOrRun } = await import("@/lib/finance/gated-actions");
+    const receipt = await createPurchaseReceipt({
+      tenantSlug,
+      purchaseOrderId: poId ?? undefined,
+      vendorId: vendorId ?? undefined,
+      receivedDate: body.receivedDate ?? new Date().toISOString().slice(0, 10),
+      notes: notes ?? undefined,
+      createdBy: context.userId ?? "unknown",
+      items: items.map((it: any) => ({
+        poItemId: it.poItemId ?? undefined,
+        productId: it.productId ?? undefined,
+        sku: it.sku,
+        description: it.name ?? it.description ?? undefined,
+        receivedQty: Number(it.quantity ?? it.receivedQty),
+        rejectedQty: it.rejectedQty ?? undefined,
+        unitPrice: Number(it.unitCost ?? it.unitPrice ?? 0),
+        uom: it.uom ?? undefined,
+      })),
+    });
 
-    const id = randomUUID();
-    const receiptNumber = `GR-${Date.now().toString().slice(-8)}`;
-    const totalAmount = items.reduce((sum: number, item: any) => sum + item.quantity * item.unitCost, 0);
+    const gated = await gateOrRun(tenantSlug, "purchase_receipt", {
+      receiptId: receipt.id,
+      receiptNumber: receipt.receiptNumber,
+      totalAmount: receipt.totalAmount,
+      purchaseOrderId: poId ?? undefined,
+      vendorId: vendorId ?? undefined,
+    }, { requestedBy: context.userId ?? "unknown" });
 
-    await db.query(
-      `insert into procurement_goods_receipts (id, tenant_slug, po_id, receipt_number, vendor_id, items, total_amount, status, notes, created_at)
-       values ($1, $2, $3, $4, $5, $6, $7, 'received', $8, now())`,
-      [id, tenantSlug, poId ?? null, receiptNumber, vendorId ?? null, JSON.stringify(items), totalAmount, notes ?? null]
-    );
-
-    for (const item of items) {
-      const existing = (await db.query(
-        `select id, current_stock, unit_cost from inventory_products where tenant_slug = $1 and sku = $2`,
-        [tenantSlug, item.sku]
-      )).rows;
-
-      if (existing.length > 0) {
-        const existingStock = Number(existing[0].current_stock);
-        const existingUnitCost = Number(existing[0].unit_cost);
-        const receivedQty = Number(item.quantity);
-        const receivedUnitCost = Number(item.unitCost);
-        const newStock = existingStock + receivedQty;
-        const newUnitCost = (existingStock * existingUnitCost + receivedQty * receivedUnitCost) / (existingStock + receivedQty);
-        await db.query(
-          `update inventory_products set current_stock = $1, unit_cost = $2 where id = $3 and tenant_slug = $4`,
-          [newStock, newUnitCost, existing[0].id, tenantSlug]
-        );
-      } else {
-        await db.query(
-          `insert into inventory_products (id, tenant_slug, name, sku, category, current_stock, min_stock, unit_cost, sale_price, created_at)
-           values ($1, $2, $3, $4, 'materials', $5, 0, $6, 0, now())`,
-          [randomUUID(), tenantSlug, item.name, item.sku, item.quantity, item.unitCost]
-        );
+    if (gated.status === "pending") {
+      const approvalId = (gated as any).approvalId as string | undefined;
+      if (approvalId) {
+        const { sql } = await import("@/lib/sql-client");
+        await sql`update purchase_receipts set approval_id = ${approvalId} where id = ${receipt.id}`;
       }
+      return NextResponse.json({
+        receipt: { id: receipt.id, receiptNumber: receipt.receiptNumber, status: "pending" },
+        approvalId, pendingApproval: true,
+      }, { status: 202 });
     }
-
-    // Roll receipt progress onto the PO: received qty across all receipts vs
-    // ordered qty → 'received' / 'partially_received'.
-    if (poId) {
-      try {
-        await db.query(
-          `update purchase_orders p
-           set status = case
-             when (select coalesce(sum((it->>'quantity')::numeric), 0)
-                   from procurement_goods_receipts r,
-                        lateral jsonb_array_elements(r.items) it
-                   where r.po_id = p.id and r.tenant_slug = p.tenant_slug)
-                  >= (select coalesce(sum(quantity), 0)
-                      from purchase_order_items
-                      where coalesce(purchase_order_id, po_id) = p.id)
-                  and (select coalesce(sum(quantity), 0)
-                       from purchase_order_items
-                       where coalesce(purchase_order_id, po_id) = p.id) > 0
-             then 'received'
-             else 'partially_received'
-           end,
-           updated_at = now()
-           where p.id = $1 and p.tenant_slug = $2`,
-          [poId, tenantSlug]
-        );
-      } catch (poErr) {
-        console.error("Failed to update PO receipt status:", poErr);
-      }
-    }
-
-    try {
-      const today = new Date().toISOString().split("T")[0];
-      const { resolvePostingAccount } = await import("@/lib/finance/posting-settings");
-      const [invAcc, grniAcc] = await Promise.all([
-        resolvePostingAccount(tenantSlug, "inventory_asset"),
-        resolvePostingAccount(tenantSlug, "goods_received_not_invoiced"),
-      ]);
-      await createJournalEntry({
-        tenantSlug,
-        entryDate: today,
-        referenceType: "manual",
-        // reference_id is uuid — use the receipt row id, not the GR-nnnnn number
-        referenceId: id,
-        description: `Goods receipt ${receiptNumber} from vendor`,
-        lines: [
-          {
-            accountCode: invAcc,
-            debitAmount: totalAmount,
-            creditAmount: 0,
-            description: `Inventory receipt (${items.length} items)`,
-          },
-          {
-            accountCode: grniAcc,
-            debitAmount: 0,
-            creditAmount: totalAmount,
-            description: `Goods received not invoiced — ${receiptNumber}`,
-          },
-        ],
-      });
-    } catch (jeError) {
-      console.error("Failed to post goods receipt journal entry:", jeError);
+    if (gated.status === "denied") {
+      return NextResponse.json({ error: (gated as any).error ?? "Denied" }, { status: 403 });
     }
 
     return NextResponse.json({
-      receipt: {
-        id,
-        receiptNumber,
+      goodsReceipt: {
+        id: receipt.id,
+        receiptNumber: receipt.receiptNumber,
         poId: poId ?? null,
         vendorId: vendorId ?? null,
         items,
-        totalAmount,
+        totalAmount: receipt.totalAmount,
         status: "received",
       },
     }, { status: 201 });
