@@ -50,6 +50,30 @@ export async function GET(request: NextRequest) {
       [...params, limit, offset]
     )).rows;
 
+    // Converged receipts — new GRs land in purchase_receipts; merge them in
+    // so the goods-receipts tab shows everything.
+    const convRows = (await db.query(
+      `select r.*, coalesce(jsonb_agg(i order by i.id) filter (where i.id is not null), '[]') as items
+       from purchase_receipts r
+       left join purchase_receipt_items i on i.receipt_id = r.id
+       where r.tenant_slug = $1 ${poId ? "and r.purchase_order_id = $2" : ""}
+       group by r.id order by r.created_at desc limit 200`,
+      poId ? [tenantSlug, poId] : [tenantSlug]
+    ).then((x) => x.rows).catch(() => [])) as any[];
+
+    const convReceipts = (convRows || []).map((r: any) => ({
+      id: r.id,
+      receiptNumber: r.receipt_number,
+      poId: r.purchase_order_id,
+      vendorId: r.vendor_id,
+      items: r.items,
+      totalAmount: Number(r.total_amount ?? 0),
+      status: r.status,
+      notes: r.notes,
+      receivedDate: r.received_date,
+      createdAt: r.created_at,
+    }));
+
     const receipts = (rows || []).map((r: any) => ({
       id: r.id,
       receiptNumber: r.receipt_number,
@@ -63,7 +87,7 @@ export async function GET(request: NextRequest) {
       createdAt: r.created_at,
     }));
 
-    return NextResponse.json({ receipts, limit, offset });
+    return NextResponse.json({ receipts: [...receipts, ...convReceipts], limit, offset });
   } catch (error) {
     console.error("Error fetching goods receipts:", error);
     return NextResponse.json(

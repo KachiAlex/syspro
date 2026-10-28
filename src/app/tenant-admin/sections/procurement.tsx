@@ -618,6 +618,35 @@ function CreateGoodsReceiptModal({ tenantSlug, onClose, onCreated }: { tenantSlu
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [poOptions, setPoOptions] = useState<any[]>([]);
+
+  // Guided flow — pick an open PO, its remaining lines prefill the items.
+  useEffect(() => {
+    fetch('/api/procurement/purchase-orders')
+      .then((r) => r.json())
+      .then((d) => setPoOptions((d.purchaseOrders ?? d.data ?? []).filter((po: any) => !['received','cancelled','closed'].includes(po.status))))
+      .catch(() => {});
+  }, []);
+
+  async function selectPo(id: string) {
+    setPoId(id);
+    if (!id) { setItems([]); return; }
+    try {
+      const res = await fetch(`/api/procurement/three-way-match?poId=${encodeURIComponent(id)}`);
+      const m = await res.json();
+      const lines = (m.items ?? m.lines ?? m.match?.items ?? []) as any[];
+      const po = poOptions.find((x) => String(x.id) === id);
+      if (po?.supplierId || po?.supplier_id || po?.vendorId) setVendorId(String(po.supplierId ?? po.supplier_id ?? po.vendorId));
+      setItems(lines
+        .filter((l: any) => Number(l.pendingQty ?? l.pending_quantity ?? l.quantity ?? 0) > 0)
+        .map((l: any) => ({
+          sku: l.sku ?? '',
+          name: l.description ?? l.name ?? '',
+          quantity: String(l.pendingQty ?? l.pending_quantity ?? l.quantity ?? ''),
+          unitCost: String(l.unitPrice ?? l.unit_price ?? l.unitCost ?? 0),
+        })));
+    } catch { /* manual entry still works */ }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -647,8 +676,14 @@ function CreateGoodsReceiptModal({ tenantSlug, onClose, onCreated }: { tenantSlu
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <div className="p-3 rounded-lg bg-red-50 text-red-800 text-sm">{error}</div>}
         <div>
-          <label className="block text-sm font-medium text-theme-text-primary mb-1">PO Reference (optional)</label>
-          <input value={poId} onChange={(e) => setPoId(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm" placeholder="Purchase Order ID" />
+          <label className="block text-sm font-medium text-theme-text-primary mb-1">Purchase Order</label>
+          <select value={poId} onChange={(e) => selectPo(e.target.value)} className="w-full border border-theme-border rounded px-3 py-2 text-sm">
+            <option value="">— Pick a PO to prefill its open lines, or leave blank for a free receipt —</option>
+            {poOptions.map((po) => (
+              <option key={po.id} value={po.id}>{po.orderNumber ?? po.order_number ?? po.id} — {po.supplierName ?? po.supplier_name ?? ''} ({po.status})</option>
+            ))}
+          </select>
+          <p className="text-xs text-theme-text-secondary mt-1">Selecting a PO fills the items below with what is still outstanding — you cannot receive more than was ordered.</p>
         </div>
         <div>
           <label className="block text-sm font-medium text-theme-text-primary mb-1">Vendor ID</label>
