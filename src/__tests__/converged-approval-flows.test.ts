@@ -825,4 +825,54 @@ describe.skipIf(!HAS_DB)("converged approval flows", () => {
     const merge = (await db.query(`select rewrote from document_merges where tenant_slug = $1`, [TENANT])).rows[0];
     expect(Object.keys(merge.rewrote).length).toBeGreaterThan(0);
   }, T);
+
+  it("report builder: allowlist blocks arbitrary tables/columns; saved report runs parameterized", async () => {
+    const { saveCustomReport, runCustomReport, getCustomReport } = await import("../lib/reports/builder");
+
+    // A product row to report on
+    const sku = `RPT-${randomUUID().slice(0, 6)}`;
+    try {
+      await db.query(
+        `insert into inventory_products (id, tenant_slug, sku, name, current_stock, unit_cost, location, category)
+         values ($1,$2,$3,'Reportable',42,100,'Main','General')`,
+        [`ip_${randomUUID().slice(0, 8)}`, TENANT, sku]
+      );
+    } catch {
+      await db.query(
+        `insert into inventory_products (id, tenant_slug, sku, name, current_stock, unit_cost, location)
+         values ($1,$2,$3,'Reportable',42,100,'Main')`,
+        [`ip_${randomUUID().slice(0, 8)}`, TENANT, sku]
+      );
+    }
+
+    // Rejections: unknown table, non-allowlisted column, bad operator
+    await expect(runCustomReport({
+      tenantSlug: TENANT, tableName: "tenants", columns: ["slug"], filters: [],
+    })).rejects.toThrow(/not available/);
+    await expect(runCustomReport({
+      tenantSlug: TENANT, tableName: "inventory_products", columns: ["settings"], filters: [],
+    })).rejects.toThrow(/not available/);
+    await expect(runCustomReport({
+      tenantSlug: TENANT, tableName: "inventory_products", columns: ["sku"],
+      filters: [{ field: "sku", op: "drop table tenants; --", value: "x" }],
+    })).rejects.toThrow(/not supported/);
+
+    const saved = await saveCustomReport({
+      tenantSlug: TENANT, name: "Low stock report",
+      tableName: "inventory_products", columns: ["sku", "name", "current_stock"],
+      filters: [{ field: "current_stock", op: "<", value: 100 }],
+      sort: { field: "current_stock", dir: "asc" },
+    });
+    const r = await getCustomReport(TENANT, saved.id);
+    expect(r.name).toBe("Low stock report");
+
+    const result = await runCustomReport({
+      tenantSlug: TENANT, tableName: "inventory_products",
+      columns: ["sku", "name", "current_stock"],
+      filters: [{ field: "current_stock", op: "<", value: 100 }],
+    });
+    const hit = result.rows.find((row: any) => row.sku === sku);
+    expect(hit).toBeTruthy();
+    expect(Number(hit.current_stock)).toBe(42);
+  }, T);
 });
