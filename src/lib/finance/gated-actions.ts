@@ -701,3 +701,31 @@ registerGatedAction<Record<string, any>>("work_order_complete", {
   run: async (tenantSlug, p) =>
     (await import("../manufacturing/work-orders")).completeWorkOrder(p.workOrderId, tenantSlug, p.opts),
 });
+
+/** Customer/vendor merge — rewrites every FK reference then marks the
+ *  source merged. Irreversible and destructive → always gated. */
+registerGatedAction<Record<string, any>>("customer_merge", {
+  domain: "master_data",
+  mode: "block",
+  always: true,
+  amount: () => 0,
+  describe: (p) => `Merge customer ${p.sourceId} -> ${p.targetId}`,
+  run: async (tenantSlug, p, ctx) =>
+    (await import("./merge")).mergeCustomer({
+      tenantSlug, sourceId: p.sourceId, targetId: p.targetId,
+      createdBy: ctx.decidedBy ?? ctx.requestedBy,
+    }),
+});
+
+registerGatedAction<Record<string, any>>("vendor_merge", {
+  domain: "master_data",
+  mode: "block",
+  always: true,
+  amount: () => 0,
+  describe: (p) => `Merge vendor ${p.sourceId} -> ${p.targetId}`,
+  run: async (tenantSlug, p, ctx) =>
+    (await import("./merge")).mergeVendor({
+      tenantSlug, sourceId: p.sourceId, targetId: p.targetId,
+      createdBy: ctx.decidedBy ?? ctx.requestedBy,
+    }),
+});

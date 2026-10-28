@@ -763,4 +763,66 @@ describe.skipIf(!HAS_DB)("converged approval flows", () => {
     await db.query(`update tenants set settings = $1::jsonb where slug = $2`,
       [JSON.stringify({ approvals: {} }), TENANT]);
   }, T);
+
+  it("customer_merge: gated action rewrites every reference and marks the source merged", async () => {
+    const { ensureMergeTables, mergeCustomer } = await import("../lib/finance/merge");
+    const { sql } = await import("../lib/sql-client");
+    await ensureMergeTables(sql);
+
+    const srcId = randomUUID(), tgtId = randomUUID();
+    for (const [id, name] of [[srcId, "Dup Customer"], [tgtId, "Real Customer"]] as const) {
+      try {
+        await db.query(
+          `insert into finance_customers (id, tenant_slug, customer_code, name)
+           values ($1,$2,$3,$4)`,
+          [id, TENANT, `C-${id.slice(0,4)}`, name]
+        );
+      } catch {
+        await db.query(
+          `insert into finance_customers (id, tenant_slug, name)
+           values ($1,$2,$3)`, [id, TENANT, name]
+        );
+      }
+    }
+    // References on the source: an invoice + a sales order
+    const invId = `inv_${randomUUID().slice(0, 6)}`;
+    await db.query(
+      `insert into finance_invoices (id, tenant_slug, invoice_number, customer_id, customer_name, amount, balance_due, status, issued_date, due_date)
+       values ($1,$2,$3,$4,'Dup Customer',5000,5000,'sent','2026-10-01','2026-10-31')`,
+      [invId, TENANT, `INV-${invId.slice(4)}`, srcId]
+    );
+    const soId = `so_${randomUUID().slice(0, 6)}`;
+    try {
+      await db.query(
+        `insert into sales_orders (id, tenant_slug, order_number, customer_id, customer_name, order_date, items, quantity, total, status, created_at)
+         values ($1,$2,$3,$4,'Dup Customer','2026-10-02','[]',1,5000,'open',now())`,
+        [soId, TENANT, `SO-${soId.slice(3)}`, srcId]
+      );
+    } catch {
+      await db.query(
+        `insert into sales_orders (id, tenant_slug, customer_id, order_date, items, status, created_at)
+         values ($1,$2,$3,'2026-10-02','[]','open',now())`,
+        [soId, TENANT, srcId]
+      );
+    }
+
+    // Always-gated — the action can't run unapproved
+    const { gateOrRun } = await import("../lib/finance/gated-actions");
+    const pend = await gateOrRun(TENANT, "customer_merge",
+      { sourceId: srcId, targetId: tgtId }, { requestedBy: "admin" });
+    expect(pend.status).toBe("pending");
+    let src = (await db.query(`select merged_into from finance_customers where id = $1`, [srcId])).rows[0];
+    expect(src.merged_into).toBeNull();
+
+    await decideToTerminal((pend as any).approvalId);
+
+    const inv = (await db.query(`select customer_id from finance_invoices where id = $1`, [invId])).rows[0];
+    expect(inv.customer_id).toBe(tgtId);
+    const so = (await db.query(`select customer_id from sales_orders where id = $1`, [soId])).rows[0];
+    expect(so.customer_id).toBe(tgtId);
+    src = (await db.query(`select merged_into from finance_customers where id = $1`, [srcId])).rows[0];
+    expect(src.merged_into).toBe(tgtId);
+    const merge = (await db.query(`select rewrote from document_merges where tenant_slug = $1`, [TENANT])).rows[0];
+    expect(Object.keys(merge.rewrote).length).toBeGreaterThan(0);
+  }, T);
 });
