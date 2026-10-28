@@ -119,6 +119,7 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
   const { tenantSlug } = useTenantContext();
   const [tab, setTab] = useState<"requests" | "rules" | "officers" | "delegates" | "policy">("requests");
   const [approvals, setApprovals] = useState<Approval[]>([]);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -380,9 +381,63 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
                           </button>
                         </>
                       )}
-                      <button className="text-theme-accent hover:text-theme-text-primary">
-                        Details
+                      <button
+                        onClick={() => setExpandedId(expandedId === approval.id ? null : approval.id)}
+                        className="text-theme-accent hover:text-theme-text-primary"
+                      >
+                        {expandedId === approval.id ? "Hide" : "Details"}
                       </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {/* Expanded chain view — who needs to sign and who already did */}
+              {approvals.filter((a) => a.id === expandedId).map((approval) => (
+                <tr key={`${approval.id}-detail`} className="bg-theme-muted/40">
+                  <td colSpan={7} className="px-6 py-4">
+                    <div className="space-y-3">
+                      <div className="text-xs font-semibold uppercase text-theme-text-tertiary">
+                        Approval chain — {approval.entityType?.replace("_", " ")}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {[...approval.approverChain]
+                          .sort((a, b) => a.order - b.order || a.step - b.step)
+                          .map((step, i) => {
+                            const dec = approval.decisions?.find((d) => d.step === step.step);
+                            const isCurrent = approval.status === "pending" && step.step === approval.currentStep;
+                            return (
+                              <React.Fragment key={step.step}>
+                                {i > 0 && <span className="text-theme-text-tertiary">→</span>}
+                                <div
+                                  className={`rounded-lg border px-3 py-2 text-xs ${
+                                    dec?.decision === "approved"
+                                      ? "border-green-300 bg-green-50 text-green-800"
+                                      : dec?.decision === "rejected"
+                                      ? "border-red-300 bg-red-50 text-red-800"
+                                      : isCurrent
+                                      ? "border-amber-400 bg-amber-50 text-amber-900 font-semibold"
+                                      : "border-theme-border bg-theme-surface text-theme-text-secondary"
+                                  }`}
+                                >
+                                  <div className="font-medium">
+                                    {dec ? (dec.decision === "approved" ? "✓ " : "✕ ") : isCurrent ? "⏳ " : "○ "}
+                                    {step.userId?.slice(0, 8)}{step.role ? ` (${step.role.replace(/_/g, " ")})` : ""}
+                                  </div>
+                                  <div className="text-[10px] opacity-75">
+                                    {dec
+                                      ? `${dec.decision}${dec.delegatedFor ? " (delegated)" : ""}${dec.comments ? ` — ${dec.comments}` : ""}`
+                                      : isCurrent
+                                      ? "awaiting decision"
+                                      : "upcoming"}
+                                  </div>
+                                </div>
+                              </React.Fragment>
+                            );
+                          })}
+                        {approval.approverChain.length === 0 && (
+                          <span className="text-xs text-theme-text-secondary">No explicit chain — decided by the first available approver.</span>
+                        )}
+                      </div>
                     </div>
                   </td>
                 </tr>
