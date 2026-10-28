@@ -62,6 +62,18 @@ async function ensureCreditTablesRun() {
   )`;
   await sql`alter table finance_invoices add column if not exists payment_term_id uuid`;
   await sql`alter table finance_invoices add column if not exists customer_id uuid`;
+  // AP mirror — bills carry their own due schedule from the same templates.
+  await sql`alter table bills add column if not exists payment_term_id uuid`;
+  await sql`create table if not exists bill_payment_schedule (
+    id uuid primary key default gen_random_uuid(),
+    tenant_slug text not null,
+    bill_id text not null,
+    due_date date not null,
+    amount numeric not null,
+    paid_amount numeric not null default 0,
+    created_at timestamptz not null default now()
+  )`;
+  await sql`create index if not exists bill_sched_bill_idx on bill_payment_schedule (tenant_slug, bill_id)`;
 }
 
 // ---------------------------------------------------------------------------
@@ -546,4 +558,78 @@ export async function customerStatement(input: {
     openBalance: docs.reduce((s: number, d: any) =>
       s + (["sent", "partially_paid", "overdue"].includes(d.status) ? d.balance_due : 0), 0),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Bill payment schedule — the AP mirror of the invoice schedule above. Same
+// payment_terms templates ({days, portion}); built when a bill is created,
+// walked by vendor payments as they're applied.
+// ---------------------------------------------------------------------------
+export async function buildBillSchedule(input: {
+  tenantSlug: string;
+  billId: string;
+  billDate: string;
+  amount: number;
+  paymentTermId?: string | null;
+  dueDate?: string;
+}) {
+  await ensureCreditTables();
+  const term = await getPaymentTerm(input.tenantSlug, input.paymentTermId);
+  const issue = new Date(input.billDate);
+
+  const rows: { dueDate: string; amount: number }[] = [];
+  if (term) {
+    const terms: PaymentTermRow[] = Array.isArray(term.terms)
+      ? term.terms : JSON.parse(term.terms);
+    let allocated = 0;
+    terms.forEach((t, i) => {
+      const amount = i === terms.length - 1
+        ? Math.round((input.amount - allocated) * 100) / 100
+        : Math.round(input.amount * (t.portion / 100) * 100) / 100;
+      allocated += amount;
+      const d = new Date(issue);
+      d.setUTCDate(d.getUTCDate() + t.days);
+      rows.push({ dueDate: d.toISOString().slice(0, 10), amount });
+    });
+  } else {
+    rows.push({ dueDate: input.dueDate ?? input.billDate, amount: input.amount });
+  }
+
+  await db.query(
+    `delete from bill_payment_schedule where bill_id = $1`, [input.billId]
+  );
+  for (const r of rows) {
+    await db.query(
+      `insert into bill_payment_schedule (id, tenant_slug, bill_id, due_date, amount)
+       values ($1,$2,$3,$4,$5)`,
+      [randomUUID(), input.tenantSlug, input.billId, r.dueDate, r.amount]
+    );
+  }
+  return rows;
+}
+
+export async function getBillSchedule(tenantSlug: string, billId: string) {
+  await ensureCreditTables();
+  return (await db.query<any>(
+    `select * from bill_payment_schedule where bill_id = $1 and tenant_slug = $2
+     order by due_date`,
+    [billId, tenantSlug]
+  )).rows;
+}
+
+export async function markBillSchedulePaid(tenantSlug: string, billId: string, amount: number) {
+  await ensureCreditTables();
+  const rows = await getBillSchedule(tenantSlug, billId);
+  let remaining = amount;
+  for (const r of rows) {
+    const due = Number(r.amount) - Number(r.paid_amount);
+    if (due <= 0) continue;
+    const pay = Math.min(due, remaining);
+    await db.query(
+      `update bill_payment_schedule set paid_amount = paid_amount + $1 where id = $2`,
+      [pay, r.id]
+    );
+    remaining -= pay;
+    if (remaining <= 0) break;
+  }
 }

@@ -292,6 +292,10 @@ export async function createVendorPayment(payload: {
               updated_at = now()
           where id = ${app.billId} and tenant_slug = ${payload.tenantSlug}
         `;
+        try {
+          const { markBillSchedulePaid } = await import("./credit-control");
+          await markBillSchedulePaid(payload.tenantSlug, app.billId, app.appliedAmount);
+        } catch { /* schedule is advisory */ }
       }));
     }
 
@@ -513,6 +517,10 @@ export async function applyPaymentToBill(paymentId: string, billId: string, appl
         updated_at = now()
     where id = ${billId} ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
   `;
+  try {
+    const { markBillSchedulePaid } = await import("./credit-control");
+    if (tenantSlug) await markBillSchedulePaid(tenantSlug, billId, appliedAmount);
+  } catch { /* schedule is advisory */ }
 
   // Return updated payment
   return getVendorPayment(paymentId);

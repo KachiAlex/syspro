@@ -571,4 +571,35 @@ describe.skipIf(!HAS_DB)("converged approval flows", () => {
     so = (await db.query(`select status from sales_orders where id = $1`, [soId])).rows[0];
     expect(so.status).toBe("delivered");
   }, T);
+
+  it("bill payment schedule: term template splits due amounts; payments walk the schedule", async () => {
+    const { createPaymentTerm, buildBillSchedule, getBillSchedule, markBillSchedulePaid } =
+      await import("../lib/finance/credit-control");
+
+    await expect(createPaymentTerm({
+      tenantSlug: TENANT, name: "Bad Term",
+      terms: [{ days: 0, portion: 50 }, { days: 30, portion: 40 }],
+    })).rejects.toThrow(/100/);
+
+    const term = await createPaymentTerm({
+      tenantSlug: TENANT, name: "30/70 Net",
+      terms: [{ days: 0, portion: 30 }, { days: 30, portion: 70 }],
+    });
+
+    const billId = `bill_${randomUUID().slice(0, 8)}`;
+    const schedule = await buildBillSchedule({
+      tenantSlug: TENANT, billId, billDate: "2026-10-01",
+      amount: 100001, paymentTermId: term.id,
+    });
+    expect(schedule.length).toBe(2);
+    expect(schedule[0].amount).toBeCloseTo(30000.3, 2);
+    expect(schedule[1].dueDate).toBe("2026-10-31");
+    expect(schedule[0].amount + schedule[1].amount).toBeCloseTo(100001, 2);
+
+    // A payment against the bill consumes the earliest installment first
+    await markBillSchedulePaid(TENANT, billId, 40000);
+    const rows = await getBillSchedule(TENANT, billId);
+    expect(Number(rows[0].paid_amount)).toBeCloseTo(30000.3, 2);
+    expect(Number(rows[1].paid_amount)).toBeCloseTo(9999.7, 2);
+  }, T);
 });

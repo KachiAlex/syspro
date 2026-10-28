@@ -1390,6 +1390,10 @@ async function applyVendorPaymentOutcome(
        where id = $2 and tenant_slug = $3`,
       [Number(app.applied_amount), app.bill_id, tenantSlug]
     );
+    try {
+      const { markBillSchedulePaid } = await import("./credit-control");
+      await markBillSchedulePaid(tenantSlug, String(app.bill_id), Number(app.applied_amount));
+    } catch { /* schedule is advisory */ }
   }
 
   try {

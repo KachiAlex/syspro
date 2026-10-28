@@ -362,13 +362,14 @@ export async function createBill(payload: {
     insert into bills (
       id, tenant_slug, bill_number, vendor_id, po_id, branch_id,
       bill_date, due_date, currency, subtotal, taxes, total, wht_rate, wht_amount,
-      balance_due, status, metadata, created_at, updated_at
+      balance_due, status, metadata, payment_term_id, created_at, updated_at
     ) values (
       ${id}, ${payload.tenantSlug}, ${billNumber}, ${payload.vendorId},
       ${payload.poId || null}, ${payload.branchId || null},
       ${payload.billDate}, ${payload.dueDate || null}, ${currency},
       ${subtotal}, ${taxes}, ${total}, ${payload.whtRate ?? null}, ${whtAmount},
-      ${balanceDue}, ${gated ? "pending_approval" : "open"}, ${payload.metadata || null}, now(), now()
+      ${balanceDue}, ${gated ? "pending_approval" : "open"}, ${payload.metadata || null},
+      ${(payload as any).paymentTermId || null}, now(), now()
     ) returning *
   `);
 
@@ -393,6 +394,23 @@ export async function createBill(payload: {
   }));
 
   const bill = normalizeBill(record, itemRecords);
+
+  // Due schedule from the payment-term template (or the bill's own due
+  // date when none). Built for every bill — gated or not — so AP aging
+  // and payment walks have a spine even while the JE is deferred.
+  try {
+    const { buildBillSchedule } = await import("./credit-control");
+    await buildBillSchedule({
+      tenantSlug: payload.tenantSlug,
+      billId: id,
+      billDate: payload.billDate,
+      amount: total,
+      paymentTermId: (payload as any).paymentTermId ?? null,
+      dueDate: payload.dueDate,
+    });
+  } catch (schedErr) {
+    console.error("Failed to build bill payment schedule:", schedErr);
+  }
 
   if (!gated) {
     // Create accounting journal entry
