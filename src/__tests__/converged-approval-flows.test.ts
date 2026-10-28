@@ -36,6 +36,9 @@ async function cleanupTenant(t: string) {
   await db.query(`delete from purchase_orders where tenant_slug = $1`, [t]).catch(() => {});
   await db.query(`delete from bill_items where bill_id in (select id from bills where tenant_slug = $1)`, [t]).catch(() => {});
   await db.query(`delete from bills where tenant_slug = $1`, [t]).catch(() => {});
+  await db.query(`delete from delivery_note_items where tenant_slug = $1`, [t]).catch(() => {});
+  await db.query(`delete from delivery_notes where tenant_slug = $1`, [t]).catch(() => {});
+  await db.query(`delete from sales_orders where tenant_slug = $1`, [t]).catch(() => {});
   await db.query(`delete from admin_employees where tenant_slug = $1`, [t]).catch(() => {});
   await db.query(`delete from approvals where tenant_slug = $1`, [t]);
   await db.query(`delete from approval_rules where tenant_slug = $1`, [t]);
@@ -519,5 +522,53 @@ describe.skipIf(!HAS_DB)("converged approval flows", () => {
     expect(Number(billItems[0].quantity)).toBe(6);
 
     await expect(convertPOToBill(poId, { billDate: "2026-10-22" }, TENANT)).rejects.toThrow(/Nothing to bill/);
+  }, T);
+
+  it("delivery note: over-delivery rejected, apply posts stock-out + flips SO status", async () => {
+    const soId = `so_${randomUUID().slice(0, 8)}`;
+    const items = [{ sku: "CAKE-VAN", description: "Vanilla Cake", qty: 10, quantity: 10, unitPrice: 5000 }];
+    try {
+      await db.query(
+        `insert into sales_orders (id, tenant_slug, order_number, customer_id, customer_name, order_date, items, quantity, total, status, created_at)
+         values ($1, $2, $3, 'cust1', 'Test Customer', '2026-10-01', $4::jsonb, 10, 50000, 'confirmed', now())`,
+        [soId, TENANT, `SO-${soId.slice(3)}`, JSON.stringify(items)]
+      );
+    } catch {
+      await db.query(
+        `insert into sales_orders (id, tenant_slug, order_number, customer_name, order_date, items, quantity, total, status, created_at)
+         values ($1, $2, $3, 'Test Customer', '2026-10-01', $4::jsonb, 10, 50000, 'confirmed', now())`,
+        [soId, TENANT, `SO-${soId.slice(3)}`, JSON.stringify(items)]
+      );
+    }
+
+    const { createDeliveryNote, deliverDeliveryNote } = await import("../lib/sales/delivery-notes");
+
+    await expect(createDeliveryNote({
+      tenantSlug: TENANT, salesOrderId: soId, deliveryDate: "2026-10-20",
+      items: [{ soLineKey: "CAKE-VAN", sku: "CAKE-VAN", deliveredQty: 11, unitPrice: 5000 }],
+    })).rejects.toThrow(/Over-delivery/);
+
+    const n = await createDeliveryNote({
+      tenantSlug: TENANT, salesOrderId: soId, deliveryDate: "2026-10-20",
+      items: [{ soLineKey: "CAKE-VAN", sku: "CAKE-VAN", description: "Vanilla Cake", deliveredQty: 6, unitPrice: 5000 }],
+    });
+    expect(n.status).toBe("pending");
+    await deliverDeliveryNote(TENANT, n.id);
+    let so = (await db.query(`select status from sales_orders where id = $1`, [soId])).rows[0];
+    expect(so.status).toBe("partially_delivered");
+
+    // Remaining capacity shrinks: 4 open after delivering 6 of 10
+    await expect(createDeliveryNote({
+      tenantSlug: TENANT, salesOrderId: soId, deliveryDate: "2026-10-21",
+      items: [{ soLineKey: "CAKE-VAN", sku: "CAKE-VAN", deliveredQty: 5, unitPrice: 5000 }],
+    })).rejects.toThrow(/Over-delivery/);
+
+    const n2 = await createDeliveryNote({
+      tenantSlug: TENANT, salesOrderId: soId, deliveryDate: "2026-10-21",
+      items: [{ soLineKey: "CAKE-VAN", sku: "CAKE-VAN", deliveredQty: 4, unitPrice: 5000 }],
+    });
+    await deliverDeliveryNote(TENANT, n2.id);
+    so = (await db.query(`select status from sales_orders where id = $1`, [soId])).rows[0];
+    expect(so.status).toBe("delivered");
   }, T);
 });

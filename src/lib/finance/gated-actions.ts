@@ -644,3 +644,16 @@ registerGatedAction<Record<string, any>>("purchase_receipt", {
   run: async (tenantSlug, p, ctx) =>
     (await import("./purchase-receipts")).receivePurchaseReceipt(tenantSlug, p.receiptId, ctx.decidedBy ?? ctx.requestedBy),
 });
+
+/** Delivery note — goods physically leaving the warehouse against a sales
+ *  order. Same posture as purchase receipts: notes are created 'pending'
+ *  and apply (stock-out + SO status) after approval; ungated delivers
+ *  immediately. */
+registerGatedAction<Record<string, any>>("delivery_note", {
+  domain: "inventory",
+  mode: "block",
+  amount: (p) => Number(p.totalAmount ?? 0),
+  describe: (p) => `Delivery note — ${p.noteNumber ?? p.noteId ?? ""} ${Number(p.totalAmount ?? 0).toLocaleString()}`.trim(),
+  run: async (tenantSlug, p) =>
+    (await import("../sales/delivery-notes")).deliverDeliveryNote(tenantSlug, p.noteId),
+});
