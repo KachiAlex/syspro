@@ -14,6 +14,25 @@ type Role = {
   createdAt: string;
 };
 
+// Document-level keys — doc.<docType>.<action> enforced by requireDocAccess.
+// "<type>.*" = every action; "… approve" = sign-off only. Finer keys
+// (read/create/edit/submit/cancel/delete/refund) follow the same pattern.
+const DOC_GATED_TYPES = [
+  ["journal_entry", "Journal Entry"],
+  ["bill", "Vendor Bill"],
+  ["invoice", "Sales Invoice"],
+  ["payment_entry", "Payment"],
+  ["purchase_order", "Purchase Order"],
+  ["goods_receipt", "Goods Receipt"],
+  ["sales_order", "Sales Order"],
+  ["delivery_note", "Delivery Note"],
+  ["expense_claim", "Expense"],
+  ["payroll_run", "Payroll Run"],
+  ["stock_adjustment", "Stock Adjustment"],
+  ["credit_note", "Credit Note"],
+  ["pos_sale", "POS Sale"],
+] as const;
+
 // Permission groups organized by module
 const PERMISSION_GROUPS = {
   crm: {
@@ -60,6 +79,23 @@ const PERMISSION_GROUPS = {
       { id: "dashboard:projects", label: "Projects Dashboard", description: "View the projects dashboard" },
       { id: "dashboard:reports", label: "Reports Dashboard", description: "View the reports dashboard" },
       { id: "dashboard:billing", label: "Billing Dashboard", description: "View the billing dashboard" },
+    ],
+  },
+  documents: {
+    label: "Document Actions",
+    description:
+      "Fine-grained control per document type — full document control or approve-only rights on top of module access",
+    permissions: [
+      ...DOC_GATED_TYPES.map(([k, l]) => ({
+        id: `doc.${k}.*`,
+        label: `${l} — full control`,
+        description: `All actions on ${l.toLowerCase()}s`,
+      })),
+      ...DOC_GATED_TYPES.map(([k, l]) => ({
+        id: `doc.${k}.approve`,
+        label: `${l} — approve only`,
+        description: `Can approve ${l.toLowerCase()}s without full write`,
+      })),
     ],
   },
 };
