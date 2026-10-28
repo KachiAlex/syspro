@@ -369,6 +369,70 @@ describe.skipIf(!HAS_DB)("converged approval flows", () => {
     expect(row.status).toBe("disposed");
   }, T);
 
+  it("employee_bank_change: stages pending details; approval applies + stamps fraud window", async () => {
+    const empId = `emp_${randomUUID().slice(0, 8)}`;
+    await db.query(
+      `insert into admin_employees (id, tenant_slug, name, email, status, role, bank_name, bank_account_number)
+       values ($1, $2, 'Bank Tester', $3, 'active', 'staff', 'Old Bank', '111')`,
+      [empId, TENANT, `${empId}@test.local`]
+    );
+
+    const { gateOrRun } = await import("../lib/finance/gated-actions");
+    const outcome = await gateOrRun(TENANT, "employee_bank_change", {
+      employeeId: empId, employeeName: "Bank Tester",
+      bankChanges: { bankAccountNumber: "999" },
+    }, { requestedBy: "hr-staff" });
+    expect(outcome.status).toBe("pending");
+
+    const [staged] = (await db.query(
+      `select bank_account_number, pending_bank_details, bank_details_changed_at
+       from admin_employees where id = $1`, [empId]
+    )).rows as any[];
+    expect(staged.bank_account_number).toBe("111");
+    expect((staged.pending_bank_details as any).bankAccountNumber).toBe("999");
+    expect(staged.bank_details_changed_at).toBeNull();
+
+    await decideToTerminal((outcome as any).approvalId);
+    const [applied] = (await db.query(
+      `select bank_name, bank_account_number, pending_bank_details,
+              bank_details_changed_at is not null as stamped
+       from admin_employees where id = $1`, [empId]
+    )).rows as any[];
+    expect(applied.bank_account_number).toBe("999");
+    expect(applied.bank_name).toBe("Old Bank"); // untouched field survives
+    expect(applied.pending_bank_details).toBeNull();
+    expect(applied.stamped).toBe(true);
+  }, T);
+
+  it("coa_change: ungated without master_data band; band routes to chain", async () => {
+    const { gateOrRun } = await import("../lib/finance/gated-actions");
+    // TENANT has no master_data band → opt-in action runs free.
+    const free = await gateOrRun(TENANT, "coa_change", {
+      op: "create",
+      fields: {
+        accountCode: `9${String(Date.now()).slice(-4)}`,
+        accountName: "Test Account", accountType: "EXPENSE",
+      },
+      code: "9999", name: "Test Account",
+    }, { requestedBy: "finance-staff" });
+    expect(free.status).toBe("ran");
+
+    // CFG_TENANT gets a master_data band via save-settings → gates.
+    const { setApprovalSettings } = await import("../lib/finance/approvals");
+    await setApprovalSettings(CFG_TENANT, {
+      authorityMatrix: { master_data: [{ upTo: null, approvers: ["finance_manager"] }] },
+    });
+    const gated = await gateOrRun(CFG_TENANT, "coa_change", {
+      op: "create",
+      fields: {
+        accountCode: `8${String(Date.now()).slice(-4)}`,
+        accountName: "Gated Account", accountType: "EXPENSE",
+      },
+      code: "8888", name: "Gated Account",
+    }, { requestedBy: "finance-staff" });
+    expect(gated.status).toBe("pending");
+  }, T);
+
   it("period_close: period stays open until approval, then closes", async () => {
     const { ensureGLTables } = await import("../lib/finance/gl");
     await ensureGLTables();

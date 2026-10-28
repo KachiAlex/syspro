@@ -84,6 +84,17 @@ export function getGatedAction(name: string): GatedActionDef<any> | undefined {
   return REGISTRY.get(name);
 }
 
+/** Names + metadata of every registered gated action — powers the rules
+ *  editor's action picker (conditions.action) and the Policy tab. */
+export function listGatedActions(): { name: string; domain: GateDomain; mode: GateMode; always: boolean }[] {
+  return [...REGISTRY.entries()].map(([name, def]) => ({
+    name,
+    domain: def.domain,
+    mode: def.mode,
+    always: def.always === true,
+  }));
+}
+
 export type GateOutcome<R = any> =
   | { status: "ran"; result: R; reviewApprovalId?: string }
   | { status: "pending"; approvalId: string }
@@ -519,4 +530,104 @@ registerGatedAction<Record<string, any>>("budget_approval", {
   },
   rejected: async (tenantSlug, p) =>
     (await import("./budgets-db")).changeBudgetStatus(BigInt(p.budgetId), tenantSlug, "DRAFT"),
+});
+
+/** Employee bank details — same payment-diversion vector as vendor bank
+ *  changes, but on the payroll side. The staged change shows as
+ *  pending_bank_details on the employee; approval applies the merge and
+ *  stamps bank_details_changed_at, which escalates payroll runs covering
+ *  this employee to a company officer for 30 days. */
+registerGatedAction<{ employeeId: string; employeeName?: string; bankChanges: Record<string, string | undefined> }>(
+  "employee_bank_change",
+  {
+    domain: "people",
+    mode: "block",
+    always: true,
+    amount: () => 0,
+    describe: (p) => `Employee bank details — ${p.employeeName ?? p.employeeId}`,
+    staged: async (tenantSlug, p) => {
+      await db.query(`alter table admin_employees add column if not exists pending_bank_details jsonb`).catch(() => {});
+      await db.query(
+        `update admin_employees set pending_bank_details = $1::jsonb where id = $2 and tenant_slug = $3`,
+        [JSON.stringify(p.bankChanges), p.employeeId, tenantSlug]
+      );
+    },
+    run: async (tenantSlug, p, ctx) => {
+      const { getEmployeeById, updateEmployee } = await import("../hr/db");
+      const current: any = await getEmployeeById(p.employeeId, tenantSlug);
+      const merged: Record<string, string | undefined> = {
+        bankName: p.bankChanges.bankName !== undefined ? p.bankChanges.bankName : current?.bankName,
+        bankAccountNumber: p.bankChanges.bankAccountNumber !== undefined ? p.bankChanges.bankAccountNumber : current?.bankAccountNumber,
+        bankAccountName: p.bankChanges.bankAccountName !== undefined ? p.bankChanges.bankAccountName : current?.bankAccountName,
+      };
+      const applied = await updateEmployee(p.employeeId, merged, tenantSlug, ctx.decidedBy ?? ctx.requestedBy);
+      await db.query(`alter table admin_employees add column if not exists bank_details_changed_at timestamptz`).catch(() => {});
+      await db.query(
+        `update admin_employees set pending_bank_details = null, bank_details_changed_at = now()
+         where id = $1 and tenant_slug = $2`,
+        [p.employeeId, tenantSlug]
+      );
+      return applied;
+    },
+    rejected: async (tenantSlug, p) => {
+      await db.query(
+        `update admin_employees set pending_bank_details = null where id = $1 and tenant_slug = $2`,
+        [p.employeeId, tenantSlug]
+      );
+    },
+  }
+);
+
+/** Asset value adjustment (impairment/write-down) — posts a GL entry
+ *  moving NBV without disposal. Amount is the absolute delta. */
+registerGatedAction<Record<string, any>>("asset_value_adjustment", {
+  domain: "system",
+  mode: "block",
+  always: true,
+  amount: (p) => Math.abs(Number(p.delta ?? p.newNetBookValue ?? 0)),
+  describe: (p) =>
+    `Asset value adjustment — ${p.assetName ?? p.assetId} → NBV ${Number(p.newNetBookValue ?? 0).toLocaleString()}`,
+  run: async (tenantSlug, p, ctx) =>
+    (await import("./asset-lifecycle")).adjustAssetValue({
+      tenantSlug,
+      assetId: p.assetId,
+      adjustmentDate: p.adjustmentDate,
+      newNetBookValue: Number(p.newNetBookValue),
+      reason: p.reason,
+      financeBook: p.financeBook,
+      userId: ctx.decidedBy ?? ctx.requestedBy,
+    } as any),
+});
+
+/** Asset capitalization — recognizes spend as a fixed asset + depreciation
+ *  schedule. Amount is the capitalized cost. */
+registerGatedAction<Record<string, any>>("asset_capitalize", {
+  domain: "system",
+  mode: "block",
+  always: true,
+  amount: (p) => Number(p.amount ?? 0),
+  describe: (p) => `Capitalize asset — ${p.name} ${Number(p.amount ?? 0).toLocaleString()}`,
+  run: async (tenantSlug, p, ctx) =>
+    (await import("./asset-lifecycle")).capitalizeAsset({
+      ...p,
+      tenantSlug,
+      userId: ctx.decidedBy ?? ctx.requestedBy,
+    } as any),
+});
+
+/** Chart-of-accounts create/update — opt-in master-data control: ungated
+ *  unless the tenant configures a master_data matrix band (or a rule
+ *  scoped to this action via conditions.action). */
+registerGatedAction<Record<string, any>>("coa_change", {
+  domain: "master_data",
+  mode: "block",
+  amount: () => 0,
+  describe: (p) => `GL account ${p.op === "update" ? "update" : "create"} — ${p.code ?? ""} ${p.name ?? ""}`.trim(),
+  run: async (tenantSlug, p) => {
+    const { createChartOfAccount, updateChartOfAccount } = await import("../accounting/db");
+    if (p.op === "update") {
+      return updateChartOfAccount(p.accountId, { ...p.fields, tenantSlug } as any);
+    }
+    return createChartOfAccount({ ...p.fields, tenantSlug, createdBy: p.requestedBy } as any);
+  },
 });

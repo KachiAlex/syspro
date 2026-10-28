@@ -177,12 +177,56 @@ export async function POST(request: NextRequest) {
       case "completeMaintenance":
         data = await completeMaintenance({ ...input, userId });
         break;
-      case "adjust":
-        data = await adjustAssetValue({ ...input, userId });
+      case "adjust": {
+        // Impairment/write-down posts a GL entry — gated like disposal.
+        const { sql } = await import("@/lib/sql-client");
+        const [asset] = (await sql`
+          select name, net_book_value from fixed_assets
+          where id = ${input.assetId} and tenant_slug = ${input.tenantSlug} limit 1
+        `) as any[];
+        const { gateOrRun } = await import("@/lib/finance/gated-actions");
+        const outcome = await gateOrRun(
+          input.tenantSlug,
+          "asset_value_adjustment",
+          {
+            ...input,
+            assetName: asset?.name,
+            delta: Math.abs(Number(input.newNetBookValue) - Number(asset?.net_book_value ?? 0)),
+          },
+          { requestedBy: userId ?? "unknown" }
+        );
+        if (outcome.status === "pending") {
+          return NextResponse.json(
+            { success: true, pendingApproval: true, approvalId: outcome.approvalId },
+            { status: 202 }
+          );
+        }
+        if (outcome.status === "denied") {
+          return NextResponse.json({ success: false, error: outcome.error }, { status: 403 });
+        }
+        data = outcome.result;
         break;
-      case "capitalize":
-        data = await capitalizeAsset({ ...input, userId });
+      }
+      case "capitalize": {
+        const { gateOrRun } = await import("@/lib/finance/gated-actions");
+        const outcome = await gateOrRun(
+          input.tenantSlug,
+          "asset_capitalize",
+          { ...input },
+          { requestedBy: userId ?? "unknown" }
+        );
+        if (outcome.status === "pending") {
+          return NextResponse.json(
+            { success: true, pendingApproval: true, approvalId: outcome.approvalId },
+            { status: 202 }
+          );
+        }
+        if (outcome.status === "denied") {
+          return NextResponse.json({ success: false, error: outcome.error }, { status: 403 });
+        }
+        data = outcome.result;
         break;
+      }
       case "location":
         data = await upsertAssetLocation(input);
         break;

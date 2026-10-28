@@ -387,6 +387,8 @@ async function ensureHrTablesRun(sql: SqlClient = SQL) {
   await sql`alter table admin_employees add column if not exists bank_name text`;
   await sql`alter table admin_employees add column if not exists bank_account_number text`;
   await sql`alter table admin_employees add column if not exists bank_account_name text`;
+  await sql`alter table admin_employees add column if not exists pending_bank_details jsonb`;
+  await sql`alter table admin_employees add column if not exists bank_details_changed_at timestamptz`;
 
   // Recurring per-employee salary components (allowances, deductions, loans)
   await sql`

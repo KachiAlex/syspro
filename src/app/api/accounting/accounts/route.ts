@@ -6,7 +6,6 @@ import {
   chartOfAccountUpdateSchema,
 } from "@/lib/accounting/types";
 import {
-  createChartOfAccount,
   getChartOfAccounts,
   getChartOfAccount,
   updateChartOfAccount,
@@ -69,11 +68,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const account = await createChartOfAccount({
-      ...parsed.data,
-      tenantSlug: context.tenantSlug,
-      createdBy: context.userId ?? parsed.data.createdBy,
-    });
+    // Opt-in control: a master_data matrix band (or a rule scoped to
+    // coa_change) routes account creation through the approval chain;
+    // otherwise it applies immediately.
+    const { gateOrRun } = await import("@/lib/finance/gated-actions");
+    const outcome = await gateOrRun(
+      context.tenantSlug,
+      "coa_change",
+      {
+        op: "create",
+        fields: { ...parsed.data, createdBy: context.userId ?? parsed.data.createdBy },
+        code: parsed.data.accountCode,
+        name: parsed.data.accountName,
+        requestedBy: context.userId,
+      },
+      { requestedBy: context.userId ?? "unknown" }
+    );
+    if (outcome.status === "pending") {
+      return NextResponse.json(
+        { success: true, pendingApproval: true, approvalId: outcome.approvalId },
+        { status: 202 }
+      );
+    }
+    if (outcome.status === "denied") {
+      return NextResponse.json({ error: outcome.error }, { status: 403 });
+    }
+    const account = outcome.result;
 
     return NextResponse.json({ account, data: account }, { status: 201 });
   } catch (error: any) {

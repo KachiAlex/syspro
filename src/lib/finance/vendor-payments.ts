@@ -312,10 +312,9 @@ export async function createVendorPayment(payload: {
     }
   } else {
     try {
-      // Risk escalation: paying a vendor whose bank details changed within
-      // the last 30 days forces a company-officer step regardless of amount
-      // — the classic beneficiary-switch fraud window.
-      let forceOfficerApproval = false;
+      // Risk escalation: signals that push this payment to a company
+      // officer regardless of amount.
+      const riskFlags: string[] = [];
       let bankChangedAt: string | null = null;
       try {
         const [v] = (await sql`
@@ -323,10 +322,32 @@ export async function createVendorPayment(payload: {
           from vendors where id = ${payload.vendorId} and tenant_slug = ${payload.tenantSlug}
         `) as any[];
         bankChangedAt = v?.changed_at ?? null;
+        // Bank details changed <30d — the classic beneficiary-switch window.
         if (bankChangedAt && Date.now() - new Date(bankChangedAt).getTime() < 30 * 86400000) {
-          forceOfficerApproval = true;
+          riskFlags.push("vendor_bank_recently_changed");
         }
       } catch { /* column may predate the gate migration */ }
+      try {
+        const [hist] = (await sql`
+          select count(*)::int as prior,
+                 count(*) filter (where created_at > now() - interval '7 days')::int as last_week
+          from vendor_payments
+          where tenant_slug = ${payload.tenantSlug} and vendor_id = ${payload.vendorId}
+            and status in ('posted', 'pending_approval')
+        `) as any[];
+        // First-time payee — no prior payments to this vendor.
+        if (Number(hist?.prior ?? 0) === 0) riskFlags.push("first_time_payee");
+        // Velocity — 3+ payments to the same vendor inside a week.
+        else if (Number(hist?.last_week ?? 0) >= 3) riskFlags.push("payment_velocity");
+      } catch { /* history check is best-effort */ }
+      // Off-hours request — outside 07:00–19:00 WAT (UTC+1) or on a weekend.
+      const now = new Date();
+      const watHour = (now.getUTCHours() + 1) % 24;
+      const watDay = new Date(now.getTime() + 3600000).getUTCDay();
+      if (watHour < 7 || watHour >= 19 || watDay === 0 || watDay === 6) {
+        riskFlags.push("off_hours");
+      }
+      const forceOfficerApproval = riskFlags.length > 0;
       const { initiateApproval } = await import("./approvals");
       const approval = await initiateApproval({
         tenantSlug: payload.tenantSlug,
@@ -340,7 +361,7 @@ export async function createVendorPayment(payload: {
           reference: paymentNumber,
           requestedByName: (payload.metadata as any)?.createdBy,
           forceOfficerApproval,
-          riskFlags: forceOfficerApproval ? ["vendor_bank_recently_changed"] : [],
+          riskFlags,
           bankDetailsChangedAt: bankChangedAt,
         },
       });

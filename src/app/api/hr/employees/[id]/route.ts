@@ -131,6 +131,65 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
 
+    // Employee bank-detail edits are the payroll-side equivalent of vendor
+    // bank fraud — staged as pending_bank_details and routed through the
+    // approvals engine. Other fields still apply immediately.
+    const BANK_FIELDS = ["bankName", "bankAccountNumber", "bankAccountName"] as const;
+    const bankChanges: Record<string, string | undefined> = {};
+    for (const f of BANK_FIELDS) {
+      if (updateData[f] !== undefined) {
+        bankChanges[f] = updateData[f] as string | undefined;
+        delete updateData[f];
+      }
+    }
+    let bankChangePending: { approvalId: string } | null = null;
+    if (Object.keys(bankChanges).length > 0 && parsed.data.tenantSlug) {
+      const { sql } = await import("@/lib/sql-client");
+      await sql`alter table admin_employees add column if not exists pending_bank_details jsonb`;
+      const [emp] = await sql`
+        select bank_name, bank_account_number, bank_account_name,
+               pending_bank_details, name
+        from admin_employees
+        where id = ${id} and tenant_slug = ${parsed.data.tenantSlug}
+        limit 1
+      ` as any[];
+      if (!emp) {
+        return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+      }
+      if (emp.pending_bank_details) {
+        return NextResponse.json(
+          { error: "A bank-detail change is already awaiting approval for this employee" },
+          { status: 409 }
+        );
+      }
+      const current: Record<string, any> = {
+        bankName: emp.bank_name,
+        bankAccountNumber: emp.bank_account_number,
+        bankAccountName: emp.bank_account_name,
+      };
+      const changed = Object.entries(bankChanges).filter(
+        ([k, v]) => String(v ?? "") !== String(current[k] ?? "")
+      );
+      if (changed.length > 0) {
+        const { gateOrRun } = await import("@/lib/finance/gated-actions");
+        const outcome = await gateOrRun(
+          parsed.data.tenantSlug,
+          "employee_bank_change",
+          {
+            employeeId: id,
+            employeeName: emp.name,
+            bankChanges: Object.fromEntries(changed),
+          },
+          { requestedBy: auth.user.id }
+        );
+        if (outcome.status === "pending") {
+          bankChangePending = { approvalId: outcome.approvalId };
+        } else if (outcome.status === "denied") {
+          return NextResponse.json({ error: outcome.error }, { status: 403 });
+        }
+      }
+    }
+
     // Termination is an authority decision — route it through the approvals
     // engine (people domain). Other fields still apply immediately.
     let terminationPending: { approvalId: string } | null = null;
@@ -166,6 +225,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       employee,
       salaryPendingApproval: salaryPending,
       terminationPendingApproval: terminationPending,
+      bankChangePendingApproval: bankChangePending,
     });
   } catch (error: any) {
     console.error("Employee update failed", error);

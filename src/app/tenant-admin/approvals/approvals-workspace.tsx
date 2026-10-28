@@ -64,6 +64,14 @@ const ENTITY_TYPE_OPTIONS = [
   ["purchase_return", "Purchase Return"],
   ["expense", "Expense"],
   ["employee_expense", "Employee Expense"],
+  ["payroll_run", "Payroll Run"],
+  ["employee_salary_change", "Salary Change"],
+  ["credit_limit_change", "Credit Limit"],
+  ["stock_adjustment", "Stock Adjustment"],
+  ["bank_guarantee", "Bank Guarantee"],
+  ["invoice_discounting", "Invoice Discounting"],
+  ["pricing_change", "Pricing Change"],
+  ["gated_action", "Gated Action"],
 ] as const;
 
 const RULE_TYPE_OPTIONS = [
@@ -109,7 +117,7 @@ function useOfficers(tenantSlug: string) {
 
 export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (section: string) => void }) {
   const { tenantSlug } = useTenantContext();
-  const [tab, setTab] = useState<"requests" | "rules" | "officers" | "delegates">("requests");
+  const [tab, setTab] = useState<"requests" | "rules" | "officers" | "delegates" | "policy">("requests");
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -213,7 +221,7 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-theme-border">
-        {([["requests", "Requests"], ["rules", "Rules"], ["officers", "Officers"], ["delegates", "Delegations"]] as const).map(([key, label]) => (
+        {([["requests", "Requests"], ["rules", "Rules"], ["officers", "Officers"], ["delegates", "Delegations"], ["policy", "Policy"]] as const).map(([key, label]) => (
           <button
             key={key}
             onClick={() => setTab(key)}
@@ -244,6 +252,13 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
       )}
       {tab === "delegates" && (
         <DelegatesPanel
+          tenantSlug={tenantSlug ?? ""}
+          onError={setError}
+          onSuccess={(m) => { setSuccess(m); setTimeout(() => setSuccess(null), 3000); }}
+        />
+      )}
+      {tab === "policy" && (
+        <PolicyPanel
           tenantSlug={tenantSlug ?? ""}
           onError={setError}
           onSuccess={(m) => { setSuccess(m); setTimeout(() => setSuccess(null), 3000); }}
@@ -449,6 +464,17 @@ function conditionsSummary(rule: ApprovalRule): string {
   return parts.join(" · ") || "—";
 }
 
+function useGatedActions() {
+  const [actions, setActions] = useState<Array<{ name: string; domain: string; mode: string; always: boolean }>>([]);
+  useEffect(() => {
+    fetch("/api/finance/approvals?gated-actions=true")
+      .then((r) => r.json())
+      .then((d) => setActions(d.actions ?? []))
+      .catch(() => {});
+  }, []);
+  return actions;
+}
+
 function RulesPanel({ tenantSlug, onError, onSuccess }: {
   tenantSlug: string;
   onError: (m: string | null) => void;
@@ -460,6 +486,7 @@ function RulesPanel({ tenantSlug, onError, onSuccess }: {
   const [saving, setSaving] = useState(false);
   const users = useUserOptions(tenantSlug);
   const { officers } = useOfficers(tenantSlug);
+  const gatedActions = useGatedActions();
   const officerSpecs = officers.map((o) => ({
     value: `role:${officerSlug(o.title)}`,
     label: `${o.title} (officer)`,
@@ -473,6 +500,7 @@ function RulesPanel({ tenantSlug, onError, onSuccess }: {
   const [categoryId, setCategoryId] = useState("");
   const [projectId, setProjectId] = useState("");
   const [vendorId, setVendorId] = useState("");
+  const [actionScope, setActionScope] = useState("");
   const [slaHours, setSlaHours] = useState("");
   const [slaAction, setSlaAction] = useState<"remind" | "escalate">("remind");
   const [priority, setPriority] = useState("0");
@@ -547,6 +575,7 @@ function RulesPanel({ tenantSlug, onError, onSuccess }: {
       if (ruleType === "category_based" && categoryId) conditions.categoryId = categoryId;
       if (ruleType === "project_based" && projectId) conditions.projectId = projectId;
       if (ruleType === "vendor_based" && vendorId) conditions.vendorId = vendorId;
+      if (entityType === "gated_action" && actionScope) conditions.action = actionScope;
       if (slaHours) {
         conditions.slaHours = Number(slaHours);
         conditions.slaAction = slaAction;
@@ -633,6 +662,15 @@ function RulesPanel({ tenantSlug, onError, onSuccess }: {
           {ruleType === "vendor_based" && (
             <div><label className={labelCls}>Vendor ID</label>
               <input value={vendorId} onChange={(e) => setVendorId(e.target.value)} className={inputCls} /></div>
+          )}
+          {entityType === "gated_action" && (
+            <div>
+              <label className={labelCls}>Scope to action (optional — all gated actions when blank)</label>
+              <select value={actionScope} onChange={(e) => setActionScope(e.target.value)} className={inputCls}>
+                <option value="">All gated actions</option>
+                {gatedActions.map((a) => <option key={a.name} value={a.name}>{a.name}</option>)}
+              </select>
+            </div>
           )}
 
           <div className="grid grid-cols-3 gap-4">
@@ -1096,6 +1134,257 @@ function OfficersPanel({ tenantSlug, onError, onSuccess }: {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Policy tab — Delegation-of-Authority matrix + approval thresholds.
+// Writes settings.approvals via POST action "save-settings".
+// ---------------------------------------------------------------------------
+
+const DOA_DOMAINS: Array<[string, string]> = [
+  ["spend", "Spend (POs, bills, payments, expenses, requisitions, budgets)"],
+  ["treasury", "Treasury (guarantees, discounting)"],
+  ["people", "People (salary, payroll adj, leave, roles, termination, emp. bank)"],
+  ["inventory", "Inventory (stock adjustments, transfers)"],
+  ["master_data", "Master data (vendors, credit limits, pricing, CoA)"],
+  ["system", "System (journal entries, period close, asset ops)"],
+  ["sales", "Sales (returns, discounts, refunds, payouts, invoice delete)"],
+];
+
+interface MatrixBandDraft {
+  upTo: string;
+  approvers: string;
+  mode: string;
+}
+
+const THRESHOLD_KEYS: Array<[string, string]> = [
+  ["expenseMinAmount", "Expense min"],
+  ["employeeExpenseMinAmount", "Employee expense min"],
+  ["billMinAmount", "Bill min"],
+  ["paymentMinAmount", "Vendor payment min"],
+  ["payrollMinAmount", "Payroll run min"],
+  ["stockAdjustmentMinAmount", "Stock adjustment min"],
+  ["stockTransferMinAmount", "Stock transfer min"],
+  ["requisitionMinAmount", "Requisition min"],
+  ["bankGuaranteeMinAmount", "Bank guarantee min"],
+  ["invoiceDiscountingMinAmount", "Invoice discounting min"],
+  ["approvalSlaHours", "Default SLA (hours)"],
+];
+
+function PolicyPanel({ tenantSlug, onError, onSuccess }: {
+  tenantSlug: string;
+  onError: (m: string | null) => void;
+  onSuccess: (m: string) => void;
+}) {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [matrix, setMatrix] = useState<Record<string, MatrixBandDraft[]>>({});
+  const [thresholds, setThresholds] = useState<Record<string, string>>({});
+  const [actions, setActions] = useState<Array<{ name: string; domain: string; mode: string; always: boolean }>>([]);
+  const { officers } = useOfficers(tenantSlug);
+  const specOptions = [
+    "dept_manager",
+    "role:finance_manager",
+    "role:admin",
+    "role:tenant_owner",
+    ...officers.map((o) => `officer:${o.title}`),
+  ];
+  const inputCls = "w-full rounded-lg border border-theme-border px-3 py-2 text-sm";
+  const labelCls = "block text-xs font-medium text-theme-text-primary mb-1";
+
+  useEffect(() => {
+    if (!tenantSlug) return;
+    (async () => {
+      try {
+        const [mx, ga] = await Promise.all([
+          fetch(`/api/finance/approvals?matrix=true&tenantSlug=${encodeURIComponent(tenantSlug)}`).then((r) => r.json()),
+          fetch(`/api/finance/approvals?gated-actions=true&tenantSlug=${encodeURIComponent(tenantSlug)}`).then((r) => r.json()),
+        ]);
+        setActions(ga.actions ?? []);
+        const drafts: Record<string, MatrixBandDraft[]> = {};
+        for (const [domain] of DOA_DOMAINS) {
+          const bands = (mx.matrix?.[domain] ?? []) as any[];
+          drafts[domain] = bands.map((b) => ({
+            upTo: b?.upTo === null || b?.upTo === undefined ? "" : String(b.upTo),
+            approvers: (b?.approvers ?? [])
+              .map((a: any) => (Array.isArray(a) ? a.join("|") : String(a)))
+              .join(", "),
+            mode: b?.mode ?? "",
+          }));
+        }
+        setMatrix(drafts);
+        const t: Record<string, string> = {};
+        for (const [k] of THRESHOLD_KEYS) {
+          const v = (mx.approvals ?? {})[k];
+          if (v !== undefined && v !== null) t[k] = String(v);
+        }
+        setThresholds(t);
+      } catch {
+        onError("Failed to load approval policy");
+      } finally {
+        setLoading(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenantSlug]);
+
+  const setBand = (domain: string, idx: number, field: keyof MatrixBandDraft, value: string) => {
+    setMatrix((m) => ({
+      ...m,
+      [domain]: m[domain].map((b, i) => (i === idx ? { ...b, [field]: value } : b)),
+    }));
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const authorityMatrix: Record<string, any[]> = {};
+      for (const [domain, bands] of Object.entries(matrix)) {
+        const clean = (bands ?? [])
+          .filter((b) => b.approvers.trim() !== "" || b.upTo.trim() !== "")
+          .map((b) => ({
+            upTo: b.upTo.trim() === "" ? null : Number(b.upTo),
+            approvers: b.approvers
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+              .map((spec) => (spec.includes("|") ? spec.split("|").map((x) => x.trim()).filter(Boolean) : spec)),
+            ...(b.mode ? { mode: b.mode } : {}),
+          }));
+        if (clean.length) authorityMatrix[domain] = clean;
+      }
+      const patch: Record<string, any> = { authorityMatrix };
+      for (const [k] of THRESHOLD_KEYS) {
+        const v = thresholds[k]?.trim();
+        patch[k] = v === "" || v === undefined ? null : Number(v);
+      }
+      const res = await fetch(`/api/finance/approvals?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "save-settings", patch }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Save failed");
+      onSuccess("Approval policy saved");
+    } catch (e: any) {
+      onError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <p className="text-sm text-theme-text-secondary">Loading policy…</p>;
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-theme-border bg-theme-surface p-6 space-y-5">
+        <div>
+          <p className="text-sm font-semibold text-theme-text-primary">Delegation-of-authority matrix</p>
+          <p className="mt-1 text-xs text-theme-text-secondary">
+            First band whose ceiling covers the amount wins. Approver specs: dept_manager, role:&lt;key&gt;,
+            officer:&lt;title&gt;, user:&lt;id&gt; — comma-separate steps, use | for parallel approvers on one step.
+            An empty approver list auto-approves; mode review applies immediately with post-hoc review.
+          </p>
+        </div>
+        {DOA_DOMAINS.map(([domain, label]) => (
+          <div key={domain} className="rounded-xl border border-theme-border p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-theme-text-primary">{label}</p>
+              <button
+                onClick={() => setMatrix((m) => ({ ...m, [domain]: [...(m[domain] ?? []), { upTo: "", approvers: "", mode: "" }] }))}
+                className="text-xs font-medium text-theme-accent hover:underline"
+              >
+                + band
+              </button>
+            </div>
+            {(matrix[domain] ?? []).length === 0 && (
+              <p className="text-xs text-theme-text-secondary">No bands — falls back to rules and thresholds.</p>
+            )}
+            {(matrix[domain] ?? []).map((band, idx) => (
+              <div key={idx} className="grid grid-cols-12 gap-2 items-center">
+                <input
+                  value={band.upTo}
+                  onChange={(e) => setBand(domain, idx, "upTo", e.target.value)}
+                  placeholder="up to N (blank = no limit)"
+                  className={`${inputCls} col-span-3`}
+                />
+                <div className="col-span-6">
+                  <input
+                    value={band.approvers}
+                    onChange={(e) => setBand(domain, idx, "approvers", e.target.value)}
+                    placeholder="dept_manager, officer:Managing Director"
+                    list={`specs-${domain}-${idx}`}
+                    className={inputCls}
+                  />
+                  <datalist id={`specs-${domain}-${idx}`}>
+                    {specOptions.map((s) => <option key={s} value={s} />)}
+                  </datalist>
+                </div>
+                <select
+                  value={band.mode}
+                  onChange={(e) => setBand(domain, idx, "mode", e.target.value)}
+                  className={`${inputCls} col-span-2`}
+                >
+                  <option value="">block</option>
+                  <option value="review">review</option>
+                </select>
+                <button
+                  onClick={() => setMatrix((m) => ({ ...m, [domain]: m[domain].filter((_, i) => i !== idx) }))}
+                  className="col-span-1 text-rose-600 text-xs"
+                >
+                  remove
+                </button>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-2xl border border-theme-border bg-theme-surface p-6 space-y-4">
+        <div>
+          <p className="text-sm font-semibold text-theme-text-primary">Thresholds</p>
+          <p className="mt-1 text-xs text-theme-text-secondary">
+            Documents below the min skip the chain for opt-in types; on always-gated types it acts as an opt-out floor. Blank = unset.
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          {THRESHOLD_KEYS.map(([k, label]) => (
+            <div key={k}>
+              <label className={labelCls}>{label} (₦)</label>
+              <input
+                type="number"
+                value={thresholds[k] ?? ""}
+                onChange={(e) => setThresholds({ ...thresholds, [k]: e.target.value })}
+                className={inputCls}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-theme-border bg-theme-surface p-6">
+        <p className="text-sm font-semibold text-theme-text-primary mb-3">Registered gated actions</p>
+        <div className="grid grid-cols-2 gap-2">
+          {actions.map((a) => (
+            <div key={a.name} className="flex items-center justify-between rounded-lg bg-theme-muted px-3 py-1.5">
+              <span className="text-xs font-mono text-theme-text-primary">{a.name}</span>
+              <span className="text-[10px] text-theme-text-secondary">{a.domain} · {a.mode}{a.always ? " · always" : ""}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          onClick={save}
+          disabled={saving}
+          className="rounded-lg bg-theme-accent px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+        >
+          {saving ? "Saving…" : "Save policy"}
+        </button>
+      </div>
     </div>
   );
 }

@@ -469,7 +469,43 @@ export async function setOfficers(
     set settings = jsonb_set(coalesce(settings, '{}'::jsonb), '{approvals,officers}', ${JSON.stringify(clean)}::jsonb, true)
     where slug = ${tenantSlug}
   `;
+  await notifyApprovalsConfigChanged(tenantSlug, "officers");
   return clean;
+}
+
+/**
+ * Writes keys into settings.approvals (authorityMatrix, *MinAmount
+ * thresholds, SLA defaults, …) and fires an audit notification — whoever
+ * can weaken the control config should leave a trace admins see.
+ */
+export async function setApprovalSettings(
+  tenantSlug: string,
+  patch: Record<string, any>
+): Promise<Record<string, any>> {
+  const current = await tenantApprovalSettings(tenantSlug);
+  const next = { ...current, ...patch };
+  await SQL`
+    update tenants
+    set settings = jsonb_set(coalesce(settings, '{}'::jsonb), '{approvals}', ${JSON.stringify(next)}::jsonb, true)
+    where slug = ${tenantSlug}
+  `;
+  await notifyApprovalsConfigChanged(tenantSlug, Object.keys(patch).join(", "));
+  return next;
+}
+
+/** Audit event for approval-control changes — notifies tenant admins that
+ *  the approval configuration itself was modified. */
+async function notifyApprovalsConfigChanged(tenantSlug: string, section: string): Promise<void> {
+  try {
+    const { emitEvent } = await import("../notify");
+    void emitEvent({
+      tenantSlug,
+      eventType: "approvals.config_changed",
+      sourceModule: "approvals",
+      sourceRecordId: `cfg_${Date.now()}`,
+      payload: { section },
+    }).catch((err) => console.error("approvals.config_changed emit failed:", err));
+  } catch { /* notify lib must not break a settings write */ }
 }
 
 /**

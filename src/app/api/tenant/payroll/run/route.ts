@@ -261,6 +261,23 @@ export async function POST(request: NextRequest) {
         left join admin_employees e on e.tenant_slug = t.ts and e.id::text = ${context.userId}
         limit 1
       ` as any[];
+      // Risk escalation: if any paid employee's bank details were changed
+      // within the last 30 days (beneficiary-switch fraud window), force a
+      // company-officer step regardless of the run total.
+      let forceOfficerApproval = false;
+      try {
+        const empIds = (employees as any[]).map((e) => String(e.id ?? e.employeeId ?? "")).filter(Boolean);
+        if (empIds.length) {
+          const rows = (await sql`
+            select count(*)::int as n from admin_employees
+            where tenant_slug = ${context.tenantSlug}
+              and id = any(${empIds}::text[])
+              and bank_details_changed_at is not null
+              and bank_details_changed_at > now() - interval '30 days'
+          `) as any[];
+          forceOfficerApproval = Number(rows[0]?.n ?? 0) > 0;
+        }
+      } catch { /* column may predate the gate migration */ }
       const approval = await initiateApproval({
         tenantSlug: context.tenantSlug,
         entityType: "payroll_run",
@@ -272,6 +289,8 @@ export async function POST(request: NextRequest) {
           period,
           reference: `Payroll ${period}`,
           requestedByName: actor?.name ?? context.userId,
+          forceOfficerApproval,
+          riskFlags: forceOfficerApproval ? ["employee_bank_recently_changed"] : [],
         },
       });
       await sql`

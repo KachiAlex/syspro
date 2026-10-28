@@ -15,11 +15,13 @@ import {
   revokeDelegate,
   getOfficers,
   setOfficers,
+  tenantAuthorityMatrix,
+  setApprovalSettings,
 } from "@/lib/finance/approvals";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { requireModuleAccess } from "@/lib/api-auth";
 
-const ENTITY_TYPES = ["purchase_order", "bill", "payment", "journal_entry", "sales_return", "purchase_return", "expense", "employee_expense"] as const;
+const ENTITY_TYPES = ["purchase_order", "bill", "payment", "journal_entry", "sales_return", "purchase_return", "expense", "employee_expense", "payroll_run", "employee_salary_change", "credit_limit_change", "stock_adjustment", "bank_guarantee", "invoice_discounting", "pricing_change", "gated_action"] as const;
 
 const approvalRuleCreateSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -121,6 +123,24 @@ export async function GET(request: NextRequest) {
     if (url.searchParams.get("officers") === "true") {
       const officers = await getOfficers(tenantSlug);
       return NextResponse.json({ officers });
+    }
+
+    // Delegation-of-authority matrix + thresholds (Policy tab)
+    if (url.searchParams.get("matrix") === "true") {
+      const matrix = await tenantAuthorityMatrix(tenantSlug);
+      const { db } = await import("@/lib/sql-client");
+      const t = (await db.query(`select settings from tenants where slug = $1`, [tenantSlug])).rows[0];
+      return NextResponse.json({
+        matrix,
+        approvals: (t?.settings as any)?.approvals ?? {},
+      });
+    }
+
+    // Registered gated actions — powers the rules editor's action picker
+    // and explains what each flow is gated by.
+    if (url.searchParams.get("gated-actions") === "true") {
+      const { listGatedActions } = await import("@/lib/finance/gated-actions");
+      return NextResponse.json({ actions: listGatedActions() });
     }
 
     // Delegation grants
@@ -293,6 +313,16 @@ export async function POST(request: NextRequest) {
       }
       const officers = await setOfficers(tenantSlug, parsed.data.officers);
       return NextResponse.json({ officers });
+    }
+
+    // DoA matrix + threshold settings — the Policy tab writes through here.
+    if (body.action === "save-settings") {
+      const patch = body.patch;
+      if (!patch || typeof patch !== "object" || Array.isArray(patch)) {
+        return NextResponse.json({ error: "patch object required" }, { status: 400 });
+      }
+      const settings = await setApprovalSettings(tenantSlug, patch);
+      return NextResponse.json({ settings });
     }
 
     // Process approval decision
