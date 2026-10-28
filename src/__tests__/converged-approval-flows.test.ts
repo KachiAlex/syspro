@@ -30,6 +30,12 @@ async function cleanupTenant(t: string) {
   await db.query(`delete from budget_lines where budget_id in (select id from budgets where tenant_slug = $1)`, [t]).catch(() => {});
   await db.query(`delete from budgets where tenant_slug = $1`, [t]).catch(() => {});
   await db.query(`delete from fiscal_periods where tenant_slug = $1`, [t]).catch(() => {});
+  await db.query(`delete from purchase_receipt_items where tenant_slug = $1`, [t]).catch(() => {});
+  await db.query(`delete from purchase_receipts where tenant_slug = $1`, [t]).catch(() => {});
+  await db.query(`delete from purchase_order_items where purchase_order_id in (select id from purchase_orders where tenant_slug = $1)`, [t]).catch(() => {});
+  await db.query(`delete from purchase_orders where tenant_slug = $1`, [t]).catch(() => {});
+  await db.query(`delete from bill_items where bill_id in (select id from bills where tenant_slug = $1)`, [t]).catch(() => {});
+  await db.query(`delete from bills where tenant_slug = $1`, [t]).catch(() => {});
   await db.query(`delete from admin_employees where tenant_slug = $1`, [t]).catch(() => {});
   await db.query(`delete from approvals where tenant_slug = $1`, [t]);
   await db.query(`delete from approval_rules where tenant_slug = $1`, [t]);
@@ -459,5 +465,59 @@ describe.skipIf(!HAS_DB)("converged approval flows", () => {
     await decideToTerminal((outcome as any).approvalId);
     row = (await db.query(`select status from fiscal_periods where id = $1`, [periodId])).rows[0];
     expect((row.status as string).toLowerCase()).toBe("closed");
+  }, T);
+
+  it("purchase receipt: over-receipt rejected, received applies PO qty, 3-way match caps billing", async () => {
+    const { ensurePurchaseOrderTables } = await import("../lib/finance/purchase-orders");
+    const { sql } = await import("../lib/sql-client");
+    await ensurePurchaseOrderTables(sql);
+    const poId = randomUUID();
+    const poItemId = randomUUID();
+    try {
+      await db.query(
+        `insert into purchase_orders (id, tenant_slug, order_number, po_number, supplier_id, supplier_name, status, issued_date, total_amount, created_at)
+         values ($1, $2, $3, $4, '00000000-0000-0000-0000-0000000000aa', 'Test Supplier', 'approved', '2026-10-01', 100000, now())`,
+        [poId, TENANT, `PO-${poId.slice(0,8)}`, `PO-${poId.slice(0,8)}`]
+      );
+    } catch {
+      await db.query(
+        `insert into purchase_orders (id, tenant_slug, po_number, supplier_id, supplier_name, status, issued_date, total_amount, created_at)
+         values ($1, $2, $3, '00000000-0000-0000-0000-0000000000aa', 'Test Supplier', 'approved', '2026-10-01', 100000, now())`,
+        [poId, TENANT, `PO-${poId.slice(0,8)}`]
+      );
+    }
+    await db.query(
+      `insert into purchase_order_items (id, purchase_order_id, sku, description, quantity, unit_price, amount, received_quantity)
+       values ($1, $2, 'SKU-1', 'Flour 50kg', 10, 10000, 100000, 0)`,
+      [poItemId, poId]
+    );
+
+    const { createPurchaseReceipt, receivePurchaseReceipt } = await import("../lib/finance/purchase-receipts");
+
+    await expect(createPurchaseReceipt({
+      tenantSlug: TENANT, purchaseOrderId: poId, receivedDate: "2026-10-20",
+      items: [{ poItemId, sku: "SKU-1", receivedQty: 11, unitPrice: 10000 }],
+    })).rejects.toThrow(/Over-receipt/);
+
+    const r = await createPurchaseReceipt({
+      tenantSlug: TENANT, purchaseOrderId: poId, receivedDate: "2026-10-20",
+      items: [{ poItemId, sku: "SKU-1", description: "Flour 50kg", receivedQty: 6, unitPrice: 10000 }],
+    });
+    expect(r.status).toBe("pending");
+    const applied = await receivePurchaseReceipt(TENANT, r.id, "tester");
+    expect(applied.status).toBe("received");
+    const item = (await db.query(`select received_quantity from purchase_order_items where id = $1`, [poItemId])).rows[0];
+    expect(Number(item.received_quantity)).toBe(6);
+    const po = (await db.query(`select status from purchase_orders where id = $1`, [poId])).rows[0];
+    expect(po.status).toBe("partially_received");
+
+    const { convertPOToBill } = await import("../lib/finance/bills");
+    const bill = await convertPOToBill(poId, { billDate: "2026-10-21" }, TENANT);
+    expect(bill).toBeTruthy();
+    const billItems = (await db.query(`select quantity from bill_items where bill_id = $1`, [(bill as any).id])).rows;
+    expect(billItems.length).toBe(1);
+    expect(Number(billItems[0].quantity)).toBe(6);
+
+    await expect(convertPOToBill(poId, { billDate: "2026-10-22" }, TENANT)).rejects.toThrow(/Nothing to bill/);
   }, T);
 });

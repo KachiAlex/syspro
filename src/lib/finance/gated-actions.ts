@@ -631,3 +631,16 @@ registerGatedAction<Record<string, any>>("coa_change", {
     return createChartOfAccount({ ...p.fields, tenantSlug, createdBy: p.requestedBy } as any);
   },
 });
+
+/** Goods receipt — physical stock-in against a PO. Receipts are created
+ *  'pending' and apply (stock-in + PO received_qty + status) only after
+ *  the chain approves. Ungated → receives immediately (it's a physical
+ *  event the warehouse already confirmed). */
+registerGatedAction<Record<string, any>>("purchase_receipt", {
+  domain: "inventory",
+  mode: "block",
+  amount: (p) => Number(p.totalAmount ?? 0),
+  describe: (p) => `Purchase receipt — ${p.receiptNumber ?? p.receiptId ?? ""} ${Number(p.totalAmount ?? 0).toLocaleString()}`.trim(),
+  run: async (tenantSlug, p, ctx) =>
+    (await import("./purchase-receipts")).receivePurchaseReceipt(tenantSlug, p.receiptId, ctx.decidedBy ?? ctx.requestedBy),
+});

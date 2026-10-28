@@ -551,6 +551,52 @@ export async function convertPOToBill(poId: string, payload: {
     select * from purchase_order_items where coalesce(purchase_order_id, po_id) = ${poId}
   `) as any[];
 
+  // Three-way match — when receipts exist for this PO, a line may only be
+  // billed up to what was physically received, minus what prior bills
+  // already consumed. POs without any receipts keep the legacy
+  // bill-the-full-order behavior.
+  let receiptCount: any;
+  try {
+    [receiptCount] = (await sql`
+      select count(*)::int as c from purchase_receipts
+      where purchase_order_id = ${poId} and tenant_slug = ${po.tenant_slug}
+        and status = 'received'
+    `) as any[];
+  } catch {
+    receiptCount = { c: 0 };
+  }
+  const hasReceipts = Number(receiptCount?.c ?? 0) > 0;
+
+  let itemsToBill = poItems.map((item) => ({ item, qty: Number(item.quantity) }));
+  if (hasReceipts) {
+    // Billed-so-far per line, keyed on sku (bill lines carry it via metadata).
+    let billedRows: any[] = [];
+    try {
+      billedRows = (await sql`
+        select coalesce(bi.metadata->>'sku', bi.description) as line_key,
+               sum(bi.quantity) as billed_qty
+        from bill_items bi
+        join bills b on b.id = bi.bill_id
+        where b.po_id = ${poId} and b.tenant_slug = ${po.tenant_slug}
+          and b.status not in ('rejected','cancelled','void')
+        group by 1
+      `) as any[];
+    } catch { /* bill_items metadata column may not exist yet */ }
+    const billedByKey = new Map(billedRows.map((r) => [String(r.line_key), Number(r.billed_qty)]));
+    itemsToBill = poItems.map((item) => {
+      const key = item.sku ?? item.description;
+      const billed = billedByKey.get(String(key)) ?? 0;
+      const billable = Math.max(0, Number(item.received_quantity ?? 0) - billed);
+      return { item, qty: billable };
+    }).filter(({ qty }) => qty > 0);
+    if (!itemsToBill.length) {
+      throw new Error(
+        `Nothing to bill on ${po.order_number}: all received quantities are already billed ` +
+        `(or no goods have been received yet — post a purchase receipt first)`
+      );
+    }
+  }
+
   // Create bill from PO
   return createBill({
     tenantSlug: po.tenant_slug,
@@ -561,9 +607,9 @@ export async function convertPOToBill(poId: string, payload: {
     dueDate: payload.dueDate,
     currency: payload.currency || po.currency,
     whtRate: payload.whtRate,
-    items: poItems.map(item => ({
+    items: itemsToBill.map(({ item, qty }) => ({
       description: item.description,
-      quantity: Number(item.quantity),
+      quantity: qty,
       unitPrice: Number(item.unit_price),
       taxRate: item.tax_rate ? Number(item.tax_rate) : undefined,
       accountCode: item.account_code,
