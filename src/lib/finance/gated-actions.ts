@@ -22,7 +22,7 @@
  */
 
 import { randomUUID } from "crypto";
-import { db } from "../sql-client";
+import { db, withTransaction } from "../sql-client";
 import {
   canOverride,
   initiateApproval,
@@ -131,7 +131,7 @@ export async function gateOrRun<P extends Record<string, any>>(
   if (mode === "override") {
     const over = def.overLimit ? def.overLimit(payload, settings) : false;
     if (!over) {
-      return { status: "ran", result: await def.run(tenantSlug, payload, ctx) };
+      return { status: "ran", result: await withTransaction(() => def.run(tenantSlug, payload, ctx)) };
     }
     const overrideBy = String((payload as any).overrideBy ?? "").trim();
     if (!overrideBy) {
@@ -154,7 +154,7 @@ export async function gateOrRun<P extends Record<string, any>>(
         description: def.describe(payload),
       },
     }).catch((err) => console.error("override audit event failed:", err));
-    return { status: "ran", result: await def.run(tenantSlug, payload, ctx) };
+    return { status: "ran", result: await withTransaction(() => def.run(tenantSlug, payload, ctx)) };
   }
 
   // ---- Gating decision (rules → matrix → action defaults) ---------------
@@ -174,7 +174,7 @@ export async function gateOrRun<P extends Record<string, any>>(
 
   // ---- Review mode: apply now, review post-hoc ---------------------------
   if (mode === "review") {
-    const result = await def.run(tenantSlug, payload, ctx);
+    const result = await withTransaction(() => def.run(tenantSlug, payload, ctx));
     if (gated) {
       entityData.postHoc = true;
       entityData.ranAt = new Date().toISOString();
@@ -212,7 +212,7 @@ export async function gateOrRun<P extends Record<string, any>>(
   // reaches its approved end-state.
   const explicitAutoApprove = !!band && !engineGated;
   if (explicitAutoApprove || def.runUngated !== false) {
-    return { status: "ran", result: await def.run(tenantSlug, payload, ctx) };
+    return { status: "ran", result: await withTransaction(() => def.run(tenantSlug, payload, ctx)) };
   }
   return { status: "ran", result: undefined };
 }

@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "crypto";
-import { db, sql as SQL } from "../sql-client";
+import { db, sql as SQL, withTransaction } from "../sql-client";
 import { ensureOnce } from "@/lib/ensure-once";
 import { emitEvent } from "@/lib/notify";
 
@@ -1065,6 +1065,9 @@ async function applyApprovalOutcome(
   // types would otherwise map it onto their rejected branch.
   if (outcome === "clarify" && entityType !== "expense" && entityType !== "employee_expense") return;
   try {
+    // All deferred effects for an entity apply inside one transaction —
+    // a partial failure rolls back rather than leaving half-posted state.
+    await withTransaction(async () => {
     switch (entityType) {
       case "expense":
         await applyExpenseOutcome(tenantSlug, entityId, outcome, ctx);
@@ -1131,6 +1134,7 @@ async function applyApprovalOutcome(
         }
         break;
     }
+    });
   } catch (err) {
     console.error(`applyApprovalOutcome ${entityType} ${entityId}:`, err);
   }
@@ -1647,7 +1651,7 @@ async function applyGatedActionOutcome(
       return;
     }
     if (outcome === "approved") {
-      await def.run(tenantSlug, m.payload, actionCtx);
+      await withTransaction(() => def.run(tenantSlug, m.payload, actionCtx));
     } else if (outcome === "rejected" && def.rejected) {
       await def.rejected(tenantSlug, m.payload, actionCtx);
     }

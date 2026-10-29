@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "crypto";
-import { db, sql as SQL } from "../sql-client";
+import { db, sql as SQL, withTransaction } from "../sql-client";
 import { createBillJournalEntry } from "./accounting";
 import { ensurePurchaseOrderTables } from "./purchase-orders";
 import { ensureOnce } from "@/lib/ensure-once";
@@ -534,7 +534,17 @@ export async function deleteBill(billId: string, tenantSlug?: string): Promise<b
   return result.count > 0;
 }
 
-export async function convertPOToBill(poId: string, payload: {
+export function convertPOToBill(poId: string, payload: {
+  billDate: string;
+  dueDate?: string;
+  currency?: string;
+  whtRate?: number;
+  metadata?: Record<string, unknown>;
+}, tenantSlug?: string): Promise<Bill | null> {
+  return withTransaction(() => convertPOToBillTx(poId, payload, tenantSlug));
+}
+
+async function convertPOToBillTx(poId: string, payload: {
   billDate: string;
   dueDate?: string;
   currency?: string;

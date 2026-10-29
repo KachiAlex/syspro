@@ -78,3 +78,5 @@
 - Employee `portal_permissions` accepts `true`/`"write"`/`"read"`/`"admin"`/`false` per module — read level now exists for staff.
 - `scope.department` permission key: `resolveDepartmentHeadContext` scopes non-managers to their `admin_employees.department_id`; applied on employees + expenses lists. Dept managers auto-scope as before.
 - Role-assignment UI warns when the target is a tenant admin (roles have no effect on them); role-builder exposes all 13 module groups + doc.* keys with the restriction caveat.
+- Transactions: `withTransaction(fn)` in sql-client.ts binds a held pool client via AsyncLocalStorage — all db/sql calls inside fn run on it (atomic); nested calls join the outer tx (no nested BEGIN). Wrapped: every gated `def.run`, the `applyApprovalOutcome` replay dispatch, `receivePurchaseReceipt`, `convertPOToBill`, `deliverDeliveryNote`. gl.ts has its own inner withTransaction — nesting is safe.
+- SESSION_SECRET: fails closed in production (was silently deriving from DATABASE_URL). Required in prod .env.

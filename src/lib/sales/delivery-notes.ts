@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { sql as SQL } from "../sql-client";
+import { sql as SQL, withTransaction } from "../sql-client";
 
 /**
  * Delivery Notes — the outbound mirror of purchase receipts. A DN records
@@ -151,7 +151,11 @@ export async function createDeliveryNote(input: {
 }
 
 /** Applies a DN: stock-out per line, note → delivered, SO status updated. */
-export async function deliverDeliveryNote(tenantSlug: string, noteId: string) {
+export function deliverDeliveryNote(tenantSlug: string, noteId: string) {
+  return withTransaction(() => deliverDeliveryNoteTx(tenantSlug, noteId));
+}
+
+async function deliverDeliveryNoteTx(tenantSlug: string, noteId: string) {
   const sql = SQL;
   await ensureDeliveryNoteTables(sql);
   const [note] = (await sql`

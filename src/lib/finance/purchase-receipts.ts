@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { sql as SQL } from "../sql-client";
+import { sql as SQL, withTransaction } from "../sql-client";
 
 /**
  * Purchase Receipts (GRN) — the goods-in document between the PO and the
@@ -138,7 +138,11 @@ export async function createPurchaseReceipt(input: {
 
 /** Applies a receipt: bumps PO received_quantity per line, posts the
  *  stock-in movement per received line, flips status → received. */
-export async function receivePurchaseReceipt(tenantSlug: string, receiptId: string, decidedBy?: string) {
+export function receivePurchaseReceipt(tenantSlug: string, receiptId: string, decidedBy?: string) {
+  return withTransaction(() => receivePurchaseReceiptTx(tenantSlug, receiptId, decidedBy));
+}
+
+async function receivePurchaseReceiptTx(tenantSlug: string, receiptId: string, decidedBy?: string) {
   const sql = SQL;
   await ensurePurchaseReceiptTables(sql);
   const [receipt] = (await sql`

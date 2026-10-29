@@ -1,4 +1,37 @@
-import { getSql } from "./db";
+import { getSql, getPool } from "./db";
+import { AsyncLocalStorage } from "async_hooks";
+
+// Active transaction client, bound per async context — db/sql calls inside a
+// withTransaction(fn) run on this held client instead of the pool, giving
+// atomicity without changing call signatures.
+const txStore = new AsyncLocalStorage<any>();
+function currentClient(): any {
+  return txStore.getStore() ?? getSql();
+}
+
+/**
+ * Run fn inside a Postgres transaction on a held pool client. All db/sql calls
+ * inside fn join the transaction (via AsyncLocalStorage); on throw → ROLLBACK.
+ * Must be awaited serially per call site — a held client can't interleave.
+ */
+export async function withTransaction<T>(fn: () => Promise<T>): Promise<T> {
+  // Already inside a transaction? Join it — nested BEGINs aren't supported.
+  if (txStore.getStore()) return fn();
+  const pool = getPool();
+  if (!pool) throw new Error("No database pool configured");
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await txStore.run(client, fn);
+    await client.query("COMMIT");
+    return result;
+  } catch (err) {
+    try { await client.query("ROLLBACK"); } catch {}
+    throw err;
+  } finally {
+    client.release();
+  }
+}
 
 /**
  * Minimal SQL executor: a tagged-template function returning rows.
@@ -56,7 +89,7 @@ export const db: DbClient = {
   },
 
   async query<T = any>(queryText: string, params?: any[]) {
-    const client = getSql();
+    const client = currentClient();
     const startedAt = SLOW_MS ? Date.now() : 0;
     const res = await (client as any).query(queryText, params || []);
     if (SLOW_MS) warnIfSlow(startedAt, queryText);
@@ -130,7 +163,7 @@ class SQLFragment {
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null
   ) {
     const { text, values } = this.toSQL();
-    const client = getSql();
+    const client = currentClient();
     const startedAt = SLOW_MS ? Date.now() : 0;
     const execPromise = (client as any).query
       ? (client as any).query(text, values).then((res: any) => {

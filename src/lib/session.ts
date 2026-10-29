@@ -14,7 +14,12 @@ export function getSessionSecret(): string {
 	const secret = process.env.SESSION_SECRET;
 	if (secret) return secret;
 
-	// Fallback: derive a stable secret from DATABASE_URL so the app doesn't crash
+	// Fail closed in production — a derived/default secret means forged sessions.
+	if (process.env.NODE_ENV === "production") {
+		throw new Error("SESSION_SECRET must be set in production — refusing to sign sessions with a derived secret");
+	}
+
+	// Dev-only fallback: derive a stable secret from DATABASE_URL so the app doesn't crash
 	const fallback = process.env.DATABASE_URL || "fallback-dev-secret-change-me";
 	console.warn("SESSION_SECRET not set — using derived fallback. Set SESSION_SECRET for proper security.");
 	return createHmac("sha256", "pisairtel-session-key").update(fallback).digest("base64url");
