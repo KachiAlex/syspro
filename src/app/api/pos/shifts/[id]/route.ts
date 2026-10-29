@@ -9,7 +9,7 @@ import { requireModuleAccess } from "@/lib/api-auth";
 type Params = { params: Promise<{ id: string }> };
 
 export async function GET(request: NextRequest, { params }: Params) {
-  const gate = await requireModuleAccess(request, "sales", "read");
+  const gate = await requireModuleAccess(request, "pos", "read");
   if (!gate.ok) return gate.response;
   const context = validateTenantContext(request, "read");
   const { id } = await params;
@@ -26,7 +26,7 @@ const closeSchema = z.object({
 });
 
 export async function POST(request: NextRequest, { params }: Params) {
-  const gate = await requireModuleAccess(request, "sales", "write");
+  const gate = await requireModuleAccess(request, "pos", "write");
   if (!gate.ok) return gate.response;
   const context = validateTenantContext(request, "write");
   const { id } = await params;

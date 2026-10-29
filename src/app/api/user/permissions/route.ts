@@ -17,7 +17,9 @@ const EMPTY_PERMISSIONS = {
   projects: "none",
   sales: "none",
   analytics: "none",
+  inventory: "none",
   manufacturing: "none",
+  pos: "none",
 };
 
 /**
@@ -69,7 +71,7 @@ export async function GET(request: NextRequest) {
           permissions = {
             people: level("people"),
             admin: level("admin"),
-            integrations: "none",
+            integrations: level("integrations"),
             billing: "none",
             automation: level("automation"),
             crm: level("crm"),
@@ -77,6 +79,9 @@ export async function GET(request: NextRequest) {
             projects: level("projects"),
             sales: level("sales"),
             analytics: level("analytics"),
+            inventory: level("inventory"),
+            manufacturing: level("manufacturing"),
+            pos: level("pos"),
             dashboards: [],
             isAdmin: false,
           };

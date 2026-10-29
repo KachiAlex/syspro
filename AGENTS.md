@@ -74,3 +74,7 @@
 - `scripts/migrate.sh` applies pending `db/migrations` in order, tracks `schema_migrations` (filename+md5), skips applied.
 - Doc-gate coverage extended: goods_receipt.submit (purchase-receipts), delivery_note.submit, sales_order.create/edit, customer.edit (merge), purchase_requisition.create/approve, product.create/edit — all backward-compatible (module fallback when no doc.* keys assigned).
 - Approver digest: cron step emits `approvals.digest` events for pending approvals >24h (deduped daily per requested_by) — "you have N items waiting" notification through the standard pipeline.
+- Module granularity: `inventory`, `manufacturing`, `pos` are GovernedModules with `x.read`/`x.write` keys (+ `integrations`). `MODULE_INHERITANCE` in permissions.ts keeps old grants working — admin→inventory/manufacturing, sales→pos. ~75 routes re-mapped from admin/sales to their granular module.
+- Employee `portal_permissions` accepts `true`/`"write"`/`"read"`/`"admin"`/`false` per module — read level now exists for staff.
+- `scope.department` permission key: `resolveDepartmentHeadContext` scopes non-managers to their `admin_employees.department_id`; applied on employees + expenses lists. Dept managers auto-scope as before.
+- Role-assignment UI warns when the target is a tenant admin (roles have no effect on them); role-builder exposes all 13 module groups + doc.* keys with the restriction caveat.

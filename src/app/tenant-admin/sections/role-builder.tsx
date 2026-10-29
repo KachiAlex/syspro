@@ -67,6 +67,78 @@ const PERMISSION_GROUPS = {
       { id: "billing.write", label: "Edit", description: "Create and modify billing records" },
     ],
   },
+  sales: {
+    label: "Sales",
+    description: "Sales orders, quotations and delivery notes",
+    permissions: [
+      { id: "sales.read", label: "View", description: "See sales orders and quotations" },
+      { id: "sales.write", label: "Edit", description: "Create orders, quotations, delivery notes" },
+    ],
+  },
+  inventory: {
+    label: "Inventory & Warehouse",
+    description: "Products, stock, warehouses, transfers",
+    permissions: [
+      { id: "inventory.read", label: "View", description: "See stock, products, warehouses" },
+      { id: "inventory.write", label: "Edit", description: "Manage products, stock, transfers" },
+    ],
+  },
+  manufacturing: {
+    label: "Manufacturing",
+    description: "BOMs, work orders, production planning",
+    permissions: [
+      { id: "manufacturing.read", label: "View", description: "See BOMs and work orders" },
+      { id: "manufacturing.write", label: "Edit", description: "Manage production" },
+    ],
+  },
+  pos: {
+    label: "Point of Sale",
+    description: "POS terminals, sessions, retail sales",
+    permissions: [
+      { id: "pos.read", label: "View", description: "See POS sales and sessions" },
+      { id: "pos.write", label: "Operate", description: "Run POS terminals" },
+    ],
+  },
+  projects: {
+    label: "Projects",
+    description: "Project tracking and tasks",
+    permissions: [
+      { id: "projects.read", label: "View", description: "See projects and tasks" },
+      { id: "projects.write", label: "Edit", description: "Manage projects" },
+    ],
+  },
+  automation: {
+    label: "Automation",
+    description: "Automation rules and scheduled jobs",
+    permissions: [
+      { id: "automation.read", label: "View", description: "See automation rules" },
+      { id: "automation.write", label: "Edit", description: "Manage automation" },
+    ],
+  },
+  analytics: {
+    label: "Analytics",
+    description: "Reports and analytics dashboards",
+    permissions: [
+      { id: "analytics.read", label: "View", description: "See analytics" },
+      { id: "analytics.write", label: "Edit", description: "Configure analytics" },
+    ],
+  },
+  integrations: {
+    label: "Integrations",
+    description: "API keys, webhooks and external services",
+    permissions: [
+      { id: "integrations.read", label: "View", description: "See integrations" },
+      { id: "integrations.write", label: "Edit", description: "Manage integrations" },
+    ],
+  },
+  admin: {
+    label: "Administration",
+    description: "Users, roles, org structure, platform settings",
+    permissions: [
+      { id: "admin.read", label: "View", description: "See admin settings" },
+      { id: "admin.write", label: "Edit", description: "Manage users, roles, org structure" },
+    ],
+  },
   dashboard: {
     label: "Dashboards",
     description: "Role-based dashboard access",
@@ -84,7 +156,7 @@ const PERMISSION_GROUPS = {
   documents: {
     label: "Document Actions",
     description:
-      "Fine-grained control per document type — full document control or approve-only rights on top of module access",
+      "Fine-grained control per document type — full control or approve-only rights on top of module access. Note: assigning ANY doc.<type> key restricts that document for every role not listed",
     permissions: [
       ...DOC_GATED_TYPES.map(([k, l]) => ({
         id: `doc.${k}.*`,

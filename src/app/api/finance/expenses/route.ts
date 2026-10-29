@@ -22,6 +22,8 @@ import { calculateMonthlyUsage, requiresEscalatedApproval } from "@/lib/finance/
 import { getGLAccountForCategory } from "@/lib/finance/service";
 import { enforceBudget, BudgetViolationError } from "@/lib/finance/budget-control";
 import { requireModuleAccess, requireDocAccess } from "@/lib/api-auth";
+import { extractAuthContext } from "@/lib/auth-helper";
+import { resolveDepartmentHeadContext } from "@/lib/tenant-admin/utils";
 import { sql as SQL } from "@/lib/sql-client";
 import {
   initiateApprovalIfRequired,
@@ -54,6 +56,7 @@ const expenseListSchema = z.object({
   paymentStatus: z.enum(EXPENSE_PAYMENT_STATUSES).optional(),
   categoryId: z.string().optional(),
   createdBy: z.string().optional(),
+  departmentId: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
   offset: z.coerce.number().int().min(0).optional(),
 });
@@ -69,6 +72,7 @@ export async function GET(request: NextRequest) {
     paymentStatus: url.searchParams.get("paymentStatus") ?? undefined,
     categoryId: url.searchParams.get("categoryId") ?? undefined,
     createdBy: url.searchParams.get("createdBy") ?? undefined,
+    departmentId: url.searchParams.get("departmentId") ?? undefined,
     limit: url.searchParams.get("limit") ?? undefined,
     offset: url.searchParams.get("offset") ?? undefined,
   });
@@ -80,7 +84,20 @@ export async function GET(request: NextRequest) {
   try {
     // Seed categories if needed
     await seedExpenseCategories();
-    
+
+    // Row-level department scoping — dept managers and roles carrying the
+    // scope.department key only see their own department's expenses.
+    const auth = extractAuthContext(request);
+    const deptCtx = await resolveDepartmentHeadContext({
+      tenantSlug: auth.tenantSlug,
+      userId: auth.userId || 'unknown',
+      userRole: auth.userRole || 'user',
+      userPermissions: auth.userPermissions || [],
+    });
+    if (deptCtx.managedDepartmentId && !parsed.data.departmentId) {
+      parsed.data.departmentId = deptCtx.managedDepartmentId;
+    }
+
     const expenses = await listExpenses(parsed.data);
     return NextResponse.json({ expenses });
   } catch (error) {

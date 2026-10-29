@@ -75,11 +75,11 @@ export async function GET(request: NextRequest) {
                 ? JSON.parse(emp.portal_permissions)
                 : emp.portal_permissions;
               // Map module permissions to the TenantUserPermissions format
-              const level = (key: string) => modulePerms[key] === true ? "write" : "none";
+              const level = (key: string) => { const v = modulePerms[key]; return v === true || v === "write" ? "write" : v === "read" ? "read" : v === "admin" ? "admin" : "none"; };
               permissions = {
                 people: level("people"),
                 admin: level("admin"),
-                integrations: "none",
+                integrations: level("integrations"),
                 billing: "none",
                 automation: level("automation"),
                 crm: level("crm"),
@@ -87,6 +87,9 @@ export async function GET(request: NextRequest) {
                 projects: level("projects"),
                 sales: level("sales"),
                 analytics: level("analytics"),
+                inventory: level("inventory"),
+                manufacturing: level("manufacturing"),
+                pos: level("pos"),
                 dashboards: [],
                 isAdmin: false,
               };

@@ -22,7 +22,7 @@ const createSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  const gate = await requireModuleAccess(request, "admin", "read");
+  const gate = await requireModuleAccess(request, "inventory", "read");
   if (!gate.ok) return gate.response;
   const context = validateTenantContext(request, "read");
   const { searchParams } = new URL(request.url);
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const gate = await requireModuleAccess(request, "admin", "write");
+  const gate = await requireModuleAccess(request, "inventory", "write");
   if (!gate.ok) return gate.response;
   const context = validateTenantContext(request, "write");
   const body = await request.json();

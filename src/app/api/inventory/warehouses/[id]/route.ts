@@ -9,7 +9,7 @@ import { requireModuleAccess } from "@/lib/api-auth";
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(request: NextRequest, { params }: Ctx) {
-  const _scope = await requireModuleAccess(request, "admin", "read");
+  const _scope = await requireModuleAccess(request, "inventory", "read");
   if (!_scope.ok) return _scope.response;
   const context = validateTenantContext(request, "read");
   const { id } = await params;
@@ -29,7 +29,7 @@ const schema = z.object({
 });
 
 export async function PATCH(request: NextRequest, { params }: Ctx) {
-  const _scope = await requireModuleAccess(request, "admin", "write");
+  const _scope = await requireModuleAccess(request, "inventory", "write");
   if (!_scope.ok) return _scope.response;
   const context = validateTenantContext(request, "write");
   const { id } = await params;
@@ -47,7 +47,7 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
 }
 
 export async function DELETE(request: NextRequest, { params }: Ctx) {
-  const _scope = await requireModuleAccess(request, "admin", "write");
+  const _scope = await requireModuleAccess(request, "inventory", "write");
   if (!_scope.ok) return _scope.response;
   const context = validateTenantContext(request, "write");
   const { id } = await params;

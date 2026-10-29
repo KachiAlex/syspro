@@ -7,7 +7,7 @@ import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { requireModuleAccess } from "@/lib/api-auth";
 
 export async function GET(request: NextRequest) {
-  const _scope = await requireModuleAccess(request, "admin", "read");
+  const _scope = await requireModuleAccess(request, "inventory", "read");
   if (!_scope.ok) return _scope.response;
   const context = validateTenantContext(request, "read");
   try {
@@ -29,7 +29,7 @@ const schema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const _scope = await requireModuleAccess(request, "admin", "write");
+  const _scope = await requireModuleAccess(request, "inventory", "write");
   if (!_scope.ok) return _scope.response;
   const context = validateTenantContext(request, "write");
   const body = await request.json().catch(() => null);

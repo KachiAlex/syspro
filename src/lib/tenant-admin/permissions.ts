@@ -36,6 +36,19 @@ const MODULE_PERMISSION_KEYS: Record<string, string[]> = {
   admin: ["admin.read", "admin.write"],
   sales: ["sales.read", "sales.write"],
   analytics: ["analytics.read", "analytics.write"],
+  integrations: ["integrations.read", "integrations.write"],
+  inventory: ["inventory.read", "inventory.write"],
+  manufacturing: ["manufacturing.read", "manufacturing.write"],
+  pos: ["pos.read", "pos.write"],
+};
+
+/** Backward-compat inheritance: routes were re-scoped from broad modules to
+ *  granular ones — an existing grant on the parent still unlocks the child.
+ *  inventory/manufacturing were "admin"-gated; pos was "sales"-gated. */
+const MODULE_INHERITANCE: Record<string, string> = {
+  inventory: "admin",
+  manufacturing: "admin",
+  pos: "sales",
 };
 
 function keyToLevel(key: string): "none" | "read" | "write" | "admin" {
@@ -57,6 +70,9 @@ export interface TenantUserPermissions {
   projects: "none" | "read" | "write" | "admin";
   sales: "none" | "read" | "write" | "admin";
   analytics: "none" | "read" | "write" | "admin";
+  inventory: "none" | "read" | "write" | "admin";
+  manufacturing: "none" | "read" | "write" | "admin";
+  pos: "none" | "read" | "write" | "admin";
   dashboards: string[];
   isAdmin: boolean;
 }
@@ -174,6 +190,9 @@ async function _getTenantUserPermissions(
       projects: "admin",
       sales: "admin",
       analytics: "admin",
+      inventory: "admin",
+      manufacturing: "admin",
+      pos: "admin",
       dashboards: allDashboards,
       isAdmin: true,
     };
@@ -192,6 +211,9 @@ async function _getTenantUserPermissions(
       projects: "admin",
       sales: "admin",
       analytics: "admin",
+      inventory: "admin",
+      manufacturing: "admin",
+      pos: "admin",
       dashboards: allDashboards,
       isAdmin: true,
     };
@@ -208,6 +230,9 @@ async function _getTenantUserPermissions(
     projects: "none",
     sales: "none",
     analytics: "none",
+    inventory: "none",
+    manufacturing: "none",
+    pos: "none",
   };
 
   const dashboards: string[] = [];
@@ -235,6 +260,14 @@ async function _getTenantUserPermissions(
         }
       }
     }
+  }
+
+  // Parent-module inheritance keeps re-scoped routes working for existing
+  // grants: e.g. inventory/manufacturing were gated under "admin" before
+  // granular modules existed; pos under "sales".
+  for (const [child, parent] of Object.entries(MODULE_INHERITANCE)) {
+    const c = (result as any)[child], p = (result as any)[parent];
+    if (c === "none" && p && p !== "none") (result as any)[child] = p;
   }
 
   if (isAdmin) {

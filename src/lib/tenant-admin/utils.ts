@@ -122,20 +122,33 @@ export function validateTenantContext(request: NextRequest, requiredPermission?:
 }
 
 export async function resolveDepartmentHeadContext(context: TenantRequestContext): Promise<TenantRequestContext> {
-  if (context.userId && context.userId !== 'unknown' && context.tenantSlug) {
-    try {
-      const { db } = await import('@/lib/sql-client');
-      const rows = await db.sql<any>`
-        select id from admin_departments
-        where tenant_slug = ${context.tenantSlug} and manager_id = ${context.userId}
+  if (!context.userId || context.userId === 'unknown' || !context.tenantSlug) return context;
+  try {
+    const { db } = await import('@/lib/sql-client');
+    // Manager of a department → scoped to it automatically.
+    const rows = await db.sql<any>`
+      select id from admin_departments
+      where tenant_slug = ${context.tenantSlug} and manager_id = ${context.userId}
+      limit 1
+    `;
+    if (Array.isArray(rows) && rows.length > 0) {
+      context.managedDepartmentId = rows[0].id;
+      return context;
+    }
+    // scope.department permission key → scoped to their own employee record's
+    // department even without being its manager (row-level grant).
+    if (context.userPermissions?.includes("scope.department")) {
+      const emp = await db.sql<any>`
+        select department_id from admin_employees
+        where tenant_slug = ${context.tenantSlug} and id = ${context.userId}
         limit 1
       `;
-      if (Array.isArray(rows) && rows.length > 0) {
-        context.managedDepartmentId = rows[0].id;
+      if (Array.isArray(emp) && emp[0]?.department_id) {
+        context.managedDepartmentId = emp[0].department_id;
       }
-    } catch {
-      // ignore — no managed department
     }
+  } catch {
+    // ignore — no managed department
   }
   return context;
 }

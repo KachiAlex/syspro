@@ -21,7 +21,7 @@ const runMrpSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-    const _scope = await requireModuleAccess(request, "admin", "write");
+    const _scope = await requireModuleAccess(request, "manufacturing", "write");
     if (!_scope.ok) return _scope.response;
 
   try {

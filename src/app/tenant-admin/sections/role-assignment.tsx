@@ -250,6 +250,14 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
             </div>
           </div>
 
+          {selectedUser && users.find((u) => u.id === selectedUser)?.roleId === "admin" && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              This user is a <strong>tenant admin</strong> — role assignments have no effect on them.
+              Tenant admins always receive full access (lockout protection). To restrict this person,
+              remove their admin role on the team page first.
+            </div>
+          )}
+
           {/* Role Selection */}
           {selectedUser && (
             <div>

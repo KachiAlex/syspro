@@ -2005,6 +2005,7 @@ export async function listExpenses(filters: {
   paymentStatus?: string;
   categoryId?: string;
   createdBy?: string;
+  departmentId?: string;
   limit?: number;
   offset?: number;
 }): Promise<Expense[]> {
@@ -2042,6 +2043,9 @@ export async function listExpenses(filters: {
   }
   if (filters.createdBy) {
     filtered = filtered.filter(r => r.created_by === filters.createdBy);
+  }
+  if (filters.departmentId) {
+    filtered = filtered.filter(r => r.department_id === filters.departmentId);
   }
   
   // Apply pagination

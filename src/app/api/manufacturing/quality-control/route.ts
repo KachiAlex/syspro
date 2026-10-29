@@ -17,7 +17,7 @@ const createSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-    const _scope = await requireModuleAccess(request, "admin", "read");
+    const _scope = await requireModuleAccess(request, "manufacturing", "read");
     if (!_scope.ok) return _scope.response;
 
   try {
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    const _scope = await requireModuleAccess(request, "admin", "write");
+    const _scope = await requireModuleAccess(request, "manufacturing", "write");
     if (!_scope.ok) return _scope.response;
 
   try {

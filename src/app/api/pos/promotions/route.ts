@@ -8,7 +8,7 @@ import { requireModuleAccess } from "@/lib/api-auth";
 
 export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");
-  const gate = await requireModuleAccess(request, "sales", "read");
+  const gate = await requireModuleAccess(request, "pos", "read");
   if (!gate.ok) return gate.response;
   try {
     const promotions = await listPromotions(
@@ -38,7 +38,7 @@ const upsertSchema = z.object({
 
 export async function POST(request: NextRequest) {
   const context = validateTenantContext(request, "write");
-  const gate = await requireModuleAccess(request, "sales", "write");
+  const gate = await requireModuleAccess(request, "pos", "write");
   if (!gate.ok) return gate.response;
   try {
     const parsed = upsertSchema.safeParse(await request.json());
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const context = validateTenantContext(request, "write");
-  const gate = await requireModuleAccess(request, "sales", "write");
+  const gate = await requireModuleAccess(request, "pos", "write");
   if (!gate.ok) return gate.response;
   try {
     const id = new URL(request.url).searchParams.get("id");

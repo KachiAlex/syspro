@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
   // query params, headers, or unsigned cookies.
   let effectiveUserId: string | undefined;
   let isEmployee = false;
-  let employeeModules: Record<string, boolean> = {};
+  let employeeModules: Record<string, boolean | string> = {};
 
   // Check pisairtel_session (tenant admin) FIRST — takes priority over employee session
   const sysSession = request.cookies.get("pisairtel_session")?.value;
@@ -143,10 +143,12 @@ export async function GET(request: NextRequest) {
     // "admin" but have module activations in admin_employees.
     if (hasModuleRestrictions && isFullAdmin && !isEmployee) {
       // Override: treat as non-admin with module restrictions
-      const moduleKeys = ["crm", "finance", "people", "projects", "sales", "analytics", "automation", "admin"];
+      const moduleKeys = ["crm", "finance", "people", "projects", "sales", "analytics", "automation", "admin", "integrations", "inventory", "manufacturing", "pos"];
       for (const mk of moduleKeys) {
-        if (employeeModules[mk] !== true) {
-          (permissions as any)[mk] = "none";
+        {
+          const v = employeeModules[mk];
+          if (v === "read" || v === "write" || v === "admin") (permissions as any)[mk] = v;
+          else if (v !== true) (permissions as any)[mk] = "none";
         }
       }
       const allowedDashboards = permissions.dashboards.filter(
@@ -155,11 +157,11 @@ export async function GET(request: NextRequest) {
       permissions = { ...permissions, dashboards: allowedDashboards, isAdmin: false, admin: "none" };
     } else if (isEmployee && hasModuleRestrictions) {
       // For employees: completely override role-based perms with module perms
-      const level = (key: string) => employeeModules[key] === true ? "write" : "none";
+      const level = (key: string) => { const v = employeeModules[key]; return v === true || v === "write" ? "write" : v === "read" ? "read" : v === "admin" ? "admin" : "none"; };
       permissions = {
         people: level("people"),
         admin: level("admin"),
-        integrations: "none",
+        integrations: level("integrations"),
         billing: "none",
         automation: level("automation"),
         crm: level("crm"),
@@ -167,6 +169,9 @@ export async function GET(request: NextRequest) {
         projects: level("projects"),
         sales: level("sales"),
         analytics: level("analytics"),
+        inventory: level("inventory"),
+        manufacturing: level("manufacturing"),
+        pos: level("pos"),
         dashboards: [],
         isAdmin: false,
       };
@@ -174,10 +179,12 @@ export async function GET(request: NextRequest) {
       // For non-employees (HOD, staff, etc.): restrict visible modules to only those
       // explicitly enabled in portal_permissions. Role-based perm level is kept for
       // allowed modules, but modules not in portal_permissions are set to "none".
-      const moduleKeys = ["crm", "finance", "people", "projects", "sales", "analytics", "automation", "admin"];
+      const moduleKeys = ["crm", "finance", "people", "projects", "sales", "analytics", "automation", "admin", "integrations", "inventory", "manufacturing", "pos"];
       for (const mk of moduleKeys) {
-        if (employeeModules[mk] !== true) {
-          (permissions as any)[mk] = "none";
+        {
+          const v = employeeModules[mk];
+          if (v === "read" || v === "write" || v === "admin") (permissions as any)[mk] = v;
+          else if (v !== true) (permissions as any)[mk] = "none";
         }
       }
       // Also restrict dashboards to only allowed modules

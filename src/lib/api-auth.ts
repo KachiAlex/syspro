@@ -170,7 +170,8 @@ export async function requireTenantScope(
  */
 export type GovernedModule =
   | "crm" | "finance" | "people" | "projects" | "sales"
-  | "analytics" | "automation" | "admin" | "billing" | "integrations";
+  | "analytics" | "automation" | "admin" | "billing" | "integrations"
+  | "inventory" | "manufacturing" | "pos";
 
 export type ModuleAccessLevel = "read" | "write";
 
@@ -182,7 +183,7 @@ export type ModuleAccessLevel = "read" | "write";
 export async function loadPortalPermissions(
   tenant: string,
   user: SessionUser
-): Promise<Record<string, boolean>> {
+): Promise<Record<string, boolean | string>> {
   // Per-request hot path — cache for 60s keyed on the user identity.
   return cached(
     `portal-perms:${tenant}:${user.id}:${user.email ?? ""}`,
@@ -194,7 +195,7 @@ export async function loadPortalPermissions(
 async function loadPortalPermissionsUncached(
   tenant: string,
   user: SessionUser
-): Promise<Record<string, boolean>> {
+): Promise<Record<string, boolean | string>> {
   try {
     const sql = SQL;
     let rows = await sql`
@@ -346,11 +347,15 @@ export async function requireModuleAccess(
 
   if (hasRestrictions) {
     if (user.isEmployee) {
-      level = modulePerms[module] === true ? "write" : "none";
+      // portal_permissions values: true/"write" → write, "read" → read-only,
+      // "admin" → admin on that module, false/missing → none.
+      const v = modulePerms[module];
+      level = v === true || v === "write" ? "write" : v === "read" ? "read" : v === "admin" ? "admin" : "none";
       isAdmin = false;
     } else {
-      if (modulePerms[module] !== true) level = "none";
-      if (wasFullAdmin || modulePerms["admin"] !== true) isAdmin = false;
+      if (modulePerms[module] !== true && modulePerms[module] !== "write" && modulePerms[module] !== "read" && modulePerms[module] !== "admin") level = "none";
+      else if (modulePerms[module] === "read" && required === "write") level = "read";
+      if (wasFullAdmin || (modulePerms["admin"] !== true && modulePerms["admin"] !== "admin" && modulePerms["admin"] !== "write")) isAdmin = false;
     }
   }
 

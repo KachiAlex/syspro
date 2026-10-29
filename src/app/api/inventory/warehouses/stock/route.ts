@@ -7,7 +7,7 @@ import { requireModuleAccess } from "@/lib/api-auth";
 
 // GET /api/inventory/warehouses/stock?warehouseId=... — per-warehouse stock
 export async function GET(request: NextRequest) {
-  const _scope = await requireModuleAccess(request, "admin", "read");
+  const _scope = await requireModuleAccess(request, "inventory", "read");
   if (!_scope.ok) return _scope.response;
   const context = validateTenantContext(request, "read");
   const warehouseId = request.nextUrl.searchParams.get("warehouseId") ?? undefined;

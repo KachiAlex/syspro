@@ -10,7 +10,7 @@ import { requireModuleAccess } from "@/lib/api-auth";
 /** GET ?saleId= or ?receiptNo= [&format=escpos] — receipt data / printer payload. */
 export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");
-  const gate = await requireModuleAccess(request, "sales", "read");
+  const gate = await requireModuleAccess(request, "pos", "read");
   if (!gate.ok) return gate.response;
   const url = new URL(request.url);
   try {
@@ -50,7 +50,7 @@ const sendSchema = z.object({
 /** POST — send an e-receipt by email. */
 export async function POST(request: NextRequest) {
   const context = validateTenantContext(request, "write");
-  const gate = await requireModuleAccess(request, "sales", "write");
+  const gate = await requireModuleAccess(request, "pos", "write");
   if (!gate.ok) return gate.response;
   try {
     const parsed = sendSchema.safeParse(await request.json());

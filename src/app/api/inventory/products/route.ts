@@ -30,7 +30,7 @@ async function ensureInventoryTables() {
 }
 
 export async function GET(request: NextRequest) {
-    const _scope = await requireModuleAccess(request, "admin", "read");
+    const _scope = await requireModuleAccess(request, "inventory", "read");
     if (!_scope.ok) return _scope.response;
 
   try {
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    const _scope = await requireDocAccess(request, "product", "create", "admin", "write");
+    const _scope = await requireDocAccess(request, "product", "create", "inventory", "write");
     if (!_scope.ok) return _scope.response;
 
   try {
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-    const _scope = await requireDocAccess(request, "product", "edit", "admin", "write");
+    const _scope = await requireDocAccess(request, "product", "edit", "inventory", "write");
     if (!_scope.ok) return _scope.response;
 
   try {
@@ -195,7 +195,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-    const _scope = await requireModuleAccess(request, "admin", "write");
+    const _scope = await requireModuleAccess(request, "inventory", "write");
     if (!_scope.ok) return _scope.response;
 
   try {

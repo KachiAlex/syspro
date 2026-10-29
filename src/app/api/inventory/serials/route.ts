@@ -5,7 +5,7 @@ import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { requireModuleAccess } from "@/lib/api-auth";
 
 export async function GET(request: NextRequest) {
-  const _scope = await requireModuleAccess(request, "admin", "read");
+  const _scope = await requireModuleAccess(request, "inventory", "read");
   if (!_scope.ok) return _scope.response;
 
   try {
