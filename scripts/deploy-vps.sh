@@ -52,6 +52,12 @@ rsync -a --delete \
   --exclude=node_modules --exclude=.next --exclude=.git \
   --exclude='*.tar.gz' --exclude='*.log' --exclude=.env \
   /root/syspro-new/ /opt/syspro-erp/
+# Backup retention: keep the newest 5 deploy backups (~45MB each — unbounded
+# accumulation filled the disk on 2026-10-30).
+ls -1dt /root/syspro-erp-backup-* 2>/dev/null | tail -n +6 | xargs -r rm -rf
+# Reclaim dangling image layers before the build so a packed disk can't
+# ENOSPC mid-build (also happened 2026-10-30).
+docker image prune -f >/dev/null 2>&1 || true
 REMOTE
 
 echo "==> Pre-flight: network + compose sanity"
@@ -93,3 +99,13 @@ echo "==> Health check"
 sleep 10
 curl -fsS --connect-timeout 15 "$HEALTH_URL" && echo && echo "DEPLOY OK: $IMAGE_TAG" \
   || { echo "HEALTH CHECK FAILED — inspect: ssh $SSH_TARGET docker logs syspro-erp-app --tail 100"; exit 1; }
+
+echo "==> Cleanup: old deploy tags + journal vacuum"
+ssh "$SSH_TARGET" bash -s <<'REMOTE'
+set -euo pipefail
+# Keep 'patched' + the 2 newest depth-* tags; drop older tags and orphans.
+docker images syspro-erp-app --format '{{.Tag}}' | grep '^depth-' | sort -r | tail -n +3 \
+  | xargs -r -I{} docker rmi "syspro-erp-app:{}" 2>/dev/null || true
+docker image prune -f >/dev/null 2>&1 || true
+journalctl --vacuum-size=300M >/dev/null 2>&1 || true
+REMOTE
