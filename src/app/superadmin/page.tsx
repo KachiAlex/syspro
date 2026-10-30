@@ -145,7 +145,15 @@ export default function SuperadminPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'tenants' | 'licenses' | 'admins' | 'pricing'>('tenants');
+  const [activeTab, setActiveTab] = useState<'tenants' | 'licenses' | 'admins' | 'pricing' | 'audit' | 'usage'>('tenants');
+  const [auditItems, setAuditItems] = useState<any[]>([]);
+  const [auditPage, setAuditPage] = useState(1);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditSource, setAuditSource] = useState<'all' | 'platform' | 'tenant'>('all');
+  const [auditTenantFilter, setAuditTenantFilter] = useState('');
+  const [auditActionFilter, setAuditActionFilter] = useState('');
+  const [usageData, setUsageData] = useState<{ totals: any; tenants: any[] } | null>(null);
+  const [usageLoading, setUsageLoading] = useState(false);
   const [licenseSubTab, setLicenseSubTab] = useState<'assignments' | 'tiers'>('assignments');
   const [licenseTiers, setLicenseTiers] = useState<LicenseTier[]>([]);
   const [showTierModal, setShowTierModal] = useState(false);
@@ -208,6 +216,38 @@ export default function SuperadminPage() {
       setLoading(false);
     }
   }, [currentPage, searchQuery, tenantsPerPage]);
+
+  const fetchAuditLogs = useCallback(async (page = 1) => {
+    setAuditLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(), limit: '50', source: auditSource,
+        ...(auditTenantFilter && { tenant: auditTenantFilter }),
+        ...(auditActionFilter && { action: auditActionFilter }),
+      });
+      const res = await fetch(`/api/superadmin/audit-logs?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAuditItems(data.items || []);
+        setAuditPage(page);
+      }
+    } catch (e) { console.error('Failed to fetch audit logs:', e); }
+    finally { setAuditLoading(false); }
+  }, [auditSource, auditTenantFilter, auditActionFilter]);
+
+  const fetchUsage = useCallback(async () => {
+    setUsageLoading(true);
+    try {
+      const res = await fetch('/api/superadmin/usage');
+      if (res.ok) setUsageData(await res.json());
+    } catch (e) { console.error('Failed to fetch usage:', e); }
+    finally { setUsageLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'audit') fetchAuditLogs(1);
+    if (activeTab === 'usage') fetchUsage();
+  }, [activeTab, fetchAuditLogs, fetchUsage]);
 
   // Debounce search
   useEffect(() => {
@@ -904,6 +944,26 @@ export default function SuperadminPage() {
               }`}
             >
               Pricing
+            </button>
+            <button
+              onClick={() => setActiveTab('usage')}
+              className={`px-4 py-2 rounded-md font-medium transition ${
+                activeTab === 'usage' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Usage
+            </button>
+            <button
+              onClick={() => setActiveTab('audit')}
+              className={`px-4 py-2 rounded-md font-medium transition ${
+                activeTab === 'audit' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Audit Log
             </button>
           </div>
         </div>
@@ -2269,6 +2329,184 @@ export default function SuperadminPage() {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Usage Monitoring Tab */}
+      {activeTab === 'usage' && (
+        <div>
+          {usageLoading ? (
+            <div className="text-center py-12 text-gray-500">Loading usage data…</div>
+          ) : usageData ? (
+            <>
+              {/* Summary cards */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+                {[
+                  { label: 'Tenants', value: usageData.totals.tenants },
+                  { label: 'Active (30d)', value: usageData.totals.activeTenants30d },
+                  { label: 'API calls today', value: usageData.totals.apiCallsToday.toLocaleString() },
+                  { label: 'API calls 7d', value: usageData.totals.apiCalls7d.toLocaleString() },
+                  { label: 'API calls 30d', value: usageData.totals.apiCalls30d.toLocaleString() },
+                  { label: 'Seats used/licensed', value: `${usageData.totals.seatsUsed}/${usageData.totals.seatsLicensed || '—'}` },
+                ].map((c) => (
+                  <div key={c.label} className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                    <p className="text-xs text-gray-500 mb-1">{c.label}</p>
+                    <p className="text-xl font-bold text-gray-900">{c.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tenant</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Seats</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Calls today</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Calls 7d</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Calls 30d</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Top module</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Audit events 30d</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last active</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {usageData.tenants.map((t) => (
+                      <tr key={t.tenantSlug} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <div className="text-sm font-medium text-gray-900">{t.tenantName || t.tenantSlug}</div>
+                          <div className="text-xs text-gray-400">{t.tenantSlug}</div>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {t.seats.used}{t.seats.limit != null ? `/${t.seats.limit}` : ''}
+                          {t.seats.limit != null && t.seats.used > t.seats.limit && (
+                            <span className="ml-1 text-xs text-red-600 font-medium">over</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-sm">{t.apiCalls.today.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm">{t.apiCalls.last7d.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm">{t.apiCalls.last30d.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm">{t.topModule || '—'}</td>
+                        <td className="px-4 py-3 text-sm">{t.auditEvents30d}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500">
+                          {t.lastActive ? new Date(t.lastActive).toLocaleDateString() : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <button onClick={fetchUsage} className="mt-4 text-sm text-blue-600 hover:text-blue-800">Refresh</button>
+            </>
+          ) : (
+            <div className="text-center py-12 text-gray-500">No usage data yet.</div>
+          )}
+        </div>
+      )}
+
+      {/* Audit Log Tab */}
+      {activeTab === 'audit' && (
+        <div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4 flex flex-wrap items-end gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Source</label>
+              <select
+                value={auditSource}
+                onChange={(e) => setAuditSource(e.target.value as any)}
+                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm"
+              >
+                <option value="all">All activity</option>
+                <option value="platform">Platform (superadmin)</option>
+                <option value="tenant">Tenant admins</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Tenant slug</label>
+              <input
+                type="text"
+                value={auditTenantFilter}
+                onChange={(e) => setAuditTenantFilter(e.target.value)}
+                placeholder="e.g. acme"
+                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm w-40"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Action contains</label>
+              <input
+                type="text"
+                value={auditActionFilter}
+                onChange={(e) => setAuditActionFilter(e.target.value)}
+                placeholder="e.g. invoice"
+                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm w-48"
+              />
+            </div>
+            <button
+              onClick={() => fetchAuditLogs(1)}
+              className="px-4 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+            >
+              Apply
+            </button>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            {auditLoading ? (
+              <div className="text-center py-12 text-gray-500">Loading…</div>
+            ) : auditItems.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">No audit events match the filters.</div>
+            ) : (
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tenant</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actor</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Resource</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {auditItems.map((log) => (
+                    <tr key={log.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                        {new Date(log.createdAt).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${log.source === 'platform' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                          {log.source}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm">{log.tenantSlug || '—'}</td>
+                      <td className="px-4 py-3 text-sm">{log.actor || '—'}</td>
+                      <td className="px-4 py-3 text-sm font-medium">{log.action}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500">
+                        {log.resource || '—'}{log.resourceId ? ` #${log.resourceId}` : ''}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-500">{log.ip || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+          <div className="flex items-center gap-3 mt-4">
+            <button
+              onClick={() => fetchAuditLogs(auditPage - 1)}
+              disabled={auditPage <= 1}
+              className="px-3 py-1.5 border border-gray-300 rounded-md text-sm disabled:opacity-40"
+            >
+              ← Prev
+            </button>
+            <span className="text-sm text-gray-500">Page {auditPage}</span>
+            <button
+              onClick={() => fetchAuditLogs(auditPage + 1)}
+              disabled={auditItems.length < 50}
+              className="px-3 py-1.5 border border-gray-300 rounded-md text-sm disabled:opacity-40"
+            >
+              Next →
+            </button>
           </div>
         </div>
       )}
