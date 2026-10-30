@@ -150,7 +150,7 @@ export async function middleware(request: NextRequest) {
       try {
         const originUrl = new URL(origin);
         const allowedUrl = new URL(allowedOrigin);
-        isValidOrigin = originUrl.host === allowedUrl.host || originUrl.hostname === 'localhost' || originUrl.hostname === '127.0.0.1';
+        isValidOrigin = originUrl.host === request.nextUrl.host || originUrl.host === allowedUrl.host || originUrl.hostname === 'localhost' || originUrl.hostname === '127.0.0.1';
       } catch {
         isValidOrigin = false;
       }
@@ -158,7 +158,7 @@ export async function middleware(request: NextRequest) {
       try {
         const refererUrl = new URL(referer);
         const allowedUrl = new URL(allowedOrigin);
-        isValidOrigin = refererUrl.host === allowedUrl.host || refererUrl.hostname === 'localhost' || refererUrl.hostname === '127.0.0.1';
+        isValidOrigin = refererUrl.host === request.nextUrl.host || refererUrl.host === allowedUrl.host || refererUrl.hostname === 'localhost' || refererUrl.hostname === '127.0.0.1';
       } catch {
         isValidOrigin = false;
       }
