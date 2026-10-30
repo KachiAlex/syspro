@@ -896,8 +896,8 @@ export const RecruitmentDashboard: React.FC = () => {
       />
       {/* AI Screening Config Modal */}
       {showScreeningConfig && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
-          <div className="w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-theme-card border border-theme-border rounded-xl p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay backdrop-blur-sm p-4">
+          <div className="w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-theme-surface border border-theme-border rounded-xl p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-theme-text-primary flex items-center gap-2">
                 <Settings className="w-5 h-5 text-purple-400" />
@@ -1131,8 +1131,8 @@ export const RecruitmentDashboard: React.FC = () => {
 
       {/* AI Screening Results Modal */}
       {showScreeningResults && screeningResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay">
-          <div className="w-full max-w-4xl max-h-[85vh] overflow-y-auto bg-theme-card border border-theme-border rounded-xl p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-overlay backdrop-blur-sm p-4">
+          <div className="w-full max-w-4xl max-h-[85vh] overflow-y-auto bg-theme-surface border border-theme-border rounded-xl p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-theme-text-primary flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-purple-400" />
