@@ -404,33 +404,33 @@ export default function TenantAdminDashboard() {
       ) : (
         <>
           {/* Primary Metrics Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {metrics.map((m) => (
               <Link
                 key={m.label}
                 href={m.href}
-                className="group gradient-card bg-theme-surface rounded-xl border border-theme-border p-5 hover:border-theme-accent/40 transition-all duration-300 accent-glow hover:shadow-lg"
+                className="group gradient-card bg-theme-surface rounded-lg border border-theme-border px-3 py-3 hover:border-theme-accent/40 transition-all duration-200 accent-glow hover:shadow-md"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`w-10 h-10 rounded-lg ${m.iconBg} flex items-center justify-center`}>
-                    {m.icon}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-9 h-9 rounded-lg ${m.iconBg} flex items-center justify-center shrink-0`}>
+                      {m.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-theme-text-secondary truncate">{m.label}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-lg font-bold text-theme-text-primary leading-tight">{m.value}</p>
+                        {m.delta && (
+                          <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium ${m.trend === "up" ? "text-green-500" : "text-red-500"}`}>
+                            {m.trend === "up" ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                            {m.delta}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-theme-text-tertiary group-hover:text-theme-accent transition-colors" />
+                  <ArrowRight className="w-4 h-4 shrink-0 text-theme-text-tertiary group-hover:text-theme-accent transition-colors" />
                 </div>
-                <p className="text-sm text-theme-text-secondary mb-1">{m.label}</p>
-                <p className="text-2xl font-bold text-theme-text-primary">{m.value}</p>
-                {m.delta && (
-                  <div className="flex items-center gap-1 mt-2">
-                    {m.trend === "up" ? (
-                      <TrendingUp className="w-3.5 h-3.5 text-green-400" />
-                    ) : (
-                      <TrendingDown className="w-3.5 h-3.5 text-red-400" />
-                    )}
-                    <span className={`text-xs font-medium ${m.trend === "up" ? "text-green-400" : "text-red-400"}`}>
-                      {m.delta}
-                    </span>
-                  </div>
-                )}
               </Link>
             ))}
           </div>
