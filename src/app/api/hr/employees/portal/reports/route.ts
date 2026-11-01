@@ -281,6 +281,38 @@ export async function POST(request: NextRequest) {
 
     const record = await sql`SELECT * FROM admin_staff_reports WHERE id = ${id}`;
 
+    // Central approval gate: when a staff_report rule or people matrix band
+    // is configured, the configured chain decides instead of the legacy
+    // role-based route. Ungated → legacy flow continues below.
+    try {
+      const { gateOrRun } = await import("@/lib/finance/gated-actions");
+      const gateRes = await gateOrRun(session.tenantSlug, "staff_report", {
+        reportId: id,
+        reportType: d.reportType,
+        reportDate: d.reportDate,
+        employeeId: session.id,
+        employeeName: session.name,
+      }, { requestedBy: session.id, requestedByName: session.name, departmentId });
+
+      if (gateRes.status === "pending") {
+        await sql`
+          UPDATE admin_staff_reports SET approval_id = ${gateRes.approvalId}
+          WHERE id = ${id} AND tenant_slug = ${session.tenantSlug}
+        `.catch(() => {});
+        return NextResponse.json(
+          { success: true, pending: true, approvalId: gateRes.approvalId, report: record[0], message: "Report sent for approval" },
+          { status: 202 }
+        );
+      }
+      if (gateRes.status === "denied") {
+        return NextResponse.json({ error: gateRes.error || "Report submission denied" }, { status: 403 });
+      }
+      // status === "ran": ungated (legacy flow below) or auto-approved by an
+      // approvers:[] band — in the latter case the row is already 'approved'.
+    } catch (gateErr) {
+      console.error("staff_report gate check failed (falling back to legacy routing):", (gateErr as any)?.message);
+    }
+
     // Notify HODs in the department about the new report
     if (departmentId) {
       try {

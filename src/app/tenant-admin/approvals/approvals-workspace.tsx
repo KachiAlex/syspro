@@ -117,7 +117,7 @@ function useOfficers(tenantSlug: string) {
 
 export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (section: string) => void }) {
   const { tenantSlug } = useTenantContext();
-  const [tab, setTab] = useState<"requests" | "rules" | "officers" | "delegates" | "policy">("requests");
+  const [tab, setTab] = useState<"requests" | "routing" | "rules" | "officers" | "delegates" | "policy">("requests");
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -222,7 +222,7 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-theme-border">
-        {([["requests", "Requests"], ["rules", "Rules"], ["officers", "Officers"], ["delegates", "Delegations"], ["policy", "Policy"]] as const).map(([key, label]) => (
+        {([["requests", "Requests"], ["routing", "Routing"], ["rules", "Rules"], ["officers", "Officers"], ["delegates", "Delegations"], ["policy", "Policy"]] as const).map(([key, label]) => (
           <button
             key={key}
             onClick={() => setTab(key)}
@@ -237,6 +237,13 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
         ))}
       </div>
 
+      {tab === "routing" && (
+        <RoutingPanel
+          tenantSlug={tenantSlug ?? ""}
+          onError={setError}
+          onSuccess={(m) => { setSuccess(m); setTimeout(() => setSuccess(null), 3000); }}
+        />
+      )}
       {tab === "rules" && (
         <RulesPanel
           tenantSlug={tenantSlug ?? ""}
@@ -1440,6 +1447,261 @@ function PolicyPanel({ tenantSlug, onError, onSuccess }: {
           {saving ? "Saving…" : "Save policy"}
         </button>
       </div>
+    </div>
+  );
+}
+
+/** Human-readable label for an approver spec — resolves officer posts and
+ *  named users to actual people so the admin sees WHO gets the power. */
+function specLabel(
+  spec: string,
+  officers: TenantOfficer[],
+  users: Array<{ id: string; name: string }>
+): string {
+  const s = spec.trim();
+  if (s === "role:dept_manager") return "Submitter's department manager";
+  if (s.startsWith("user:")) {
+    const id = s.slice(5);
+    return users.find((u) => u.id === id)?.name ?? `User ${id}`;
+  }
+  if (s.startsWith("role:")) {
+    const key = s.slice(5);
+    const officer = officers.find((o) => officerSlug(o.title) === key);
+    if (officer) {
+      const names = officer.userIds.map((id) => users.find((u) => u.id === id)?.name ?? id).join(", ");
+      return `${officer.title} (${names || "no one assigned"})`;
+    }
+    return `Role: ${key}`;
+  }
+  return users.find((u) => u.id === s)?.name ?? s;
+}
+
+function RoutingPanel({ tenantSlug, onError, onSuccess }: {
+  tenantSlug: string;
+  onError: (m: string | null) => void;
+  onSuccess: (m: string) => void;
+}) {
+  const [rules, setRules] = useState<ApprovalRule[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [target, setTarget] = useState<string | null>(null);
+  const [steps, setSteps] = useState<Array<{ step: number; userId: string; required: boolean }>>([
+    { step: 0, userId: "role:dept_manager", required: true },
+  ]);
+  const [minAmount, setMinAmount] = useState("");
+  const [maxAmount, setMaxAmount] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [slaHours, setSlaHours] = useState("");
+  const [saving, setSaving] = useState(false);
+  const users = useUserOptions(tenantSlug);
+  const { officers } = useOfficers(tenantSlug);
+  const gatedActions = useGatedActions();
+  const officerSpecs = officers.map((o) => ({
+    value: `role:${officerSlug(o.title)}`,
+    label: `${o.title} (officer)`,
+  }));
+
+  const loadRules = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/finance/approvals?rules=true&tenantSlug=${encodeURIComponent(tenantSlug)}`);
+      const data = await res.json();
+      setRules(data.rules ?? []);
+    } catch { setRules([]); } finally { setLoading(false); }
+  }, [tenantSlug]);
+  useEffect(() => { if (tenantSlug) loadRules(); }, [tenantSlug, loadRules]);
+
+  const rulesFor = (key: string) =>
+    rules.filter((r) =>
+      key.startsWith("ga:")
+        ? r.entityType === "gated_action" && r.conditions?.action === key.slice(3)
+        : r.entityType === key.slice(4)
+    );
+
+  const docTypes = ENTITY_TYPE_OPTIONS.filter(([v]) => v !== "gated_action");
+
+  const openBuilder = (key: string) => {
+    setTarget(key);
+    setSteps([{ step: 0, userId: "role:dept_manager", required: true }]);
+    setMinAmount(""); setMaxAmount(""); setDepartmentId(""); setSlaHours("");
+  };
+
+  const targetLabel = (key: string) =>
+    key.startsWith("ga:")
+      ? `${key.slice(3).replace(/_/g, " ")} (action)`
+      : docTypes.find(([v]) => v === key.slice(4))?.[1] ?? key.slice(4);
+
+  const save = async () => {
+    if (!target) return;
+    const usable = steps.filter((s) => s.userId.trim());
+    if (usable.length === 0) { onError("Add at least one approver"); return; }
+    setSaving(true);
+    try {
+      const isGa = target.startsWith("ga:");
+      const conditions: Record<string, any> = {};
+      if (isGa) conditions.action = target.slice(3);
+      if (minAmount) conditions.minAmount = Number(minAmount);
+      if (maxAmount) conditions.maxAmount = Number(maxAmount);
+      if (departmentId) conditions.departmentId = departmentId;
+      if (slaHours) { conditions.slaHours = Number(slaHours); conditions.slaAction = "escalate"; }
+      const res = await fetch(`/api/finance/approvals?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create-rule",
+          tenantSlug,
+          entityType: isGa ? "gated_action" : target.slice(4),
+          ruleType: (minAmount || maxAmount) ? "amount_based" : "department_based",
+          conditions,
+          approvers: usable.map((s, i) => ({ step: s.step, userId: s.userId.trim(), required: s.required, order: i })),
+          priority: 0,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to create routing rule");
+      onSuccess(`Routing saved for ${targetLabel(target)}`);
+      setTarget(null);
+      loadRules();
+    } catch (e: any) { onError(e.message); } finally { setSaving(false); }
+  };
+
+  const inputCls = "w-full rounded-lg border border-theme-border px-3 py-2 text-sm";
+  const labelCls = "block text-xs font-medium text-theme-text-secondary mb-1";
+  const domainOf = (key: string) =>
+    key.startsWith("ga:") ? gatedActions.find((a) => a.name === key.slice(3))?.domain : undefined;
+
+  const Row = ({ k, label, hint }: { k: string; label: string; hint?: string }) => {
+    const matched = rulesFor(k);
+    const active = matched.filter((r) => r.isActive);
+    return (
+      <tr className="hover:bg-theme-muted">
+        <td className="px-4 py-3 text-sm font-medium text-theme-text-primary">{label}</td>
+        <td className="px-4 py-3 text-xs text-theme-text-secondary">
+          {domainOf(k) ? <span className="rounded bg-theme-muted px-1.5 py-0.5">{domainOf(k)}</span> : hint ?? "—"}
+        </td>
+        <td className="px-4 py-3 text-xs">
+          {active.length > 0 ? (
+            <span className="rounded bg-green-100 text-green-800 px-2 py-0.5 font-medium">{active.length} routing rule{active.length > 1 ? "s" : ""}</span>
+          ) : (
+            <span className="text-theme-text-secondary">Default chain</span>
+          )}
+        </td>
+        <td className="px-4 py-3 text-right">
+          <button onClick={() => openBuilder(k)} className="text-xs font-medium text-theme-accent hover:underline">
+            {active.length > 0 ? "Add rule" : "Configure routing"}
+          </button>
+        </td>
+      </tr>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl border border-theme-border bg-theme-muted/40 p-4 text-sm text-theme-text-secondary">
+        Route any request type to the people who hold authority for it — an officer post
+        (CFO, MD, HR Manager from the <b>Officers</b> tab), a department manager, a role, or a named user.
+        Steps with the same number act in parallel (any one approves).
+      </div>
+
+      {target && (
+        <div className="rounded-2xl border border-theme-accent/30 bg-theme-surface p-6 shadow-sm">
+          <h3 className="text-sm font-semibold text-theme-text-primary mb-4">
+            Routing for <span className="text-theme-accent">{targetLabel(target)}</span>
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div>
+              <label className={labelCls}>Min amount (optional)</label>
+              <input type="number" value={minAmount} onChange={(e) => setMinAmount(e.target.value)} className={inputCls} placeholder="0" />
+            </div>
+            <div>
+              <label className={labelCls}>Max amount (optional)</label>
+              <input type="number" value={maxAmount} onChange={(e) => setMaxAmount(e.target.value)} className={inputCls} placeholder="no cap" />
+            </div>
+            <div>
+              <label className={labelCls}>Department (optional)</label>
+              <input value={departmentId} onChange={(e) => setDepartmentId(e.target.value)} className={inputCls} placeholder="dept id" />
+            </div>
+            <div>
+              <label className={labelCls}>SLA hours → escalate (optional)</label>
+              <input type="number" value={slaHours} onChange={(e) => setSlaHours(e.target.value)} className={inputCls} placeholder="e.g. 24" />
+            </div>
+          </div>
+
+          <div className="mb-2 flex items-center justify-between">
+            <label className={labelCls}>Approval chain (same step = any one approves)</label>
+            <button type="button" onClick={() => setSteps([...steps, { step: steps.length ? Math.max(...steps.map((s) => s.step)) + 1 : 0, userId: "", required: true }])} className="text-xs text-theme-accent font-medium">
+              + Add step
+            </button>
+          </div>
+          <div className="space-y-2 mb-4">
+            {steps.map((s, i) => (
+              <div key={i} className="rounded-lg border border-theme-border p-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-theme-text-secondary w-14">Step</span>
+                  <input
+                    type="number"
+                    value={s.step}
+                    onChange={(e) => { const n = [...steps]; n[i] = { ...s, step: Number(e.target.value) }; setSteps(n); }}
+                    className="w-16 rounded-lg border border-theme-border px-2 py-1.5 text-sm"
+                  />
+                  <div className="flex-1">
+                    <UserSpecInput value={s.userId} onChange={(v) => { const n = [...steps]; n[i] = { ...s, userId: v }; setSteps(n); }} users={users} extraSpecs={officerSpecs} />
+                  </div>
+                  <label className="flex items-center gap-1 text-xs text-theme-text-secondary">
+                    <input type="checkbox" checked={s.required} onChange={(e) => { const n = [...steps]; n[i] = { ...s, required: e.target.checked }; setSteps(n); }} />
+                    Required
+                  </label>
+                  {steps.length > 1 && (
+                    <button type="button" onClick={() => setSteps(steps.filter((_, j) => j !== i))} className="text-rose-600 text-sm px-1">✕</button>
+                  )}
+                </div>
+                {s.userId.trim() && (
+                  <p className="mt-1.5 ml-16 text-xs text-theme-text-secondary">
+                    → {specLabel(s.userId, officers, users)}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={() => setTarget(null)} className="px-4 py-2 text-sm text-theme-text-secondary hover:text-theme-text-primary">Cancel</button>
+            <button onClick={save} disabled={saving} className="rounded-lg bg-theme-accent px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50">
+              {saving ? "Saving…" : "Save routing"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="rounded-2xl border border-theme-border bg-theme-surface shadow-sm overflow-x-auto">
+        <div className="px-4 py-3 border-b border-theme-border bg-theme-muted">
+          <h3 className="text-sm font-semibold text-theme-text-primary">Requests & forms</h3>
+        </div>
+        <table className="w-full">
+          <tbody className="divide-y divide-theme-border">
+            <Row k="ga:staff_report" label="Staff / task reports" hint="people" />
+            <Row k="ga:leave_request" label="Leave requests" hint="people" />
+            <Row k="doc:expense" label="Finance expenses" />
+            <Row k="doc:employee_expense" label="Employee expense claims" />
+            {gatedActions
+              .filter((a) => !["staff_report", "leave_request"].includes(a.name))
+              .map((a) => (
+                <Row key={a.name} k={`ga:${a.name}`} label={a.name.replace(/_/g, " ")} hint={a.domain} />
+              ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="rounded-2xl border border-theme-border bg-theme-surface shadow-sm overflow-x-auto">
+        <div className="px-4 py-3 border-b border-theme-border bg-theme-muted">
+          <h3 className="text-sm font-semibold text-theme-text-primary">Documents</h3>
+        </div>
+        <table className="w-full">
+          <tbody className="divide-y divide-theme-border">
+            {docTypes.map(([v, l]) => <Row key={v} k={`doc:${v}`} label={l} />)}
+          </tbody>
+        </table>
+      </div>
+
+      {loading && <p className="text-xs text-theme-text-secondary">Loading routing rules…</p>}
     </div>
   );
 }

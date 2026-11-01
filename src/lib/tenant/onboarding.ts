@@ -26,6 +26,7 @@ export type OnboardingStepId =
   | "currencies"
   | "localization"
   | "team"
+  | "approval-routing"
   | "finance-policies"
   | "opening-data"
   | "go-live";
@@ -125,6 +126,14 @@ export const ONBOARDING_STEPS: OnboardingStepDef[] = [
       "Invite additional administrators or employees and assign module access. The creating admin alone still counts as configured if you work solo.",
     required: false,
     link: "/tenant-admin/users",
+  },
+  {
+    id: "approval-routing",
+    title: "Approval routing",
+    description:
+      "Decide who signs off on what: name company officers (CFO, MD, HR Manager), then route expenses, leave, staff reports, purchases and other requests to them or to specific people.",
+    required: false,
+    link: "/tenant-admin/approvals",
   },
   {
     id: "finance-policies",
@@ -363,6 +372,27 @@ const VALIDATORS: Record<OnboardingStepId, Validator> = {
         ? { complete: true, detail: `${total} admin/employee record(s).` }
         : { complete: false, detail: "Only one user — invite teammates or skip if you work solo." };
     }, "User tables are not available yet."),
+
+  "approval-routing": (tenantSlug) =>
+    safe(async () => {
+      const { rows } = await db.query<{ officers: any; matrix: any }>(
+        `select settings->'approvals'->'officers' as officers,
+                settings->'approvals'->'authorityMatrix' as matrix
+         from tenants where slug = $1`,
+        [tenantSlug]
+      );
+      const officers = Array.isArray(rows[0]?.officers) ? rows[0].officers.length : 0;
+      const matrix = rows[0]?.matrix;
+      const bands = matrix && typeof matrix === "object" ? Object.keys(matrix).length : 0;
+      const rules = await tableCount(
+        `select count(*)::int as n from approval_rules where tenant_slug = $1`,
+        [tenantSlug]
+      );
+      const configured = officers + bands + rules;
+      return configured > 0
+        ? { complete: true, detail: `${officers} officer post(s), ${rules} routing rule(s), ${bands} matrix domain(s).` }
+        : { complete: false, detail: "No approval routing yet — name officers or set chains, or skip if one admin approves all." };
+    }, "Approval tables are not available yet."),
 
   "finance-policies": (tenantSlug) =>
     safe(async () => {

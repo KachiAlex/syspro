@@ -417,6 +417,36 @@ registerGatedAction<Record<string, any>>("leave_request", {
     (await import("../hr/db")).updateLeaveStatus(p.leaveId, tenantSlug, "rejected", ctx.decidedBy ?? ctx.requestedBy),
 });
 
+/** Staff reports (daily/weekly work reports): the row is created 'pending'
+ *  and the legacy role-based route applies (staff→HOD, HOD→HR admin,
+ *  executive→tenant admin) when NO gate is configured — runUngated:false.
+ *  When an admin adds a staff_report action-scoped rule or a people matrix
+ *  band, the central chain owns the decision instead: approval flips the
+ *  report to 'approved', rejection to 'rejected'. */
+registerGatedAction<Record<string, any>>("staff_report", {
+  domain: "people",
+  mode: "block",
+  runUngated: false,
+  always: false,
+  amount: () => 0,
+  describe: (p) =>
+    `${p.reportType ?? "Staff"} report — ${p.employeeName ?? p.employeeId}, ${p.reportDate}`,
+  run: async (tenantSlug, p) => {
+    await db.query(
+      `update admin_staff_reports set status = 'approved', updated_at = now()
+       where id = $1 and tenant_slug = $2 and status = 'pending'`,
+      [p.reportId, tenantSlug]
+    );
+  },
+  rejected: async (tenantSlug, p) => {
+    await db.query(
+      `update admin_staff_reports set status = 'rejected', updated_at = now()
+       where id = $1 and tenant_slug = $2`,
+      [p.reportId, tenantSlug]
+    );
+  },
+});
+
 /** Invoice deletion — destructive; always routed unless a sales-matrix band
  *  auto-approves. */
 registerGatedAction<Record<string, any>>("invoice_delete", {
