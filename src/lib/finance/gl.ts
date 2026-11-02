@@ -19,8 +19,7 @@
  */
 
 import { randomUUID } from "crypto";
-import { db, sql as SQL, SqlClient } from "../sql-client";
-import { getPool } from "../db";
+import { db, sql as SQL, SqlClient, withTransaction as sharedWithTransaction } from "../sql-client";
 import { ensureOnce } from "@/lib/ensure-once";
 
 export type GLAccountType = "asset" | "liability" | "equity" | "revenue" | "expense";
@@ -407,29 +406,12 @@ async function ensureGLTablesRun() {
 type QueryFn = (text: string, params?: any[]) => Promise<any[]>;
 
 async function withTransaction<T>(fn: (q: QueryFn) => Promise<T>): Promise<T> {
-  const pool = getPool();
-  if (!pool) {
-    const q: QueryFn = async (text, params) => (await db.query(text, params)).rows;
-    return fn(q);
-  }
-  const client = await pool.connect();
-  const q: QueryFn = async (text, params) => (await client.query(text, params || [])).rows;
-  try {
-    await client.query("BEGIN");
-    const result = await fn(q);
-    await client.query("COMMIT");
-    return result;
-  } catch (error) {
-    try {
-      await client.query("ROLLBACK");
-    } catch {
-      /* connection may be broken */
-    }
-    throw error;
-  } finally {
-    client.release();
-  }
+  // Join the shared transaction (sql-client): a second pool connection here
+  // would wait on locks held by the caller's open transaction.
+  const q: QueryFn = async (text, params) => (await db.query(text, params)).rows;
+  return sharedWithTransaction(() => fn(q));
 }
+
 
 // ---------------------------------------------------------------------------
 // Account resolution

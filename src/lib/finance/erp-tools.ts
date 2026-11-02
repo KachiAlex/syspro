@@ -492,6 +492,16 @@ export async function applyCostCenterAllocations(
   lines: Array<{ costCenterId?: string; debitAmount?: number; creditAmount?: number; [k: string]: any }>,
 ) {
   await ensureErpToolTables();
+  // Databases created before this table gained main_cost_center keep the
+  // legacy shape (CREATE TABLE IF NOT EXISTS never alters it). Skip allocation
+  // there instead of raising — a failed query would abort an enclosing GL
+  // transaction.
+  const [hasKey] = (await SQL`
+    select 1 as ok from information_schema.columns
+    where table_schema = current_schema() and table_name = 'cost_center_allocations'
+      and column_name = 'main_cost_center'
+  `) as any[];
+  if (!hasKey) return lines;
   const rules = new Map(
     ((await SQL`
       select main_cost_center, allocations from cost_center_allocations
