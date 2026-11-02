@@ -1701,7 +1701,156 @@ function RoutingPanel({ tenantSlug, onError, onSuccess }: {
         </table>
       </div>
 
+      <RoutingTester tenantSlug={tenantSlug} docTypes={docTypes} gatedActions={gatedActions} officers={officers} users={users} />
+      <SodSection tenantSlug={tenantSlug} users={users} />
+      <div className="text-xs text-theme-text-secondary">
+        Need your full dataset? <a href="/api/tenant/export" className="text-theme-accent hover:underline">Download tenant export (JSON)</a> — credential columns excluded.
+      </div>
       {loading && <p className="text-xs text-theme-text-secondary">Loading routing rules…</p>}
+    </div>
+  );
+}
+
+/** "Who approves this?" — dry-run the request through the live engine
+ *  (rules → matrix → ladder) and show the resolved chain with real names. */
+function RoutingTester({ tenantSlug, docTypes, gatedActions, officers, users }: {
+  tenantSlug: string;
+  docTypes: readonly (readonly [string, string])[];
+  gatedActions: Array<{ name: string; domain: string }>;
+  officers: TenantOfficer[];
+  users: Array<{ id: string; name: string }>;
+}) {
+  const [kind, setKind] = useState("doc:expense");
+  const [amount, setAmount] = useState("");
+  const [dept, setDept] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [out, setOut] = useState<any | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const inputCls = "w-full rounded-lg border border-theme-border px-3 py-2 text-sm";
+  const labelCls = "block text-xs font-medium text-theme-text-secondary mb-1";
+
+  const run = async () => {
+    setBusy(true); setErr(null); setOut(null);
+    try {
+      const isGa = kind.startsWith("ga:");
+      const params = new URLSearchParams({
+        simulate: "true",
+        entityType: isGa ? "gated_action" : kind.slice(4),
+        ...(isGa ? { action: kind.slice(3) } : {}),
+        ...(amount ? { amount } : {}),
+        ...(dept ? { departmentId: dept } : {}),
+        tenantSlug,
+      });
+      const res = await fetch(`/api/finance/approvals?${params}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Simulation failed");
+      setOut(data);
+    } catch (e: any) { setErr(e.message); } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="rounded-2xl border border-theme-border bg-theme-surface shadow-sm p-6">
+      <h3 className="text-sm font-semibold text-theme-text-primary mb-1">Test a request</h3>
+      <p className="text-xs text-theme-text-secondary mb-4">See exactly who would approve a request before anyone submits it.</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+        <div className="col-span-2">
+          <label className={labelCls}>Request type</label>
+          <select value={kind} onChange={(e) => setKind(e.target.value)} className={inputCls}>
+            <optgroup label="Requests & forms">
+              <option value="ga:staff_report">Staff / task report</option>
+              <option value="ga:leave_request">Leave request</option>
+              {gatedActions.filter((a) => !["staff_report", "leave_request"].includes(a.name)).map((a) => (
+                <option key={a.name} value={`ga:${a.name}`}>{a.name.replace(/_/g, " ")}</option>
+              ))}
+            </optgroup>
+            <optgroup label="Documents">
+              {docTypes.map(([v, l]) => <option key={v} value={`doc:${v}`}>{l}</option>)}
+            </optgroup>
+          </select>
+        </div>
+        <div>
+          <label className={labelCls}>Amount</label>
+          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className={inputCls} placeholder="optional" />
+        </div>
+        <div>
+          <label className={labelCls}>Department</label>
+          <input value={dept} onChange={(e) => setDept(e.target.value)} className={inputCls} placeholder="optional" />
+        </div>
+      </div>
+      <button onClick={run} disabled={busy} className="mt-4 rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50">
+        {busy ? "Resolving…" : "Who approves this?"}
+      </button>
+      {err && <p className="mt-3 text-sm text-rose-500">{err}</p>}
+      {out && (
+        <div className="mt-4 rounded-lg border border-theme-border p-4">
+          <p className="text-xs text-theme-text-secondary mb-3">
+            {out.gated ? "This request requires approval" : "No approval required"} — via <span className="font-medium text-theme-text-primary">{out.reason}</span>
+          </p>
+          {out.chain.length > 0 ? (
+            <ol className="space-y-1.5">
+              {out.chain.map((s: any, i: number) => (
+                <li key={i} className="flex items-center gap-2 text-sm">
+                  <span className="w-14 text-xs text-theme-text-tertiary">Step {s.step}</span>
+                  <span className={`font-medium ${s.resolved ? "text-theme-text-primary" : "text-amber-500"}`}>{s.name}</span>
+                  {!s.resolved && <span className="text-xs text-amber-500">(resolves at submit time)</span>}
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="text-xs text-theme-text-secondary">No approval steps — auto-approved.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Separation-of-duties conflicts: users who can both create/submit AND
+ *  approve the same document type. */
+function SodSection({ tenantSlug, users }: { tenantSlug: string; users: Array<{ id: string; name: string }> }) {
+  const [data, setData] = useState<{ conflicts: any[]; analyzed: any } | null>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    fetch(`/api/finance/approvals?sod=true&tenantSlug=${encodeURIComponent(tenantSlug)}`)
+      .then((r) => r.ok ? r.json() : { conflicts: [] })
+      .then(setData).catch(() => setData({ conflicts: [], analyzed: {} }))
+      .finally(() => setLoading(false));
+  }, [tenantSlug]);
+  const nameFor = (id: string) => users.find((u) => u.id === id)?.name ?? id;
+  return (
+    <div className="rounded-2xl border border-theme-border bg-theme-surface shadow-sm overflow-x-auto">
+      <div className="px-4 py-3 border-b border-theme-border bg-theme-muted flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-theme-text-primary">Separation of duties</h3>
+        <span className="text-xs text-theme-text-secondary">
+          {data ? `${data.conflicts.length} conflict${data.conflicts.length === 1 ? "" : "s"}` : ""}
+        </span>
+      </div>
+      {loading ? (
+        <p className="px-4 py-6 text-sm text-theme-text-secondary">Analyzing roles and approval chains…</p>
+      ) : !data || data.conflicts.length === 0 ? (
+        <p className="px-4 py-6 text-sm text-theme-text-secondary">No conflicts — no user can both create and approve the same document type.</p>
+      ) : (
+        <table className="w-full">
+          <thead className="border-b border-theme-border bg-theme-muted">
+            <tr>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-theme-text-secondary uppercase">User</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-theme-text-secondary uppercase">Document</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-theme-text-secondary uppercase">Creates via</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-theme-text-secondary uppercase">Approves via</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-theme-border">
+            {data.conflicts.map((c, i) => (
+              <tr key={i} className="hover:bg-theme-muted">
+                <td className="px-4 py-2.5 text-sm font-medium text-amber-600">{nameFor(c.userId)}</td>
+                <td className="px-4 py-2.5 text-sm">{c.docType.replace(/_/g, " ")}</td>
+                <td className="px-4 py-2.5 text-xs text-theme-text-secondary">{(c.canCreateVia ?? []).join(", ") || c.roles.join(", ")}</td>
+                <td className="px-4 py-2.5 text-xs text-theme-text-secondary">{(c.canApproveVia ?? []).join(", ")}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }

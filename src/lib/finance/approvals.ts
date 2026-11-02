@@ -2211,3 +2211,69 @@ export async function escalateStaleApprovals(
 
   return { scanned: rows.length, reminded, escalated };
 }
+
+/**
+ * Read-only chain preview — resolves the SAME chain initiateApproval would
+ * build (rule → matrix band → amount ladder → role resolution) without
+ * creating anything. Powers the "who approves this?" dry-run in the
+ * Routing tab so admins can verify config before it matters.
+ */
+export async function simulateApproval(payload: {
+  tenantSlug: string;
+  entityType: ApprovalEntityType;
+  entityData: Record<string, any>;
+}): Promise<{
+  gated: boolean;
+  reason: string;
+  chain: Array<{ step: number; userId: string; name: string; required: boolean; resolved: boolean }>;
+}> {
+  const { tenantSlug, entityType, entityData } = payload;
+  await ensureApprovalTables(SQL);
+
+  const gated = await requiresApproval(tenantSlug, entityType, entityData);
+  const rule = await findMatchingRule(tenantSlug, entityType, entityData);
+  const settings = await tenantApprovalSettings(tenantSlug);
+  const amount = Number(entityData.amount ?? entityData.total ?? 0);
+  const domain = (entityData.domain ?? ENTITY_DOMAINS[entityType]) as GateDomain | undefined;
+  const band = matrixBandFor((settings as any)?.authorityMatrix ?? {}, domain, amount);
+
+  let reason: string;
+  let chain: ApproverStep[];
+  if (rule?.approvers?.length) {
+    reason = `rule:${rule.ruleType}`;
+    chain = rule.approvers;
+  } else if (band) {
+    if ((band.approvers ?? []).length === 0) {
+      return { gated, reason: `matrix:${domain} → auto-approve band`, chain: [] };
+    }
+    reason = `matrix:${domain}`;
+    chain = chainFromBand(band) ?? [];
+  } else {
+    const isExpense = entityType === "expense" || entityType === "employee_expense";
+    chain = buildThresholdEscalationChain(amount, {
+      step2Amount: isExpense ? settings.expenseStep2Amount : settings.step2Amount,
+      step3Amount: isExpense ? settings.expenseStep3Amount : settings.step3Amount,
+    });
+    if (entityType === "gated_action" && !entityData.departmentId) {
+      chain = chain.map((s) =>
+        s.userId === "role:dept_manager"
+          ? { ...s, userId: "role:finance_manager", role: "finance_manager" }
+          : s
+      );
+    }
+    reason = gated ? "default-ladder" : "ungated";
+  }
+
+  const resolved = await resolveChainApprovers(tenantSlug, chain, entityData);
+  const named = await Promise.all(resolved.map(async (s) => {
+    const isSpec = s.userId.startsWith("role:");
+    return {
+      step: s.step,
+      userId: s.userId,
+      required: s.required,
+      name: isSpec ? s.userId : await resolveUserName(tenantSlug, s.userId),
+      resolved: !isSpec,
+    };
+  }));
+  return { gated, reason, chain: named };
+}

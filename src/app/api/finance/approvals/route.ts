@@ -105,6 +105,141 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const tenantSlug = ctx.tenantSlug;
 
+    // Dry-run: "who approves this request?" — resolves the chain read-only.
+    if (url.searchParams.get("simulate") === "true") {
+      const entityType = url.searchParams.get("entityType") || "expense";
+      const entityData: Record<string, any> = {};
+      const amt = url.searchParams.get("amount");
+      if (amt) entityData.amount = Number(amt);
+      const dept = url.searchParams.get("departmentId");
+      if (dept) entityData.departmentId = dept;
+      const act = url.searchParams.get("action");
+      if (act) entityData.action = act;
+      if (entityType === "gated_action") entityData.domain = url.searchParams.get("domain") || undefined;
+      const { simulateApproval } = await import("@/lib/finance/approvals");
+      return NextResponse.json(await simulateApproval({ tenantSlug, entityType: entityType as any, entityData }));
+    }
+
+    // Separation-of-duties report: users who can both create/submit AND
+    // approve the same document type — the classic audit finding.
+    if (url.searchParams.get("sod") === "true") {
+      const { getSql } = await import("@/lib/db");
+      const sql2 = getSql();
+      const roleRows: any[] = await sql2`select id, name, permissions from admin_roles where tenant_slug = ${tenantSlug}`;
+      const assignRows: any[] = await sql2`select user_id, role_id from admin_user_roles where tenant_slug = ${tenantSlug} and (expires_at is null or expires_at > now())`;
+      const ruleRows: any[] = await sql2`select entity_type, approvers from approval_rules where tenant_slug = ${tenantSlug} and is_active`;
+      const officerRows: any[] = await sql2`select settings->'approvals'->'officers' as officers, settings->'approvals'->'authorityMatrix' as matrix from tenants where slug = ${tenantSlug}`;
+
+      const rolePerms = new Map<string, { name: string; perms: string[] }>();
+      for (const r of roleRows) rolePerms.set(String(r.id), { name: r.name, perms: Array.isArray(r.permissions) ? r.permissions : [] });
+      const userRoles = new Map<string, string[]>();
+      for (const a of assignRows) {
+        const role = rolePerms.get(String(a.role_id));
+        if (!role) continue;
+        const cur = userRoles.get(String(a.user_id)) || [];
+        cur.push(role.name);
+        userRoles.set(String(a.user_id), cur);
+      }
+      const userPermKeys = new Map<string, string[]>();
+      for (const a of assignRows) {
+        const role = rolePerms.get(String(a.role_id));
+        if (!role) continue;
+        userPermKeys.set(String(a.user_id), [...(userPermKeys.get(String(a.user_id)) || []), ...role.perms]);
+      }
+
+      const CREATE_ACTIONS = new Set(["create", "edit", "submit"]);
+      const docKey = (dt: string, acts: string[]) => `doc.${dt}.${acts.join("/")}`;
+      const canCreate = (perms: string[], dt: string) =>
+        perms.some((p) => p === "all" || p === "doc.*" || p === `doc.${dt}.*` || CREATE_ACTIONS.has(p.replace(`doc.${dt}.`, "")) && p.startsWith(`doc.${dt}.`));
+      const canApprove = (perms: string[], dt: string) =>
+        perms.some((p) => p === "all" || p === "doc.*" || p === `doc.${dt}.*` || p === `doc.${dt}.approve`);
+
+      const officers = Array.isArray(officerRows[0]?.officers) ? officerRows[0].officers : [];
+      const matrix = officerRows[0]?.matrix && typeof officerRows[0].matrix === "object" ? officerRows[0].matrix : {};
+      const officerSlug = (t: string) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+
+      // userId -> Set of docTypes they can approve via rules/officers/matrix
+      const approverOf = new Map<string, Set<string>>();
+      const addApprover = (uid: string, dt: string) => {
+        if (!approverOf.has(uid)) approverOf.set(uid, new Set());
+        approverOf.get(uid)!.add(dt);
+      };
+      const docTypes = new Set<string>();
+      for (const r of ruleRows) {
+        const dt = r.entity_type === "gated_action" ? null : r.entity_type;
+        if (!dt) continue;
+        docTypes.add(dt);
+        const steps = Array.isArray(r.approvers) ? r.approvers : [];
+        for (const s of steps) {
+          const uid = String(s.userId || "");
+          if (!uid) continue;
+          if (uid.startsWith("user:")) addApprover(uid.slice(5), dt);
+          else if (!uid.startsWith("role:")) addApprover(uid, dt);
+          else if (uid.startsWith("role:")) {
+            const off = officers.find((o: any) => `role:${officerSlug(o.title)}` === uid);
+            if (off) for (const oid of off.userIds ?? []) addApprover(String(oid), dt);
+          }
+        }
+      }
+      // Officer assignments also count toward gated actions on the same domain
+      const domainOf: Record<string, string[]> = {};
+      for (const [dom, bands] of Object.entries(matrix as Record<string, any[]>)) {
+        if (!Array.isArray(bands)) continue;
+        for (const b of bands) {
+          for (const entry of b?.approvers ?? []) {
+            const specs = Array.isArray(entry) ? entry : [entry];
+            for (const spec of specs) {
+              const s = String(spec);
+              const put = (uid: string) => { (domainOf[dom] ??= []).push(uid); };
+              if (s.startsWith("user:")) put(s.slice(5));
+              else if (s.startsWith("officer:")) {
+                const off = officers.find((o: any) => o.title === s.slice(8));
+                for (const oid of off?.userIds ?? []) put(String(oid));
+              } else if (s.startsWith("role:")) {
+                const off = officers.find((o: any) => `role:${officerSlug(o.title)}` === s);
+                if (off) for (const oid of off.userIds ?? []) put(String(oid));
+              }
+            }
+          }
+        }
+      }
+
+      const conflicts: any[] = [];
+      for (const [uid, perms] of userPermKeys) {
+        const allDts = new Set<string>([...docTypes]);
+        for (const p of perms) {
+          if (!p.startsWith("doc.") || p === "doc.*") { allDts.add("*"); continue; }
+          const dt = p.split(".")[1];
+          if (dt) allDts.add(dt);
+        }
+        for (const dt of allDts) {
+          const creates = dt !== "*" && canCreate(perms, dt);
+          const approvesPerm = dt !== "*" && canApprove(perms, dt);
+          const approvesChain = dt !== "*" && (approverOf.get(uid)?.has(dt) ?? false);
+          if (!creates || !(approvesPerm || approvesChain)) continue;
+          const via: string[] = [];
+          if (approvesPerm) via.push(`perm doc.${dt}.approve`);
+          if (approvesChain) via.push("approval chain");
+          conflicts.push({
+            docType: dt, userId: uid,
+            roles: userRoles.get(uid) ?? [],
+            canCreateVia: perms.filter((p) => p === "all" || p === "doc.*" || p === `doc.${dt}.*` || CREATE_ACTIONS.has(p.replace(`doc.${dt}.`, "")) && p.startsWith(`doc.${dt}.`)),
+            canApproveVia: via,
+          });
+        }
+      }
+      // Also flag users who can create docs (via perms) AND are named approvers
+      for (const [uid, dts] of approverOf) {
+        const perms = userPermKeys.get(uid) ?? [];
+        for (const dt of dts) {
+          if (canCreate(perms, dt) && !conflicts.some((c) => c.userId === uid && c.docType === dt)) {
+            conflicts.push({ docType: dt, userId: uid, roles: userRoles.get(uid) ?? [], canCreateVia: perms.filter((p) => p.startsWith("doc.") || p === "all"), canApproveVia: ["approval chain"] });
+          }
+        }
+      }
+      return NextResponse.json({ conflicts, analyzed: { users: userPermKeys.size, docTypes: [...docTypes] } });
+    }
+
     // Get approval rules
     if (url.searchParams.get("rules") === "true") {
       const entityType = url.searchParams.get("entityType");
