@@ -24,6 +24,11 @@ describe("invoice_issue gated action", () => {
     expect(def!.amount({})).toBe(0);
   });
 
+  it("keys duplicate submissions by invoice", () => {
+    expect(def!.dedupeKey!({ invoiceId: "inv-1" })).toBe("invoice:inv-1");
+    expect(def!.dedupeKey!({})).toBeNull();
+  });
+
   it("describes the invoice being issued", () => {
     const text = def!.describe({ invoiceNumber: "INV-1001", total: 5000 });
     expect(text).toContain("Issue invoice INV-1001");

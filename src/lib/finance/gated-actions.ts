@@ -51,6 +51,10 @@ export interface GatedActionDef<P = any> {
   always?: boolean;
   /** Extra gating predicate evaluated with the tenant's full settings. */
   gated?: (payload: P, settings: Record<string, any>) => boolean | Promise<boolean>;
+  /** Stable key for one logical request. While an approval with the same key
+   *  is pending, a repeat submission returns that approval instead of a
+   *  duplicate. */
+  dedupeKey?: (payload: P) => string | null;
   /** Risk amount used for matrix band selection and notifications. */
   amount: (payload: P) => number;
   /** One-line description shown to approvers and in notifications. */
@@ -192,19 +196,35 @@ export async function gateOrRun<P extends Record<string, any>>(
 
   // ---- Block mode: defer or run -----------------------------------------
   if (gated) {
-    const approval = await initiateApproval({
-      tenantSlug,
-      entityType: "gated_action",
-      entityId: `ga_${randomUUID()}`,
-      requestedBy: ctx.requestedBy,
-      entityData,
+    const dedupeKey = def.dedupeKey?.(payload) ?? null;
+    const { id, created } = await withTransaction(async () => {
+      if (dedupeKey) {
+        entityData.dedupeKey = dedupeKey;
+        await db.query(`select pg_advisory_xact_lock(hashtext($1))`, [`${tenantSlug}|${actionName}|${dedupeKey}`]);
+        const dup = (await db.query<{ id: string }>(
+          `select id from approvals
+           where tenant_slug = $1 and entity_type = 'gated_action' and status = 'pending'
+             and metadata->>'dedupeKey' = $2
+           limit 1`,
+          [tenantSlug, dedupeKey]
+        )).rows[0];
+        if (dup) return { id: dup.id, created: false };
+      }
+      const approval = await initiateApproval({
+        tenantSlug,
+        entityType: "gated_action",
+        entityId: `ga_${randomUUID()}`,
+        requestedBy: ctx.requestedBy,
+        entityData,
+      });
+      return { id: approval.id, created: true };
     });
-    if (def.staged) {
+    if (created && def.staged) {
       await def.staged(tenantSlug, payload, ctx).catch((err) =>
         console.error(`Gated action "${actionName}" staged hook failed:`, err)
       );
     }
-    return { status: "pending", approvalId: approval.id };
+    return { status: "pending", approvalId: id };
   }
   // Ungated: run now — except actions that deliberately defer to a legacy
   // decision flow when no gate is configured (runUngated === false). An
@@ -468,6 +488,7 @@ registerGatedAction<Record<string, any>>("invoice_delete", {
 registerGatedAction<Record<string, any>>("invoice_issue", {
   domain: "sales",
   mode: "block",
+  dedupeKey: (p) => (p.invoiceId ? `invoice:${p.invoiceId}` : null),
   amount: (p) => Number(p.total ?? 0),
   describe: (p) =>
     `Issue invoice ${p.invoiceNumber ?? p.invoiceId}${p.total ? ` — ${Number(p.total).toLocaleString()}` : ""}`,

@@ -36,7 +36,18 @@ export async function GET(request: NextRequest) {
 
   try {
     const invoices = await listFinanceInvoices(parsed.data);
-    return NextResponse.json({ invoices });
+    const { db } = await import("@/lib/sql-client");
+    const pending = (await db.query<{ invoice_id: string; approval_id: string }>(
+      `select metadata->'payload'->>'invoiceId' as invoice_id, id as approval_id
+       from approvals
+       where tenant_slug = $1 and entity_type = 'gated_action' and status = 'pending'
+         and metadata->>'action' = 'invoice_issue'`,
+      [parsed.data.tenantSlug]
+    ).catch(() => ({ rows: [] as Array<{ invoice_id: string; approval_id: string }> }))).rows;
+    const pendingBy = new Map(pending.map((r) => [r.invoice_id, r.approval_id]));
+    return NextResponse.json({
+      invoices: invoices.map((inv) => ({ ...inv, pendingApprovalId: pendingBy.get(inv.id) ?? null })),
+    });
   } catch (error) {
     console.error("Finance invoices list failed", error);
     return NextResponse.json({ error: "Failed to load invoices" }, { status: 500 });

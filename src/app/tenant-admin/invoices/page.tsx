@@ -15,6 +15,7 @@ type Invoice = {
   amount: number;
   balanceDue: number;
   status: string;
+  pendingApprovalId?: string | null;
 };
 
 const PAY_METHODS = ["bank_transfer", "cash", "check", "pos", "mobile_money", "wire"] as const;
@@ -179,7 +180,7 @@ export default function InvoicesPage() {
     await load();
   };
 
-  const canIssue = (inv: Invoice) => inv.status === "draft";
+  const canIssue = (inv: Invoice) => inv.status === "draft" && !inv.pendingApprovalId;
   const canPay = (inv: Invoice) => ["sent", "partially_paid", "overdue"].includes(effectiveStatus(inv)) && inv.balanceDue > 0;
   const inputCls = "w-full rounded-lg border border-theme-border px-3 py-2 text-sm";
   const labelCls = "block text-xs font-medium text-theme-text-secondary mb-1";
@@ -289,7 +290,10 @@ export default function InvoicesPage() {
                     </span>
                   </td>
                   <td className="px-4 py-2.5">
-                    <div className="flex gap-3">
+                    <div className="flex items-center gap-3">
+                      {inv.pendingApprovalId && (
+                        <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Awaiting approval</span>
+                      )}
                       {canIssue(inv) && (
                         <button
                           onClick={() => issue(inv)}
