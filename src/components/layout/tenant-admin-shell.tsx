@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { SidebarNav, navigationItems, canView } from "./sidebar-nav";
+import { ROUTE_INDEX } from "@/lib/nav/route-index";
 import { useTheme } from "@/components/theme/theme-provider";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
 import { AIChatPanel } from "@/components/ai/ai-chat-panel";
@@ -98,7 +99,7 @@ const SEARCH_ALIASES: Record<string, { label: string; href: string }> = {
   supplier: { label: "Suppliers", href: "/tenant-admin/suppliers" },
   vendor: { label: "Vendors", href: "/tenant-admin/vendors" },
   purchase: { label: "Purchase Orders", href: "/tenant-admin/sales/purchase-orders" },
-  receipt: { label: "Goods Receipts", href: "/tenant-admin/goods-receipts" },
+  receipt: { label: "Purchases", href: "/tenant-admin/purchases" },
   report: { label: "Reports & Analytics", href: "/tenant-admin/analytics" },
   budget: { label: "Budget vs Actual", href: "/tenant-admin/budget-vs-actual" },
   tax: { label: "Tax", href: "/tenant-admin/tax" },
@@ -135,9 +136,14 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
 
   // Navigation search: every sidebar page the user can see, plus synonym
   // aliases (workflow → approvals, …) — deduped, capped at 12.
+  // Navigation search: every page in the app (nav tree + generated route
+  // index covering non-sidebar pages) + synonym aliases. Multi-token AND
+  // matching ("bank recon" works). Permission-filtered like the sidebar —
+  // non-nav routes inherit their parent section's module permission.
   const filteredLinks = useMemo(() => {
     if (!searchQuery.trim()) return [];
-    const q = searchQuery.toLowerCase();
+    const tokens = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
+    const match = (hay: string) => tokens.every((t) => hay.includes(t));
     const hits: { label: string; href: string }[] = [];
     const seen = new Set<string>();
     const push = (label: string, href: string, section?: string) => {
@@ -145,17 +151,50 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
       seen.add(href);
       hits.push({ label: section ? `${label} — ${section}` : label, href });
     };
+
+    // module permission for a route: longest nav-group href prefix, else
+    // a keyword→module inference from the path, else unrestricted.
+    const navHrefPerms = (navigationItems as any[])
+      .filter((g) => g.href)
+      .map((g) => ({ href: g.href as string, permission: g.permission as string | undefined, title: g.title as string }))
+      .sort((a, b) => b.href.length - a.href.length);
+    const KEYWORD_MODULE: Array<[RegExp, string]> = [
+      [/finance|expense|bill|payment|tax|treasury|bank|budget|period|imprest|recurring|asset|ledger|coa|return|credit|equity|pricing|deferred/, "finance"],
+      [/hr|leave|payroll|staff|attendance|roster|recruit|promotion|team/, "people"],
+      [/inventory|warehouse|stock|landed|material/, "inventory"],
+      [/manufactur|work-order|mrp|batch|quality|subcontract/, "manufacturing"],
+      [/sales|crm|pos|deliver|order|quotation|promotion|storefront|procurement|rfq|purchase|supplier|vendor/, "sales"],
+      [/project|gantt|task/, "projects"],
+      [/it-support|ticket|incident|sla|engineer/, "itsupport"],
+      [/automation|workflow/, "automation"],
+      [/analytic|report/, "analytics"],
+      [/revops|campaign|attribution|forecast/, "revops"],
+      [/admin|setting|user|audit|notif|health|platform|setup|custom-field|team-data/, "admin"],
+    ];
+    const permFor = (href: string): string | undefined => {
+      const pref = navHrefPerms.find((g) => href === g.href || href.startsWith(g.href + "/"));
+      if (pref) return pref.permission;
+      for (const [re, mod] of KEYWORD_MODULE) if (re.test(href)) return mod;
+      return undefined;
+    };
+
+    const hayFor = (label: string, href: string, section?: string) =>
+      `${label} ${href} ${section ?? ""}`.toLowerCase();
+
+    for (const r of ROUTE_INDEX) {
+      if (!canView(permFor(r.href), perms)) continue;
+      if (match(hayFor(r.label, r.href, r.section))) push(r.label, r.href, r.section);
+    }
     for (const group of navigationItems as any[]) {
       if (!canView(group.permission, perms)) continue;
-      if (group.title.toLowerCase().includes(q)) push(group.title, group.href);
       for (const child of group.children ?? []) {
-        if (child.title.toLowerCase().includes(q)) push(child.title, child.href, group.title);
+        if (match(hayFor(child.title, child.href, group.title))) push(child.title, child.href, group.title);
       }
     }
     for (const [term, dest] of Object.entries(SEARCH_ALIASES)) {
-      if (term.includes(q) || q.includes(term)) push(dest.label, dest.href);
+      if (tokens.some((t) => term.includes(t) || t.includes(term))) push(dest.label, dest.href);
     }
-    return hits.slice(0, 12);
+    return hits.slice(0, 15);
   }, [searchQuery, perms]);
 
   // Global entity search — debounced /api/search call.
