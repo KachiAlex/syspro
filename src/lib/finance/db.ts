@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 
 import { db, sql as SQL, withTransaction } from "../sql-client";
 import type { SqlClient } from "../sql-client";
+import { toCurrencyCode } from "../currencies";
 import { uploadReceipt } from "./uploads";
 import type {
   FinanceAccount,
@@ -791,7 +792,7 @@ async function insertFinanceInvoiceTx(payload: FinanceInvoiceCreateInput): Promi
       ${payload.purchaseOrder ?? null},
       ${payload.issuedDate},
       ${payload.dueDate},
-      ${payload.currency ?? "₦"},
+      ${toCurrencyCode(payload.currency)},
       ${payload.amount},
       ${payload.balanceDue ?? payload.amount},
       ${payload.status ?? "draft"},
@@ -889,6 +890,9 @@ async function updateFinanceInvoiceTx(
   }
 
   const paymentsApplied = Number(originalInvoice.amount) - Number(originalInvoice.balance_due);
+  if (updates.status === "void" && paymentsApplied > 0.005) {
+    throw new Error("Invoice has payments applied — reverse the payments before voiding");
+  }
 
   let [invoiceRow] = (await sql`
     update finance_invoices
@@ -899,7 +903,7 @@ async function updateFinanceInvoiceTx(
       purchase_order = coalesce(${updates.purchaseOrder ?? null}, purchase_order),
       issued_date = coalesce(${updates.issuedDate ?? null}, issued_date),
       due_date = coalesce(${updates.dueDate ?? null}, due_date),
-      currency = coalesce(${updates.currency ?? null}, currency),
+      currency = coalesce(${updates.currency ? toCurrencyCode(updates.currency) : null}, currency),
       amount = coalesce(${updates.amount ?? null}, amount),
       balance_due = coalesce(${updates.balanceDue ?? null}, balance_due),
       status = coalesce(${updates.status ?? null}, status),

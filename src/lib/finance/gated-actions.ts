@@ -104,6 +104,15 @@ export type GateOutcome<R = any> =
   | { status: "pending"; approvalId: string }
   | { status: "denied"; error: string };
 
+/** Key-order-independent JSON, so the same request always fingerprints alike. */
+function canonicalJson(value: unknown): string {
+  return JSON.stringify(JSON.parse(JSON.stringify(value ?? null)), (_k, v) =>
+    v && typeof v === "object" && !Array.isArray(v)
+      ? Object.keys(v).sort().reduce((o: Record<string, unknown>, k) => { o[k] = v[k]; return o; }, {})
+      : v
+  );
+}
+
 async function tenantFullSettings(tenantSlug: string): Promise<Record<string, any>> {
   const rows = await db.query<any>(`select settings from tenants where slug = $1`, [tenantSlug]);
   return (rows.rows[0]?.settings as any) ?? {};
@@ -196,19 +205,22 @@ export async function gateOrRun<P extends Record<string, any>>(
 
   // ---- Block mode: defer or run -----------------------------------------
   if (gated) {
-    const dedupeKey = def.dedupeKey?.(payload) ?? null;
-    const { id, created } = await withTransaction(async () => {
+    const logicalKey = def.dedupeKey?.(payload) ?? null;
+    const dedupeKey = logicalKey ? `${actionName}:${logicalKey}` : null;
+    const fingerprint = canonicalJson(payload);
+    const { id, created, sameRequest } = await withTransaction(async () => {
       if (dedupeKey) {
         entityData.dedupeKey = dedupeKey;
-        await db.query(`select pg_advisory_xact_lock(hashtext($1))`, [`${tenantSlug}|${actionName}|${dedupeKey}`]);
-        const dup = (await db.query<{ id: string }>(
-          `select id from approvals
+        entityData.fingerprint = fingerprint;
+        await db.query(`select pg_advisory_xact_lock(hashtext($1))`, [`${tenantSlug}|${dedupeKey}`]);
+        const dup = (await db.query<{ id: string; fingerprint: string | null }>(
+          `select id, metadata->>'fingerprint' as fingerprint from approvals
            where tenant_slug = $1 and entity_type = 'gated_action' and status = 'pending'
              and metadata->>'dedupeKey' = $2
            limit 1`,
           [tenantSlug, dedupeKey]
         )).rows[0];
-        if (dup) return { id: dup.id, created: false };
+        if (dup) return { id: dup.id, created: false, sameRequest: dup.fingerprint === fingerprint };
       }
       const approval = await initiateApproval({
         tenantSlug,
@@ -217,8 +229,11 @@ export async function gateOrRun<P extends Record<string, any>>(
         requestedBy: ctx.requestedBy,
         entityData,
       });
-      return { id: approval.id, created: true };
+      return { id: approval.id, created: true, sameRequest: true };
     });
+    if (!sameRequest) {
+      return { status: "denied", error: "A different change to this record is already awaiting approval — resolve that request first" };
+    }
     if (created && def.staged) {
       await def.staged(tenantSlug, payload, ctx).catch((err) =>
         console.error(`Gated action "${actionName}" staged hook failed:`, err)
@@ -492,6 +507,20 @@ registerGatedAction<Record<string, any>>("invoice_issue", {
   amount: (p) => Number(p.total ?? 0),
   describe: (p) =>
     `Issue invoice ${p.invoiceNumber ?? p.invoiceId}${p.total ? ` — ${Number(p.total).toLocaleString()}` : ""}`,
+  run: async (tenantSlug, p) =>
+    (await import("./db")).updateFinanceInvoice(p.invoiceId, p.updates, tenantSlug),
+});
+
+/** Invoice void — reverses the AR journal, so it is always routed. Blocked
+ *  while payments are applied (enforced in updateFinanceInvoice). */
+registerGatedAction<Record<string, any>>("invoice_void", {
+  domain: "sales",
+  mode: "block",
+  always: true,
+  dedupeKey: (p) => (p.invoiceId ? `invoice:${p.invoiceId}` : null),
+  amount: (p) => Number(p.total ?? 0),
+  describe: (p) =>
+    `Void invoice ${p.invoiceNumber ?? p.invoiceId}${p.total ? ` — ${Number(p.total).toLocaleString()}` : ""}`,
   run: async (tenantSlug, p) =>
     (await import("./db")).updateFinanceInvoice(p.invoiceId, p.updates, tenantSlug),
 });

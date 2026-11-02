@@ -50,8 +50,17 @@ describe.skipIf(!HAS_DB)("invoice_issue duplicate submissions", () => {
 
     const rows = await db.query(
       `select id from approvals where tenant_slug = $1 and metadata->>'dedupeKey' = $2`,
-      [TENANT, `invoice:${invoiceId}`]
+      [TENANT, `invoice_issue:invoice:${invoiceId}`]
     );
     expect(rows.rows.length).toBe(1);
+  }, 60000);
+
+  it("refuses a different change to an invoice that already has a pending request", async () => {
+    const invoiceId = `inv-diff-${Date.now()}`;
+    const ctx = { requestedBy: "user-1" };
+    const first = await gateOrRun(TENANT, "invoice_issue", { invoiceId, invoiceNumber: "INV-D", total: 1000, updates: { status: "sent" } }, ctx);
+    const second = await gateOrRun(TENANT, "invoice_issue", { invoiceId, invoiceNumber: "INV-D", total: 1000, updates: { status: "sent", notes: "changed" } }, ctx);
+    expect(first.status).toBe("pending");
+    expect(second.status).toBe("denied");
   }, 60000);
 });

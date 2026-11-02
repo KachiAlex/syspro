@@ -47,6 +47,113 @@ const effectiveStatus = (inv: Invoice) =>
     ? "overdue"
     : inv.status;
 
+type EInvoiceSubmission = { status: string; provider: string; irn: string; submittedAt: string; response?: { message?: string } };
+
+const PROVIDER_LABEL: Record<string, string> = {
+  "firs-sandbox": "Sandbox validation",
+  app: "Accredited APP (FIRS clearance)",
+};
+
+/** E-invoice status and submission. Sandbox results are structural validation
+ *  only — they are not transmitted to FIRS and must not be presented as
+ *  clearance. */
+function EInvoicePanel({ invoice, tenantSlug, onClose, onError }: {
+  invoice: Invoice;
+  tenantSlug: string;
+  onClose: () => void;
+  onError: (m: string) => void;
+}) {
+  const [sub, setSub] = useState<EInvoiceSubmission | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const url = `/api/finance/invoices/${invoice.id}/einvoice/submit?tenantSlug=${encodeURIComponent(tenantSlug)}`;
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(url)
+      .then((r) => r.json())
+      .then((d) => setSub(d.submission ?? null))
+      .catch(() => onError("Could not load e-invoice status"))
+      .finally(() => setLoading(false));
+  }, [url]);
+
+  const submit = async (provider: "firs-sandbox" | "app") => {
+    setBusy(true);
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(errText(data, "E-invoice submission failed"));
+      setSub(data.submission);
+    } catch (e: any) {
+      onError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const statusText = !sub
+    ? "Not submitted"
+    : sub.status === "accepted" && sub.provider === "firs-sandbox"
+      ? "Validated (sandbox)"
+      : sub.status.replace(/_/g, " ");
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="w-full max-w-lg rounded-2xl border border-theme-border bg-theme-surface p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-theme-text-primary">E-invoice — {invoice.invoiceNumber}</h3>
+          <button onClick={onClose} className="text-theme-text-secondary hover:text-theme-text-primary"><X className="h-4 w-4" /></button>
+        </div>
+
+        {loading ? (
+          <Loader2 className="mx-auto h-5 w-5 animate-spin text-theme-text-secondary" />
+        ) : (
+          <dl className="grid grid-cols-3 gap-y-2 text-sm">
+            <dt className="text-theme-text-secondary">Status</dt>
+            <dd className="col-span-2 font-medium text-theme-text-primary">{statusText}</dd>
+            <dt className="text-theme-text-secondary">Provider</dt>
+            <dd className="col-span-2 text-theme-text-primary">{sub ? PROVIDER_LABEL[sub.provider] ?? sub.provider : "—"}</dd>
+            <dt className="text-theme-text-secondary">IRN</dt>
+            <dd className="col-span-2 break-all font-mono text-xs text-theme-text-primary">{sub?.irn ?? "—"}</dd>
+            {sub?.response?.message && (
+              <>
+                <dt className="text-theme-text-secondary">Message</dt>
+                <dd className="col-span-2 text-theme-text-primary">{sub.response.message}</dd>
+              </>
+            )}
+          </dl>
+        )}
+
+        <p className="mt-4 rounded-lg bg-theme-muted p-3 text-xs text-theme-text-secondary">
+          Sandbox validation checks the invoice structure only. It is not sent to FIRS and is not a legal clearance.
+          Live e-invoicing requires the accredited APP provider to be configured for this tenant.
+        </p>
+
+        <div className="mt-5 flex flex-wrap justify-end gap-3">
+          <button
+            onClick={() => submit("firs-sandbox")}
+            disabled={busy || loading}
+            className="rounded-lg border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-primary hover:bg-theme-muted disabled:opacity-50"
+          >
+            Validate (sandbox)
+          </button>
+          <button
+            onClick={() => submit("app")}
+            disabled={busy || loading}
+            className="rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {busy ? "Submitting…" : "Submit via accredited APP"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function InvoicesPage() {
   const { tenantSlug } = useTenantContext();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -60,6 +167,7 @@ export default function InvoicesPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [einvFor, setEinvFor] = useState<Invoice | null>(null);
 
   const load = async () => {
     if (!tenantSlug) return;
@@ -134,6 +242,28 @@ export default function InvoicesPage() {
     }
   };
 
+  const voidInvoice = async (inv: Invoice) => {
+    if (!window.confirm(`Void ${inv.invoiceNumber}? This reverses its ledger entry.`)) return;
+    setBusyId(inv.id);
+    setError(null);
+    try {
+      const res = await fetch(`/api/finance/invoices/${inv.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantSlug, status: "void" }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.status === 202) flash(`Void of ${inv.invoiceNumber} sent for approval`);
+      else if (!res.ok) throw new Error(errText(body, "Failed to void invoice"));
+      else flash(`${inv.invoiceNumber} voided`);
+      await load();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const openPayment = (inv: Invoice) => {
     setPayFor(inv);
     setPayForm({ amount: String(inv.balanceDue), method: "bank_transfer", paymentDate: today(), reference: "" });
@@ -181,6 +311,11 @@ export default function InvoicesPage() {
   };
 
   const canIssue = (inv: Invoice) => inv.status === "draft" && !inv.pendingApprovalId;
+  // Voiding is refused by the ledger once any payment is applied, so only
+  // invoices with nothing received are offered the action.
+  const canVoid = (inv: Invoice) =>
+    inv.status !== "draft" && inv.status !== "void" && !inv.pendingApprovalId &&
+    Math.abs(Number(inv.balanceDue) - Number(inv.amount)) < 0.005;
   const canPay = (inv: Invoice) => ["sent", "partially_paid", "overdue"].includes(effectiveStatus(inv)) && inv.balanceDue > 0;
   const inputCls = "w-full rounded-lg border border-theme-border px-3 py-2 text-sm";
   const labelCls = "block text-xs font-medium text-theme-text-secondary mb-1";
@@ -311,6 +446,23 @@ export default function InvoicesPage() {
                           <Wallet className="h-3 w-3" /> Record payment
                         </button>
                       )}
+                      {canVoid(inv) && (
+                        <button
+                          onClick={() => voidInvoice(inv)}
+                          disabled={busyId === inv.id}
+                          className="text-xs font-medium text-rose-600 hover:underline disabled:opacity-50"
+                        >
+                          Void
+                        </button>
+                      )}
+                      {inv.status !== "draft" && inv.status !== "void" && (
+                        <button
+                          onClick={() => setEinvFor(inv)}
+                          className="text-xs font-medium text-theme-text-secondary hover:text-theme-text-primary"
+                        >
+                          E-invoice
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -360,6 +512,15 @@ export default function InvoicesPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {einvFor && (
+        <EInvoicePanel
+          invoice={einvFor}
+          tenantSlug={tenantSlug}
+          onClose={() => setEinvFor(null)}
+          onError={(m) => setError(m)}
+        />
       )}
 
       <CreateInvoiceModal isOpen={showCreate} onClose={() => setShowCreate(false)} onSubmit={createInvoice} />

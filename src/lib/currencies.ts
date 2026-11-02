@@ -203,3 +203,18 @@ export const CURRENCY_SYMBOL_OPTIONS: { code: string; name: string; symbol: stri
   }
   return out;
 })();
+
+const AMBIGUOUS_SYMBOL_CODES: Record<string, string> = { "₦": "NGN", "$": "USD", "€": "EUR", "£": "GBP" };
+
+/** Canonical ISO code for a stored currency value. Accepts an ISO code or a
+ *  legacy display symbol; anything unrecognised throws rather than guessing. */
+export function toCurrencyCode(value: string | null | undefined, fallback = "NGN"): string {
+  const v = (value ?? "").trim();
+  if (!v) return fallback;
+  if (/^[A-Za-z]{3}$/.test(v)) return v.toUpperCase();
+  const mapped = AMBIGUOUS_SYMBOL_CODES[v];
+  if (mapped) return mapped;
+  const unique = Object.entries(CURRENCY_SYMBOLS).filter(([, sym]) => sym === v);
+  if (unique.length === 1) return unique[0][0];
+  throw new Error(`Unrecognised currency "${v}" — use an ISO code such as NGN or USD`);
+}

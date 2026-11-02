@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       `select metadata->'payload'->>'invoiceId' as invoice_id, id as approval_id
        from approvals
        where tenant_slug = $1 and entity_type = 'gated_action' and status = 'pending'
-         and metadata->>'action' = 'invoice_issue'`,
+         and metadata->>'action' in ('invoice_issue', 'invoice_void')`,
       [parsed.data.tenantSlug]
     ).catch(() => ({ rows: [] as Array<{ invoice_id: string; approval_id: string }> }))).rows;
     const pendingBy = new Map(pending.map((r) => [r.invoice_id, r.approval_id]));

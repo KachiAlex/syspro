@@ -25,18 +25,23 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   // Draft → issued posts AR to the ledger: route through the sales authority
   // matrix (invoice_issue). Unconfigured tenants keep the immediate issue.
   const tenantSlug = _scope.user.tenantSlug ?? "";
-  if (parsed.data.status && parsed.data.status !== "draft" && parsed.data.status !== "void") {
+  const next = parsed.data.status;
+  if (next && next !== "draft") {
     const { db } = await import("@/lib/sql-client");
     const current = (await db.query(
       `select status, invoice_number, amount from finance_invoices where id = $1 and tenant_slug = $2 limit 1`,
       [params.id, tenantSlug]
     )).rows[0];
-    if (current?.status === "draft") {
+    const gatedAction =
+      next === "void" && current && current.status !== "void" && current.status !== "draft" ? "invoice_void"
+      : next !== "void" && current?.status === "draft" ? "invoice_issue"
+      : null;
+    if (gatedAction) {
       try {
         const { gateOrRun } = await import("@/lib/finance/gated-actions");
         const outcome = await gateOrRun(
           tenantSlug,
-          "invoice_issue",
+          gatedAction,
           { invoiceId: params.id, invoiceNumber: current.invoice_number, total: Number(current.amount), updates: parsed.data },
           { requestedBy: _scope.user.id ?? "unknown" }
         );
@@ -67,7 +72,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Finance invoice update failed", errorMessage, error);
-    const status = errorMessage.includes("cannot be edited") ? 409 : 500;
+    const status = /cannot be edited|payments applied/.test(errorMessage) ? 409 : 500;
     return NextResponse.json({ error: "Failed to update invoice", details: errorMessage }, { status });
   }
 }

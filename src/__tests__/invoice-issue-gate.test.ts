@@ -24,6 +24,13 @@ describe("invoice_issue gated action", () => {
     expect(def!.amount({})).toBe(0);
   });
 
+  it("registers invoice_void as always gated on the sales domain", () => {
+    const voidDef = getGatedAction("invoice_void");
+    expect(voidDef).toBeDefined();
+    expect(voidDef!.always).toBe(true);
+    expect(voidDef!.domain).toBe("sales");
+  });
+
   it("keys duplicate submissions by invoice", () => {
     expect(def!.dedupeKey!({ invoiceId: "inv-1" })).toBe("invoice:inv-1");
     expect(def!.dedupeKey!({})).toBeNull();
