@@ -61,7 +61,6 @@ const navigationItems = [
       { title: "Bank Recon", href: "/tenant-admin/bank-reconciliation" },
       { title: "Chart of Accounts", href: "/tenant-admin/finance/coa" },
       { title: "Payment Recon", href: "/tenant-admin/finance/payment-reconciliation" },
-      { title: "Approvals", href: "/tenant-admin/approvals" },
       { title: "Fixed Assets", href: "/tenant-admin/assets" },
       { title: "Budget vs Actual", href: "/tenant-admin/budget-vs-actual" },
       { title: "Imprest", href: "/tenant-admin/imprest" },

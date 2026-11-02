@@ -20,6 +20,21 @@ import {
 } from "@/lib/finance/approvals";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { requireModuleAccess } from "@/lib/api-auth";
+import type { AuthResult } from "@/lib/api-auth";
+
+/** Approvals span finance, HR, inventory, sales and master data — the gate
+ *  accepts admin (tenant administration), finance, or people (HR routing)
+ *  module access, whichever the caller holds. */
+async function requireApprovalsAccess(
+  request: Parameters<typeof requireModuleAccess>[0],
+  level: "read" | "write"
+): Promise<AuthResult> {
+  for (const mod of ["admin", "finance", "people"] as const) {
+    const gate = await requireModuleAccess(request, mod, level);
+    if (gate.ok) return gate;
+  }
+  return requireModuleAccess(request, "admin", level); // final call = the 403 body
+}
 
 const ENTITY_TYPES = ["purchase_order", "bill", "payment", "journal_entry", "sales_return", "purchase_return", "expense", "employee_expense", "payroll_run", "employee_salary_change", "credit_limit_change", "stock_adjustment", "bank_guarantee", "invoice_discounting", "pricing_change", "gated_action"] as const;
 
@@ -100,7 +115,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const ctx = validateTenantContext(request, "read");
-    const _gate = await requireModuleAccess(request, "finance", "read");
+    const _gate = await requireApprovalsAccess(request, "read");
     if (!_gate.ok) return _gate.response;
     const url = new URL(request.url);
     const tenantSlug = ctx.tenantSlug;
@@ -355,7 +370,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const ctx = validateTenantContext(request, "write");
-    const _gate = await requireModuleAccess(request, "finance", "write");
+    const _gate = await requireApprovalsAccess(request, "write");
     if (!_gate.ok) return _gate.response;
     const tenantSlug = ctx.tenantSlug;
     const body = await request.json();
