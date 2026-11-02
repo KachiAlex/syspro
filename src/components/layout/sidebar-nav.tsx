@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
 
-const navigationItems = [
+export const navigationItems = [
   {
     title: "Dashboard",
     href: "/tenant-admin",
@@ -228,7 +228,7 @@ interface SidebarNavProps {
   roleId?: string;
 }
 
-function canView(permission: string | undefined, perms: ReturnType<typeof useTenantPermissions>) {
+export function canView(permission: string | undefined, perms: ReturnType<typeof useTenantPermissions>) {
   // Dashboard (no permission required) is always visible
   if (!permission) return true;
 

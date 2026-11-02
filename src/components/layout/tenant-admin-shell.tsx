@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { SidebarNav } from "./sidebar-nav";
+import { SidebarNav, navigationItems, canView } from "./sidebar-nav";
 import { useTheme } from "@/components/theme/theme-provider";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
 import { AIChatPanel } from "@/components/ai/ai-chat-panel";
@@ -66,6 +66,47 @@ const QUICK_LINKS = [
   { label: "Settings", href: "/tenant-admin/settings" },
 ];
 
+/** Synonyms → href: terms users naturally type that don't appear verbatim
+ *  in any nav title (workflow → approvals, routing → approvals, …). */
+const SEARCH_ALIASES: Record<string, { label: string; href: string }> = {
+  approval: { label: "Approvals & Routing", href: "/tenant-admin/approvals" },
+  approvals: { label: "Approvals & Routing", href: "/tenant-admin/approvals" },
+  approve: { label: "Approvals & Routing", href: "/tenant-admin/approvals" },
+  workflow: { label: "Approvals & Routing", href: "/tenant-admin/approvals" },
+  routing: { label: "Approvals & Routing", href: "/tenant-admin/approvals" },
+  "sign off": { label: "Approvals & Routing", href: "/tenant-admin/approvals" },
+  signoff: { label: "Approvals & Routing", href: "/tenant-admin/approvals" },
+  authorize: { label: "Approvals & Routing", href: "/tenant-admin/approvals" },
+  delegation: { label: "Approvals & Routing", href: "/tenant-admin/approvals" },
+  officer: { label: "Approvals & Routing", href: "/tenant-admin/approvals" },
+  onboarding: { label: "Tenant Setup / Onboarding", href: "/tenant-admin/setup" },
+  setup: { label: "Tenant Setup / Onboarding", href: "/tenant-admin/setup" },
+  audit: { label: "Audit Trail", href: "/tenant-admin/audit" },
+  export: { label: "Tenant Setup / Onboarding", href: "/tenant-admin/setup" },
+  roles: { label: "Users & Roles", href: "/tenant-admin/users" },
+  permission: { label: "Users & Roles", href: "/tenant-admin/users" },
+  permissions: { label: "Users & Roles", href: "/tenant-admin/users" },
+  employee: { label: "HR Staff", href: "/tenant-admin/hr/staff" },
+  staff: { label: "HR Staff", href: "/tenant-admin/hr/staff" },
+  leave: { label: "Leave", href: "/tenant-admin/hr/leave" },
+  holiday: { label: "Leave", href: "/tenant-admin/hr/leave" },
+  payslip: { label: "Payroll", href: "/tenant-admin/hr/payroll" },
+  salary: { label: "Payroll", href: "/tenant-admin/hr/payroll" },
+  invoice: { label: "Sales", href: "/tenant-admin/sales" },
+  stock: { label: "Inventory", href: "/tenant-admin/inventory" },
+  warehouse: { label: "Warehouses", href: "/tenant-admin/warehouses" },
+  supplier: { label: "Suppliers", href: "/tenant-admin/suppliers" },
+  vendor: { label: "Vendors", href: "/tenant-admin/vendors" },
+  purchase: { label: "Purchase Orders", href: "/tenant-admin/sales/purchase-orders" },
+  receipt: { label: "Goods Receipts", href: "/tenant-admin/goods-receipts" },
+  report: { label: "Reports & Analytics", href: "/tenant-admin/analytics" },
+  budget: { label: "Budget vs Actual", href: "/tenant-admin/budget-vs-actual" },
+  tax: { label: "Tax", href: "/tenant-admin/tax" },
+  asset: { label: "Fixed Assets", href: "/tenant-admin/assets" },
+  reconcile: { label: "Bank Recon", href: "/tenant-admin/bank-reconciliation" },
+  notification: { label: "Notifications", href: "/tenant-admin/notifications" },
+};
+
 function getDashboardKey(pathname: string): string | null {
   if (pathname === '/tenant-admin' || pathname.startsWith('/tenant-admin/admin') || pathname.startsWith('/tenant-admin/users') || pathname.startsWith('/tenant-admin/settings') || pathname.startsWith('/tenant-admin/audit') || pathname.startsWith('/tenant-admin/health')) return 'admin';
   if (pathname.startsWith('/tenant-admin/automation')) return 'automation';
@@ -90,12 +131,32 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
   const [aiChatOpen, setAiChatOpen] = useState(false);
 
   const [searchHits, setSearchHits] = useState<{ entity: string; id: string; title: string; subtitle?: string; href: string }[]>([]);
+  const perms = useTenantPermissions();
 
+  // Navigation search: every sidebar page the user can see, plus synonym
+  // aliases (workflow → approvals, …) — deduped, capped at 12.
   const filteredLinks = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
-    return QUICK_LINKS.filter((l) => l.label.toLowerCase().includes(q));
-  }, [searchQuery]);
+    const hits: { label: string; href: string }[] = [];
+    const seen = new Set<string>();
+    const push = (label: string, href: string, section?: string) => {
+      if (seen.has(href)) return;
+      seen.add(href);
+      hits.push({ label: section ? `${label} — ${section}` : label, href });
+    };
+    for (const group of navigationItems as any[]) {
+      if (!canView(group.permission, perms)) continue;
+      if (group.title.toLowerCase().includes(q)) push(group.title, group.href);
+      for (const child of group.children ?? []) {
+        if (child.title.toLowerCase().includes(q)) push(child.title, child.href, group.title);
+      }
+    }
+    for (const [term, dest] of Object.entries(SEARCH_ALIASES)) {
+      if (term.includes(q) || q.includes(term)) push(dest.label, dest.href);
+    }
+    return hits.slice(0, 12);
+  }, [searchQuery, perms]);
 
   // Global entity search — debounced /api/search call.
   useEffect(() => {
@@ -161,7 +222,6 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
   };
 
   const dashboardKey = getDashboardKey(safePath || '');
-  const perms = useTenantPermissions();
 
   // Role-based route access:
   // - Admin role: full access to all routes
