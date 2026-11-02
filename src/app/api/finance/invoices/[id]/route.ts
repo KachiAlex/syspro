@@ -22,6 +22,42 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  // Draft → issued posts AR to the ledger: route through the sales authority
+  // matrix (invoice_issue). Unconfigured tenants keep the immediate issue.
+  const tenantSlug = _scope.user.tenantSlug ?? "";
+  if (parsed.data.status && parsed.data.status !== "draft" && parsed.data.status !== "void") {
+    const { db } = await import("@/lib/sql-client");
+    const current = (await db.query(
+      `select status, invoice_number, amount from finance_invoices where id = $1 and tenant_slug = $2 limit 1`,
+      [params.id, tenantSlug]
+    )).rows[0];
+    if (current?.status === "draft") {
+      try {
+        const { gateOrRun } = await import("@/lib/finance/gated-actions");
+        const outcome = await gateOrRun(
+          tenantSlug,
+          "invoice_issue",
+          { invoiceId: params.id, invoiceNumber: current.invoice_number, total: Number(current.amount), updates: parsed.data },
+          { requestedBy: _scope.user.id ?? "unknown" }
+        );
+        if (outcome.status === "pending") {
+          return NextResponse.json(
+            { message: "Issue submitted for approval", pendingApproval: true, approvalId: outcome.approvalId },
+            { status: 202 }
+          );
+        }
+        if (outcome.status === "denied") {
+          return NextResponse.json({ error: outcome.error }, { status: 403 });
+        }
+        return NextResponse.json({ invoice: outcome.result });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error("Finance invoice issue failed", errorMessage, error);
+        return NextResponse.json({ error: "Failed to issue invoice", details: errorMessage }, { status: 409 });
+      }
+    }
+  }
+
   try {
     const invoice = await updateFinanceInvoice(params.id, parsed.data, _scope.user.tenantSlug);
     if (!invoice) {

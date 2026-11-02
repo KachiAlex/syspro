@@ -57,7 +57,32 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const invoice = await insertFinanceInvoice(parsed.data);
+    // Creating an invoice already in an issued state posts AR, so it takes
+    // the same invoice_issue gate as a PATCH draft→issued: insert as draft,
+    // then issue through the gate.
+    const { status, tenantSlug } = parsed.data;
+    const issueNow = status !== "draft" && status !== "void";
+    const created = await insertFinanceInvoice(issueNow ? { ...parsed.data, status: "draft" } : parsed.data);
+    let invoice = created;
+    if (issueNow) {
+      const { gateOrRun } = await import("@/lib/finance/gated-actions");
+      const outcome = await gateOrRun(
+        tenantSlug,
+        "invoice_issue",
+        { invoiceId: created.id, invoiceNumber: created.invoiceNumber, total: created.amount, updates: { status } },
+        { requestedBy: getCurrentUser(request)?.id ?? "unknown" }
+      );
+      if (outcome.status === "pending") {
+        return NextResponse.json(
+          { invoice: created, pendingApproval: true, approvalId: outcome.approvalId },
+          { status: 202 }
+        );
+      }
+      if (outcome.status === "denied") {
+        return NextResponse.json({ error: outcome.error }, { status: 403 });
+      }
+      invoice = outcome.result;
+    }
 
     // Publish finance event for reporting
     writeFinanceEvent({

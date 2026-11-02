@@ -460,6 +460,21 @@ registerGatedAction<Record<string, any>>("invoice_delete", {
     (await import("./db")).deleteFinanceInvoice(p.invoiceId, tenantSlug),
 });
 
+/** Invoice issue (draft → sent/issued) — posts AR to the ledger. Opt-in: with
+ *  no sales authority band the issue runs immediately (current behaviour);
+ *  a band with approvers routes it through the chain by invoice value. The
+ *  payload carries the full PATCH so a gated issue applies the same changes
+ *  the user submitted. */
+registerGatedAction<Record<string, any>>("invoice_issue", {
+  domain: "sales",
+  mode: "block",
+  amount: (p) => Number(p.total ?? 0),
+  describe: (p) =>
+    `Issue invoice ${p.invoiceNumber ?? p.invoiceId}${p.total ? ` — ${Number(p.total).toLocaleString()}` : ""}`,
+  run: async (tenantSlug, p) =>
+    (await import("./db")).updateFinanceInvoice(p.invoiceId, p.updates, tenantSlug),
+});
+
 /** Fiscal period close — posts the closing JE and locks the period. */
 registerGatedAction<Record<string, any>>("period_close", {
   domain: "system",

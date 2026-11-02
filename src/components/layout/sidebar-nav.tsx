@@ -56,6 +56,7 @@ export const navigationItems = [
     children: [
       { title: "Overview", href: "/tenant-admin/finance" },
       { title: "Expenses", href: "/tenant-admin/expenses" },
+      { title: "Invoices", href: "/tenant-admin/invoices" },
       { title: "Bills", href: "/tenant-admin/bills" },
       { title: "Payments", href: "/tenant-admin/payments" },
       { title: "Bank Recon", href: "/tenant-admin/bank-reconciliation" },

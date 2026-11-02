@@ -20,6 +20,7 @@ interface SalesOrder {
   orderDate: string;
   dueDate: string;
   items: number;
+  invoiceId?: string | null;
 }
 
 export default function SalesOrdersPage() {
@@ -231,6 +232,14 @@ export default function SalesOrdersPage() {
                   <td className="px-6 py-4 text-sm text-theme-text-secondary">{order.dueDate}</td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
+                      {order.invoiceId && (
+                        <Link
+                          href={`/tenant-admin/invoices?q=${encodeURIComponent(`INV-${order.orderNumber}`)}`}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-accent hover:underline"
+                        >
+                          Invoice
+                        </Link>
+                      )}
                       <button 
                         onClick={() => handleViewOrder(order)}
                         className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-accent hover:text-theme-accent-hover"

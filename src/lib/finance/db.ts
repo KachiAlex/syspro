@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 
-import { db, sql as SQL } from "../sql-client";
+import { db, sql as SQL, withTransaction } from "../sql-client";
 import type { SqlClient } from "../sql-client";
 import { uploadReceipt } from "./uploads";
 import type {
@@ -744,7 +744,13 @@ async function postInvoiceJournalEntry(
   return entry.id;
 }
 
-export async function insertFinanceInvoice(payload: FinanceInvoiceCreateInput): Promise<FinanceInvoice> {
+/** Issue + GL post + schedule commit together: a GL failure rolls the whole
+ *  invoice back rather than leaving an issued invoice with no journal entry. */
+export function insertFinanceInvoice(payload: FinanceInvoiceCreateInput): Promise<FinanceInvoice> {
+  return withTransaction(() => insertFinanceInvoiceTx(payload));
+}
+
+async function insertFinanceInvoiceTx(payload: FinanceInvoiceCreateInput): Promise<FinanceInvoice> {
   const sql = SQL;
   await ensureFinanceTables(sql);
   const invoiceId = randomUUID();
@@ -833,29 +839,33 @@ export async function insertFinanceInvoice(payload: FinanceInvoiceCreateInput): 
         payload.tenantSlug, invoiceRow.customer_code, Number(invoiceRow.amount)
       );
     }
-    try {
-      const journalEntryId = await postInvoiceJournalEntry(invoiceRow, lineRows);
-      if (journalEntryId) {
-        await sql`update finance_invoices set journal_entry_id = ${journalEntryId} where id = ${invoiceId}`;
-      }
-      const { buildInvoiceSchedule } = await import("./credit-control");
-      await buildInvoiceSchedule({
-        tenantSlug: payload.tenantSlug,
-        invoiceId,
-        issueDate: invoiceRow.issued_date,
-        amount: Number(invoiceRow.amount),
-        paymentTermId: (invoiceRow as any).payment_term_id,
-        dueDate: invoiceRow.due_date,
-      });
-    } catch (err) {
-      console.error("Failed to post invoice journal entry:", err);
+    const journalEntryId = await postInvoiceJournalEntry(invoiceRow, lineRows);
+    if (journalEntryId) {
+      await sql`update finance_invoices set journal_entry_id = ${journalEntryId} where id = ${invoiceId}`;
     }
+    const { buildInvoiceSchedule } = await import("./credit-control");
+    await buildInvoiceSchedule({
+      tenantSlug: payload.tenantSlug,
+      invoiceId,
+      issueDate: invoiceRow.issued_date,
+      amount: Number(invoiceRow.amount),
+      paymentTermId: (invoiceRow as any).payment_term_id,
+      dueDate: invoiceRow.due_date,
+    });
   }
 
   return normalizeFinanceInvoiceRow(invoiceRow, lineRows);
 }
 
-export async function updateFinanceInvoice(
+export function updateFinanceInvoice(
+  id: string,
+  updates: FinanceInvoiceUpdateInput,
+  tenantSlug?: string
+): Promise<FinanceInvoice | null> {
+  return withTransaction(() => updateFinanceInvoiceTx(id, updates, tenantSlug));
+}
+
+async function updateFinanceInvoiceTx(
   id: string,
   updates: FinanceInvoiceUpdateInput,
   tenantSlug?: string
@@ -969,17 +979,13 @@ export async function updateFinanceInvoice(
     (originalInvoice as any).journal_entry_id &&
     !(originalInvoice as any).reversed_journal_entry_id
   ) {
-    try {
-      const { reverseGLEntry } = await import("./gl");
-      const reversal = await reverseGLEntry(
-        (originalInvoice as any).journal_entry_id,
-        `Void invoice ${originalInvoice.invoice_number}`
-      );
-      await sql`update finance_invoices set reversed_journal_entry_id = ${reversal.id}, balance_due = 0 where id = ${id}`;
-      invoiceRow.balance_due = 0;
-    } catch (err) {
-      console.error("Failed to reverse invoice journal entry:", err);
-    }
+    const { reverseGLEntry } = await import("./gl");
+    const reversal = await reverseGLEntry(
+      (originalInvoice as any).journal_entry_id,
+      `Void invoice ${originalInvoice.invoice_number}`
+    );
+    await sql`update finance_invoices set reversed_journal_entry_id = ${reversal.id}, balance_due = 0 where id = ${id}`;
+    invoiceRow.balance_due = 0;
   }
 
   // Draft -> issued transition posts the invoice to the GL
@@ -996,23 +1002,19 @@ export async function updateFinanceInvoice(
         invoiceRow.tenant_slug, invoiceRow.customer_code, Number(invoiceRow.amount)
       );
     }
-    try {
-      const journalEntryId = await postInvoiceJournalEntry(invoiceRow, lineRows);
-      if (journalEntryId) {
-        await sql`update finance_invoices set journal_entry_id = ${journalEntryId} where id = ${id}`;
-      }
-      const { buildInvoiceSchedule } = await import("./credit-control");
-      await buildInvoiceSchedule({
-        tenantSlug: invoiceRow.tenant_slug,
-        invoiceId: id,
-        issueDate: invoiceRow.issued_date,
-        amount: Number(invoiceRow.amount),
-        paymentTermId: (invoiceRow as any).payment_term_id,
-        dueDate: invoiceRow.due_date,
-      });
-    } catch (err) {
-      console.error("Failed to post invoice journal entry:", err);
+    const journalEntryId = await postInvoiceJournalEntry(invoiceRow, lineRows);
+    if (journalEntryId) {
+      await sql`update finance_invoices set journal_entry_id = ${journalEntryId} where id = ${id}`;
     }
+    const { buildInvoiceSchedule } = await import("./credit-control");
+    await buildInvoiceSchedule({
+      tenantSlug: invoiceRow.tenant_slug,
+      invoiceId: id,
+      issueDate: invoiceRow.issued_date,
+      amount: Number(invoiceRow.amount),
+      paymentTermId: (invoiceRow as any).payment_term_id,
+      dueDate: invoiceRow.due_date,
+    });
   }
 
   return normalizeFinanceInvoiceRow(invoiceRow, lineRows);
