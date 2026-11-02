@@ -216,6 +216,7 @@ const navigationItems = [
       { title: "Platform", href: "/tenant-admin/settings/platform" },
       { title: "Platform Edge", href: "/tenant-admin/platform/edge" },
       { title: "Users & Roles", href: "/tenant-admin/users" },
+      { title: "Approvals & Routing", href: "/tenant-admin/approvals" },
       { title: "Audit Trail", href: "/tenant-admin/audit" },
       { title: "System Health", href: "/tenant-admin/health" },
     ]
