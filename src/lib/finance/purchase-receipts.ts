@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { sql as SQL, withTransaction } from "../sql-client";
+import { sql as SQL, tryBlock, withTransaction } from "../sql-client";
 
 /**
  * Purchase Receipts (GRN) — the goods-in document between the PO and the
@@ -168,6 +168,7 @@ async function receivePurchaseReceiptTx(tenantSlug: string, receiptId: string, d
     // posts in the product's stock_uom; the receipt line may arrive in any
     // declared UoM (buy drums, stock liters) — convertUom walks the chain.
     try {
+      await tryBlock(async () => {
       const sku = item.sku ?? item.product_id ?? item.description ?? "unknown";
       let prod: any = null;
       try {
@@ -206,6 +207,7 @@ async function receivePurchaseReceiptTx(tenantSlug: string, receiptId: string, d
           where tenant_slug = ${tenantSlug} and sku = ${sku}
         `;
       }
+      });
     } catch (err) {
       console.error(`Receipt stock-in failed for line ${item.id}:`, err);
     }
