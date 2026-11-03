@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { db, sql as SQL } from "@/lib/sql-client";
+import { db, sql as SQL, tryBlock } from "@/lib/sql-client";
 import { ensureOnce } from "@/lib/ensure-once";
 import { postGLEntry, GL_ACCOUNTS } from "./gl";
 import { upsertExchangeRate, ensureCurrencyTables } from "./currency";
@@ -447,6 +447,7 @@ export async function generateSubscriptionInvoices(input: {
     const periodEnd = addInterval(periodStart, sub.interval);
     const amount = Math.round(Number(sub.unit_price) * Number(sub.qty) * 100) / 100;
     try {
+      await tryBlock(async () => {
       const { insertFinanceInvoice } = await import("./db");
       const invoice = await insertFinanceInvoice({
         tenantSlug: input.tenantSlug,
@@ -478,6 +479,7 @@ export async function generateSubscriptionInvoices(input: {
             status = ${next ? "active" : "ended"}
         where id = ${sub.id} and tenant_slug = ${input.tenantSlug}`;
       results.push({ subscriptionId: sub.id, invoiceId: invoice.id, period: periodStart, amount });
+      });
     } catch (e: any) {
       errors.push({ subscriptionId: sub.id, error: e?.message ?? String(e) });
     }
