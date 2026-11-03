@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { db, sql as SQL, SqlClient } from "../sql-client";
+import { db, sql as SQL, SqlClient, tryBlock } from "../sql-client";
 import { ensureOnce } from "@/lib/ensure-once";
 
 export type POItemRecord = {
@@ -278,6 +278,7 @@ export async function createPurchaseOrder(payload: {
   })) as POItemRecord[];
 
   try {
+    await tryBlock(async () => {
     const { emitEvent } = await import("@/lib/notify");
     let vendorName: string | null = null;
     let vendorEmail: string | null = null;
@@ -298,6 +299,7 @@ export async function createPurchaseOrder(payload: {
         partyEmail: vendorEmail,
         status: gated ? "pending_approval" : "open",
       },
+    });
     });
   } catch (err) {
     console.error("Failed to emit po.created:", err);
