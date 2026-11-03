@@ -1,4 +1,4 @@
-import { db } from "@/lib/sql-client";
+import { db, tryStatement } from "@/lib/sql-client";
 import { ensureGLTables } from "./gl";
 
 // ---------------------------------------------------------------------------
@@ -224,10 +224,10 @@ export async function salesPaymentSummary(f: AdvReportFilter) {
   ).catch(() => ({ rows: [] as any[] }));
   const rparams: any[] = [f.tenantSlug];
   const rwhere = `tenant_slug = $1 and direction = 'sales' and status <> 'cancelled'${rangeClause(f, "created_at::date", rparams)}`;
-  const { rows: ret } = await db.query(
+  const { rows: ret } = await tryStatement(() => db.query(
     `select count(*) returns, sum(total_amount) returned_amount from finance_returns where ${rwhere}`,
     rparams,
-  ).catch(() => ({ rows: [{ returns: 0, returned_amount: 0 }] }));
+  )).catch(() => ({ rows: [{ returns: 0, returned_amount: 0 }] }));
   return { byMethod: rows, returns: ret[0] };
 }
 

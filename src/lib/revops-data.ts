@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { db } from "@/lib/sql-client";
+import { db, tryStatement } from "@/lib/sql-client";
 import { ensureOnce } from "@/lib/ensure-once";
 import { emitAutomationEvent } from "@/lib/automation/emit";
 
@@ -1178,10 +1178,10 @@ async function refreshSalesPerformanceSnapshot(tenantSlug: string): Promise<void
   const officerIds = Array.from(new Set(won.map((d: any) => d.assigned_officer_id).filter(Boolean)));
   const nameMap = new Map<string, string>();
   if (officerIds.length > 0) {
-    const names = await db.query(
+    const names = await tryStatement(() => db.query(
       `select id, full_name from admin_employees where tenant_slug = $1 and id = any($2)`,
       [tenantSlug, officerIds]
-    ).catch(() => ({ rows: [] as any[] }));
+    )).catch(() => ({ rows: [] as any[] }));
     for (const n of names.rows) nameMap.set(n.id, n.full_name);
   }
   const repMap = new Map<string, { repId: string; repName: string; meetings: number; proposals: number; wins: number; attainment: number }>();

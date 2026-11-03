@@ -19,7 +19,7 @@
  */
 
 import { randomUUID } from "crypto";
-import { db, sql as SQL, SqlClient, withTransaction as sharedWithTransaction } from "../sql-client";
+import { db, sql as SQL, SqlClient, tryStatement, withTransaction as sharedWithTransaction } from "../sql-client";
 import { ensureOnce } from "@/lib/ensure-once";
 
 export type GLAccountType = "asset" | "liability" | "equity" | "revenue" | "expense";
@@ -284,9 +284,9 @@ async function ensureGLTablesRun() {
       // Dimension columns are uuid on some schema generations; callers pass
       // arbitrary text ids (branches, cost centers), so normalize to text.
       for (const col of ["branch_id", "department_id", "project_id", "cost_center_id"]) {
-        await db.query(
+        await tryStatement(() => db.query(
           `alter table journal_entry_lines alter column ${col} type text using ${col}::text`
-        ).catch(() => undefined);
+        )).catch(() => undefined);
       }
     } catch {
       /* columns missing or already text */
@@ -638,10 +638,10 @@ export async function postGLEntry(input: PostGLEntryInput): Promise<GLEntryResul
   // Accounts-frozen cutoff (finance_settings): postings dated on/before the
   // frozen boundary are rejected even inside open fiscal periods.
   {
-    const { rows: fs } = await db.query(
+    const { rows: fs } = await tryStatement(() => db.query(
       `select accounts_frozen_until from finance_settings where tenant_slug = $1`,
       [input.tenantSlug],
-    ).catch(() => ({ rows: [] }));
+    )).catch(() => ({ rows: [] }));
     const frozen = (fs as any[])[0]?.accounts_frozen_until;
     if (frozen && postingDate <= new Date(frozen).toISOString().slice(0, 10)) {
       throw new Error(

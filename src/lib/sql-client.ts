@@ -9,6 +9,13 @@ function currentClient(): any {
   return txStore.getStore() ?? getSql();
 }
 
+/** Marks a statement whose failure is caught and execution continues. Every
+ *  statement inside a transaction currently runs under a savepoint, so this is
+ *  a pass-through; it becomes the savepoint switch once all such sites use it. */
+export async function tryStatement<T>(fn: () => PromiseLike<T> | T): Promise<T> {
+  return await fn();
+}
+
 // PostgreSQL aborts a whole transaction when one statement fails, even if the
 // caller catches that error. Inside a transaction each statement therefore runs
 // under its own savepoint: a caught failure rolls back only that statement.

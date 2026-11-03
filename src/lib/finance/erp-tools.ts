@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { db, sql as SQL } from "@/lib/sql-client";
+import { db, sql as SQL, tryStatement } from "@/lib/sql-client";
 import { ensureOnce } from "@/lib/ensure-once";
 import { postGLEntry, GL_ACCOUNTS } from "./gl";
 
@@ -419,10 +419,10 @@ async function resolvePartyEmail(tenantSlug: string, customerCode: string): Prom
     [tenantSlug, customerCode],
   );
   if ((rows as any[])[0]?.customer_email) return (rows as any[])[0].customer_email;
-  const { rows: crm } = await db.query(
+  const { rows: crm } = await tryStatement(() => db.query(
     `select email from customers where tenant_slug = $1 and code = $2 limit 1`,
     [tenantSlug, customerCode],
-  ).catch(() => ({ rows: [] }));
+  )).catch(() => ({ rows: [] }));
   return (crm as any[])[0]?.email ?? null;
 }
 
