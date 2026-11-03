@@ -9,6 +9,32 @@ function currentClient(): any {
   return txStore.getStore() ?? getSql();
 }
 
+// PostgreSQL aborts a whole transaction when one statement fails, even if the
+// caller catches that error. Inside a transaction each statement therefore runs
+// under its own savepoint: a caught failure rolls back only that statement.
+// Statements on one connection are serialized so savepoints can't interleave.
+const statementQueues = new WeakMap<object, Promise<unknown>>();
+let savepointSeq = 0;
+function runStatement(client: any, text: string, params: any[]): Promise<any> {
+  if (txStore.getStore() !== client) return client.query(text, params);
+  const prev = statementQueues.get(client) ?? Promise.resolve();
+  const run = prev.catch(() => undefined).then(async () => {
+    const sp = `stmt_sp_${++savepointSeq}`;
+    await client.query(`SAVEPOINT ${sp}`);
+    try {
+      const res = await client.query(text, params);
+      await client.query(`RELEASE SAVEPOINT ${sp}`);
+      return res;
+    } catch (err) {
+      await client.query(`ROLLBACK TO SAVEPOINT ${sp}`);
+      await client.query(`RELEASE SAVEPOINT ${sp}`);
+      throw err;
+    }
+  });
+  statementQueues.set(client, run);
+  return run;
+}
+
 /**
  * Run fn inside a Postgres transaction on a held pool client. All db/sql calls
  * inside fn join the transaction (via AsyncLocalStorage); on throw → ROLLBACK.
@@ -91,7 +117,7 @@ export const db: DbClient = {
   async query<T = any>(queryText: string, params?: any[]) {
     const client = currentClient();
     const startedAt = SLOW_MS ? Date.now() : 0;
-    const res = await (client as any).query(queryText, params || []);
+    const res = await runStatement(client, queryText, params || []);
     if (SLOW_MS) warnIfSlow(startedAt, queryText);
     const rows = (res.rows ?? []) as T[];
     const rowCount = res.rowCount ?? rows.length;
@@ -166,7 +192,7 @@ class SQLFragment {
     const client = currentClient();
     const startedAt = SLOW_MS ? Date.now() : 0;
     const execPromise = (client as any).query
-      ? (client as any).query(text, values).then((res: any) => {
+      ? runStatement(client, text, values).then((res: any) => {
           warnIfSlow(startedAt, text);
           return res.rows;
         })
