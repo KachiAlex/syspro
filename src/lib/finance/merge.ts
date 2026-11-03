@@ -54,17 +54,22 @@ async function rewriteRefs(
 ): Promise<Record<string, number>> {
   const counts: Record<string, number> = {};
   for (const ref of refs) {
-    try {
-      const res = await db.query(
-        `update ${ref.table} set ${ref.column} = $1
-         where ${ref.column} = $2 and tenant_slug = $3`,
-        [targetId, sourceId, tenantSlug]
-      );
-      const n = res.rowCount ?? 0;
-      if (n) counts[`${ref.table}.${ref.column}`] = n;
-    } catch {
-      // Table/column may not exist in this deployment — skip, don't fail.
-    }
+    // Table/column may not exist in this deployment — skip those. A real
+    // update error must surface: swallowing it inside the transaction would
+    // abort the merge silently.
+    const present = await db.query(
+      `select 1 from information_schema.columns
+       where table_schema = current_schema() and table_name = $1 and column_name = $2`,
+      [ref.table, ref.column]
+    );
+    if (!present.rows.length) continue;
+    const res = await db.query(
+      `update ${ref.table} set ${ref.column} = $1
+       where ${ref.column} = $2 and tenant_slug = $3`,
+      [targetId, sourceId, tenantSlug]
+    );
+    const n = res.rowCount ?? 0;
+    if (n) counts[`${ref.table}.${ref.column}`] = n;
   }
   return counts;
 }

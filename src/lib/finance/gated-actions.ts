@@ -641,7 +641,7 @@ registerGatedAction<{ employeeId: string; employeeName?: string; bankChanges: Re
     amount: () => 0,
     describe: (p) => `Employee bank details — ${p.employeeName ?? p.employeeId}`,
     staged: async (tenantSlug, p) => {
-      await db.query(`alter table admin_employees add column if not exists pending_bank_details jsonb`).catch(() => {});
+      await db.query(`alter table admin_employees add column if not exists pending_bank_details jsonb`);
       await db.query(
         `update admin_employees set pending_bank_details = $1::jsonb where id = $2 and tenant_slug = $3`,
         [JSON.stringify(p.bankChanges), p.employeeId, tenantSlug]
@@ -656,7 +656,7 @@ registerGatedAction<{ employeeId: string; employeeName?: string; bankChanges: Re
         bankAccountName: p.bankChanges.bankAccountName !== undefined ? p.bankChanges.bankAccountName : current?.bankAccountName,
       };
       const applied = await updateEmployee(p.employeeId, merged, tenantSlug, ctx.decidedBy ?? ctx.requestedBy);
-      await db.query(`alter table admin_employees add column if not exists bank_details_changed_at timestamptz`).catch(() => {});
+      await db.query(`alter table admin_employees add column if not exists bank_details_changed_at timestamptz`);
       await db.query(
         `update admin_employees set pending_bank_details = null, bank_details_changed_at = now()
          where id = $1 and tenant_slug = $2`,
