@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "crypto";
-import { db, sql as SQL, SqlClient } from "../sql-client";
+import { db, sql as SQL, SqlClient, tryStatement } from "../sql-client";
 
 export interface VendorRecord {
   id: string;
@@ -380,7 +380,7 @@ async function ensureVendorTables(sql: SqlClient) {
     ];
     for (const alterSql of compatAlters) {
       try {
-        await db.query(alterSql);
+        await tryStatement(() => db.query(alterSql));
       } catch (e: any) {
         console.warn('ensureVendorTables: ignoring alter table error:', e.message);
       }
@@ -397,7 +397,7 @@ async function ensureVendorTables(sql: SqlClient) {
     ];
     for (const bf of backfills) {
       try {
-        await db.query(bf);
+        await tryStatement(() => db.query(bf));
       } catch (e: any) {
         // Legacy column may not exist on this schema — that's fine
         console.warn('ensureVendorTables: ignoring backfill error:', e.message);

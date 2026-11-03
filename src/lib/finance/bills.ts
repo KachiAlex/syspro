@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "crypto";
-import { db, sql as SQL, tryBlock, withTransaction } from "../sql-client";
+import { db, sql as SQL, tryBlock, tryStatement, withTransaction } from "../sql-client";
 import { createBillJournalEntry } from "./accounting";
 import { ensurePurchaseOrderTables } from "./purchase-orders";
 import { ensureOnce } from "@/lib/ensure-once";
@@ -162,7 +162,7 @@ async function ensureBillTablesRun(sql = SQL) {
 
     for (const idxSql of indexes) {
       try {
-        await db.query(idxSql);
+        await tryStatement(() => db.query(idxSql));
       } catch (e: any) {
         console.warn('ensureBillTables: ignoring index error:', e.message);
       }
