@@ -16,6 +16,25 @@ export async function tryStatement<T>(fn: () => PromiseLike<T> | T): Promise<T> 
   return await fn();
 }
 
+/** Block-level variant for a try body that runs several statements and whose
+ *  catch continues: a failure rolls back the whole body, not the transaction.
+ *  Outside a transaction it is a plain call. */
+export async function tryBlock<T>(fn: () => PromiseLike<T> | T): Promise<T> {
+  const client = txStore.getStore();
+  if (!client) return await fn();
+  const sp = `block_sp_${++savepointSeq}`;
+  await client.query(`SAVEPOINT ${sp}`);
+  try {
+    const result = await fn();
+    await client.query(`RELEASE SAVEPOINT ${sp}`);
+    return result;
+  } catch (err) {
+    await client.query(`ROLLBACK TO SAVEPOINT ${sp}`);
+    await client.query(`RELEASE SAVEPOINT ${sp}`);
+    throw err;
+  }
+}
+
 // PostgreSQL aborts a whole transaction when one statement fails, even if the
 // caller catches that error. Inside a transaction each statement therefore runs
 // under its own savepoint: a caught failure rolls back only that statement.

@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 
-import { db, sql as SQL, withTransaction } from "../sql-client";
+import { db, sql as SQL, tryBlock, withTransaction } from "../sql-client";
 import type { SqlClient } from "../sql-client";
 import { toCurrencyCode } from "../currencies";
 import { uploadReceipt } from "./uploads";
@@ -1157,6 +1157,7 @@ export async function receiveInvoicePayment(data: {
   const invoice = normalizeFinanceInvoiceRow(primaryInvoice, lineRows);
 
   try {
+    await tryBlock(async () => {
     const { postGLEntry, GL_ACCOUNTS } = await import("./gl");
     const cashAccount =
       data.method === "cash" ? GL_ACCOUNTS.CASH : GL_ACCOUNTS.BANK;
@@ -1221,6 +1222,7 @@ export async function receiveInvoicePayment(data: {
       `;
     }
     await sql`update finance_payments set journal_entry_id = ${entry.id} where id = ${paymentId}`;
+    });
   } catch (err) {
     console.error("Failed to create journal entry for AR payment:", err);
   }

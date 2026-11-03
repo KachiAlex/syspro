@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "crypto";
-import { db, sql as SQL, withTransaction } from "../sql-client";
+import { db, sql as SQL, tryBlock, withTransaction } from "../sql-client";
 import { ensureOnce } from "@/lib/ensure-once";
 import { emitEvent } from "@/lib/notify";
 
@@ -1192,6 +1192,7 @@ async function applyExpenseOutcome(
   if (amount <= 0 || expense.journal_entry_id) return;
 
   try {
+    await tryBlock(async () => {
     const { postGLEntry, GL_ACCOUNTS } = await import("./gl");
     const catRows = await db.query<any>(
       `select account_id from expense_categories where id = $1 limit 1`,
@@ -1219,6 +1220,7 @@ async function applyExpenseOutcome(
     if (jeId) {
       await db.query(`update expenses set journal_entry_id = $1 where id = $2`, [jeId, expenseId]);
     }
+    });
   } catch (err) {
     console.error("Expense approval GL posting failed:", err);
   }
@@ -1543,6 +1545,7 @@ async function applyTreasuryOutcome(
   if (!row || outcome !== "approved" || row.journal_entry_id) return;
 
   try {
+    await tryBlock(async () => {
     const { postGLEntry, GL_ACCOUNTS } = await import("./gl");
     if (isGuarantee) {
       const margin = Number(row.margin_amount) || 0;
@@ -1587,6 +1590,7 @@ async function applyTreasuryOutcome(
         await db.query(`update invoice_discountings set journal_entry_id = $1 where id = $2`, [(je as any)?.id ?? null, entityId]);
       }
     }
+    });
   } catch (err) {
     console.error(`Treasury approval JE posting failed (${entityType} ${entityId}):`, err);
   }
