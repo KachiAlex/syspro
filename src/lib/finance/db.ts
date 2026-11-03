@@ -1486,11 +1486,14 @@ export async function updatePayment(
     existing.journal_entry_id &&
     !existing.reversed_journal_entry_id
   ) {
+    const journalEntryId = existing.journal_entry_id as string;
+    const reference = existing.reference;
     try {
+      await tryBlock(async () => {
       const { reverseGLEntry } = await import("./gl");
       const reversal = await reverseGLEntry(
-        existing.journal_entry_id,
-        `Reverse payment ${existing.reference}`
+        journalEntryId,
+        `Reverse payment ${reference}`
       );
 
       const allocations = (await sql`
@@ -1508,6 +1511,7 @@ export async function updatePayment(
       }
 
       await sql`update finance_payments set reversed_journal_entry_id = ${reversal.id} where id = ${id}`;
+      });
     } catch (err) {
       console.error("Failed to reverse payment journal entry:", err);
     }
