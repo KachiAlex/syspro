@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 
-import { db, sql as SQL } from "@/lib/sql-client";
+import { db, sql as SQL, tryBlock } from "@/lib/sql-client";
 import { ensureOnce } from "@/lib/ensure-once";
 import { postGLEntry, GL_ACCOUNTS } from "./gl";
 
@@ -463,6 +463,7 @@ export async function runDunningCycle(input: {
     const target = levelFor(Number(c.days_overdue));
     if (Number(c.current_level) >= target) continue; // already at/beyond target
     try {
+      await tryBlock(async () => {
       const out = await issueDunningNotice({
         tenantSlug: input.tenantSlug,
         invoiceId: c.id,
@@ -481,6 +482,7 @@ export async function runDunningCycle(input: {
         );
         held.push(c.customer_code);
       }
+      });
     } catch (err: any) {
       errors.push({ invoiceId: c.id, error: err?.message ?? String(err) });
     }
