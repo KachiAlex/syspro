@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "crypto";
-import { db, sql as SQL, withTransaction } from "../sql-client";
+import { db, sql as SQL, tryBlock, withTransaction } from "../sql-client";
 import { createBillJournalEntry } from "./accounting";
 import { ensurePurchaseOrderTables } from "./purchase-orders";
 import { ensureOnce } from "@/lib/ensure-once";
@@ -440,22 +440,24 @@ export async function createBill(payload: {
     }
   } else {
     try {
-      const { initiateApproval } = await import("./approvals");
-      const approval = await initiateApproval({
-        tenantSlug: payload.tenantSlug,
-        entityType: "bill",
-        entityId: id,
-        requestedBy: (payload.metadata as any)?.createdBy ?? "system",
-        entityData: {
-          amount: total,
-          vendorId: payload.vendorId,
-          billNumber,
-          reference: billNumber,
-          requestedByName: (payload.metadata as any)?.createdBy,
-        },
+      await tryBlock(async () => {
+        const { initiateApproval } = await import("./approvals");
+        const approval = await initiateApproval({
+          tenantSlug: payload.tenantSlug,
+          entityType: "bill",
+          entityId: id,
+          requestedBy: (payload.metadata as any)?.createdBy ?? "system",
+          entityData: {
+            amount: total,
+            vendorId: payload.vendorId,
+            billNumber,
+            reference: billNumber,
+            requestedByName: (payload.metadata as any)?.createdBy,
+          },
+        });
+        await sql`alter table bills add column if not exists approval_id text`;
+        await sql`update bills set approval_id = ${approval.id} where id = ${id}`;
       });
-      await sql`alter table bills add column if not exists approval_id text`;
-      await sql`update bills set approval_id = ${approval.id} where id = ${id}`;
     } catch (approvalErr) {
       console.error("Bill approval initiation failed:", approvalErr);
     }
