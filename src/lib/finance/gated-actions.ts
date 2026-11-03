@@ -22,7 +22,7 @@
  */
 
 import { randomUUID } from "crypto";
-import { db, withTransaction } from "../sql-client";
+import { db, tryBlock, withTransaction } from "../sql-client";
 import {
   canOverride,
   initiateApproval,
@@ -609,15 +609,17 @@ registerGatedAction<Record<string, any>>("budget_approval", {
   run: async (tenantSlug, p, ctx) => {
     const { changeBudgetStatus, createBudgetApproval } = await import("./budgets-db");
     try {
-      const rec = await createBudgetApproval(BigInt(p.budgetId), tenantSlug, 1, "approvals_engine");
-      if ((rec as any)?.id) {
-        await db.query(
-          `update budget_approvals
-           set status = 'APPROVED', approver_id = $1, approver_name = $2, approved_at = now()
-           where id = $3`,
-          [ctx.decidedBy ?? ctx.requestedBy, ctx.decidedBy ?? ctx.requestedBy, (rec as any).id]
-        );
-      }
+      await tryBlock(async () => {
+        const rec = await createBudgetApproval(BigInt(p.budgetId), tenantSlug, 1, "approvals_engine");
+        if ((rec as any)?.id) {
+          await db.query(
+            `update budget_approvals
+             set status = 'APPROVED', approver_id = $1, approver_name = $2, approved_at = now()
+             where id = $3`,
+            [ctx.decidedBy ?? ctx.requestedBy, ctx.decidedBy ?? ctx.requestedBy, (rec as any).id]
+          );
+        }
+      });
     } catch (err) {
       console.error("budget_approval audit row failed:", err);
     }
