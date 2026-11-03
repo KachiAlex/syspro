@@ -237,17 +237,9 @@ async function ensureGLTablesRun() {
     await sql`alter table if exists journal_entries add column if not exists is_reversing boolean default false`;
     await sql`alter table if exists journal_entries add column if not exists reversed_entry_id uuid`;
     await sql`alter table if exists journal_entries add column if not exists posted_at timestamptz`;
-    try {
-      // Legacy reference_id / created_by columns are uuid; canonical callers pass text
-      await sql`alter table if exists journal_entries alter column reference_id type text using reference_id::text`;
-    } catch {
-      /* column missing or already text */
-    }
-    try {
-      await sql`alter table if exists journal_entries alter column created_by type text using created_by::text`;
-    } catch {
-      /* column missing or already text */
-    }
+    // Legacy reference_id / created_by columns are uuid; canonical callers pass text
+    await tryStatement(() => sql`alter table if exists journal_entries alter column reference_id type text using reference_id::text`).catch(() => undefined);
+    await tryStatement(() => sql`alter table if exists journal_entries alter column created_by type text using created_by::text`).catch(() => undefined);
     try {
       await sql`alter table if exists journal_entries drop constraint if exists journal_entries_reference_type_check`;
       await sql`alter table if exists journal_entries drop constraint if exists journal_entries_journal_type_check`;
@@ -324,11 +316,8 @@ async function ensureGLTablesRun() {
       last_updated timestamptz default now()
     )`;
     await sql`alter table if exists account_balances add column if not exists tenant_slug text`;
-    try {
-      await sql`create unique index if not exists account_balances_account_period_uq on account_balances (account_id, fiscal_period_id)`;
-    } catch {
-      /* duplicates exist; fall through */
-    }
+    // Duplicates may exist; fall through.
+    await tryStatement(() => sql`create unique index if not exists account_balances_account_period_uq on account_balances (account_id, fiscal_period_id)`).catch(() => undefined);
 
     await sql`alter table if exists journal_entries add column if not exists finance_book text not null default 'main'`;
 
