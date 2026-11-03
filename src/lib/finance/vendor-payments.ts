@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "crypto";
-import { db, sql as SQL } from "../sql-client";
+import { db, sql as SQL, tryBlock } from "../sql-client";
 import { createPaymentJournalEntry } from "./accounting";
 import { ensureOnce } from "@/lib/ensure-once";
 
@@ -316,6 +316,7 @@ export async function createVendorPayment(payload: {
     }
   } else {
     try {
+      await tryBlock(async () => {
       // Risk escalation: signals that push this payment to a company
       // officer regardless of amount.
       const riskFlags: string[] = [];
@@ -370,6 +371,7 @@ export async function createVendorPayment(payload: {
         },
       });
       await sql`update vendor_payments set approval_id = ${approval.id} where id = ${id}`;
+      });
     } catch (approvalErr) {
       console.error("Vendor payment approval initiation failed:", approvalErr);
     }
